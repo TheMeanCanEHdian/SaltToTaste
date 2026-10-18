@@ -3608,6 +3608,26 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-18 — matcher v73 (batch M73): flags and flavourings (prep50 §2
+  M73, under the standing authorization).** Four rules plus one ruling:
+  makrut lime leaves and the Lapsang smoking tea join the zero-nutrient
+  flavourings class (three lines leave a wrong "drumstick leaves" record
+  for the rule row at 0 g; two recipes complete); the Dijon and porcini
+  stand-ins say so in their bases (70 and 15 rows, basis only); the
+  lumpia row says it counts an egg-roll sheet's weight; the "raspberries
+  and/or blackberries" line leaves a berry-pie record for raspberries at
+  0 g. My ruling after the verifier passed: the design's condition for
+  whole-grain mustard ("no whole-grain record") means no whole-grain
+  MUSTARD record, and the build showed none exists in the cache, so its 16
+  rows join the flag — a follow-up closer and verifier round added one
+  guarded arm. 106 rows and 0 kcal; statuses 1,045 complete / 153 partial.
+  Two facts the design had wrong and the build corrected: the flavouring
+  keys are the normalised plurals (the singular keys reach nothing), and
+  the cached lime-leaf answer holds 25 leaf records of 14 plants, none a
+  lime leaf (not "twelve other leaves"). The attribution script counts the
+  three rule rows as person rows because the rule-row shape stores
+  "confirmed"; the decisions table holds no rows.
+
 - **2026-10-17 — matcher v72 (batch M72): records, yields and rendered fat
   (prep50 §2 M72, under the standing authorization).** Six rules: cold
   cooked white rice lands on the cooked-rice record instead of glutinous;

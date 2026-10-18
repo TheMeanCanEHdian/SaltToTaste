@@ -453,7 +453,8 @@ void main() {
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    expect(matcherVersion, 70);
+    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
+    expect(matcherVersion, 71);
   });
 
   test("kosher salt's figure is half of SR 173468's '1 tsp' 6.0 g by "
@@ -990,7 +991,10 @@ void main() {
           // RE-PIN (M71 batch, v71): 404.60 (was 596.80) — the galangal
           // strained (pE R-E3, −12.80) and the jam's oil at its printed 2
           // tablespoons (pF R2, −756.00) (replay 596.82 → 404.62).
-          ('partial', '404.60'), // 601.75; 601.77 → 596.82 (H1)
+          // RE-PIN (M73 batch, v73, pD C3): complete (was partial) — its
+          // makrut lime leaves the flavouring rule row (replay partial →
+          // complete, 404.62 unchanged).
+          ('complete', '404.60'), // 601.75; 601.77 → 596.82 (H1)
         ],
       );
     });

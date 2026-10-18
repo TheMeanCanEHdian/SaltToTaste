@@ -940,7 +940,9 @@ exact items, `liquid smoke`, `red food coloring`, `green food coloring`,
 14 such lines (liquid smoke ×5, red and green food coloring, Ball Pickle
 Crisp, Angostura bitters, vanilla bean ×5; FDC has no record of any, and
 each sat on a wrong one: "Pectin, liquid", "Soup, bean", "Cheese ball";
-since matcher v64 `gel food dye` too, the rainbow cake's)
+since matcher v64 `gel food dye` too, the rainbow cake's; since matcher
+v73 `makrut lime leaves` and `ground lapsang souchong tea leaves` — M73
+below)
 — confirmed on no food as "Flavouring — no nutrients, counts as zero", 0
 g unmeasured, basis `"flavouring, no nutrients — counted as 0 g"` (an
 engine rule row). A person's row on such a line stands, and a line held
@@ -5551,6 +5553,95 @@ protein tracer; the undeducted 7.5 % is 0.76–1.51 g a recipe —
 tuscan-style-beef-stew stores 20.28 g, 1.51 g of it skimmed; `braisedKept`
 carries the design's five columns only). Deploy note: matcherVersion 70 stales every recipe; one
 zero-request sweep settles it.
+
+**Since matcher v73 (batch M73 — flags and flavourings; matcherVersion 71;
+prep50 design_v2 §2 M73, decided under the 2026-10-07 standing
+authorization; zero requests; no step read).** Four rules (the second
+widened by the orchestrator's ruling R1, 2026-10-18), 106 rows, 0 kcal:
+
+(1, pD C3) **Makrut lime leaves and the Lapsang smoking tea are
+zero-nutrient flavourings** (the v37 class: an explicit list of exact
+NORMALIZED items — the corpus lines print `makrut lime leaves` and `ground
+lapsang souchong tea leaves`, plural; the decision key singularizes, the
+list does not — and a line held as a discarded medium still stays held).
+FDC holds no lime leaf (the cached 'makrut lime leaves' answer holds 25 leaf
+records of 14 plants, none a lime leaf); 0615's tea is sprinkled under the
+rack to smoke the ribs (step 2), never eaten. guay-tiew-tom-yum-goong…|3 (its
+leaves are also fished out and discarded at step 2), panang-beef-curry|7 and
+oven-barbecued-spareribs|10 leave SR 168416 *Drumstick leaves, raw* at
+confidence 0 (264 g / 5.25 g displayed, 0 kcal) for the rule row "Flavouring
+— no nutrients, counts as zero", 0 g; guay-tiew and the spareribs →
+complete, panang stays partial (its curry paste |2 unmatched).
+
+(2, pD C4) **The K stand-ins say so** (flag only, the 173408 / 173420
+precedents; `trimStandInFlagOf` [re-point → `item`]): a line naming
+`dijon` on Foundation 326698 *Mustard, prepared, yellow* → `approximate
+(FDC holds no Dijon mustard — counted as prepared yellow mustard)` (70 rows,
+8 of them section rows; the 5 discarded dip rows keep their dip basis and
+gain the flag), and a line naming `porcini` on SR 168436 *Mushrooms,
+shiitake, dried* → `approximate (FDC holds no porcini — counted as dried
+shiitake)` (15 rows, incl. grilled-stuffed-pork-tenderloin's Porcini and
+Artichoke Stuffing and braised-turkey|11, still counted at 14.17 g — M71's
+strain did not reach it: its head is `mushroom`, the steps say porcini). No cached answer
+holds a Dijon or porcini record (the 'dijon mustard' answer is FNDDS
+2710202 honey mustard dressing alone). Not flagged by this arm: the 23
+other lines on 326698 (16 whole-grain — flagged by (2′) —, 6 yellow,
+boston-baked-beans' brown) and the 7 shiitake lines on 168436.
+
+(2′, R1 — the orchestrator's ruling, 2026-10-18, under the 2026-10-07
+standing authorization) **Whole-grain mustard says so too.** §2 M73 flagged
+it "only if its cached answer holds no whole-grain record"; the condition
+is read as no whole-grain MUSTARD record. The cached answers ('whole-grain
+mustard', 'whole grain mustard') hold 25 whole-grain GRAIN foods each
+(waffles, flours, breads) and no mustard, the line reads the `mustard
+prepared` rewrite, and no cached record anywhere is a whole-grain mustard.
+A line naming `whole-grain`, `whole grain` or `coarse-grain mustard`
+(`\b(?:whole|coarse)[- ]grain mustard\b`, after the Dijon arm — no corpus
+line names both) on Foundation 326698 → `approximate (FDC holds no
+whole-grain mustard — counted as prepared yellow mustard)` (16 rows, 4 of
+them section rows — garlic-studded-roast-pork-loin's Mustard–Shallot Sauce
+and glazed-salmon's three glazes —, basis only, 0 kcal; it moves
+brussels-sprout-salad-with-warm-mustard-vinaigrette|1, M73's whole-grain
+negative, into the reach). SR 172234, the cached rewrite's other prepared
+yellow record, holds no row, so no arm reads it. Not flagged: the 7 other
+lines on 326698 — yellow mustard, the record's own food
+(indoor-pulled-chicken|0, peruvian-roast-chicken-with-garlic-and-lime|7,
+indoor-pulled-pork-with-sweet-and-tangy-barbecue-sauce|4,
+oven-barbecued-spareribs|0, jerk-chicken|9,
+grill-roasted-cornish-game-hens|4) — and boston-baked-beans|6's prepared
+brown mustard (Gulden's; outside R1).
+
+(3, pE R-E4; keep 32 g) **The lumpia row says what it counts**: a line
+naming `lumpia` on SR 172802 *Wonton wrappers (includes egg roll wrappers)*
+→ `approximate (USDA SR 172802's 7-inch egg-roll wrapper, 32 g a sheet —
+FDC holds no 8-inch lumpia or spring-roll sheet and no label read prints a
+size (L49); the thin lumpia sheet likely weighs less)` [re-point → `item`].
+lumpiang-shanghai-with-seasoned-vinegar|16, 608.00 g unchanged. Not
+flagged: shu-mai|15 (5½-inch egg roll wrappers — the record's own food),
+pork-and-cabbage-dumplings|16 (gyoza, its own label). Not built: the
+per-area figure (64 sq in × 0.653061 g = 41.80 g a sheet, +669.26 kcal) —
+it moves away from every label L49 read.
+
+(4, critic F7, L221) **The berries read raw raspberries**:
+`_rankAs['raspberries and or blackberries']` → the cached 'raspberries'
+answer ranked as `raspberries raw` [re-point → `alternative`]:
+buttermilk-vanilla-panna-cotta-with-berries-and-honey|7 "Fresh raspberries
+and/or blackberries" FNDDS 2707997 *Pie, berry* (confidence 0, a wrong
+food) → FNDDS 2709281 *Raspberries, raw* (1.0), still 0 g `unmeasured` (no
+amount on the line); the recipe stays complete (281.02 /serving).
+
+Batch: 106 rows (3 rule rows, 102 basis-only, 1 record-only), 13 of them
+section rows; 0 kcal (row column = recipe energy = 0); 2 recipes complete
+(1,045 / 153); buckets check −3, counted +3; holds and sections unchanged;
+0 requests. The flags are fixed texts and join no list; no step reader.
+
+Known gaps: panang eats its few sliced leaves (no FDC record — counted 0);
+the panna cotta's step "top with 3 to 5 berries" is a count no unit reads
+(no piece figure is cached for a berry); the lumpia sheet's own weight
+(the per-area figure, not built); Dijon's, whole-grain mustard's and
+porcini's own compositions (no FDC record); boston-baked-beans' brown
+mustard counted as yellow, unflagged. Deploy note:
+matcherVersion 71 stales every recipe; one zero-request sweep settles it.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

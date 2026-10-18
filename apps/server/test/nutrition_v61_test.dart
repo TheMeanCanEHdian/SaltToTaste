@@ -91,6 +91,10 @@ const _dipBasis =
 const _dipKeptBasis =
     "discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
 
+/// RE-PIN (M73 batch, v73, pD C4): a Dijon dip line says its stand-in.
+const _dipDijonBasis =
+    "discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)";
+
 /// RE-PIN (M69 batch, v68): the coat flags of the coats M69 budgets.
 const _c4Breast =
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast (no record for a sautéed flour dusting; read as the baked breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour, sauce included, and is not read); the dredge's excess not counted)";
@@ -187,6 +191,7 @@ const List<_Row> _dips = [
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M66 batch, v65): R3' — as |10
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     _nutCrusted,
     11,
@@ -197,7 +202,7 @@ const List<_Row> _dips = [
     '1.16',
     'auto',
     null,
-    'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+    'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   (
     _stuffed,
@@ -223,6 +228,7 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     _kiev,
     13,
@@ -233,7 +239,7 @@ const List<_Row> _dips = [
     '0.65',
     'auto',
     null,
-    'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+    'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   (
     _crispyFried,
@@ -295,6 +301,7 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     _porkChops,
     2,
@@ -305,7 +312,7 @@ const List<_Row> _dips = [
     '3.64',
     'auto',
     null,
-    'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+    'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   (
     _porkChops,
@@ -331,6 +338,7 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     _crunchy,
     12,
@@ -341,7 +349,7 @@ const List<_Row> _dips = [
     '12.01',
     'auto',
     null,
-    'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+    'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   (
     _porkSchnitzel,
@@ -429,6 +437,7 @@ const List<_Row> _dips = [
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M66 batch, v65): as |4
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     _almond,
     5,
@@ -439,7 +448,7 @@ const List<_Row> _dips = [
     '1.23',
     'auto',
     null,
-    'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
+    'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M66 batch, v65): R2 — 0.78 g of dip + the ¼ teaspoon (0.50 g) S4 writes, eaten whole: the kept-part basis
   (
@@ -1290,7 +1299,8 @@ void main() {
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    expect(matcherVersion, 70);
+    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
+    expect(matcherVersion, 71);
   });
 
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
@@ -1402,10 +1412,17 @@ void main() {
       // RE-PIN (M66 batch, v65): 30 rows, almond|6 in the kept-part form.
       // RE-PIN (M69 batch, v68): 35 rows — five of H's dips are budgeted.
       expect(_dips, hasLength(35));
+      // RE-PIN (M73 batch, v73): the five Dijon dips in the flagged form.
       expect(
-        _dips.every((r) => r.$10 == _dipBasis || r.$10 == _dipKeptBasis),
+        _dips.every(
+          (r) =>
+              r.$10 == _dipBasis ||
+              r.$10 == _dipKeptBasis ||
+              r.$10 == _dipDijonBasis,
+        ),
         isTrue,
       );
+      expect(_dips.where((r) => r.$10 == _dipDijonBasis), hasLength(5));
       expectRows(_dips);
       for (final (file, position, _, _, _, _, _, _, _, _) in _dips) {
         expect(
@@ -1604,8 +1621,10 @@ void main() {
         for (final (position, line) in nutritionLines(recipe).indexed) {
           final match = items[position]['match'] as Map<String, Object?>?;
           // RE-PIN (M66 batch, v65): the kept-part form is a dip too.
+          // RE-PIN (M73 batch, v73): and the Dijon dips' flagged form.
           if (match?['gram_basis'] == _dipBasis ||
-              match?['gram_basis'] == _dipKeptBasis) {
+              match?['gram_basis'] == _dipKeptBasis ||
+              match?['gram_basis'] == _dipDijonBasis) {
             dips++;
           }
           expect(

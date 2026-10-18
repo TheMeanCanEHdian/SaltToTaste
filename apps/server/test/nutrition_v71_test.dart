@@ -523,19 +523,20 @@ const List<_Row> _unmoved = [
     '19.20',
     '4 × 15 g each',
   ),
+  // RE-PIN (M73 batch, v73): a zero-nutrient flavouring (pD C3).
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
     3,
     '6 makrut lime leaves, torn if large',
-    168416,
-    'Drumstick leaves, raw',
-    '0.000000',
-    '264.00',
-    'auto',
+    null,
+    'Flavouring — no nutrients, counts as zero',
+    '1.000000',
+    '0.00',
+    'confirmed',
     null,
     '0.00',
-    '6 × 44 g each',
+    'flavouring, no nutrients — counted as 0 g',
   ),
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
@@ -1657,6 +1658,7 @@ const List<_Row> _unmoved = [
     '2190.85',
     'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
   ),
+  // RE-PIN (M73 batch, v73): the porcini flag (pD C4).
   (
     '0172-braised-turkey.yaml',
     null,
@@ -1669,7 +1671,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '41.96',
-    'from 1/2 ounce',
+    'from 1/2 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0172-braised-turkey.yaml',
@@ -2007,6 +2009,7 @@ const List<_Row> _unmoved = [
     '252.00',
     '2 tablespoon · USDA portion',
   ),
+  // RE-PIN (M73 batch, v73): the whole-grain mustard flag (R1, the 2026-10-18 ruling).
   (
     '0235-maple-glazed-pork-tenderloin.yaml',
     null,
@@ -2019,7 +2022,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '9.47',
-    '1 tablespoon ≈ 15 mL',
+    '1 tablespoon ≈ 15 mL · approximate (FDC holds no whole-grain mustard — counted as prepared yellow mustard)',
   ),
   (
     '0243-arista-tuscan-style-roast-pork-with-garlic-and-rosemary.yaml',
@@ -3029,6 +3032,7 @@ const List<_Row> _unmoved = [
     '385.55',
     'from 4 ounce',
   ),
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
     null,
@@ -3041,7 +3045,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '1.58',
-    '1/2 teaspoon ≈ 2 mL',
+    '1/2 teaspoon ≈ 2 mL · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard)',
   ),
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
@@ -3729,6 +3733,7 @@ const List<_Row> _unmoved = [
     '0.00',
     'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted)',
   ),
+  // RE-PIN (M73 batch, v73): the porcini flag (pD C4).
   (
     '0402-italian-wedding-soup.yaml',
     null,
@@ -3741,7 +3746,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '20.98',
-    'from 1/4 ounce',
+    'from 1/4 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0402-italian-wedding-soup.yaml',
@@ -4247,6 +4252,7 @@ const List<_Row> _unmoved = [
     '3.65',
     '1/2 teaspoon ≈ 2 mL',
   ),
+  // RE-PIN (M73 batch, v73): the porcini flag (pD C4).
   (
     '0457-beef-burgundy.yaml',
     null,
@@ -4259,7 +4265,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '41.96',
-    'from 1/2 ounce',
+    'from 1/2 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0457-beef-burgundy.yaml',
@@ -5577,6 +5583,7 @@ const List<_Row> _unmoved = [
     '39.27',
     '3 tablespoon · USDA portion',
   ),
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     '0634-barbecued-pulled-chicken.yaml',
     null,
@@ -5589,7 +5596,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '28.41',
-    '3 tablespoon ≈ 44 mL',
+    '3 tablespoon ≈ 44 mL · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard)',
   ),
   (
     '0634-barbecued-pulled-chicken.yaml',
@@ -7796,7 +7803,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    expect(matcherVersion, 70);
+    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
+    expect(matcherVersion, 71);
   });
 
   group('matcher v71 (batch M71)', skip: skipIfNoCorpus, () {
@@ -8264,10 +8272,12 @@ void main() {
     test('per serving: the 12 recipes M71 moves (and the jam section) — the '
         "fresh compute here; the replay's v69 → v71 in each comment", () {
       for (final (file, section, status, perServing) in const [
+        // RE-PIN (M73 batch, v73, pD C3): complete (was partial) — its
+        // makrut lime leaves the flavouring rule row (404.60 unchanged).
         (
           '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
           null,
-          'partial',
+          'complete',
           '404.60',
         ), // 596.82 → 404.62
         (

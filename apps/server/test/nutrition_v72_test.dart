@@ -2321,6 +2321,7 @@ const List<_Row> _unmoved = [
     '0.00',
     '2 sprig — a sprig is not measured, counted as 0 g',
   ),
+  // RE-PIN (M73 batch, v73): the whole-grain mustard flag (R1, the 2026-10-18 ruling).
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
     null,
@@ -2333,7 +2334,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '9.47',
-    '1 tablespoon ≈ 15 mL',
+    '1 tablespoon ≈ 15 mL · approximate (FDC holds no whole-grain mustard — counted as prepared yellow mustard)',
   ),
   (
     '1166-fruit-hand-pies.yaml',
@@ -2699,6 +2700,7 @@ const List<_Row> _unmoved = [
     '14.19',
     '5 tablespoon ≈ 74 mL',
   ),
+  // RE-PIN (M73 batch, v73): the whole-grain mustard flag (R1, the 2026-10-18 ruling).
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
     null,
@@ -2711,7 +2713,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '9.47',
-    '1 tablespoon ≈ 15 mL',
+    '1 tablespoon ≈ 15 mL · approximate (FDC holds no whole-grain mustard — counted as prepared yellow mustard)',
   ),
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
@@ -4393,6 +4395,7 @@ const List<_Row> _unmoved = [
     '1.62',
     '2 teaspoon · USDA portion',
   ),
+  // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
   (
     '0088-slow-cooker-beer-braised-short-ribs.yaml',
     null,
@@ -4405,7 +4408,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '28.41',
-    '3 tablespoon ≈ 44 mL',
+    '3 tablespoon ≈ 44 mL · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard)',
   ),
   (
     '0088-slow-cooker-beer-braised-short-ribs.yaml',
@@ -4435,6 +4438,7 @@ const List<_Row> _unmoved = [
     '21.29',
     '1 1/2 cup ≈ 355 mL',
   ),
+  // RE-PIN (M73 batch, v73): the porcini flag (pD C4).
   (
     '0350-beef-short-rib-ragu.yaml',
     null,
@@ -4447,7 +4451,7 @@ const List<_Row> _unmoved = [
     'auto',
     null,
     '41.96',
-    'from 1/2 ounce',
+    'from 1/2 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0350-beef-short-rib-ragu.yaml',
@@ -5919,19 +5923,20 @@ const List<_Row> _unmoved = [
     '5.10',
     '1 · USDA per-item weight',
   ),
+  // RE-PIN (M73 batch, v73): a zero-nutrient flavouring (pD C3).
   (
     '0551-panang-beef-curry.yaml',
     null,
     7,
     '6 makrut lime leaves, middle vein removed, sliced thin',
-    168416,
-    'Drumstick leaves, raw',
-    '0.000000',
-    '264.00',
-    'auto',
+    null,
+    'Flavouring — no nutrients, counts as zero',
+    '1.000000',
+    '0.00',
+    'confirmed',
     null,
     '0.00',
-    '6 × 44 g each',
+    'flavouring, no nutrients — counted as 0 g',
   ),
   (
     '0551-panang-beef-curry.yaml',
@@ -7183,7 +7188,8 @@ const List<(String, int, String)> _gated = [
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 70);
+    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
+    expect(matcherVersion, 71);
   });
 
   test('braisedKept: three USDA same-cut pairs, five columns each, every '

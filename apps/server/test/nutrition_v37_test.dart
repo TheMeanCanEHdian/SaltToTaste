@@ -192,7 +192,9 @@ void main() {
 
   // RE-PIN (M65 batch, v64, F8): 15 lines (was 14) — gel food dye joins
   // the class (rainbow-cake|8).
-  test('the flavourings class reaches exactly its 15 library lines; the '
+  // RE-PIN (M73 batch, v73, pD C3): 18 lines (was 15) — makrut lime leaves
+  // ×2 and the Lapsang tea join.
+  test('the flavourings class reaches exactly its 18 library lines; the '
       'held liquid smoke stays held (census of the corpus)', () {
     final reached = <String>[];
     final held = <String>[];
@@ -928,5 +930,22 @@ const List<(String, int, String)> _flavourings = [
     '1201-rainbow-cake.yaml',
     8,
     'Gel food dye (red, orange, yellow, green, blue, and purple)',
+  ),
+  // RE-PIN (M73 batch, v73, pD C3): the two makrut-lime-leaf lines and the
+  // Lapsang smoking tea join the class.
+  (
+    '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
+    3,
+    '6 makrut lime leaves, torn if large',
+  ),
+  (
+    '0551-panang-beef-curry.yaml',
+    7,
+    '6 makrut lime leaves, middle vein removed, sliced thin',
+  ),
+  (
+    '0615-oven-barbecued-spareribs.yaml',
+    10,
+    '¼ cup finely ground Lapsang Souchong tea leaves (from about 10 tea bags, or ½ cup loose tea leaves ground to a powder in a spice grinder)',
   ),
 ];

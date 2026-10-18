@@ -15914,6 +15914,18 @@ String? gramBasisFor(
 /// where their steps skim (the six other rows say nothing). A 173128 or
 /// 168664 line in a recipe whose steps skim nothing (none in the corpus)
 /// says its rendered fat is not deducted.
+/// v71 (batch M73, pD C4; flag only, the 173408 / 173420 precedents): a
+/// Dijon line on Foundation 326698 "Mustard, prepared, yellow" and a
+/// porcini line on SR 168436 "Mushrooms, shiitake, dried" say FDC holds no
+/// such record (no cached answer holds one). Keyed on the line's own word
+/// [re-point → `item`]. A whole-grain (or coarse-grain) mustard line on
+/// 326698 says the same (M73 R1, the orchestrator's 2026-10-18 ruling: §2's
+/// "no whole-grain record" means no whole-grain MUSTARD record — both
+/// cached whole-grain answers hold grain foods only); no row sits on SR
+/// 172234, so no arm reads it. v71 (M73, pE R-E4; keep 32 g): an 8-inch
+/// lumpia line on SR 172802 says it counts the egg-roll sheet's per-item
+/// weight (shu-mai's egg roll wrappers ARE the record's food; the gyoza row
+/// has its own label).
 String? trimStandInFlagOf(
   String raw,
   int? fdcId, {
@@ -15958,6 +15970,22 @@ String? trimStandInFlagOf(
       'approximate (lean only — FDC publishes no lean-and-fat top sirloin '
           "petite roast (search 2026-10-08); the roast's separable fat not "
           'counted)',
+    326698 when raw.toLowerCase().contains('dijon') =>
+      'approximate (FDC holds no Dijon mustard — counted as prepared yellow '
+          'mustard)',
+    326698
+        when RegExp(
+          r'\b(?:whole|coarse)[- ]grain mustard\b',
+        ).hasMatch(raw.toLowerCase()) =>
+      'approximate (FDC holds no whole-grain mustard — counted as prepared '
+          'yellow mustard)',
+    168436 when raw.toLowerCase().contains('porcini') =>
+      'approximate (FDC holds no porcini — counted as dried shiitake)',
+    172802 when raw.toLowerCase().contains('lumpia') =>
+      "approximate (USDA SR 172802's 7-inch egg-roll wrapper, 32 g a sheet "
+          '— FDC holds no 8-inch lumpia or spring-roll sheet and no label '
+          'read prints a size (L49); the thin lumpia sheet likely weighs '
+          'less)',
     173420 when raw.toLowerCase().contains('ricotta salata') =>
       'approximate (FDC holds no ricotta salata — a stand-in by class; '
           "feta's sodium (1,139 mg per 100 g) and fat (21.49 g per 100 g) "

@@ -284,6 +284,7 @@ const List<_Row> _guarded = [
 /// (the porcini named again after it; every other strained head first
 /// named after it).
 const List<_Row> _daube = [
+  // RE-PIN (M73 batch, v73): the porcini flag (pD C4).
   (
     '0456-daube-provencal.yaml',
     0,
@@ -292,7 +293,7 @@ const List<_Row> _daube = [
     '0.616667',
     '21.26',
     '62.94',
-    'from 3/4 ounce',
+    'from 3/4 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0456-daube-provencal.yaml',
@@ -673,7 +674,8 @@ void main() {
     // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    expect(matcherVersion, 70);
+    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
+    expect(matcherVersion, 71);
   });
 
   group('matcher v56 (batch M57)', skip: skipIfNoCorpus, () {

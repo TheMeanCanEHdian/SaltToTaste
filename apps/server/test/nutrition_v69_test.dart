@@ -2237,23 +2237,26 @@ const List<_Row> _negatives = [
     '71.70',
     '1/4 cup · USDA portion of "Tamarinds, raw"',
   ),
+  // RE-PIN (M73 batch, v73): a zero-nutrient flavouring (pD C3).
   (
     '0615-oven-barbecued-spareribs.yaml',
     null,
     10,
     '¼ cup finely ground Lapsang Souchong tea leaves (from about 10 tea bags, or ½ cup loose tea leaves ground to a powder in a spice grinder)',
-    168416,
-    'Drumstick leaves, raw',
-    '0.000000',
+    null,
+    'Flavouring — no nutrients, counts as zero',
+    '1.000000',
     // As the liquid smoke below: the replay's row (byte-equal v68 → v69)
     // weighs 5.25 g on 168416's detail ('1/4 cup · USDA portion', 0 kcal),
     // which the library caches; this DB holds only its hit (a pick below
     // the gate fetches nothing), so no grams and no basis here.
+    // RE-PIN (M73 batch, v73): the engine's flavouring rule row, 0 g on no
+    // food — its grams and basis the rule's (the replay's too).
+    '0.00',
+    'confirmed',
     null,
-    'auto',
     null,
-    null,
-    null,
+    'flavouring, no nutrients — counted as 0 g',
   ),
   (
     '0628-grilled-stuffed-chicken-breasts-with-prosciutto-and-fontina.yaml',
@@ -4765,7 +4768,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
     // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    expect(matcherVersion, 70);
+    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
+    expect(matcherVersion, 71);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '

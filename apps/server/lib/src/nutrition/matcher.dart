@@ -951,7 +951,17 @@ const Map<String, String> _synonyms = {
 /// steps print that the fat is not served (engine `_defatsLiquid`) — the
 /// whole brisket's separator, and the boneless short ribs (170827 →
 /// 171223) where their steps skim.
-const int matcherVersion = 70;
+///
+/// v71 (the Matcher v73 commit, batch M73 — flags and flavourings; prep50
+/// design_v2 §2 M73, decided under the 2026-10-07 standing authorization;
+/// zero requests): makrut lime leaves and the Lapsang smoking tea are
+/// zero-nutrient flavourings ([isZeroNutrientFlavouring]); Dijon and (by the
+/// orchestrator's ruling R1, 2026-10-18) whole-grain mustard on prepared
+/// yellow mustard, porcini on dried shiitake and an 8-inch lumpia sheet on
+/// SR 172802's egg-roll wrapper say they are stand-ins (engine
+/// `trimStandInFlagOf`); "raspberries and/or blackberries" reads the cached
+/// raw raspberries ([_rankAs]).
+const int matcherVersion = 71;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1377,6 +1387,16 @@ const Set<String> _zeroNutrientFlavourings = {
   // orange, …)" sat on "Fast foods, coleslaw" (0.033) — the food-coloring
   // precedent.
   'gel food dye',
+  // v71 (M73, pD C3): FDC holds no lime leaf (the cached answer: 25
+  // leaf records of 14 plants, none a lime leaf) — guay-tiew|3 and
+  // panang-beef-curry|7 sat on "Drumstick leaves, raw" at 0. Panang eats
+  // its few sliced leaves: counted 0, a stated gap.
+  // The normalized item, as both corpus lines print it (plural; the key
+  // singularizes, this set does not).
+  'makrut lime leaves',
+  // v71 (M73, pD C3): 0615's smoking tea, sprinkled under the rack and
+  // never eaten (step 2) — the liquid-smoke precedent.
+  'ground lapsang souchong tea leaves',
 };
 
 /// v37 (Z14): whether [raw] is the tail of the line above that the corpus
@@ -2817,6 +2837,11 @@ const Map<String, (String, String)> _rankAs = {
   'red thai chile': ('jarred hot cherry peppers', 'jarred hot cherry peppers'),
   'herbes de provence': ('dried thyme', 'spices thyme dried'),
   'frozen raspberries': ('raspberries', 'raspberries frozen'),
+  // v71 (M73, critic F7, L221) [re-point → `alternative`]: the panna cotta's
+  // amount-less "Fresh raspberries and/or blackberries" sat on FNDDS 2707997
+  // "Pie, berry" (0, a wrong food at 0 g) — the cached 'raspberries' answer's
+  // raw records (2709281 / 2346410 / 167755), the first named fruit.
+  'raspberries and or blackberries': ('raspberries', 'raspberries raw'),
   'halloumi cheese': ('halloumi cheese', 'cheese monterey'),
   'halloumi': ('halloumi cheese', 'cheese monterey'),
   // v49 (M47 Q15 iv, the owner's 2026-10-07 ruling): the pasta e fagioli
