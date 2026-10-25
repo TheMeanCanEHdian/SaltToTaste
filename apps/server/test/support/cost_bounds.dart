@@ -153,6 +153,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // the first coat sentence and the first pour-off or wipe — once per
       // index.
       'memo:panFatLines',
+      // v76 (M79, Q10 (b′)): the dry-heat cooking a rack's pair reads —
+      // grill, or oven and a fat pour-off — once per index.
+      'memo:dryHeat',
     ])
       once: 1,
     // v71 closer 1 (verify1 D2): the D-E1 mixing test, once per sentence

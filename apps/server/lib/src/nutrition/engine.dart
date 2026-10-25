@@ -86,6 +86,13 @@ const double _wholeMassMacros = 90;
 /// fat 100 g; detail cached): 251 rows keep 748608 and its 90.7 g per 100 mL.
 /// Plain "olive oil" lines stay on FNDDS 2710186 at 900 — the same food
 /// 1.8 % apart (disclosed).
+///
+/// v76 (M79, pD C7; the napa precedent — in BOTH sibling maps): Foundation
+/// 2747675 "Watermelon, seedless, flesh only, raw" publishes no energy and
+/// no portion (only minerals and protein: held `no_nutrients`) → SR 167765
+/// "Watermelon, raw" (30 kcal; its detail read at L50 #3); its grams come
+/// through grams `volumeSiblings`. The row keeps 2747675 (the seedless
+/// flesh the line names).
 const Map<int, int> nutrientSiblings = {
   2727583: 169979,
   2758998: 169736,
@@ -95,6 +102,7 @@ const Map<int, int> nutrientSiblings = {
   // 1750348 peanut, 1750351 extra-light olive) carry 0 rows on snapshot 27
   // — not mapped; add each here when a line lands on it.
   748608: 171413,
+  2747675: 167765,
 };
 
 /// A cooking medium the recipe throws away, found from the line and the
@@ -14555,6 +14563,16 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
     {172641: 174414, 168607: 168664, 168743: 173128},
   ),
   (RegExp('fat caps? removed'), {2727572: 171751}),
+  // v76 (batch M79, the orchestrator's Q10 (b′); the planner's C7): the
+  // racks' rank-as ('racks of lamb', matcher `_rankAs`) lands on SR 174321
+  // (¼", a HIT only — '1/8"' and '1/4"' are no words, so FDC's order breaks
+  // the tie) → SR 174377 "Lamb, rib, separable lean and fat, trimmed to
+  // 1/8" fat, choice, raw" (its detail read at L50 #6), where the line
+  // prints "trimmed" (0228 "fat trimmed to ⅛ to ¼ inch", 0622 "frenched and
+  // trimmed") — before any weight read would fetch the hit. APPENDED, never
+  // first: [trimStandInFlagOf] and [braisedKeptOf] read the first entry's
+  // depth phrase (CC8 (a)). [re-point → `prep`]
+  (RegExp(r'\btrimmed\b'), {174321: 174377}),
 ];
 
 /// v68 (batch M70; prep49 design_v2 §2 M70, the owner's Q1 flat (b′), on
@@ -14626,6 +14644,46 @@ const Map<int, Map<String, double>> braisedKept = {
   },
 };
 
+/// v76 (batch M79, prep50 design_v2 §2 M79, the orchestrator's Q10 (b′);
+/// §0.3's dry-heat clause — a record moved by an owner ruling keeps its
+/// own roasted / broiled pair where the drippings never reach the plate;
+/// the planner's C8: a record-keyed [braisedKept] entry holds one pair and
+/// reads M72's skim gate, which neither rack prints): the share of the
+/// energy and of each fat column a DRY-HEAT cooking of the record keeps,
+/// keyed by the cooking [_dryHeatOf] reads — USDA's same-cut, same-trim,
+/// same-grade pair by the protein tracer (cooked × P raw ÷ (P cooked ×
+/// raw)): SR 174377 (the rack, ⅛", choice, raw DETAIL: E 342, P 15.32, F
+/// 30.71, sat 13.43, mono 12.6, poly 2.42) → SR 172552 "…, cooked,
+/// roasted" (E 341, P 21.8, F 27.5, sat 11.7, mono 11.6, poly 1.99) and SR
+/// 174378 "…, cooked, broiled" (E 340, P 23.1, F 26.8, sat 11.4, mono 11.0,
+/// poly 2.17) — both HITS in snapshot 28's cached answers, read here as
+/// figures, never at run time. No trans on any of the three: gross, as
+/// M72's. Read only through [braisedKeptOf] (the ONE [recomputeTotals]
+/// arm, the basis and the GET read the same recipe).
+/// ponytail: one record (the racks, the only rows a ruling moved to a
+/// dry-heat pair); another roast reads none — disclosed (§0.7).
+const Map<int, Map<String, Map<String, double>>> dryHeatKept = {
+  174377: {
+    'roasted': {
+      'energy': 341 * 15.32 / (21.8 * 342),
+      'fat': 27.5 * 15.32 / (21.8 * 30.71),
+      'saturated': 11.7 * 15.32 / (21.8 * 13.43),
+      'monounsaturated': 11.6 * 15.32 / (21.8 * 12.6),
+      'polyunsaturated': 1.99 * 15.32 / (21.8 * 2.42),
+    },
+    'broiled': {
+      'energy': 340 * 15.32 / (23.1 * 342),
+      'fat': 26.8 * 15.32 / (23.1 * 30.71),
+      'saturated': 11.4 * 15.32 / (23.1 * 13.43),
+      'monounsaturated': 11.0 * 15.32 / (23.1 * 12.6),
+      'polyunsaturated': 2.17 * 15.32 / (23.1 * 2.42),
+    },
+  },
+};
+
+/// The cooked record of each [dryHeatKept] pair, for the flag.
+const Map<String, int> _dryHeatPairOf = {'roasted': 172552, 'broiled': 174378};
+
 /// v70 (M72 R-E3, §0.3): the [braisedKept] shares a row on [fdcId] keeps in
 /// [recipe], or null — the record has a pair; a record the printed depth
 /// moves a line onto ([trimDepthRecords]' first: 173128, 168664) only with
@@ -14643,7 +14701,14 @@ const Map<int, Map<String, double>> braisedKept = {
 /// (the served cup is the stated gap). The 0" flat (168743) standing in for
 /// a cap the line prints (M56 R1d's fallback where the answer loses 173128)
 /// stays gross, as its flag says.
+/// v76 (batch M79, Q10 (b′)): a [dryHeatKept] record keeps the pair of the
+/// cooking its recipe's steps print ([_dryHeatOf]) — none printed, none
+/// kept (gross); no skim gate.
 Map<String, double>? braisedKeptOf(String raw, int? fdcId, Recipe? recipe) {
+  if (dryHeatKept[fdcId] case final pairs?) {
+    final cooking = recipe == null ? null : _dryHeatOf(recipe);
+    return cooking == null ? null : pairs[cooking];
+  }
   final kept = braisedKept[fdcId];
   if (kept == null || recipe == null) {
     return null;
@@ -14702,6 +14767,53 @@ bool defatsSentence(String s) {
   }
   return s.contains('skim') &&
       s.split('.').any((p) => _skimWord.hasMatch(p) && _fatAlone.hasMatch(p));
+}
+
+/// v76 (batch M79, Q10 (b′); the planner's C8): the dry-heat cooking
+/// [recipe]'s own steps print — 'broiled' when a sentence heats a grill
+/// (`\bheat (?:the )?grill\b`: 0622 S1 "Heat grill until hot"), else
+/// 'roasted' when one heats an oven (`\bheat (?:the )?oven\b`) AND one
+/// pours off fat ([pourOffFatSentence]: 0228 S1 "heat oven to 250
+/// degrees", S3 "Pour off all but 1 teaspoon fat from skillet" — the
+/// sheet's drippings and the skillet fat never reach the plate, §0.3);
+/// else null (counted gross). Read ONCE per index (`memo:dryHeat`) over the
+/// index's lower-cased sentences, by step (no flat list built), each test
+/// LINEAR. Pre-Q18: a section reads its own steps.
+String? _dryHeatOf(Recipe recipe) => _stepIndexOf(recipe).memo(#dryHeat, () {
+  final steps = _stepIndexOf(recipe).sentences;
+  bool any(bool Function(String) test) => steps.any((s) => s.any(test));
+  if (any((s) => s.contains('grill') && _heatsGrill.hasMatch(s))) {
+    return 'broiled';
+  }
+  return any((s) => s.contains('oven') && _heatsOven.hasMatch(s)) &&
+          any(pourOffFatSentence)
+      ? 'roasted'
+      : null;
+});
+
+final RegExp _heatsGrill = RegExp(r'\bheat (?:the )?grill\b');
+final RegExp _heatsOven = RegExp(r'\bheat (?:the )?oven\b');
+final RegExp _pourOff = RegExp(r'\bpour off\b');
+
+/// [_dryHeatOf]'s pour-off test of one lower-cased sentence: the design's
+/// `\bpour off\b[^.]*\bfat\b` (quadratic on a sentence of repeated "pour
+/// off" — Run 064's lesson) read as two finds in each period-free piece:
+/// the first "pour off", then a `\bfat\b` after it (`[^.]*` never crosses a
+/// period; a fat after a later pour-off is after the first — the same
+/// answer, linear). Native substring tests first. Pinned against the regex
+/// on a fuzz (nutrition_v26_cost_test).
+@visibleForTesting
+bool pourOffFatSentence(String s) {
+  if (!s.contains('pour off') || !s.contains('fat')) {
+    return false;
+  }
+  for (final piece in s.split('.')) {
+    final pour = _pourOff.firstMatch(piece);
+    if (pour != null && _fatAlone.allMatches(piece, pour.end).isNotEmpty) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /// v72 (batch M74, the owner's Q1 (b), 2026-10-15): the step (1-based) and
@@ -16166,6 +16278,18 @@ String? gramBasisFor(
 /// and names the recipe's own printed substitute it borrows the larger part
 /// of (pastitsio's prep note). Keyed on the line's own word [re-point →
 /// `item`]; the provolone lines on 170850 say nothing.
+/// v76 (batch M79, Q9 (a); the 173420 precedent): a crystallized-ginger
+/// line on SR 167781 "Candied fruit" says FDC holds no crystallized ginger
+/// and names the Branded label its ¼ cup is weighed at (grams
+/// `_densities`; L50 #8). Keyed on the line's own words [re-point →
+/// `item`].
+/// v76 (batch M79, Q10 (b′)): a rack on SR 174377 names USDA's domestic
+/// ⅛-inch choice rib (both recipes' prep notes prefer domestic lamb) and
+/// the dry-heat pair its steps' cooking keeps ([braisedKeptOf] with
+/// [recipe], as the deduction reads it), or that no step prints the
+/// cooking (gross).
+/// ponytail: the domestic-lamb clause is the two racks' prep notes (the
+/// only rows on 174377); another recipe's needs its own read.
 String? trimStandInFlagOf(
   String raw,
   int? fdcId, {
@@ -16187,6 +16311,10 @@ String? trimStandInFlagOf(
       : null;
   final stepTrim = fdcId == 173128 && depth == null && kept != null
       ? _trimsFatTo(recipe!)
+      : null;
+  // v76 (M79): the cooking the rack's pair was read for (kept only then).
+  final dryHeat = dryHeatKept.containsKey(fdcId) && kept != null
+      ? _dryHeatOf(recipe!)
       : null;
   String pct(String key) => (kept![key]! * 100).toStringAsFixed(1);
   String pair(String to, String which) => kept == null
@@ -16250,6 +16378,22 @@ String? trimStandInFlagOf(
       'approximate (FDC holds no kasseri — counted as provolone, the larger '
           "part of the recipe's own substitute: 3 oz provolone with 1½ oz "
           'Pecorino Romano for 4 oz kasseri)',
+    174377 when dryHeat != null =>
+      "approximate (USDA's domestic choice rib at ⅛\", unfrenched — the "
+          'recipe prefers domestic lamb; its $dryHeat pair 174377 → '
+          "${_dryHeatPairOf[dryHeat]} keeps ${pct('energy')} % of the energy "
+          "and ${pct('fat')} % of the fat by the protein tracer — the "
+          "drippings, deducted; the frenched bones' trim not deducted)",
+    174377 =>
+      "approximate (USDA's domestic choice rib at ⅛\", unfrenched — the "
+          'recipe prefers domestic lamb; counted gross (no step prints the '
+          'cooking))',
+    167781 when raw.toLowerCase().contains('crystallized ginger') =>
+      'approximate (FDC holds no crystallized ginger — a stand-in by class: '
+          "SR 167781 Candied fruit (322 kcal); weighed at a Branded label's "
+          '¼ cup of the product as sold, 30 g — FDC Branded 2132938 and three '
+          'others; nine ¼-cup labels print 28–50 g, every printed volume '
+          '0.47–1.01 g/mL)',
     _ => null,
   };
 }

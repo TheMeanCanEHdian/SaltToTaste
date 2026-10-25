@@ -3608,6 +3608,29 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-25 — matcher v79 (batch M79): the records read in live step L50
+  (prep50 §2 M79 as corrected by the planner; my Q9 (a) and Q10 (b′)
+  rulings; the replay base moves to snapshot 28).** Three rules. Crystallized
+  ginger leaves the raw-root record for Candied fruit at a density read
+  from the Branded labels (the modal ¼ cup, 30 g), flagged with the labels'
+  spread (4 rows, 4 recipes complete); candied peel stays held (no source
+  for its weight). The watermelon salad's seedless-flesh record, which
+  publishes no energy or portions, reads both through the SR watermelon
+  sibling (918 g, the recipe complete). The two racks of lamb move from the
+  imported ⅛-inch records to the domestic choice rib via an appended trim
+  entry (the plain rank-as would have landed on the ¼-inch record) and
+  deduct their drippings through a new cooking-keyed dry-heat pair map and
+  a once-per-index step reader (a grill heat → broiled; an oven heat with a
+  fat pour-off → roasted; else gross). Seven rows, +1,431 kcal of recipe
+  energy, five recipes complete. The racks' compute and GET got 30–40 %
+  faster (a 3-record answer ranked instead of 14); the roasted recompute
+  runs 5–7 % over base, count-pinned and stated. Four verifier rounds: a
+  write-path rule that lost its only corpus example (restored with a
+  stated synthesized pair), the new regexes' own gates, a cost figure.
+  The owner-side gate added a real corpus pin for the grill regex's false
+  side (0656, a grill named but never heated). The run was paused by the
+  owner on 2026-10-18 after the fixer and resumed on 2026-10-25.
+
 - **2026-10-18 — matcher v78 (batch M78): the C4 recipes — the Parmesan
   crust counted whole (the owner's Q6) and the sauté pan fat in fat grams
   (my Q7 (c)); prep50 §2 M78, under the standing authorization.** Two

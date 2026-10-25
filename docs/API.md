@@ -6020,6 +6020,159 @@ count-pinned (the M71 precedent). Deploy note:
 matcherVersion 75 stales every recipe; one zero-request sweep settles it;
 the kcal digest moves by the 4 recipes' per-serving × servings energy.
 
+**Since matcher v79 (batch M79 — records read in L50: stand-ins and
+siblings; matcherVersion 76; prep50 design_v2 §2 M79 as the planner's
+report corrects it — plan_figures.md C0–C13 and the closer's CC5–CC9 —
+under the orchestrator's rulings Q9 (a) at option A, Q9 (b) HOLD and Q10
+(b′), 2026-10-18; zero requests; replayed on snapshot 28).** Three rules,
+each on shipped maps plus, for the racks, one NEW map and one NEW step
+reader. **Crystallized ginger (Q9 (a)):** FDC holds no crystallized
+ginger — the lines' own 'crystallized ginger' answer leads with the raw
+root 169231 at 0.462, below the gate (0 kcal, the recipe partial) and
+never holds SR 167781 *Candied fruit* (322 kcal; its detail read at L50,
+no portion), which sits in the cached 'candied ginger' answer (index 22).
+Matcher `_rankAs['crystallized ginger']` reads that answer under the words
+'candied fruit'; `approximationRecords` flags it (`· approximation
+(counted as Candied fruit)`), and engine `trimStandInFlagOf` adds
+`approximate (FDC holds no crystallized ginger — a stand-in by class: SR
+167781 Candied fruit (322 kcal); weighed at a Branded label's ¼ cup of the
+product as sold, 30 g — FDC Branded 2132938 and three others; nine ¼-cup
+labels print 28–50 g, every printed volume 0.47–1.01 g/mL)`. Grams (the
+owner's Q11 standing rule — a label's grams for a printed volume): grams
+`_densities` 'crystallized ginger' = 30 / (0.25 × 236.588) = 0.50721 g/mL,
+the modal and median of the nine ¼-cup labels L50 #8 read (28, 28, 30 × 4
+— 2132938 CIBO VITA, 2106313 Sugar 'N Spice, 1900068 Tree of Life, 1981078
+Price Chopper — 40, 40, 50 g), named in the basis (`approximate
+(crystallized ginger labels (…): ¼ cup = 30 g)`); longer than 'ginger'
+(the fresh root's 0.54), so it wins; one figure per key, so the ½-cup line
+is not read at the ⅓-cup label (41 g; that option B would be +8.05 kcal).
+Reach: carrot-ginger-soup|2 ¼ cup 30.00 g / 96.60 kcal, cranberry-chutney…|9
+⅓ cup 40.00 / 128.80, gingerbread-layer-cake|22 ¼ cup (optional — counted;
+`_optionalLine` reads reference lines only) 30.00 / 96.60,
+triple-berry-slab-pie…|3 ½ cup 60.00 / 193.20 (each was 169231, below the
+gate, 0 kcal); +515.20; the four recipes partial → complete (136.91 →
+153.01, 428.70 → 471.63, 723.55 → 731.60, 458.11 → 468.84 per serving).
+**Candied peel (Q9 (b)) is HELD** — no record, label or portion prints a
+volume of the candied product: stollen|6 / |7 (½ cup candied lemon / orange
+peel on the raw peels 167749 / 169103, 48 g each) and
+struffoli-neapolitan-honey-balls|11 (2 tablespoons, 12 g) are unchanged;
+not taken: on 167781 gram-less −80.76, at the raw peels' grams +267.00
+(`volumeSiblings[167781] = 169103` would carry it — a raw peel's volume is
+not the candied product's), at the ginger label +353.94.
+**The seedless watermelon (pD C7; the napa 2727583 → 169979 precedent, in
+BOTH sibling maps):** Foundation 2747675 *Watermelon, seedless, flesh only,
+raw* publishes no energy and no portion (held `no_nutrients`, no grams);
+engine `nutrientSiblings` and grams `volumeSiblings` map it to SR 167765
+*Watermelon, raw* (30 kcal; L50 #3) — the row keeps 2747675, its nutrients
+are 167765's and its cups are 167765's two cup portions ('cup, diced' 152 g,
+'cup, balls' 154 g: "pieces" names neither, so their median, 153 g).
+watermelon-salad-with-cotija-and-serrano-chiles|5 "6 cups 1½-inch seedless
+watermelon pieces" → 918.00 g, 275.40 kcal, basis `6 cup · USDA portion of
+"Watermelon, raw" · nutrients of "Watermelon, raw"`; 154.42 → 223.27 per
+serving, partial → complete. Either map alone leaves 0 kcal (the nutrient
+map alone: gram-less; the volume map alone: 918 g but held).
+**The racks of lamb (Q10 (b′)):** both rack lines (0228 roast rack, 0622
+grilled rack — each recipe's prep note: "We prefer the milder taste and
+bigger size of domestic lamb") read their own 'racks of lamb' answer,
+imported racks only (NZ 172641; 0228's printed "fat trimmed to ⅛ to ¼ inch"
+moved it to the Australian 174414, v54). Matcher `_rankAs['racks of lamb']`
+reads the cached 'lamb rib separable lean and fat choice raw' answer (L50
+#6: 174321 ¼" HIT, 174377 ⅛" DETAIL, 172493 lean-only HIT); '1/8"' and
+'1/4"' are no words, so FDC's order puts the HIT 174321 first (the
+planner's C7 — a weight read on it would fetch its detail), and engine
+`trimDepthRecords` gains a third, APPENDED entry, `\btrimmed\b` →
+{174321: 174377} (both lines print "trimmed"; appended because
+`trimStandInFlagOf` and `braisedKeptOf` read the FIRST entry's depth
+phrase), moving SR 174377 *Lamb, rib, separable lean and fat, trimmed to
+1/8" fat, choice, raw* first at the top's confidence before any weight
+read — 0 requests; the v54 172641 → 174414 move no longer fires on these
+lines. Grams unchanged: grams `ah102Meats[174377]` carries AH-102 item
+1364's row verbatim (73 %, as 172641 / 174414 do): 2 × 850.485 × 0.73 =
+1,241.71 g, 2 × 737.087 × 0.73 = 1,076.15 g. The drippings (§0.3's
+dry-heat clause; the planner's C8 — a record-keyed `braisedKept` entry
+holds one pair and reads M72's skim gate, which neither rack prints): a
+NEW cooking-keyed map engine `dryHeatKept` = {174377: {roasted → SR 172552,
+broiled → SR 174378}}, each column's share by the protein tracer from the
+snapshot-28 records (the 174377 DETAIL: E 342, P 15.32, F 30.71, sat 13.43,
+mono 12.6, poly 2.42; the HITS 172552: 341, 21.8, 27.5, 11.7, 11.6, 1.99 and
+174378: 340, 23.1, 26.8, 11.4, 11.0, 2.17; no trans on any): roasted energy
+0.700697, fat 0.629296, sat 0.612226, mono 0.646978, poly 0.577883;
+broiled 0.659325, 0.578764, 0.562958, 0.578987, 0.594691. It is read
+through `braisedKeptOf` (a `dryHeatKept` record first) by the ONE
+`recomputeTotals` arm — energy and the four fat columns never part;
+protein, sodium and cholesterol stay gross — and the cooking is the NEW
+step reader `_dryHeatOf` (`memo:dryHeat`, once per step index, the index's
+lower-cased sentences by step; pre-Q18 a section reads its own steps):
+'broiled' when a sentence matches `\bheat (?:the )?grill\b`, else 'roasted'
+when one matches `\bheat (?:the )?oven\b` AND one pours off fat (the
+design's `\bpour off\b[^.]*\bfat\b`, read as two finds in each period-free
+piece — the same answer, linear; `pourOffFatSentence`), else none (gross).
+§0.3 rulings on the steps: 0228 ROASTED (S1 "heat oven to 250 degrees",
+the racks on a wire rack over the sheet; S3 "Pour off all but 1 teaspoon
+fat from skillet" — the sheet's drippings and the skillet fat never reach
+the plate); 0622 BROILED (S1 "Heat grill until hot"; S3 "fat has begun to
+render"; nothing is made from the drippings). The flag (the deduction, the
+basis and the GET sheet read the same recipe — M74's invariant):
+`approximate (USDA's domestic choice rib at ⅛", unfrenched — the recipe
+prefers domestic lamb; its roasted pair 174377 → 172552 keeps 70.1 % of the
+energy and 62.9 % of the fat by the protein tracer — the drippings,
+deducted; the frenched bones' trim not deducted)` (broiled: 174378, 65.9 %
+and 57.9 %); with no cooking printed (or no recipe asked) `… the recipe
+prefers domestic lamb; counted gross (no step prints the cooking))`.
+Reach: roast-rack-of-lamb-with-roasted-red-pepper-relish|0 2,942.85 →
+4,246.64 kcal gross, deducting 1,271.03 (fat 381.33 → 239.97 g kept): +32.76
+recipe energy, 878.57 → 886.76 per serving; grilled-rack-of-lamb|5
+1,818.69 → 3,680.42 gross, deducting 1,253.83 (fat 330.48 → 191.27 g):
++607.91, 498.95 → 650.93; both stay complete. **Disclosed (§0.7):** the
+racks are the only dry-heat rows with a drippings deduction (the gate
+answers broiled for 102 corpus recipes and one section, roasted for 26 —
+but only a row on 174377 reads it); the frenched bones' trim (a frenched rack
+yields less than AH-102's unfrenched 73 %) is not deducted.
+ROW column +3,956.12 (7 rows: the ginger +515.20, the watermelon +275.40,
+the racks +3,165.52 gross); RECIPE ENERGY +1,431.27 by stored batch energy
+(+1,431.21 as per-serving × servings); +5 complete (holds `no_nutrients` −1);
+0 section rows, 0 requests. Not moved (byte-equal): the 101 other rows on
+169231 (fresh ginger, the galangal rank-as), the 15 ground-ginger rows on
+170926, pumpkin-pie|6's candied yams on 170071 (its 'candied yams' answer
+also holds 167781; its rank words keep the yam), struffoli|12's candied
+cherries (167563, gram-less), the peel and zest rows on 167749 / 169103,
+every other sibling row, the ten other lamb rows (four of them print
+"trimmed" on a top that is not 174321 — the appended entry's key), every
+`braisedKept` row. COST (RULE C): `_dryHeatOf` is memoised once per step
+index (`memo:dryHeat`) and read only for a row on a `dryHeatKept` record;
+its three tests are linear (the two heat regexes have no `[^.]*`; the
+pour-off test is two finds per period-free piece — a 30,000-sentence fuzz
+equal to the design's regex; on "fat" then "pour off" repeated — the v26
+group's own hostile shapes — the tree reads one sentence of 1,000 / 10,000
+/ 100,000 characters in ≈ 1–4 / 7–11 / 64–91 µs, at most ×10 per ×10
+characters — linear; the 1,000-character read carries the call's fixed
+cost — where the regex takes ≈ 249–265 µs / 21–22 ms / 1.9–2.1 s, ×80–97
+per ×10 — quadratic: warm medians and the v26 pass run cold in a fresh
+process, by the closer and three verifiers; a pass of the v26 loop reads
+≤ 5 ms on the tree and ≥ 290 ms on the restored regex). The v26 cap
+shapes (0228's lines +
+391 rack lines on 174377, 120 × 10,000-character steps naming a grill, an
+oven, a pour-off and fat that match none — quiet — or ending in 0622 S1's
+grill sentence or 0228's oven and pour-off sentences — the TRUE paths) pin,
+EXACTLY on compute, GET and recompute, one index and the gate once. Timing
+vs the v78 tree de8fa1b (ABBA × 2 rounds, 4 processes a side × 5 timed
+reps, medians): compute −30.0 / −30.1 / −28.9 % and GET
+−39.3 / −40.5 / −38.1 % (quiet / broiled / roasted) — the racks rank a
+3-record answer instead of the 14-record 'racks of lamb' one —; recompute
+(measured again by the closer, verify1 D4: ABBA × 4 rounds, 9 timed reps a
+process, medians) +4.1 / +0.5 / +6.5 % (+12 / +2 / +19 ms; the verifier's
+3 rounds: +5.2 / +1.8 / +7.1 %, +15 / +5 / +21 ms). STATED RESIDUAL: the
+quiet and roasted recompute exceed ±2 % by the gate's own scans — the gate
+alone reads 11.6 / 5.8 / 18.7 ms on these steps (two, one or three full
+scans of 16,560 sentences) — 3.9 / 2.0 / 6.3 % of the base recompute
+(1.2–2.4 % of its compute and GET), work the base never does on this shape
+(no row on 174377 there); linear and count-pinned (the M71 / M78
+precedent). Deploy
+note: matcherVersion 76 stales every recipe; one zero-request sweep settles
+it (the three details and the rank-as answer are in snapshot 28's caches; a
+library without them fetches each once, RULE A); the kcal digest moves by
+the seven recipes' per-serving × servings energy.
+
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);
 zero requests): **bone-in class yields** (revising CP6 #11 and #5). A line

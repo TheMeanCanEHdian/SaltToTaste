@@ -325,10 +325,13 @@ _reach = [
     '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
     0,
     '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, rib bones frenched',
-    174414,
-    '0.539697',
+    // RE-PIN (M79 batch, v79, Q10 (b′)): the rack ranks as the domestic
+    // ⅛-inch rib 174377 at its rank-as top's 0.975556, 4,246.64 kcal gross
+    // (was 174414 at 0.539697, 2,942.85); grams unchanged.
+    174377,
+    '0.975556',
     '1241.71',
-    '2942.85',
+    '4246.64',
   ),
 ];
 
@@ -467,14 +470,17 @@ const List<(String, int, String, int, String, String, String)> _unchanged = [
     '2095.60',
   ),
   // R3 unreached: the same retail rack with no printed depth (Q3, F11).
+  // RE-PIN (M79 batch, v79, Q10 (b′)): M79 reaches it — the domestic ⅛-inch
+  // rib 174377 at 0.975556, 3,680.42 kcal gross (was 172641 at 0.539697,
+  // 1,818.69); grams unchanged; R3's ⅛|¼ phrase still does not fire on it.
   (
     '0622-grilled-rack-of-lamb.yaml',
     5,
     '2 (1½- to 1¾-pound) racks of lamb (8 ribs each), frenched and trimmed',
-    172641,
-    '0.539697',
+    174377,
+    '0.975556',
     '1076.15',
-    '1818.69',
+    '3680.42',
   ),
   // Brisket pairs are NOT in R3 (Q2 (ii) deferred): the whole brisket stays.
   // RE-PIN (M68 batch, v67): 168664 at 11,475.88 kcal (was 168607, 7,121.39)
@@ -523,11 +529,17 @@ const _pomegranateFlag =
     'deducted)';
 
 /// The rack's AH-102 row, 172641's verbatim (now keyed on 174414 too).
+/// RE-PIN (M79 batch, v79): keyed on 174377 too, the roasted pair's flag
+/// appended (was the AH-102 row alone).
 const _rackBasis =
     '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate '
     '(USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and '
     'fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a '
-    'frenched rack yields less)';
+    "frenched rack yields less) · approximate (USDA's domestic choice rib at "
+    '⅛", unfrenched — the recipe prefers domestic lamb; its roasted pair '
+    '174377 → 172552 keeps 70.1 % of the energy and 62.9 % of the fat by the '
+    "protein tracer — the drippings, deducted; the frenched bones' trim not "
+    'deducted)';
 
 /// The row's energy, as the totals read it (the record's first energy
 /// number, else its Atwater sum): grams × kcal per 100 g.
@@ -570,7 +582,8 @@ void main() {
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    expect(matcherVersion, 75);
+    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
+    expect(matcherVersion, 76);
   });
 
   test('R1: each rank-as item reads its named cached answer under the '
@@ -614,9 +627,18 @@ void main() {
     // record (Q1 (a)); the flat 168743 is still no key.
     // RE-PIN (M70 batch, v69): + 168743: 173128 — the flat's ¼-inch cap
     // reads its ⅛" record (Q1 flat (b′)).
+    // RE-PIN (M79 batch, v79): + 174321: 174377 — the racks' appended
+    // "trimmed" entry (the rank-as top 174321, a hit, → the ⅛-inch
+    // domestic rib; nutrition_v79_test).
     expect(
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
-      {172641: 174414, 168607: 168664, 168743: 173128, 2727572: 171751},
+      {
+        172641: 174414,
+        168607: 168664,
+        168743: 173128,
+        2727572: 171751,
+        174321: 174377,
+      },
     );
     expect(ah102Meats[174414], ah102Meats[172641]);
     // RE-PIN (M63 batch, v62): `ah102MeatsOnHit` (was {174414}, the rack
@@ -730,9 +752,10 @@ void main() {
     // (174414 stays a search hit, weighed by its AH-102 row)".
     // RE-PIN (M74 batch, v74; closer 1): the title said "only pomegranate|0
     // carries the stand-in flag" (stale since M68's corned and 168664 flags).
+    // RE-PIN (M79 batch, v79): the title said "the rack (174414)".
     test('each reach row (26, design_v2 §2 M56) lands its record, '
-        'confidence, grams and energy; grams never move; the rack (174414) '
-        'is weighed on its cached detail (no refuse portion) by its AH-102 '
+        'confidence, grams and energy; grams never move; the rack (174377 '
+        'since M79) is weighed on its cached detail (no refuse portion) by its AH-102 '
         'row; the trim stand-in flags: pomegranate|0 (M56), 0595|10 (M68), '
         "the corned flats 0090|6 (M68) and 0091|0 (M74's ⅛-inch step trim) "
         "and onion-braised|0 (M74's 0\" pair)", () async {
@@ -827,7 +850,10 @@ void main() {
       // RE-PIN (M63 batch, v62): isNotNull (was isNull) — the rack is weighed
       // on its cached detail (portions 'oz' / 'chop', no refuse portion) by
       // its AH-102 row; the M56 hit read retired, the row byte-equal.
-      expect(db.fdcFoodCacheGet(174414), isNotNull);
+      // RE-PIN (M79 batch, v79): the rack is weighed on 174377's cached
+      // detail ('lb', 'oz', no refuse portion) — 174414 is no longer read
+      // (was `fdcFoodCacheGet(174414)` isNotNull).
+      expect(db.fdcFoodCacheGet(174377), isNotNull);
     });
 
     test('the rows the rules must not reach equal the v54 replay '

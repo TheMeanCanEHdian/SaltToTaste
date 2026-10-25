@@ -182,33 +182,37 @@ const List<_Row> _negatives = [
     '3449.57',
     'from the printed weight (4–5 lb, the midpoint) · approximate (USDA\'s braised pair 168743 → 169440 (flat, 0" trim) keeps 82.0 % of the energy and 58.8 % of the fat by the protein tracer — the fat the steps skim, deducted; the steps name a fat layer the 0" record does not carry — the cap\'s depth is not printed)',
   ),
+  // RE-PIN (M79 batch, v79, Q10 (b′)): both racks on the domestic ⅛-inch
+  // rib 174377 at the rank-as top's 0.975556, gross 4,246.64 / 3,680.42
+  // kcal, their dry-heat pair's flag appended (were 174414 / 172641 at
+  // 0.539697, 2,942.85 / 1,818.69); grams unchanged.
   (
     _rack,
     null,
     0,
     '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, rib bones frenched',
-    174414,
-    'Lamb, Australian, imported, fresh, rib chop/rack roast, frenched, bone-in, separable lean and fat, trimmed to 1/8" fat, raw',
-    '0.539697',
+    174377,
+    'Lamb, rib, separable lean and fat, trimmed to 1/8" fat, choice, raw',
+    '0.975556',
     '1241.71',
     'auto',
     null,
-    '2942.85',
-    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · $_rackYield',
+    '4246.64',
+    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · $_rackYield · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its roasted pair 174377 → 172552 keeps 70.1 % of the energy and 62.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     _grilledRack,
     null,
     5,
     '2 (1½- to 1¾-pound) racks of lamb (8 ribs each), frenched and trimmed',
-    172641,
-    'Lamb, New Zealand, imported, rack - fully frenched, separable lean and fat, raw',
-    '0.539697',
+    174377,
+    'Lamb, rib, separable lean and fat, trimmed to 1/8" fat, choice, raw',
+    '0.975556',
     '1076.15',
     'auto',
     null,
-    '1818.69',
-    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · $_rackYield',
+    '3680.42',
+    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · $_rackYield · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its broiled pair 174377 → 174378 keeps 65.9 % of the energy and 57.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     _newEngland,
@@ -367,16 +371,26 @@ void main() {
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    expect(matcherVersion, 75);
+    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
+    expect(matcherVersion, 76);
   });
 
   test('R-A: the trim pairs gain the whole brisket only (the flat waits for '
       'L49)', () {
     // RE-PIN (M70 batch, v69, Q1 flat (b′)): + 168743: 173128 — L49 read
     // the flat ⅛" braised pair (nutrition_v69_test).
+    // RE-PIN (M79 batch, v79): + 174321: 174377 — the racks' appended
+    // "trimmed" entry (the rank-as top 174321, a hit, → the ⅛-inch
+    // domestic rib; nutrition_v79_test).
     expect(
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
-      {172641: 174414, 168607: 168664, 168743: 173128, 2727572: 171751},
+      {
+        172641: 174414,
+        168607: 168664,
+        168743: 173128,
+        2727572: 171751,
+        174321: 174377,
+      },
     );
     final (phrase, pairs) = trimDepthRecords.first;
     expect(pairs[168607], 168664);
@@ -606,8 +620,11 @@ void main() {
 
     // RE-PIN (M74 batch, v74; closer 1): the title said "the rows M68 must
     // not reach equal v66" with no exception.
+    // RE-PIN (M79 batch, v79): the title said "(onion-braised|0 re-pinned
+    // at M74's 0\" pair flag)" — the two racks are re-pinned at M79's too.
     test('the rows M68 must not reach equal v66 (onion-braised|0 re-pinned '
-        "at M74's 0\" pair flag); the cure rows stay `discarded` 0 g", () {
+        "at M74's 0\" pair flag, the two racks at M79's 174377); the cure "
+        'rows stay `discarded` 0 g', () {
       expect(_negatives, hasLength(13));
       expectRows(_negatives);
       for (final (file, _, position, _, _, _, _, grams, _, _, _, _)

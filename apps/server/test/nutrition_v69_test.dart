@@ -1102,33 +1102,37 @@ const List<_Row> _negatives = [
     // RE-PIN (M72 batch, v72, pE R-E1/R-E2): its rendered fat deducted.
     "from the printed weight (9–11 lb, the midpoint) · approximate (the printed ¼-inch fat cap counted at USDA's ⅛-inch trim, the deepest it publishes for brisket; USDA's braised pair 168664 → 168665 keeps 93.3 % of the energy and 91.5 % of the fat by the protein tracer — the fat that renders into the separator, deducted)",
   ),
+  // RE-PIN (M79 batch, v79, Q10 (b′)): both racks on the domestic ⅛-inch
+  // rib 174377 at the rank-as top's 0.975556, gross 4,246.64 / 3,680.42
+  // kcal, their dry-heat pair's flag appended (were 174414 / 172641 at
+  // 0.539697, 2,942.85 / 1,818.69); grams unchanged.
   (
     '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
     null,
     0,
     '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, rib bones frenched',
-    174414,
-    'Lamb, Australian, imported, fresh, rib chop/rack roast, frenched, bone-in, separable lean and fat, trimmed to 1/8" fat, raw',
-    '0.539697',
+    174377,
+    'Lamb, rib, separable lean and fat, trimmed to 1/8" fat, choice, raw',
+    '0.975556',
     '1241.71',
     'auto',
     null,
-    '2942.85',
-    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    '4246.64',
+    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its roasted pair 174377 → 172552 keeps 70.1 % of the energy and 62.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     '0622-grilled-rack-of-lamb.yaml',
     null,
     5,
     '2 (1½- to 1¾-pound) racks of lamb (8 ribs each), frenched and trimmed',
-    172641,
-    'Lamb, New Zealand, imported, rack - fully frenched, separable lean and fat, raw',
-    '0.539697',
+    174377,
+    'Lamb, rib, separable lean and fat, trimmed to 1/8" fat, choice, raw',
+    '0.975556',
     '1076.15',
     'auto',
     null,
-    '1818.69',
-    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    '3680.42',
+    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its broiled pair 174377 → 174378 keeps 65.9 % of the energy and 57.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   // 2: crisp-skin's strained reserved line (no stir-back), the birds, giblets discarded
   (
@@ -4786,15 +4790,25 @@ void main() {
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    expect(matcherVersion, 75);
+    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
+    expect(matcherVersion, 76);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '
       "keeps 67.6 % of the energy by the protein tracer (L49's cached hits: "
       'P 18.1 → 28.7, F 22.2 → 19.5, E 278 → 298)', () {
+    // RE-PIN (M79 batch, v79): + 174321: 174377 — the racks' appended
+    // "trimmed" entry (the rank-as top 174321, a hit, → the ⅛-inch
+    // domestic rib; nutrition_v79_test).
     expect(
       {for (final (_, pairs) in trimDepthRecords) ...pairs},
-      {172641: 174414, 168607: 168664, 168743: 173128, 2727572: 171751},
+      {
+        172641: 174414,
+        168607: 168664,
+        168743: 173128,
+        2727572: 171751,
+        174321: 174377,
+      },
     );
     // RE-PIN (M72 batch, v72): `braisedEnergyShare` became `braisedKept`
     // (energy and the fat columns; 168664 and 170827 joined — their shares
@@ -5053,8 +5067,12 @@ void main() {
 
     // RE-PIN (M74 batch, v74; closer 1): the title said "the rows M70 must
     // not reach equal v68" with no exception.
+    // RE-PIN (M79 batch, v79): the title said "(0091|0 and onion-braised|0
+    // re-pinned at M74's records and flags)" — the two racks are re-pinned
+    // at M79's too.
     test('the rows M70 must not reach equal v68 (0091|0 and onion-braised|0 '
-        "re-pinned at M74's records and flags)", () {
+        "re-pinned at M74's records and flags, the two racks at M79's "
+        '174377)', () {
       expect(_negatives, hasLength(134));
       expectRows(_negatives);
     });

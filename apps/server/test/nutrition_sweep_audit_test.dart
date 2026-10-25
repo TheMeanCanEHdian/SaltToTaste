@@ -1273,8 +1273,17 @@ void main() {
     // frying', 'nicoise olives', 'oil-cured black olives'), differing in some
     // digit (saturated 13.8 / 13.808, monounsaturated 73.0 / 72.961):
     // compared 539 -> 540, differ 412 -> 413.
-    expect(compared, 540);
-    expect(differ, 413);
+    // RE-PIN (M79 batch, v79): matcher v79 recorded from snapshot 28 the
+    // details of SR 167781 (candied fruit — a hit in 'candied yams' and
+    // 'candied ginger'; carbohydrate and sugars differ in some digit), SR
+    // 174377 (the ⅛-inch domestic rib — a hit in the new 'lamb rib separable
+    // lean and fat choice raw'; protein, fat and saturated differ), SR 167765
+    // (watermelon — a hit in no recorded answer) and Foundation 747430 (the
+    // cold-brew coffee's held record — a hit in 'medium-grind bulgur' and
+    // four more, equal in every digit): compared 540 -> 543, differ 413 ->
+    // 415.
+    expect(compared, 543);
+    expect(differ, 415);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

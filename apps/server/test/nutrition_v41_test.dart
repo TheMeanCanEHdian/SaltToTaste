@@ -68,7 +68,11 @@ const _lemonTart = '0994-lemon-tart.yaml';
 const _fruitTart = '0997-fresh-fruit-tart-with-pastry-cream.yaml';
 // RE-PIN (M47 batch, v49 Q12): the held line the partial-child pins append
 // (its kiwi counts now): Foundation 2747675, held no_nutrients.
-const _watermelon = '1071-watermelon-salad-with-cotija-and-serrano-chiles.yaml';
+// RE-PIN (M79 batch, v79): the watermelon line is counted since matcher
+// v76 (2747675 reads SR 167765's nutrients and cups); the held line appended
+// is Cold-Brew Coffee Concentrate's (0779) coffee beans on Foundation 747430,
+// held no_nutrients — the one library line the engine still holds so.
+const _coldBrew = '0779-cold-brew-coffee-concentrate.yaml';
 
 /// Every corpus line that resolves as a sub-recipe reference (the 119 the
 /// shipped detector zeroes; engine_lines.tsv with A7 a, A8 a and D11
@@ -1417,13 +1421,17 @@ void main() {
 
     test('a routed child that is partial flags its parent row [M16]', () async {
       // A stated composed-from-real-lines exception (tests.md 7.6): the
-      // watermelon salad's real held watermelon line appended to Classic
-      // Tart Dough (RE-PIN (M47 batch, v49 Q12): was the fruit tart's kiwi
+      // cold-brew coffee's real held line appended to Classic Tart Dough
+      // (RE-PIN (M79 batch, v79): was the watermelon salad's, counted since
+      // matcher v76; RE-PIN (M47 batch, v49 Q12): was the fruit tart's kiwi
       // line, counted now).
       final dough = store(_tartDough);
       final lemon = store(_lemonTart);
-      final kiwi = nutritionLines(loadCorpusRecipe(_watermelon))[5];
-      expect(kiwi.raw, '6 cups 1½-inch seedless watermelon pieces');
+      final kiwi = nutritionLines(loadCorpusRecipe(_coldBrew))[0];
+      expect(
+        kiwi.raw,
+        '9 ounces medium-roast coffee beans, ground coarse (3½ cups)',
+      );
       final group = stored(dough).ingredients.last;
       final edited = stored(dough).copyWith(
         ingredients: [
@@ -1458,13 +1466,17 @@ void main() {
       expect(label(lemon).status, 'partial');
     });
 
-    /// The All-Butter dough with the watermelon salad's real held line
+    /// The All-Butter dough with the cold-brew coffee's real held line (RE-PIN
+    /// (M79 batch, v79): was the watermelon salad's)
     /// appended (the M16 composed-lines exception, tests.md 7.6): a child
     /// that computes partial, 7 of 8. RE-PIN (M47 batch, v49 Q12): was the
     /// fruit tart's kiwi line, counted now.
     Future<void> kiwiDough(Recipe dough) async {
-      final kiwi = nutritionLines(loadCorpusRecipe(_watermelon))[5];
-      expect(kiwi.raw, '6 cups 1½-inch seedless watermelon pieces');
+      final kiwi = nutritionLines(loadCorpusRecipe(_coldBrew))[0];
+      expect(
+        kiwi.raw,
+        '9 ounces medium-roast coffee beans, ground coarse (3½ cups)',
+      );
       final group = stored(dough).ingredients.last;
       final edited = stored(dough).copyWith(
         ingredients: [

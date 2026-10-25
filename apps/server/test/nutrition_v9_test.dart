@@ -263,10 +263,19 @@ void main() {
     // RE-PIN (M47 batch, v49 Q23 (a)): on crystallized ginger (below the
     // gate on "Ginger root, raw" 169231) — the Old Bay lines carry no record
     // since v49.
+    // RE-PIN (M79 batch, v79): since matcher v76 the crystallized-ginger
+    // lines rank as SR 167781 "Candied fruit" (the cached 'candied ginger'
+    // answer) AT the gate, so a confirm moves no other line and the reach
+    // offers none; and no other corpus item holds two amount lines below
+    // the gate (the v79 replay of snapshot 28: every below-gate item key is
+    // one line's). The rule this test pinned — an amount-less 0 g row is
+    // left out of a below-gate reach — is pinned by the next test since the
+    // M79 closer (verify1 D1); this one pins the v76 state (retitled).
     test("an amount-less 'crystallized ginger' (synthesized: no corpus "
-        'crystallized ginger line is amount-less) is counted at 0 g below the '
-        "gate: a confirm of Carrot-Ginger Soup's (0015) ¼ cup offers and "
-        "applies only Cranberry Chutney's (0178) ⅓ cup — Maryland Crab "
+        'crystallized ginger line is amount-less) is counted at 0 g AT the '
+        "gate since matcher v76: a confirm of Carrot-Ginger Soup's (0015) ¼ "
+        "cup offers and applies no other line (Cranberry Chutney's (0178) ⅓ "
+        'cup is counted too) — below the gate until v76; Maryland Crab '
         "Cakes' (0288) Old Bay was the example until matcher v49 left it no "
         "record (Q23), Tartiflette's (1134) amount-less crème fraîche until "
         'matcher v37 counted crème fraîche as heavy cream over the gate '
@@ -281,19 +290,69 @@ void main() {
         await matchAndCompute(db, provider, r);
       }
       final zero = db.ingredientMatchesFor('amountless').single;
-      expect(zero.confidence, lessThan(lowConfidence));
+      // RE-PIN (M79 batch, v79): 1.0 on 167781 (was below lowConfidence on
+      // 169231).
+      expect((zero.fdcId, zero.confidence), (167781, 1.0));
       expect((zero.grams, zero.gramSource), (0, 'unmeasured'));
       expect(bucketOf(zero), MatchBucket.counted);
       await applyMatchOverride(db, provider, teaspoons, 0, {
         'confirmed': true,
       });
       final item = await matchOf(db, teaspoons, 0);
-      expect((item['others'], item['others_lines']), (1, 1));
+      // RE-PIN (M79 batch, v79): (0, 0) — the ⅓ cup is counted at the gate
+      // (was (1, 1)).
+      expect((item['others'], item['others_lines']), (0, 0));
       final applied = await applyMatchOverride(db, provider, teaspoons, 0, {
         'confirmed': true,
         'apply_to_all': true,
       });
+      // RE-PIN (M79 batch, v79): nothing to apply (was (1, 1)).
+      expect((applied!.recipes, applied.lines), (0, 0));
+      expect(
+        db.ingredientMatchesFor('amountless').single.confidence,
+        zero.confidence,
+      );
+    });
+
+    // M79 closer 1 (verify1 D1; the orchestrator's R1): the rule back on a
+    // real below-gate line — Sous-Vide Cochinita Pibil's (0493) "¼ cup
+    // annatto seeds", on SR 172242 below the gate (0.348333 in the v79
+    // replay of snapshot 28). STATED SYNTHESIZED (the house exception for
+    // an input the corpus no longer supplies): the corpus prints that line
+    // once, so the pair a reach needs is the same real line in a second
+    // recipe; and the amount-less "annatto seeds" (no corpus line is
+    // amount-less) is the 0 g row the reach leaves out. With the exclusion
+    // dropped the reach reads (2, 2).
+    test('an amount-less "annatto seeds" (synthesized) is counted at 0 g '
+        "below the gate: a confirm of Cochinita Pibil's (0493) ¼ cup offers "
+        'and applies only its twin (the same real line in a second recipe, '
+        'synthesized)', () async {
+      final db = tempDb();
+      final pibil = recipeOf(db, 'pibil', ['¼ cup annatto seeds']);
+      final amountless = recipeOf(db, 'amountless', ['annatto seeds']);
+      final twin = recipeOf(db, 'twin', ['¼ cup annatto seeds']);
+      for (final r in [pibil, amountless, twin]) {
+        await matchAndCompute(db, provider, r);
+      }
+      for (final id in ['pibil', 'twin']) {
+        final row = db.ingredientMatchesFor(id).single;
+        expect(row.fdcId, 172242, reason: id);
+        expect(row.confidence, lessThan(lowConfidence), reason: id);
+      }
+      final zero = db.ingredientMatchesFor('amountless').single;
+      expect(zero.fdcId, 172242);
+      expect(zero.confidence, lessThan(lowConfidence));
+      expect((zero.grams, zero.gramSource), (0, 'unmeasured'));
+      expect(bucketOf(zero), MatchBucket.counted);
+      await applyMatchOverride(db, provider, pibil, 0, {'confirmed': true});
+      final item = await matchOf(db, pibil, 0);
+      expect((item['others'], item['others_lines']), (1, 1));
+      final applied = await applyMatchOverride(db, provider, pibil, 0, {
+        'confirmed': true,
+        'apply_to_all': true,
+      });
       expect((applied!.recipes, applied.lines), (1, 1));
+      expect(db.ingredientMatchesFor('twin').single.confidence, 1.0);
       expect(
         db.ingredientMatchesFor('amountless').single.confidence,
         zero.confidence,

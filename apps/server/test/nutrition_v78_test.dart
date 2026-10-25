@@ -279,7 +279,8 @@ IngredientMatchRow _withSource(IngredientMatchRow row, String source) =>
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 75);
+    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
+    expect(matcherVersion, 76);
   });
 
   test("the records: FNDDS 2705980's oil (the share's 2 / 125.77); total "

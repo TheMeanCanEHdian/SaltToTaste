@@ -993,7 +993,18 @@ const Map<String, String> _synonyms = {
 /// off or wipes out keeps FNDDS 2705980's 2 g oil per 125.77 g raw breast
 /// as FAT grams, shared by the heated lines' fat (engine `_panFatLines`,
 /// `_panFatFlag`).
-const int matcherVersion = 75;
+///
+/// v76 (the Matcher v79 commit, batch M79 — records read in L50; prep50
+/// design_v2 §2 M79 as the planner corrected it, the orchestrator's Q9 (a)
+/// and Q10 (b′); zero requests; replayed on snapshot 28): crystallized
+/// ginger on SR 167781 "Candied fruit", flagged, at a Branded label's ¼ cup
+/// (30 g; grams `_densities`) — candied peel held; the seedless watermelon
+/// through SR 167765's nutrients and cups (engine `nutrientSiblings`, grams
+/// `volumeSiblings`); both racks of lamb on the domestic ⅛-inch rib 174377
+/// (engine `trimDepthRecords`' appended "trimmed" entry, grams
+/// `ah102Meats`), deducted at the dry-heat pair their steps print (engine
+/// `dryHeatKept`, `_dryHeatOf`).
+const int matcherVersion = 76;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2803,7 +2814,10 @@ const Map<String, (String, String)> _rankAs = {
   'fluid ounces sparkling wine': ('dry white wine', 'wine white'),
   // M1–M3 STAY WITH A PERSON — FDC has no record: "candied ginger" answered
   // tea, pickled and raw ginger, ground ginger, ginger ale (no candied or
-  // crystallized ginger; never the raw root); "freekeh" answered nothing;
+  // crystallized ginger; never the raw root) — v76 (M79, Q9 (a)): its
+  // cached answer also holds SR 167781 "Candied fruit" (index 22), the
+  // stand-in by class 'crystallized ginger' now ranks as (below, flagged);
+  // "freekeh" answered nothing;
   // "farro" answered only 2710828 "Farro, pearled, dry, raw" (a 45 g racc,
   // no cup) — not WHOLE farro, so the v21 'whole farro' entry above is
   // unchanged (the owner's label figure, Bob's Red Mill, is the way on).
@@ -3000,6 +3014,29 @@ const Map<String, (String, String)> _rankAs = {
   // kasseri); flagged ([approximationRecords], engine
   // `trimStandInFlagOf`). [re-point → `item`]
   'kasseri cheese': ('provolone cheese', 'cheese provolone'),
+  // v76 (batch M79, prep50 design_v2 §2 M79, the orchestrator's Q9 (a) at
+  // the planner's option A; L50 #1, #8): FDC holds no crystallized ginger —
+  // the line's own answer leads with the raw root 169231 at 0.462, below the
+  // gate; SR 167781 "Candied fruit" (its detail read at L50, no portion)
+  // sits in the cached 'candied ginger' answer (index 22), never in the
+  // line's own. A stand-in by class, flagged ([approximationRecords],
+  // engine `trimStandInFlagOf`), weighed at a Branded label's ¼ cup (grams
+  // `_densities`). Candied peel (Q9 (b)) is HELD: no printed volume of the
+  // candied product. [re-point → `item`]
+  'crystallized ginger': ('candied ginger', 'candied fruit'),
+  // v76 (batch M79, prep50 design_v2 §2 M79, the orchestrator's Q10 (b′);
+  // L50 #6): both rack lines (0228, 0622) — whose prep notes prefer
+  // domestic lamb — read the cached 'lamb rib separable lean and fat choice
+  // raw' answer (174321 ¼" HIT, 174377 ⅛" DETAIL, 172493 lean-only HIT): the
+  // rank lands on 174321 (the depths are no words; FDC's order breaks the
+  // tie) and engine `trimDepthRecords`' appended "trimmed" entry moves the
+  // ⅛-inch 174377 first, its dry-heat pair read by engine `dryHeatKept`.
+  // Their own 'racks of lamb' answer holds only imported racks (NZ 172641
+  // first). [re-point → `item`]
+  'racks of lamb': (
+    'lamb rib separable lean and fat choice raw',
+    'lamb rib separable lean and fat choice raw',
+  ),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it
@@ -4023,6 +4060,8 @@ const Map<String, int> approximationRecords = {
   'ricotta salata': 173420,
   // v73 (M76, Q4 (a); [_rankAs]): kasseri on provolone.
   'kasseri cheese': 170850,
+  // v76 (M79, Q9 (a); [_rankAs]): crystallized ginger on candied fruit.
+  'crystallized ginger': 167781,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

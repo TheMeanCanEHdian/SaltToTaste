@@ -325,6 +325,14 @@ const List<(String, double)> _densities = [
   // ("no-sugar-needed"), so they win ([_tableEntry]).
   ('fruit pectin', 4 / 4.92892),
   ('sure-jell', 4 / 4.92892),
+  // v76 (batch M79, the orchestrator's Q9 (a) at the planner's option A;
+  // the owner's Q11 standing rule): crystallized ginger on SR 167781
+  // "Candied fruit" (no portion) at a Branded label's ¼ cup, 30 g — the
+  // modal (and median) of the nine ¼-cup labels L50 #8 read (28, 28, 30 ×4,
+  // 40, 40, 50 g). One figure per key ([_tableEntry]): the ⅓-cup label
+  // (41 g) sizes no line by its own volume. Longer than 'ginger' (the
+  // fresh root's kitchen 0.54), so it wins.
+  ('crystallized ginger', 30 / (0.25 * 236.588)),
 ];
 
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
@@ -356,6 +364,8 @@ const Map<String, String> _approximateDensities = {
   // v68 (M70, Q11).
   'fruit pectin': _sureJellLabel,
   'sure-jell': _sureJellLabel,
+  // v76 (M79, Q9 (a)).
+  'crystallized ginger': _crystallizedGingerLabel,
 };
 
 /// The Sure-Jell label the pectin densities read (v68, M70 — the owner's
@@ -364,6 +374,13 @@ const String _sureJellLabel =
     'Sure-Jell label (Kraft Heinz, FDC Branded 2596757; the regular box — '
     'FDC holds no label of the low/no-sugar box the line names; the other '
     "makers' boxes read 3.2–4.0 g per teaspoon): ⅛ teaspoon = 0.5 g";
+
+/// The crystallized-ginger labels its density reads (v76, M79 — Q9 (a);
+/// L50 #8, 25 Branded labels).
+const String _crystallizedGingerLabel =
+    'crystallized ginger labels (FDC Branded 2132938 CIBO VITA, 2106313 Sugar '
+    "'N Spice, 1900068 Tree of Life, 1981078 Price Chopper; the modal of "
+    'nine ¼-cup labels, 28–50 g): ¼ cup = 30 g';
 
 /// v37: the [_densities] keys that size a line only when its record has no
 /// volume figure of its own — a printed figure for a portion-less record,
@@ -894,6 +911,12 @@ const Map<int, int> volumeSiblings = {
   2515380: 169415,
   2515381: 170154,
   170151: 2707586,
+  // v76 (M79, pD C7; L50 #3): Foundation 2747675 "Watermelon, seedless,
+  // flesh only, raw" (no portion) → SR 167765 "Watermelon, raw": its two
+  // cup portions, 'cup, diced' 152 g and 'cup, balls' 154 g — "pieces"
+  // names neither, so the median, 153 g a cup ([_foodGramsPerMl]). Also its
+  // nutrient sibling (engine.dart nutrientSiblings), the napa precedent.
+  2747675: 167765,
 };
 
 /// v68 (batch M70, pE Q6; prep49 design_v2 §2 M70): records whose volume
@@ -2439,6 +2462,16 @@ const Map<int, ({double share, String flag})> ah102Meats = {
   // `trimDepthRecords`, 172641 → 174414) keeps 172641's AH-102 row
   // verbatim — the yield is record-keyed.
   174414: (
+    share: 0.73,
+    flag:
+        'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
+        'and fat meat, slightly trimmed 73 % (61–88), as measured '
+        'unfrenched; a frenched rack yields less',
+  ),
+  // v76 (batch M79, Q10 (b′)): the domestic ⅛-inch rib the racks move to
+  // (engine `trimDepthRecords`, 174321 → 174377) keeps the same AH-102 row
+  // verbatim.
+  174377: (
     share: 0.73,
     flag:
         'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '

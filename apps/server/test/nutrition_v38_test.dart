@@ -226,7 +226,9 @@ const List<String> _dry = [
   'malted milk powder',
   'nori',
   'gim',
-  'crystallized ginger',
+  // RE-PIN (M79 batch, v79): 'crystallized ginger' left the dry list —
+  // M79 (Q9 (a)) ranks it as SR 167781 "Candied fruit" through the cached
+  // 'candied ginger' answer, flagged (nutrition_v79_test).
   'cracked freekeh',
 ];
 

@@ -221,7 +221,13 @@ void main() {
                 // pasta record reads its nutrient sibling — Watermelon Salad
                 // with Cotija and Serrano Chiles (1071), on Foundation
                 // 2747675 (no energy, no portion).
-                '6 cups 1½-inch seedless watermelon pieces',
+                // RE-PIN (M79 batch, v79): the held vehicle since matcher v76
+                // reads 2747675's nutrients and cups from SR 167765 (the
+                // watermelon is counted) — Cold-Brew Coffee Concentrate
+                // (0779), on Foundation 747430 "Beans, Dry, Medium Red (0%
+                // moisture)" (no energy), the one library line the engine
+                // still holds `no_nutrients`.
+                '9 ounces medium-roast coffee beans, ground coarse (3½ cups)',
               ])
                 IngredientLine(
                   raw: raw,
@@ -243,7 +249,9 @@ void main() {
       // watermelon is held.
       expect(rows[0].fdcId, 169736);
       expect(rows[0].hold, isNull);
-      expect((rows[2].fdcId, rows[2].hold), (2747675, 'no_nutrients'));
+      // RE-PIN (M79 batch, v79): the coffee line (was the watermelon,
+      // 2747675).
+      expect((rows[2].fdcId, rows[2].hold), (747430, 'no_nutrients'));
       // "Flavored pasta" ranks second and is complete but another food;
       // the macro-less "Pasta, dry, enriched, spaghetti" top pick is stood
       // in for by "Pasta, dry, enriched", the same food.

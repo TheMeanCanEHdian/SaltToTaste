@@ -87,6 +87,9 @@ void main() {
       169441,
       172641,
       174414,
+      // RE-PIN (M79 batch, v79): + 174377, the domestic ⅛-inch rib both
+      // racks move to, keyed with the same row verbatim.
+      174377,
       172513,
       169177,
       168226,
@@ -408,21 +411,27 @@ const _pins = [
     // RE-PIN (M56 batch, v55, R3): the printed trim moves the rack to
     // 174414 (Australian, frenched, 1/8"), weighed by 172641's AH-102 1364
     // row verbatim — grams and basis unchanged (was 172641).
-    174414,
+    // RE-PIN (M79 batch, v79): the rank-as and the appended "trimmed" entry
+    // move it to the domestic ⅛-inch rib 174377 (was 174414), the same
+    // AH-102 row, its roasted pair's flag appended — grams unchanged.
+    174377,
     // RE-PIN (M48): 1324.49 → 1241.71 g, the printed 1¾–2 lb range at its
     // midpoint (was its top); the basis names the range.
     '1241.71',
-    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its roasted pair 174377 → 172552 keeps 70.1 % of the energy and 62.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     '0622-grilled-rack-of-lamb.yaml',
     5,
     '2 (1½- to 1¾-pound) racks of lamb (8 ribs each), frenched and trimmed',
-    172641,
+    // RE-PIN (M79 batch, v79): the domestic ⅛-inch rib 174377 (was the NZ
+    // rack 172641), the same AH-102 row, its broiled pair's flag appended —
+    // grams unchanged.
+    174377,
     // RE-PIN (M48): 1158.93 → 1076.15 g, the printed 1½–1¾ lb range at its
     // midpoint (was its top); the basis names the range.
     '1076.15',
-    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its broiled pair 174377 → 174378 keeps 65.9 % of the energy and 57.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     '1192-braised-lamb-shanks-with-red-wine-and-herbes-de-provence.yaml',

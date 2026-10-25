@@ -266,7 +266,9 @@ void main() {
       'malted milk powder',
       'nori',
       'gim',
-      'crystallized ginger',
+      // RE-PIN (M79 batch, v79): 'crystallized ginger' left the dry list —
+      // M79 (Q9 (a)) ranks it as SR 167781 "Candied fruit", flagged
+      // (nutrition_v79_test).
       'cracked freekeh',
     ];
     for (final item in dryRankAs) {

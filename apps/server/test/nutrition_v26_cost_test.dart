@@ -3229,4 +3229,161 @@ void review71() {
     },
     skip: skipIfNoCorpus,
   );
+
+  group(
+    "RULE C, the racks' dry-heat gate (v76, M79, the orchestrator's Q10 "
+    '(b′))',
+    () {
+      final design = RegExp(r'\bpour off\b[^.]*\bfat\b');
+
+      test("the pour-off test answers as the design's regex (30,000 seeded "
+          'sentences over its own words) and reads "fat" then "pour off" '
+          'repeated — no fat after any pour-off, the shape on which the '
+          "regex's `[^.]*` is quadratic — at 1,000 / 10,000 / 100,000 "
+          'characters a sentence in one pass each', () {
+        const atoms = [
+          'pour off', 'pour', 'off', 'pouring', 'poured off', 'fat', 'fats', //
+          'fatty', 'pour offfat', 'off fat', 'the', '.', '1.5', 'x', ',', '\n',
+          'liquid',
+        ];
+        var hits = 0;
+        var misses = 0;
+        for (var seed = 0; seed < 30000; seed++) {
+          final r = Random(seed);
+          final b = StringBuffer();
+          for (var i = 0, n = 1 + r.nextInt(12); i < n; i++) {
+            b.write(atoms[r.nextInt(atoms.length)]);
+            if (r.nextInt(3) > 0) {
+              b.write(' ');
+            }
+          }
+          final s = b.toString();
+          final reference = design.hasMatch(s);
+          expect(pourOffFatSentence(s), reference, reason: '"$s"');
+          reference ? hits++ : misses++;
+        }
+        // Not vacuous either way.
+        expect(hits, greaterThan(1000));
+        expect(misses, greaterThan(1000));
+        // Measured on this loop's own shapes (warm medians, and this loop
+        // run cold in a fresh process; the closer and three verifiers): the
+        // tree reads one such sentence in ≈ 1–4 / 7–11 / 64–91 µs at 1k /
+        // 10k / 100k characters (at most ×10 per ×10 — linear; the 1k read
+        // carries the call's fixed cost) and the design's regex in
+        // ≈ 249–265 µs / 21–22 ms / 1.9–2.1 s (×80–97 per ×10 —
+        // quadratic). Each pass below is ≈ 1.2 MB (2 × 100k for the last):
+        // ≤ 5 ms on the tree and ≥ 290 ms for a restored regex — 100 ms
+        // kills it by ≥ 2.9×.
+        for (final (length, count) in const [
+          (1000, 1200),
+          (10000, 120),
+          (100000, 2),
+        ]) {
+          final shape = 'fat ${'pour off ' * ((length - 6) ~/ 9)}x.';
+          expect(shape.length, inInclusiveRange(length - 9, length));
+          final hostile = List.filled(count, shape);
+          final sw = Stopwatch()..start();
+          for (final s in hostile) {
+            expect(pourOffFatSentence(s), isFalse);
+          }
+          expect(sw.elapsedMilliseconds, lessThan(100), reason: '$length');
+        }
+      });
+
+      // STATED synthesized cost inputs (cap shapes no corpus recipe holds):
+      // the real roast rack (0228) — its own lines — padded to the 400-line
+      // cap with its own real rack line (each lands on 174377 by the
+      // "trimmed" entry), under 120 × 10,000-character steps of "Trim the
+      // fat, preheat grill and preheat oven, then pour off the juices."
+      // (every sentence names the grill, the oven, a pour-off and fat, and
+      // matches none of the three tests). quiet: no cooking answer, every
+      // rack gross. The TRUE paths (the 2026-10-18 standing rule): the last
+      // step ends with 0622 S1's real "Heat grill until hot, about 5
+      // minutes." (broiled — the grill scan reads every sentence first) or
+      // 0228 S1's and S3's real sentences (roasted — all three scans read
+      // every sentence first).
+      const roast =
+          '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml';
+      const rack =
+          '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, '
+          'rib bones frenched';
+      const filler =
+          'Trim the fat, preheat grill and preheat oven, then pour off the '
+          'juices. ';
+      const ends = {
+        'quiet': '',
+        'broiled': 'Heat grill until hot, about 5 minutes.',
+        'roasted':
+            'Adjust oven rack to middle position and heat oven to 250 '
+            'degrees. Pour off all but 1 teaspoon fat from skillet and repeat '
+            'with second rack.',
+      };
+      for (final MapEntry(key: shape, value: end) in ends.entries) {
+        test('CAP SHAPE ($shape): 400 lines, ${capLines - 9} of them the rack '
+            'on 174377, under 120 × 10,000-character steps naming a grill, an '
+            'oven, a pour-off and fat${end.isEmpty ? ' (no cooking: gross)' : ' and ending in "$end"'}: '
+            'the gate once per index, the counts pinned EXACTLY; each path '
+            'under the backstop', () async {
+          final base = loadCorpusRecipe(roast);
+          final own = [for (final g in base.ingredients) ...g.items];
+          final r = capped(
+            base,
+            [
+              for (final l in own) l.raw,
+              for (var i = own.length; i < capLines; i++) rack,
+            ],
+            [
+              for (var i = 0; i < capSteps - 1; i++) fill(filler, capStep),
+              '${fill(filler, capStep - end.length)}$end',
+            ],
+          );
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          wp.saveRecipe(db, r);
+          Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+          final seen = <String, Map<String, int>>{};
+          Future<void> timed(
+            String step,
+            Future<Object?> Function() run,
+          ) async {
+            stepIndexCounts.clear();
+            final sw = Stopwatch()..start();
+            await run();
+            final ms = sw.elapsedMilliseconds;
+            final counts = Map.of(stepIndexCounts);
+            final copies = counts['indexes'] ?? 1;
+            expectBounded(r, counts, 'rack $step', copies: copies);
+            seen[step] = counts;
+            expect(ms, lessThan(backstopMs), reason: 'rack $step: $counts');
+          }
+
+          await timed('compute', () => matchAndCompute(db, provider, stored()));
+          final racks = [
+            for (final row in db.ingredientMatchesFor(r.id))
+              if (row.raw == rack) row,
+          ];
+          expect(racks, hasLength(capLines - own.length + 1));
+          expect({for (final row in racks) row.fdcId}, {174377});
+          for (final row in racks) {
+            expect(
+              braisedKeptOf(row.raw, 174377, stored()),
+              end.isEmpty ? isNull : dryHeatKept[174377]![shape],
+            );
+          }
+          await timed('GET', () => matchesBody(db, provider, stored()));
+          await timed('recompute', () async => recomputeTotals(db, stored()));
+          // EXACTLY, every path and shape: one index, the gate once.
+          const once = {'indexes': 1, 'memo:dryHeat': 1};
+          expect(
+            {
+              for (final MapEntry(:key, :value) in seen.entries)
+                key: {for (final k in once.keys) k: value[k]},
+            },
+            {'compute': once, 'GET': once, 'recompute': once},
+          );
+        });
+      }
+    },
+    skip: skipIfNoCorpus,
+  );
 }

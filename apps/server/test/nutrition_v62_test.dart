@@ -190,27 +190,31 @@ const List<_Row> _reach = [
 /// NZ 172641 (no printed depth), the crab cake's coat (no cake k: the
 /// record's 5 g of crumbs are a binder — M58 S's stand-in suffix stays).
 const List<_Row> _kept = [
+  // RE-PIN (M79 batch, v79, Q10 (b′)): both racks on the domestic ⅛-inch
+  // rib 174377 at the rank-as top's 0.975556, their gross kcal 4,246.64 /
+  // 3,680.42 and their dry-heat pair's flag (were 174414 / 172641 at
+  // 0.539697, 2,942.85 / 1,818.69, the AH-102 row alone); grams unchanged.
   (
     _rack,
     0,
     '2 racks of lamb (1¾ to 2 pounds each), fat trimmed to ⅛ to ¼ inch, rib bones frenched',
-    174414,
-    '0.539697',
+    174377,
+    '0.975556',
     '1241.71',
-    '2942.85',
+    '4246.64',
     null,
-    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    '2 × 850 g (printed 1¾–2 lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its roasted pair 174377 → 172552 keeps 70.1 % of the energy and 62.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     _grilledRack,
     5,
     '2 (1½- to 1¾-pound) racks of lamb (8 ribs each), frenched and trimmed',
-    172641,
-    '0.539697',
+    174377,
+    '0.975556',
     '1076.15',
-    '1818.69',
+    '3680.42',
     null,
-    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less)',
+    '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its broiled pair 174377 → 174378 keeps 65.9 % of the energy and 57.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
   (
     _maryland,
@@ -439,7 +443,8 @@ void main() {
     // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    expect(matcherVersion, 75);
+    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
+    expect(matcherVersion, 76);
   });
 
   test('the sirloin stand-in flag is keyed on 173408 and a line that does '
@@ -673,19 +678,27 @@ void main() {
       expect(basisIn(_maryland, 9), isNot(contains('no record for crab')));
     });
 
-    test("the rack is weighed on 174414's cached detail (no refuse "
-        'portion) by its AH-102 row, byte-equal to v61', () {
+    // RE-PIN (M79 batch, v79): the title said "the rack is weighed on
+    // 174414's cached detail … byte-equal to v61"; the rack is on 174377
+    // since M79 (its detail's portions 'lb' and 'oz'; was 174414's 'oz' and
+    // 'chop'), the same AH-102 row.
+    test("the rack is weighed on 174377's cached detail (no refuse "
+        'portion) by its AH-102 row', () {
       expectRows(_kept.where((r) => r.$1 == _rack).toList());
-      expect(db.fdcFoodCacheGet(174414), isNotNull);
-      final rack = knownFood(db, 174414)!;
+      expect(db.fdcFoodCacheGet(174377), isNotNull);
+      final rack = knownFood(db, 174377)!;
       expect(
         [for (final p in rack.portions) p.description],
-        unorderedEquals(['oz', 'chop']),
+        unorderedEquals(['lb', 'oz']),
       );
+      expect(ah102Meats[174377], ah102Meats[172641]);
       expect(ah102Meats[174414], ah102Meats[172641]);
     });
 
-    test('the rows M63 keeps and must not reach equal v61', () {
+    // RE-PIN (M79 batch, v79): the title said "equal v61" with no
+    // exception — the two racks are re-pinned at M79's 174377.
+    test('the rows M63 keeps and must not reach equal v61 (the two racks '
+        "re-pinned at M79's 174377)", () {
       expectRows(_kept);
       expectRows(_negatives);
     });

@@ -109,7 +109,15 @@ void main() {
   // "Watermelon, seedless, flesh only, raw", 0.63).
   const redBeans =
       '1 pound (about 2 cups) dried small red beans, picked over and rinsed';
-  const watermelon = '6 cups 1½-inch seedless watermelon pieces';
+  // RE-PIN (M79 batch, v79): the held vehicle (was the watermelon line,
+  // '6 cups 1½-inch seedless watermelon pieces') since matcher v76 reads
+  // 2747675's nutrients and cups from SR 167765 (`nutrientSiblings`,
+  // `volumeSiblings`) — the watermelon line is counted — is Cold-Brew Coffee
+  // Concentrate's (0779) line on Foundation 747430 "Beans, Dry, Medium Red
+  // (0% moisture)" (no energy), the one library line the engine still
+  // holds `no_nutrients` (below the gate, 0.46: no line is held
+  // `no_nutrients` above it after v76). Fixtures added from snapshot 28.
+  const coffee = '9 ounces medium-roast coffee beans, ground coarse (3½ cups)';
   // The row matcher v30 stored for [redBeans] (the v30 replay of snapshot
   // 13: red-beans-and-rice|1).
   IngredientMatchRow v30RedBeans(String recipeId) => IngredientMatchRow(
@@ -223,7 +231,7 @@ void main() {
       // The engine's own food (a library with no decision on the key):
       // skipped and back, its reason is re-derived.
       final fresh = tempDb();
-      final c = recipeOf(fresh, 'rc', [watermelon]);
+      final c = recipeOf(fresh, 'rc', [coffee]);
       await matchAndCompute(fresh, provider, c);
       expect(fresh.ingredientMatchesFor('rc').single.hold, 'no_nutrients');
       await applyMatchOverride(fresh, provider, c, 0, {'skipped': true});
@@ -893,7 +901,7 @@ void main() {
         'ways', () async {
       final db = tempDb();
       const evoo = '¼ cup extra-virgin olive oil';
-      final r = recipeOf(db, 'r1', [evoo, watermelon]);
+      final r = recipeOf(db, 'r1', [evoo, coffee]);
       IngredientMatchRow stale(int position, String raw, String? hold) =>
           IngredientMatchRow(
             recipeId: 'r1',
@@ -911,7 +919,7 @@ void main() {
           );
       db
         ..upsertIngredientMatch(stale(0, evoo, 'second_food'))
-        ..upsertIngredientMatch(stale(1, watermelon, null));
+        ..upsertIngredientMatch(stale(1, coffee, null));
       await matchAndCompute(db, provider, r);
       final rows = db.ingredientMatchesFor('r1');
       expect([for (final row in rows) row.hold], [null, 'no_nutrients']);
@@ -1008,8 +1016,13 @@ void main() {
       expect(gramsOf(tuna)!.grams, closeTo(net, 0.01), reason: 'no record');
 
       final db = tempDb();
+      // RE-PIN (M79 batch, v79): the held row was the watermelon line,
+      // counted since matcher v76 (its nutrients and cups from SR 167765);
+      // the held row above the gate is now Italian Pasta Salad's (0061)
+      // pepperoncini line — held `second_food` (its reserved liquid) at
+      // 0.7275, so the count still reads the hold, not a low score.
       final r = recipeOf(db, 'r1', [
-        watermelon,
+        '1 cup pepperoncini, stemmed, plus 2 tablespoons reserved liquid',
         '2 cups vegetable oil for frying',
         'Lemon wedges',
       ]);
