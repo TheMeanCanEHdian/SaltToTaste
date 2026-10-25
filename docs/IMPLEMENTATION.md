@@ -3608,6 +3608,25 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-25 — matcher v80 (batch M80): the coats read in live step L50
+  (prep50 §2 M80 as corrected by the planner; my Q11 (b) ruling and the
+  k = 12.12 ruling).** Two rules; the round's last batch. The oven-fried
+  onion rings' coat budget, held since the first coat batches because no
+  USDA coated-onion recipe exists, now reads the fried-cauliflower recipe
+  as a flagged stand-in: every coat line counts whole (the dredge and dip
+  margins are 5.5 % and 1.0 %, disclosed), eight rows, the recipe complete.
+  A crumb crust over a baked chicken breast reads its own figure from the
+  FNDDS parmigiana recipe's separate inputs (crumbs and flour over the raw
+  chicken; the Parmesan is a topping by the record's input order; the egg
+  is the wash), 12.12 g of carbohydrate per 100 g, for the lighter parmesan,
+  the kiev and the stuffed cutlets, with the nut-crusted breasts reading it
+  as a flagged stand-in. The batter-ethanol rule stays unbuilt (the live
+  tempura record carries no alcohol). 25 rows, +3,284 kcal of recipe
+  energy. One rule lost its last corpus example to the onion rings and is
+  tested on a stated synthesized fried copy. Verifier PASS at round 2 after
+  three LOW documentation and gate-pin items. The prep50 batches M71–M80
+  are all shipped; the exit measurement follows.
+
 - **2026-10-25 — matcher v79 (batch M79): the records read in live step L50
   (prep50 §2 M79 as corrected by the planner; my Q9 (a) and Q10 (b′)
   rulings; the replay base moves to snapshot 28).** Three rules. Crystallized

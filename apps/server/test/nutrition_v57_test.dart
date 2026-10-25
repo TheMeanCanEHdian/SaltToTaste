@@ -453,14 +453,17 @@ const List<_Row> _kept = [
     '78.96',
     "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2): lighter's crumb crust reads FNDDS
+  // 2706442's 12.12, so its dip's W grows with B (was 23.79 g / 13.08 kcal
+  // at 3.18) — W still never reads it as a batter.
   (
     '0416-lighter-chicken-parmesan.yaml',
     6,
     '3 large egg whites',
     747997,
     '0.950000',
-    '23.79',
-    '13.08',
+    '90.69',
+    '49.88',
     "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
 ];
@@ -505,7 +508,8 @@ void main() {
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   group('matcher v57 (batch M58)', skip: skipIfNoCorpus, () {

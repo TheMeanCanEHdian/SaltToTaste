@@ -179,7 +179,9 @@ enum DiscardedMedium {
   /// share of a coat budget sized from the coated food ([_m52Plan]); since
   /// v67 (M69) a sautéed dusting of a thin piece (C4) and a coated eggplant
   /// baked after the coat (C2) count too — a thick piece's dusting, a fried
-  /// coated eggplant, any other coated vegetable and a cheese crust stay held.
+  /// coated eggplant, any other coated vegetable and a cheese crust stay held;
+  /// since v77 (M80-1) a coated onion baked after the coat counts too (a
+  /// fried one stays held).
   coating,
 
   /// A line of a cooking liquid strained after the braise of which a step
@@ -18967,6 +18969,27 @@ const _Fndds _eggplantParm = (
   o: '4.9',
   r: '41.4',
 );
+
+/// v77 (M80-2, pB R-F1; L50 #4, live62_raw/2706442.json): FNDDS 2706442
+/// "Chicken or turkey parmigiana" lists RAW chicken breast — 510.3 g (5062)
+/// and 170.1 g (5314, "with added solution"), 680.4 g — and its breading as
+/// SEPARATE inputs, in sequence 3 flour 31.25 g (Foundation 789890, 77.3 %
+/// carbohydrate), 4 egg 100 g, 5 dry crumbs 81 g (SR 174928, 71.98 %); then
+/// the topping, 6 mozzarella 170, 7 tomato sauce 425.25, 8 grated Parmesan
+/// 18.75 (not read — the eggplant read takes its batter only too): k = (81
+/// × 71.98 % + 31.25 × 77.3 %) / 680.4 × 100 = 82.46 / 680.4 × 100 = 12.12.
+/// The egg is the wash, sized by [_breadingWetPerCarb] (100 g per 82.46 g
+/// of the dredge's carbohydrate = 1.21; W 1.17). `b` is crumbs + flour, `o`
+/// the 42 g of oil (never read for a coat). FNDDS 2706445 "Chicken kiev"
+/// lists ONE coated input (a fast-food fried breast): nothing is read off it.
+const _Fndds _parmigiana = (
+  id: 2706442,
+  description: 'Chicken or turkey parmigiana',
+  food: 'chicken',
+  b: '112.25',
+  o: '42',
+  r: '680.4',
+);
 const _Fndds _legsBaked = (
   id: 2705998,
   description:
@@ -19153,19 +19176,20 @@ const List<String> _meatRecords = [
 /// v67 (M69 R2, Q6 a): the vegetable records a coat may be sized from when
 /// no meat is coated ([_coatedVegetable]) — ONLY records [_coatFigure] has
 /// an arm for, and only at that arm's shape: its default arms are the
-/// chicken breast's (FNDDS 2710055's onion rings list no coat input — they
-/// stay held; the eggplant's one arm is C2).
-const List<String> _coatVegetables = ['Eggplant,'];
+/// chicken breast's (the eggplant's one arm is C2). v77 (M80-1, Q11 (b),
+/// pB R-D2): the onion — FNDDS 2710055's onion rings list no coat input, so
+/// its one C2 arm reads FNDDS 2710042's fried cauliflower as a stand-in.
+const List<String> _coatVegetables = ['Eggplant,', 'Onions,'];
 
 /// The coated vegetable among [rows] of [recipe]: the largest counted row
 /// on a [_coatVegetables] record whose head a coating sentence names
 /// ([_coatsSentence], [_naming]) — 0407's "2 pounds globe eggplant" (S3
 /// "… shake to coat the slices"); null when none, or when its shape is not
-/// C2, the eggplant's one [_coatFigure] arm (v67 closer 2, D1: fried, C1 or
-/// C1d, it would read the fried chicken breast's 5.73 or the steak's 8.79 —
-/// it stays held, as before M69). The naming test is read once per head
-/// (RULE C; v67 closer 1, D2: per row it rescanned the head's sentences,
-/// O(lines × sentences) at the caps).
+/// C2, the eggplant's and (v77, M80-1) the onion's one [_coatFigure] arm
+/// (v67 closer 2, D1: fried, C1 or C1d, it would read the fried chicken
+/// breast's 5.73 or the steak's 8.79 — it stays held, as before M69). The
+/// naming test is read once per head (RULE C; v67 closer 1, D2: per row it
+/// rescanned the head's sentences, O(lines × sentences) at the caps).
 IngredientMatchRow? _coatedVegetable(
   Recipe recipe,
   Iterable<IngredientMatchRow> rows,
@@ -19335,8 +19359,16 @@ _CoatShape? _shapeOf(Recipe recipe, String coated) {
 
 /// k, the coat's carbohydrate per 100 g of the raw coated food, for
 /// [shape] on [coated] (p3_read_figures.md; per food where a same-food
-/// record exists, critic F8: the thigh's 6.10, the wing's 5.66).
-_M52Figure _coatFigure(_CoatShape shape, String coated) {
+/// record exists, critic F8: the thigh's 6.10, the wing's 5.66). v77
+/// (M80-2): [crumbCrust] — a part the budget shares is on a `Bread,`
+/// record (dry crumbs, panko, sandwich bread); [nutCrust] — one is on a
+/// `Nuts,` record ([_m52Plan] reads both off its budgeted parts).
+_M52Figure _coatFigure(
+  _CoatShape shape,
+  String coated, {
+  bool crumbCrust = false,
+  bool nutCrust = false,
+}) {
   final d = coated.toLowerCase();
   final chicken = d.startsWith('chicken');
   return switch (shape) {
@@ -19357,10 +19389,29 @@ _M52Figure _coatFigure(_CoatShape shape, String coated) {
             !d.contains('breast') &&
             RegExp(r'\b(?:leg|thigh|drumstick)').hasMatch(d) =>
       _readFig('3.10', _legsBaked),
+    // v77 (M80-2, pB R-F1, the orchestrator's k 12.12): a crumb crust on a
+    // baked chicken reads FNDDS 2706442's separate breading inputs; a nut
+    // crust beside the crumbs has no record and stands in on it.
+    _CoatShape.c2 when chicken && crumbCrust => _readFig(
+      '12.12',
+      _parmigiana,
+      standIn: nutCrust,
+    ),
     // v67 (M69 R2): the coated vegetable's own read recipe.
     _CoatShape.c2 when d.startsWith('eggplant') => _readFig(
       '7.93',
       _eggplantParm,
+    ),
+    // v77 (M80-1, Q11 (b), pB R-D2): no record for a crumb-coated onion
+    // ring (L50 #7 read only restaurant products) — FNDDS 2710042, the only
+    // USDA coated vegetable with a separable coat, stands in: 50 g breading
+    // × [_breadingCarbPerGram] 0.40 per 39.58 g raw cauliflower = 50.53
+    // (p3's method, every shipped k's 0.40; [_coatFlag] says the stand-in by
+    // the first-word test, 'cauliflower' ≠ 'onions').
+    _CoatShape.c2 when d.startsWith('onions') => _readFig(
+      '50.53',
+      _cauliflowerFried,
+      standIn: true,
     ),
     _CoatShape.c2 => _readFig('3.18', _breastBaked),
     // v67 (M69 R1, the owner's ruling (b), 2026-10-09): no record for a
@@ -19679,9 +19730,15 @@ String _coatFlag(
   // v67 (M69 R2): the coat noun by record — FNDDS 2710050's coat is a
   // batter, listed.
   final eggplant = read?.id == _eggplantParm.id;
+  // v77 (M80-2, closer CC4): FNDDS 2706442's crust, its inputs listed.
+  final parmigiana = read?.id == _parmigiana.id;
   final coat = eggplant
       ? 'batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, '
             '0.1 g baking powder; 3.28 g carbohydrate)'
+      : parmigiana
+      ? 'crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g '
+            "carbohydrate; the record's 18.75 g grated Parmesan follows its "
+            'mozzarella and sauce — a topping, not read)'
       : 'breading';
   final source = read != null
       ? 'USDA FNDDS ${read.id} recipe: ${read.b} g $coat$breading per '
@@ -19698,6 +19755,10 @@ String _coatFlag(
       : eggplant
       ? ' (${batter ? '' : 'a crumb coat read on a batter figure; '}8.3 g '
             'of the 13.2 g batter is water and carries no carbohydrate)'
+      // v77 (M80-2, closer CC1): a nut crust read on 2706442's crumbs says
+      // so — the first-word test below sees 'chicken' on both.
+      : parmigiana && figure.standIn
+      ? " (no record for a nut crust; read as FNDDS 2706442's crumb crust)"
       : read != null && read.food.split(' ').first != name.split(' ').first
       ? _standIn(name, read.description)
       : '';
@@ -20038,19 +20099,6 @@ Map<int, _M52Row> _m52Plan(
       shape != null &&
       (coats.isNotEmpty || batter.isNotEmpty || dips.isNotEmpty);
   if (budgeted) {
-    final figure = _coatFigure(shape, coatedFood.description!);
-    var budget = double.parse(figure.value) * coatedFood.grams! / 100;
-    if (shape == _CoatShape.c5) {
-      for (final r in at.values) {
-        // A batter's lines are parts below, never off B (M58 W).
-        if (counted(r) &&
-            !batter.contains(r.position) &&
-            _dredgeHeads.contains(_headsOf(recipe)[r.position])) {
-          final record = food(r.fdcId!, lines[r.position]);
-          budget -= r.grams! * (record?.nutrientsPer100g['205'] ?? 0) / 100;
-        }
-      }
-    }
     final parts = <({int at, double dredge, double eaten, double cho})>[];
     for (final i in [...coats, ...batter]..sort()) {
       final r = at[i];
@@ -20114,6 +20162,29 @@ Map<int, _M52Row> _m52Plan(
         eaten: eaten,
         cho: (record.nutrientsPer100g['205'] ?? 0) / 100,
       ));
+    }
+    // v77 (M80-2, closer CC11): k reads the parts the budget shares — a
+    // crumb or nut crust among them — so it is read after them (B is never
+    // read above).
+    bool partOn(String family) =>
+        parts.any((p) => at[p.at]!.description!.startsWith(family));
+    final figure = _coatFigure(
+      shape,
+      coatedFood.description!,
+      crumbCrust: partOn('Bread,'),
+      nutCrust: partOn('Nuts,'),
+    );
+    var budget = double.parse(figure.value) * coatedFood.grams! / 100;
+    if (shape == _CoatShape.c5) {
+      for (final r in at.values) {
+        // A batter's lines are parts below, never off B (M58 W).
+        if (counted(r) &&
+            !batter.contains(r.position) &&
+            _dredgeHeads.contains(_headsOf(recipe)[r.position])) {
+          final record = food(r.fdcId!, lines[r.position]);
+          budget -= r.grams! * (record?.nutrientsPer100g['205'] ?? 0) / 100;
+        }
+      }
     }
     final carbs = parts.fold<double>(0, (n, p) => n + p.dredge * p.cho);
     if (carbs > 0) {

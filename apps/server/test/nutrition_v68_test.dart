@@ -37,6 +37,7 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
+import 'nutrition_v80_test.dart' show friedOnionRings;
 import 'support/corpus.dart';
 import 'support/fdc_fixtures.dart';
 
@@ -381,6 +382,7 @@ const List<_Row> _negatives = [
     null,
     null,
   ),
+  // RE-PIN (M80 batch, v80, M80-1: budgeted on the onion at 50.53 — a coat part at f = 1, its eaten ¼ cup on top) (was 30.16 g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -389,12 +391,13 @@ const List<_Row> _negatives = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '30.16',
+    '60.33',
     'auto',
-    'coating',
     null,
-    'discarded in cooking — only the part the recipe keeps counted',
+    '220.81',
+    "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: an E-w dip at share 1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -403,12 +406,13 @@ const List<_Row> _negatives = [
     748967,
     'Eggs, Grade A, Large, egg whole',
     '0.920000',
-    null,
+    '50.00',
     'auto',
-    'coating',
     null,
-    null,
+    '74.00',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -417,12 +421,13 @@ const List<_Row> _negatives = [
     2705393,
     'Buttermilk',
     '0.990000',
-    null,
+    '122.00',
     'auto',
-    'coating',
     null,
-    null,
+    '52.46',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -431,12 +436,13 @@ const List<_Row> _negatives = [
     173468,
     'Salt, table',
     '1.000000',
-    null,
+    '3.01',
     'auto',
-    'coating',
     null,
-    null,
+    '0.00',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -445,12 +451,13 @@ const List<_Row> _negatives = [
     170931,
     'Spices, pepper, black',
     '1.000000',
-    null,
+    '0.58',
     'auto',
-    'coating',
     null,
-    null,
+    '1.46',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -459,12 +466,13 @@ const List<_Row> _negatives = [
     170932,
     'Spices, pepper, red or cayenne',
     '1.000000',
-    null,
+    '0.45',
     'auto',
-    'coating',
     null,
-    null,
+    '1.43',
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: a coat part at f = 1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -473,12 +481,13 @@ const List<_Row> _negatives = [
     2708167,
     'Crackers, saltine',
     '0.990000',
-    null,
+    '90.00',
     'auto',
-    'coating',
     null,
-    null,
+    '376.20',
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |6) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     null,
@@ -487,11 +496,11 @@ const List<_Row> _negatives = [
     2709422,
     'Potato chips, plain',
     '0.990000',
-    null,
+    '100.00',
     'auto',
-    'coating',
     null,
-    null,
+    '532.00',
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
   // RE-PIN (M78 batch, v78, the owner's Q6 (c)): M69 still does not reach
   // it; M78 counts the pressed crust's whole line, flagged — was held
@@ -751,7 +760,8 @@ void main() {
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   group('matcher v68 (batch M69)', skip: skipIfNoCorpus, () {
@@ -1145,14 +1155,22 @@ void main() {
 
     test('the rows M69 must not reach equal v67 (27 rows): the thick '
         "pieces' and the tenderloin's dredges, the 8 onion-ring rows "
-        "(|0's 30.16 g eaten part kept), parmesan-crusted|3, the fried "
-        "twin's C1 flour, 0414's whole flour, H2's tacos", () {
+        "(|0's 30.16 g eaten part kept; budgeted since v80, M80-1), "
+        "parmesan-crusted|3, the fried twin's C1 flour, 0414's whole flour, "
+        "H2's tacos", () {
       expect(_negatives, hasLength(27));
       expectRows(_negatives);
       expect(g2(rowOf(_francese2, 5).grams!), '61.35');
       expect(g2(rowOf(_chickenMarsala, 1).grams!), '120.66');
+      // RE-PIN (M80 batch, v80, M80-1): the onion rings' coat is budgeted on
+      // the onion (50.53) — every row unheld, `discarded` (was held
+      // `coating`; M69 did not reach them, M80 does).
       for (final p in [0, 1, 2, 3, 4, 5, 6, 7]) {
-        expect(rowOf(_onionRings, p).hold, 'coating', reason: '$p');
+        expect(
+          (rowOf(_onionRings, p).hold, rowOf(_onionRings, p).gramSource),
+          (null, 'discarded'),
+          reason: '$p',
+        );
       }
     });
 
@@ -1198,7 +1216,9 @@ void main() {
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.04.
         expect(of(_eggplant), ('partial', '455.88')); // replay 360.33 → 453.66
         // Unmoved (replay v67 = v68).
-        expect(of(_onionRings), ('partial', '217.50')); // = replay
+        // RE-PIN (M80 batch, v80, M80-1): the coat budgeted on the onion —
+        // complete (was partial, 217.50; = the v80 replay).
+        expect(of(_onionRings), ('complete', '532.09')); // = replay
         expect(of(_salmon), ('partial', '542.67')); // = replay
         // RE-PIN (M71 batch, v71, D-E1): 444.28 (was 462.34) — the sugar,
         // salt and pepper whisked into the held cornstarch are held with it
@@ -1254,7 +1274,8 @@ void main() {
     test("Q7 (the owner's one-way door, accepted): a person's CONFIRM "
         "through the real PUT reads the plan's share — eggplant|6's eggs "
         '84.39 g `discarded` (v61 H: 0 g poured away), piccata|3 27.99; the '
-        "onion rings' held dip still 0 g poured away — and a recompute keeps "
+        "onion rings' egg since v80 the plan's 50.00 (a held dip — the STATED "
+        'fried copy — still 0 g poured away) — and a recompute keeps '
         'each', () async {
       Future<IngredientMatchRow> confirm(Recipe recipe, int position) async {
         await applyMatchOverride(db, provider, recipe, position, {
@@ -1281,15 +1302,25 @@ void main() {
         ('confirmed', 27.99, 'discarded', null),
       );
       expect(basisIn(piccata, 3), _c4Breast);
-      // The onion rings stay H (no sourced figure): a Confirm of a held dip
-      // there is still 0 g poured away (M62 H's door, the v61 pin's path).
+      // RE-PIN (M80 batch, v80, M80-1): the onion rings' coat is budgeted on
+      // the onion — a Confirm of its egg reads the plan's share, 50.00 g
+      // `discarded`, E-w's basis (was 0 g poured away, H). M62 H's door —
+      // a Confirm of a held dip is 0 g poured away — is pinned on the STATED
+      // fried copy ([friedOnionRings]), whose coat holds with no budget.
       final rings = await variant(loadCorpusRecipe(_onionRings), 'confirm');
       final egg = await confirm(rings, 1);
       expect(
         (egg.status, egg.grams, egg.gramSource, egg.hold),
+        ('confirmed', 50.0, 'discarded', null),
+      );
+      expect(basisIn(rings, 1), _dipBasis);
+      final fried = await variant(friedOnionRings(), 'confirm');
+      final held = await confirm(fried, 1);
+      expect(
+        (held.status, held.grams, held.gramSource, held.hold),
         ('confirmed', 0.0, 'discarded', null),
       );
-      expect(basisIn(rings, 1), 'poured away — counted as 0 g');
+      expect(basisIn(fried, 1), 'poured away — counted as 0 g');
     });
   });
 }

@@ -182,65 +182,70 @@ const List<_Row> _reach = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at FNDDS 2706442's 12.12) (was 15.78 g, 62.33 kcal).
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '15.78',
-    '62.33',
+    '60.16',
+    '237.63',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |0) (was 5.04 g, 21.22 kcal).
   (
     _lighter,
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
     325036,
     '0.983333',
-    '5.04',
-    '21.22',
+    '19.22',
+    '80.92',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |0) (was 10.73 g, 39.27 kcal).
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '10.73',
-    '39.27',
+    '40.91',
+    '149.73',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12, the nut crust's stand-in flagged) (was 21.66 g, 125.41 kcal).
   (
     _nutCrusted,
     2,
     '1 cup almonds, chopped coarse',
     170567,
     '0.900000',
-    '21.66',
-    '125.41',
+    '82.55',
+    '477.96',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |2) (was 8.96 g, 35.39 kcal).
   (
     _nutCrusted,
     5,
     '1 cup panko bread crumbs',
     174928,
     '0.563333',
-    '8.96',
-    '35.39',
+    '34.14',
+    '134.85',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
   ),
   (
     _nutCrusted,
@@ -254,66 +259,71 @@ const List<_Row> _reach = [
     null,
     '1/8 teaspoon · USDA portion',
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |2) (was 18.28 g, 66.90 kcal).
   (
     _nutCrusted,
     9,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '18.28',
-    '66.90',
+    '69.65',
+    '254.92',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: the dip follows B at 12.12) (was 27.60 g, 40.85 kcal).
   (
     _nutCrusted,
     10,
     '3 large eggs',
     748967,
     '0.920000',
-    '27.60',
-    '40.85',
+    '105.19',
+    '155.68',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
+  // RE-PIN (M80 batch, v80, M80-2: as |10) (was 1.90 g, 1.16 kcal).
   (
     _nutCrusted,
     11,
     '2 teaspoons Dijon mustard',
     326698,
     '0.983333',
-    '1.90',
-    '1.16',
+    '7.26',
+    '4.43',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |10) (was 0.11 g, 0.28 kcal).
   (
     _nutCrusted,
     12,
     '¼ teaspoon ground black pepper',
     170931,
     '1.000000',
-    '0.11',
-    '0.28',
+    '0.41',
+    '1.03',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M80 batch, v80, M80-1: the coat budgeted on the onion at 50.53 — R3' makes |5 an E-w dip at share 1) (was no g, 0.00 kcal, held `coating`).
   (
     _onionRings,
     5,
     '¼ teaspoon cayenne pepper',
     170932,
     '1.000000',
-    null,
-    '0.00',
+    '0.45',
+    '1.43',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
 ];
 
@@ -793,51 +803,55 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 20.38 g, 54.21 kcal).
   (
     '0122-chicken-kiev.yaml',
     7,
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '20.38',
-    null,
+    '77.68',
+    '206.63',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |7) (was 21.96 g, 80.37 kcal).
   (
     '0122-chicken-kiev.yaml',
     11,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '21.96',
-    null,
+    '83.69',
+    '306.31',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: the dip follows B at 12.12) (was 30.67 g, 45.39 kcal).
   (
     '0122-chicken-kiev.yaml',
     12,
     '3 large eggs, beaten',
     748967,
     '0.920000',
-    '30.67',
-    null,
+    '116.88',
+    '172.98',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M73 batch, v73): the Dijon flag (pD C4).
+  // RE-PIN (M80 batch, v80, M80-2: as |12) (was 1.06 g, 0.65 kcal).
   (
     '0122-chicken-kiev.yaml',
     13,
     '1 teaspoon Dijon mustard',
     326698,
     '0.983333',
-    '1.06',
-    null,
+    '4.03',
+    '2.46',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -1259,14 +1273,15 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 6.10 g carbohydrate per 100 g of the raw chicken thigh — USDA FNDDS 2706047 recipe: 15 g breading per 98.39 g raw chicken thigh; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: the dip follows B at 12.12) (was 23.79 g, 13.08 kcal).
   (
     '0416-lighter-chicken-parmesan.yaml',
     6,
     '3 large egg whites',
     747997,
     '0.950000',
-    '23.79',
-    null,
+    '90.69',
+    '49.88',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -1332,89 +1347,96 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.10 g carbohydrate per 100 g of the raw chicken legs — USDA FNDDS 2705998 recipe: 10 g breading per 129.02 g raw chicken legs; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: a coat part at f = 1 on the onion at 50.53, its eaten ¼ cup on top) (was 30.16 g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     0,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '30.16',
-    null,
+    '60.33',
+    '220.81',
     'auto',
-    'coating',
-    'discarded in cooking — only the part the recipe keeps counted',
+    null,
+    "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: an E-w dip at share 1) (was no g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     1,
     '1 large egg, at room temperature',
     748967,
     '0.920000',
-    null,
-    null,
+    '50.00',
+    '74.00',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     2,
     '½ cup buttermilk, at room temperature',
     2705393,
     '0.990000',
-    null,
-    null,
+    '122.00',
+    '52.46',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     3,
     '½ teaspoon table salt',
     173468,
     '1.000000',
-    null,
-    null,
+    '3.01',
+    '0.00',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |1) (was no g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     4,
     '¼ teaspoon ground black pepper',
     170931,
     '1.000000',
-    null,
-    null,
+    '0.58',
+    '1.46',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat's carbohydrate — USDA FNDDS 2710785 \"Breading or batter as ingredient in food\": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: a coat part at f = 1) (was no g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     6,
     '30 saltine crackers',
     2708167,
     '0.990000',
-    null,
-    null,
+    '90.00',
+    '376.20',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-1: as |6) (was no g, 0.00 kcal, held `coating`).
   (
     '0315-oven-fried-onion-rings.yaml',
     7,
     '4 cups kettle-cooked potato chips',
     2709422,
     '0.990000',
-    null,
-    null,
+    '100.00',
+    '532.00',
     'auto',
-    'coating',
     null,
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
   (
     '0257-pan-seared-salmon-steaks.yaml',
@@ -1601,47 +1623,46 @@ const List<_Row> _negatives = [
     null,
     '1/8 teaspoon · USDA portion · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
+  // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 14.32 g, 52.41 kcal).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '14.32',
-    null,
+    '54.59',
+    '199.80',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
+  // RE-PIN (M80 batch, v80, M80-2: the dip follows B at 12.12) (was 23.26 g, 34.42 kcal).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     11,
     '2 large eggs',
     748967,
     '0.920000',
-    '23.26',
-    null,
+    '88.67',
+    '131.23',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M80 batch, v80, M80-2: as |10) (was 17.73 g, 47.16 kcal).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
     '0.914286',
-    '17.73',
-    null,
+    '67.57',
+    '179.74',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
 ];
-
-/// The dip sentence an H row's `hold_note` shows (M62 H).
-const _ringsDip =
-    'Dip in the buttermilk mixture, allowing the excess to drip back into the bowl, then drop into the crumb coating, turning the ring over to coat evenly.';
 
 /// The row's energy, as the totals read it (the record's first energy
 /// number, else its Atwater sum): grams × kcal per 100 g.
@@ -1675,7 +1696,8 @@ void main() {
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   group('matcher v65 (batch M66)', skip: skipIfNoCorpus, () {
@@ -1814,14 +1836,21 @@ void main() {
           reason: '$file|$position',
         );
       }
-      expect(rowOf(_onionRings, 5).hold, 'coating');
+      // RE-PIN (M80 batch, v80, M80-1): the coat is budgeted on the onion, so
+      // R3''s dip line |5 is an E-w dip (was held `coating` with its
+      // siblings).
+      expect(
+        (rowOf(_onionRings, 5).hold, rowOf(_onionRings, 5).gramSource),
+        (null, 'discarded'),
+      );
       // R2's kept part shows in the basis; every other moved dip reads E-w's.
       expect(_reach.where((r) => r.$10 == _dipKeptBasis).map((r) => r.$2), [
         6,
       ]);
       // RE-PIN (M73 batch, v73, pD C4): 5 (was 7) — almond|5 and
       // nut-crusted|11, the two Dijon dips, carry the stand-in flag.
-      expect(_reach.where((r) => r.$10 == _dipBasis), hasLength(5));
+      // RE-PIN (M80 batch, v80, M80-1): 6 — onion-rings|5 is an E-w dip.
+      expect(_reach.where((r) => r.$10 == _dipBasis), hasLength(6));
       expect(
         _reach.where(
           (r) =>
@@ -2025,10 +2054,13 @@ void main() {
       // — was held `coating`, no grams.
       expect(rowIn(noCrumb, 2).hold, isNull);
       expect(g2(rowIn(noCrumb, 2).grams!), '28.35');
-      expect(g2(rowIn(noCrumb, 0).grams!), '16.29');
-      expect(g2(rowIn(noCrumb, 3).grams!), '11.07');
+      // RE-PIN (M80 batch, v80, M80-2): the panko is a crumb crust — k 12.12
+      // (FNDDS 2706442) on the panko and flour (was 16.29 / 11.07 at 3.18;
+      // the real recipe's Parmesan 19.22, was 5.04).
+      expect(g2(rowIn(noCrumb, 0).grams!), '62.07');
+      expect(g2(rowIn(noCrumb, 3).grams!), '42.21');
       // The real recipe: the Parmesan joins.
-      expect(g2(rowOf(_lighter, 2).grams!), '5.04');
+      expect(g2(rowOf(_lighter, 2).grams!), '19.22');
     });
 
     test('R2 reads only the steps AFTER the dip: a STATED synthesized '
@@ -2126,25 +2158,37 @@ void main() {
     });
 
     test("R3': onion-rings|5's bare \"cayenne\" in the buttermilk-mixture "
-        'sentence names it — held `coating` with its siblings, its '
-        '`hold_note` the dip sentence', () async {
+        'sentence names it — a dip line with its siblings (held `coating` '
+        "until v80; since M80-1's onion budget an E-w dip, its basis the "
+        "dip's)", () async {
       final rings = recipes[_onionRings]!;
       final row = rowIn(rings, 5);
-      expect((row.hold, row.grams, row.gramSource), ('coating', null, null));
-      expect(holdNoteOf(rings, nutritionLines(rings)[5], 'coating'), _ringsDip);
+      // RE-PIN (M80 batch, v80, M80-1): the coat is budgeted on the onion —
+      // |5 is a dip line at share 1, `discarded` with E-w's basis (was held
+      // `coating`, no grams, its `hold_note` the dip sentence; H's hold
+      // note is pinned on nutrition_v61_test's STATED fried copy).
+      expect(
+        (row.hold, row.grams, row.gramSource),
+        (null, 0.45, 'discarded'),
+      );
+      expect(basisIn(rings, 5), _dipBasis);
       final item =
           ((await matchesBody(db, provider, rings))['items']!
               as List<Map<String, Object?>>)[5];
-      expect((item['match']! as Map)['hold_note'], _ringsDip);
-      // Its sibling |4 black pepper keeps its own word's sentence, as before.
-      expect(rowIn(rings, 4).hold, 'coating');
+      expect((item['match']! as Map)['hold_note'], isNull);
+      // Its sibling |4 black pepper keeps its own word's sentence, as before:
+      // a dip line too.
+      expect(
+        (rowIn(rings, 4).hold, rowIn(rings, 4).gramSource),
+        (null, 'discarded'),
+      );
     });
 
     test("R3''s ceiling (closer 2, D2): a line with an own word is named "
         'only where that word is written — a STATED synthesized onion-rings '
         'copy whose S1 calls the black pepper by its bare head ("the salt, '
-        'pepper, and cayenne") leaves |4 out of the held dip, counted whole; '
-        '|1–|3 and |5 stay held', () async {
+        'pepper, and cayenne") leaves |4 out of the dip, counted whole; '
+        '|1–|3 and |5 stay the dip (held until v80, E-w dips since)', () async {
       final corpus = loadCorpusRecipe(_onionRings);
       const real = 'the salt, black pepper, and cayenne';
       final s1 = corpus.steps.first;
@@ -2165,8 +2209,15 @@ void main() {
       expect((pepper.hold, pepper.gramSource), (null, 'density'));
       expect(g2(pepper.grams!), '0.58');
       expect(basisIn(bare, 4), '1/4 teaspoon ≈ 1 mL');
+      // RE-PIN (M80 batch, v80, M80-1): the coat is budgeted on the onion —
+      // the four dip lines are E-w dips at share 1 (was held `coating`).
       for (final p in [1, 2, 3, 5]) {
-        expect(rowIn(bare, p).hold, 'coating', reason: '|$p');
+        expect(
+          (rowIn(bare, p).hold, rowIn(bare, p).gramSource),
+          (null, 'discarded'),
+          reason: '|$p',
+        );
+        expect(basisIn(bare, p), _dipBasis, reason: '|$p');
       }
     });
 
@@ -2224,15 +2275,25 @@ void main() {
       // chicken record reads another energy here; the rows' grams are
       // equal); then v64's.
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 402.18, 10
-      expect(of(_nutCrusted), ('complete', '385.78', 13)); // 385.84; 360.45
+      // RE-PIN (M80 batch, v80, M80-2): the crumb crust at 12.12 — 575.50
+      // (was 385.78; the v80 replay 385.84 → 575.56).
+      expect(of(_nutCrusted), ('complete', '575.50', 13)); // 575.56; 360.45
       // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its minced
       // basil on SR's chopped 2.65 g (replay 235.29 → 235.26).
-      expect(of(_lighter), ('complete', '235.22', 12)); // 235.29; 232.29
+      // RE-PIN (M80 batch, v80, M80-2): 298.93 (was 235.22; the v80 replay
+      // 235.26 → 298.97).
+      expect(of(_lighter), ('complete', '298.93', 12)); // 298.97; 232.29
       // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
       expect(of(_bestParmesan), ('complete', '489.25', 21)); // 486.50; 500.12
-      expect(of(_onionRings), ('partial', '217.50', 2)); // = replay; 217.86, 3
+      // RE-PIN (M80 batch, v80, M80-1): complete 10/10 (was partial, 217.50,
+      // 2; = the v80 replay).
+      expect(of(_onionRings), (
+        'complete',
+        '532.09',
+        10,
+      )); // = replay; 217.86, 3
     });
 
     test('a second recompute writes nothing', () {

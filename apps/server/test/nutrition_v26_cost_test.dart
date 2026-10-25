@@ -1270,8 +1270,11 @@ void m69Coats() {
       String name,
       Recipe r,
       String family,
-      void Function(List<IngredientMatchRow>) reached,
-    ) async {
+      void Function(List<IngredientMatchRow>) reached, {
+      // v80 (M80, CC7): the paths that must read [family] (the others
+      // never — closer 1, verify1 D2: ONION QUIET's compute and recompute).
+      Set<String> reading = const {'compute', 'GET', 'recompute'},
+    }) async {
       final db = wp.tempDb();
       final provider = FixtureProvider(pending: pendingSearches);
       wp.saveRecipe(db, r);
@@ -1291,8 +1294,8 @@ void m69Coats() {
         final copies = counts['indexes'] ?? 1;
         expectBounded(r, counts, '$name $step', copies: copies);
         expect(
-          counts[family],
-          inInclusiveRange(1, copies),
+          counts[family] ?? 0,
+          reading.contains(step) ? inInclusiveRange(1, copies) : 0,
           reason: '$name $step',
         );
         expect(m52PlanRuns, lessThanOrEqualTo(plans), reason: '$name $step');
@@ -1362,6 +1365,80 @@ void m69Coats() {
           (rows[5].raw, rows[5].gramSource, rows[5].hold),
           (own[5].raw, 'discarded', null),
         ),
+      );
+    });
+
+    // v80 (M80-1, closer CC7): 'Onions,' joins [_coatVegetables] — the TRUE
+    // path (a baked coated onion budgeted at 50.53) and the QUIET one (a
+    // meatless recipe with a counted onion and a frying oil whose steps coat
+    // nothing: `_m52Key` reads the naming memo whatever the coats, once per
+    // head). Synthesized, a stated exception: the repeated lines and steps.
+    test("ONION: the coat sentence's naming test read once per head, the "
+        'onion the coated food (its coat and dips budgeted); each under the '
+        'backstop', () async {
+      final base = loadCorpusRecipe('0315-oven-fried-onion-rings.yaml');
+      final own = [for (final g in base.ingredients) ...g.items];
+      // closer 1: the shape adds 390 ring lines.
+      expect(own, hasLength(10));
+      await shape(
+        'onion',
+        capped(
+          base,
+          [
+            for (final l in own) l.raw,
+            for (var n = 3; own.length + n - 3 < capLines; n++)
+              '$n large yellow onions, cut into 24 large rings',
+          ],
+          [
+            for (var i = base.steps.length; i < capSteps; i++)
+              fill('Slice the onions. ', capStep),
+            for (final s in base.steps) s.text,
+          ],
+        ),
+        'memo:coatNamed',
+        (rows) => expect(
+          {
+            for (final p in [1, 6, 7]) (rows[p].gramSource, rows[p].hold),
+          },
+          {('discarded', null)},
+        ),
+      );
+    });
+
+    test('ONION QUIET: falafel (0570, 17 lines) with 383 more onion lines '
+        "under steps that coat nothing — the GET's M52 key reads the naming "
+        'memo once per head (no coat sentence names the onion), the compute '
+        'and the recompute never; the onions counted; each under the '
+        'backstop', () async {
+      final base = loadCorpusRecipe('0570-falafel.yaml');
+      final own = [for (final g in base.ingredients) ...g.items];
+      // closer 1 (verify1 D2): two groups, 12 + 5 — the shape adds 383.
+      expect(own, hasLength(17));
+      expect(own[3].raw, '½ onion, chopped fine (½ cup)');
+      await shape(
+        'onion quiet',
+        capped(
+          base,
+          [
+            for (final l in own) l.raw,
+            for (var n = 2; own.length + n - 2 < capLines; n++)
+              '$n onions, chopped fine',
+          ],
+          [
+            for (var i = base.steps.length; i < capSteps; i++)
+              fill('Chop the onions. ', capStep),
+            for (final s in base.steps) s.text,
+          ],
+        ),
+        'memo:coatNamed',
+        (rows) => expect(
+          {
+            for (final row in rows.skip(own.length))
+              (row.description, row.hold),
+          },
+          {('Onions, yellow, raw', null)},
+        ),
+        reading: const {'GET'},
       );
     });
   }, skip: skipIfNoCorpus);
@@ -1653,6 +1730,10 @@ final Map<String, (Recipe Function(), Map<String, Object?>)> dipShapes = {
     ),
     {'confirmed': true},
   ),
+  // RE-PIN (M80 batch, v80, M80-1): a baked coated onion is budgeted at
+  // 50.53 since v80, so the held shape FRIES its rings ("Fry the onion
+  // rings" for "Bake the onion rings"): a fried coated onion reads no figure
+  // and the coat holds with its 398 dips (M62 H at the caps, as before).
   'held-dips': (
     () => capped(
       loadCorpusRecipe('0315-oven-fried-onion-rings.yaml'),
@@ -1664,7 +1745,7 @@ final Map<String, (Recipe Function(), Map<String, Object?>)> dipShapes = {
       List.filled(
         capSteps,
         fill(
-          'Place the flour in a shallow baking dish. Beat the egg and buttermilk in a medium bowl. Dredge each onion ring in the flour, shaking off the excess. Dip in the buttermilk mixture, allowing the excess to drip back into the bowl. Bake the onion rings until golden brown. ',
+          'Place the flour in a shallow baking dish. Beat the egg and buttermilk in a medium bowl. Dredge each onion ring in the flour, shaking off the excess. Dip in the buttermilk mixture, allowing the excess to drip back into the bowl. Fry the onion rings until golden brown. ',
           capStep,
         ),
       ),

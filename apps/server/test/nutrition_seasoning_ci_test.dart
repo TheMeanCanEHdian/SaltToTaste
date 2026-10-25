@@ -78,7 +78,8 @@ void main() {
     // RE-PIN (M77 batch, v77): was 73.
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -149,7 +150,11 @@ void main() {
       // 6a1dbe63…; M79 adds no hash term — it reads records, a label
       // density and the steps, already hashed or no input — the version
       // alone: the base tree with only the bump gives this literal).
-      '1e16287d8e33cfc8bbdbb1331784b0e24bd6167124dd79a8508a3bc74478af18',
+      // RE-PIN (M80 batch, v80): the hash at matcherVersion 77 (was
+      // 1e16287d…; M80 adds no hash term — it reads the coat rows' records
+      // and the steps, already hashed or no input — the version alone: the
+      // base tree with only the bump gives this literal).
+      '5e6a65b52a65f21d053528892c0722e3c742852280634466d4d2b98c354e3322',
     );
   });
 

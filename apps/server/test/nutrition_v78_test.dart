@@ -147,18 +147,21 @@ const _negatives = [
   // The other nut and cheese layers: joined by a crumb (`_layerInCrumb`)
   // or counted by `_coatLayer`.
   (_almond, 2, '1 cup sliced almonds', '79.97', 'discarded'),
+  // RE-PIN (M80 batch, v80, M80-2): the two crumb-crust layers at FNDDS
+  // 2706442's 12.12 — still parts joined by a crumb, never counted whole
+  // (were 21.66 and 5.04 g at 3.18).
   (
     '0117-nut-crusted-chicken-breasts-with-lemon-and-thyme.yaml',
     2,
     '1 cup almonds, chopped coarse',
-    '21.66',
+    '82.55',
     'discarded',
   ),
   (
     '0416-lighter-chicken-parmesan.yaml',
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
-    '5.04',
+    '19.22',
     'discarded',
   ),
   (
@@ -280,7 +283,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   test("the records: FNDDS 2705980's oil (the share's 2 / 125.77); total "

@@ -4791,7 +4791,8 @@ void main() {
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '
@@ -5613,7 +5614,9 @@ void main() {
         (
           '0416-lighter-chicken-parmesan.yaml',
           'complete',
-          '235.22',
+          // RE-PIN (M80 batch, v80, M80-2): the crumb crust at FNDDS
+          // 2706442's 12.12 — was 235.22 (the v80 replay 235.26 → 298.97).
+          '298.93',
         ), // replay complete 235.29 → complete 235.26
         (
           '0440-summer-vegetable-gratin.yaml',

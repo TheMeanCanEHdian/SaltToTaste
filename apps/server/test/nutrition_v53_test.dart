@@ -326,29 +326,32 @@ _rows = [
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
   ),
-  // C2 chicken 3.18 by the LAST cook (browned, then baked; critic F2)
+  // C2 chicken 3.18 by the LAST cook (browned, then baked; critic F2).
+  // RE-PIN (M80 batch, v80, M80-2): a C2 chicken with a crumb part (|13's
+  // bread) reads FNDDS 2706442's crust, 12.12 (was 14.32 g at C2's 3.18).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
-    '14.32',
+    '54.59',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
-  // C2 with |10, split by carbohydrate
+  // C2 with |10, split by carbohydrate.
+  // RE-PIN (M80 batch, v80, M80-2): at 12.12 (was 17.73 g at 3.18).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
-    '17.73',
+    '67.57',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // Q24 b: its eaten tablespoon kept + O1a 6.68 % × 623.69 g
   (
@@ -745,7 +748,8 @@ void main() {
     // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {
@@ -909,11 +913,13 @@ void main() {
       );
       expect(g2(gramsOf(katsu, 4)), g2(gramsOf(katsu, 3) * 6.68 / 100));
       // Stuffed cutlets (C2 3.18 by the last cook, F2): B shared by the
-      // flour and the bread by their carbohydrate.
+      // flour and the bread by their carbohydrate. RE-PIN (M80 batch, v80,
+      // M80-2): the bread part is a crumb crust — k 12.12 (FNDDS 2706442;
+      // was 3.18).
       final stuffed = await computed(
         '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
       );
-      final budget = gramsOf(stuffed, 8) * 3.18 / 100;
+      final budget = gramsOf(stuffed, 8) * 12.12 / 100;
       final f =
           budget /
           (wholeOf(stuffed, 10) * cho(stuffed, 10) +

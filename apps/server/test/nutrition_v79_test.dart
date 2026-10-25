@@ -329,7 +329,8 @@ class _Asked extends FixtureProvider {
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 76);
+    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
+    expect(matcherVersion, 77);
   });
 
   test("dryHeatKept[174377]: SR 172552's (roasted) and SR 174378's "

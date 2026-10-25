@@ -2338,7 +2338,8 @@ paragraph below; since matcher v65, M66 R3, a layer a step names with a
 crumb joins the budget; since matcher v68 (M69) a thin piece's sautéed
 dusting (C4) and a coated eggplant baked after the coat count too — the
 thick pieces' dustings, the onion rings and a fried coated eggplant stay
-held), `partial_pour_away` (since v22, Q4: a line of a braising
+held; since matcher v80 (M80-1) a coated onion baked after the coat counts
+too, a fried one stays held), `partial_pour_away` (since v22, Q4: a line of a braising
 liquid — the sentence before the strain that names it and opens "whisk"
 or "bring", the food added ("add", "arrange") in the next sentence — that
 is strained after cooking ("cooking liquid through … strainer") and of
@@ -3323,7 +3324,7 @@ stands (the `coatingFraction` switch stays null).
 |---|---|---|---|
 | C1 fried | the recipe fries | 5.73 (breast and any other food), thigh 6.10, wing 5.66 | FNDDS 2705975, 2706047, 2706065 |
 | C1d | a second dredge after the egg ("coat with flour again", 0148, 0304) | 8.79 | FNDDS 2705842 |
-| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61; since matcher v68 (M69 R2) a coated eggplant 7.93 | FNDDS 2705980, 2705998, 2706243, 2705871; 2710050 |
+| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61; since matcher v68 (M69 R2) a coated eggplant 7.93; since matcher v80 (M80) a coated onion 50.53 (a stand-in) and a chicken whose budgeted parts include a `Bread,` record 12.12 (a nut part beside it a stand-in) | FNDDS 2705980, 2705998, 2706243, 2705871; 2710050; 2710042, 2706442 |
 | C3 | fried Mollusks or Crustaceans with no crumb line | 3.94 | SR 171982, derived |
 | C4 sautéed (since matcher v68, M69 R1) | a held coat on a THIN meat (a step pounds it ⅛–½ inch thick, or its line prints the thickness) that is neither fried nor baked after the coat | 3.18 (C2's read, a stand-in — the owner's ruling) | FNDDS 2705980 |
 | C5 | a fried fish a sentence batters; the recipe's counted flour and starch come off B (since matcher v57 also battered shrimp, each on its own record, and a batter's own lines are parts, never off B — below) | 15.38 | FNDDS 2706244 (v57: shrimp 2706364, haddock 2706258) |
@@ -3335,7 +3336,9 @@ nut and cheese layers (a Nuts or Cheese record) — since matcher v65 (M66
 R3, below) only a layer no step sentence names with a crumb. Since matcher
 v68 (M69, below) a THIN piece's sautéed dusting counts as C4 and the
 eggplant parmesan's coat on its own read; the thick pieces' dustings and
-the onion rings stay held.
+the onion rings stay held. Since matcher v80 (M80-1, below) the onion
+rings' coat counts on the onion, a stand-in; the thick pieces' dustings stay
+held.
 
 (2) **The frying oil (Q3 a).** A line the engine zeroes as frying oil
 counts u × the fried food's grams / 100 ON TOP of its kept part (critic
@@ -4827,7 +4830,9 @@ on SR 170000 "Onions, raw" k 1.08 — a 0.27 g / 100 g protein difference
 moves k five-fold and both pass the energy check; only the 50/50 mixture's
 water (34.0 g) is printed, none for the raw onion or the breading. Derived,
 not sourced: the 8 rows (|0 keeping its 30.16 g eaten part) stay held; the
-design's ≤ +1,256.9 bound is not shipped.
+design's ≤ +1,256.9 bound is not shipped. Since matcher v80 (M80-1, below)
+the rings count on FNDDS 2710042's fried-cauliflower coat, a flagged
+stand-in.
 
 Reach (rp43 + bucket_v12 on fresh copies of snapshot 26, main and
 `--reverse-parents` byte-identical; STEP ZERO the v67 tree reproduces the
@@ -6172,6 +6177,151 @@ note: matcherVersion 76 stales every recipe; one zero-request sweep settles
 it (the three details and the rank-as answer are in snapshot 28's caches; a
 library without them fetches each once, RULE A); the kcal digest moves by
 the seven recipes' per-serving × servings energy.
+
+**Since matcher v80 (batch M80 — coats read in L50; matcherVersion 77;
+prep50 design_v2 §2 M80 as the planner's report corrects it —
+plan_figures.md C10–C13 and the closer's CC1–CC4, CC7, CC10, CC11 — under
+the orchestrator's rulings Q11 (b) and the crumb-crust k 12.12, 2026-10-18;
+zero requests; replayed on snapshot 28).** Two coat figures, each a read
+FNDDS recipe on `_coatFigure`'s C2 shape (p3's method: the breading's
+carbohydrate per 100 g of the RAW coated food); R-G1 is not built.
+**The onion rings (Q11 (b), pB R-D2):** L50 #7 ("onion rings") returned
+only restaurant products — no raw-ring recipe — so engine
+`_coatVegetables` gains 'Onions,' and `_coatedVegetable` sizes the coat
+from the largest counted onion row a coating sentence names (0315 S2
+"dredge each onion ring in the flour"), only where no meat is coated and
+only at C2; `_coatFigure`'s onion arm reads FNDDS 2710042 "Fried
+cauliflower", the only USDA coated vegetable with a separable coat: 50 g
+breading × `_breadingCarbPerGram` 0.40 (every shipped k's) per 39.58 g raw
+cauliflower = **50.53** g carbohydrate per 100 g of raw onion (pB's 50.66
+read 0.401 — the planner's C13). The flag names the stand-in by its read
+food: `approximation (coat: 50.53 g carbohydrate per 100 g of the raw
+onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw
+cauliflower (no record for onions; read as Fried cauliflower); the
+dredge's excess not counted)`. The engine's own split (the margins
+disclosed): B = 50.53 × 300 g / 100 = 151.59 g; the parts |0 (the flour's ¼
+cup in the dish — the ¼ cup S1 whisks into the buttermilk is its eaten part,
+counted whole on top, never a dip line), |6 saltines and |7 chips carry
+143.72 g → f = 1 (margin 5.5 %); the dips |1–|5 weigh 176.04 g whole against
+W = 1.173 × B = 177.82 g → share 1 (margin 1.0 % — fragile: read as a dip,
+the flour's eaten 30.16 g would make it 0.862). Reach:
+oven-fried-onion-rings|0 30.16 g held → 60.33 g / 220.81 kcal, |1 egg 50.00
+/ 74.00, |2 buttermilk 122.00 / 52.46, |3 salt 3.01 / 0.00, |4 black pepper
+0.58 / 1.46, |5 cayenne 0.45 / 1.43, |6 30 saltines 90.00 / 376.20, |7 4 cups
+chips 100.00 / 532.00 (each held `coating` before, 0 kcal); ROW +1,258.36,
+RECIPE ENERGY +1,258.35; 217.50 → 532.09 per serving; partial 2/10 →
+complete; the `coating` hold −8. |8 onion 300 g and |9 oil 84 g unchanged.
+A FRIED coated onion stays held (`_coatedVegetable` returns only at C2).
+Since M80 the corpus holds no dip of a coat held with no budget (the six
+`coating` holds left — skillet-chicken-and-rice, maple-glazed, salmon steaks
+— have none), so M62 H is pinned on a stated synthesized fried copy of 0315.
+Disclosed (§0.1): the auditors' ≈ 879 kcal on these lines is judgment, not
+a figure.
+**The crumb-crust k (pB R-F1; the orchestrator's 12.12, closer CC4):** L50
+#4 read FNDDS 2706442 "Chicken or turkey parmigiana", which lists RAW
+chicken and its breading as SEPARATE inputs; by `sequenceNumber`: 1 raw
+chicken breast 510.3 g · 2 salt 3 · 3 flour 31.25 · 4 egg 100 · 5 dry crumbs
+81 · 6 mozzarella 170 · 7 tomato sauce 425.25 · 8 grated Parmesan 18.75 · 9
+oil 42 · 10 raw chicken breast "with added solution" 170.1 — the breading run
+3 → 4 → 5; the Parmesan follows the mozzarella and the sauce, a topping, not
+read (the eggplant read takes its batter only too). k = (81 × 71.98 % [SR
+174928, the crumbs input's record] + 31.25 × 77.3 % [Foundation 789890, the
+flour's]) / 680.4 × 100 = 82.46 / 680.4 × 100 = **12.12**; the egg is the
+wash, sized by W (100 g per 82.46 g of the dredge's carbohydrate = 1.21; W
+1.17). Engine `_parmigiana` (b 112.25 = the crumbs and flour, o 42, r 680.4)
+is read by `_coatFigure`'s NEW arm after the legs arm — C2, a chicken, and
+`crumbCrust`: a coat part the budget shares on a `Bread,` record (dry
+crumbs, panko, sandwich bread); `nutCrust` — one on a `Nuts,` record — makes
+it a stand-in. `_m52Plan` reads k AFTER its parts loop (closer CC11): the two
+tests read the parts the budget shares under the loop's own filters, never
+the line list — a person's typed grams on the crumb line leave the rest at
+C2's 3.18. The budget, f and W are unchanged. The flag: `approximation (coat:
+12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS
+2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as
+separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan
+follows its mozzarella and sauce — a topping, not read) per 680.4 g raw
+chicken; the dredge's excess not counted)` and, beside a nut crust, `… per
+680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's
+crumb crust); …` (engine `_coatFlag` reads the figure's stand-in on this
+read — its first-word test sees 'chicken' on both; closer CC1 — gated on
+2706442 so the onion keeps its own stand-in text). FNDDS 2706445 "Chicken
+kiev" lists ONE coated input (butter 9.7 g + a fast-food fried breast 90.3
+g): nothing is read off it. Reach (f / the dip share stay below 1: lighter
+0.678 / 0.916, kiev 0.694 / 0.779, stuffed 0.603 / 0.887, nut-crusted 0.577
+/ 0.701), grams and kcal: lighter-chicken-parmesan|0 panko 15.78 → 60.16 g
+(62.33 → 237.63), |2 Parmesan 5.04 → 19.22 (21.22 → 80.92), |3 flour 10.73 →
+40.91 (39.27 → 149.73), |6 egg whites (dip) 23.79 → 90.69 (13.08 → 49.88);
+chicken-kiev|7 bread 20.38 → 77.68 (54.21 → 206.63), |11 flour 21.96 → 83.69
+(80.37 → 306.31), |12 eggs 30.67 → 116.88 (45.39 → 172.98), |13 Dijon 1.06 →
+4.03 (0.65 → 2.46); stuffed-chicken-cutlets-with-ham-and-cheddar|10 flour
+14.32 → 54.59 (52.41 → 199.80), |11 eggs 23.26 → 88.67 (34.42 → 131.23), |13
+bread 17.73 → 67.57 (47.16 → 179.74); nut-crusted-chicken-breasts (the
+flagged stand-in)|2 almonds 21.66 → 82.55 (125.41 → 477.96), |5 panko 8.96 →
+34.14 (35.39 → 134.85), |9 flour 18.28 → 69.65 (66.90 → 254.92), |10 eggs
+27.60 → 105.19 (40.85 → 155.68), |11 Dijon 1.90 → 7.26 (1.16 → 4.43), |12
+pepper 0.11 → 0.41 (0.28 → 1.03). Per recipe (ROW / RECIPE ENERGY by stored
+batch energy): lighter +382.26 / +382.25 (235.26 → 298.97 per serving), kiev
++507.76 / +507.75 (540.19 → 667.12), stuffed +376.78 / +376.77 (544.51 →
+638.71), nut-crusted +758.88 / +758.88 (385.84 → 575.56); all four complete
+before and after. Bounds (closer CC2 — R-F0's column holds the crust parts
+only): lighter panko + Parmesan +235.00 ≤ 386.2, kiev bread +152.42 ≤ 243.7,
+stuffed bread +132.58 ≤ 250.7, nut almonds + panko +452.01 ≤ 900.8; the
+flour dredge and the dips scale with B outside it; the true whole bound
+(every part and dip counted whole, less today) lighter +609.16, kiev
++784.08, stuffed +643.14, nut +1,462.99 — every recipe inside. Not taken:
+the Parmesan read as crust (12.46; +77 kcal on the four), the egg in k
+(12.26). **R-G1 (Q12) is not built:** FNDDS 2710065 "Vegetable tempura"'s
+batter is tap water 474 g, flour 312.5 g and egg yolk 51 g — no beer or
+spirit, so FDC prints nothing on ethanol in a fried batter either way; Q8
+(b) stands (85 % kept) and −276.81 kcal stays unbuilt (shrimp-tempura|4
+vodka −206.27, fish-and-chips|10 beer −38.39,
+crispy-fish-sandwiches-with-tartar-sauce|10 beer −32.15).
+M80 in all: 25 rows (the onion rings' 8, the three crumb recipes' 11,
+nut-crusted's 6), ROW column +3,284.04, RECIPE ENERGY +3,284.01 by stored
+batch energy; +1 complete (1,053 → 1,054); the `coating` hold 14 → 6; 0
+section rows, 0 requests. Not moved (byte-equal): eggplant-parmesan|2 |3
+(its own arm), buffalo-cauliflower-bites|4 |5 |6 |10 and
+vegan-baja-style-cauliflower-tacos|7 |12, every recipe with an onion row
+beside a coated meat (skillet-chicken-and-rice — its thick dusting still
+held —, stuffed-chicken-cutlets|1, maryland-crab-cakes|1,
+chicken-fried-steaks|9: the meat stays the coated food),
+easier-fried-chicken|8 (C2 with no crumb part, 3.18), every C4 row and M78's
+pan rows, crunchy-baked-pork-chops|2, crunchy-oven-fried-fish|0 and
+oven-fried-chicken|8 (their arms come first), the C1 crusts (almond-crusted,
+breaded-chicken-cutlets, chicken-katsu, chicken-schnitzel, pork-schnitzel).
+COST (RULE C; no new step reader): 'Onions,' widens two existing reads — the
+plan's coated vegetable (a meatless recipe with a held coat) and `_m52Key`'s,
+which reads the coated vegetable whatever the coats (kcal-neutral — a key
+changes only where the food turns non-null). Closer CC7's 122 meatless
+recipe groups with a counted onion are CANDIDATES: `_m52Key` runs only
+through `_m52Stored` and the confirm path, i.e. for a recipe with a coat,
+frying-oil, batter, dip, cut, kept or pan row. Measured over all 1,342 keys
+against 2cf977a (a fresh recipe instance per path — the step index lives on
+the instance): the naming memo is newly read by 4 GETs
+(oven-fried-onion-rings, falafel,
+pakoras-south-asian-spiced-vegetable-fritters,
+crispy-tempeh-with-sambal-sauce), 1 compute and 1 recompute (the onion
+rings), each once, no key more often than its step indexes
+(nutrition_v80_test pins the onion rings' and falafel's three paths).
+The v26 cap shapes pin it: ONION (0315 + 390 ring lines under 120 ×
+10,000-character steps — the TRUE path, the coat and dips budgeted) and
+ONION QUIET (0570 falafel's 17 lines, its frying oil among them, + 383
+onion lines under steps that coat nothing — the GET's key reads the memo,
+false), ONION's three paths and QUIET's GET each reading
+`memo:coatNamed` within 1..copies, QUIET's compute and recompute never (0,
+pinned), every family bounded. Timing vs the v79
+tree 2cf977a (ABBA × 2 rounds, 4 processes a side, 5 timed computes / GETs
+and 9 recomputes a process, medians): QUIET compute +1.3 %, GET +0.4 %,
+recompute +0.1 %; the eggplant shape (a coated vegetable before and after)
++0.4 / 0.0 / +0.3 % — within ±2 %. STATED RESIDUAL: the ONION shape +11.2 /
++10.4 / +22.9 % (+123 / +114 / +110 ms) — the shipped coat and dip block's
+own reads of the steps on a recipe the base holds unbudgeted (constant in
+the line count: recompute +105 / +100 / +110 ms at 100 / 200 / 400 lines,
+one plan each), work the base never does on this shape; count-pinned by the
+cap shape (the M71 / M78 precedent). The crumb test reads the plan's own
+parts list (no new pass). Deploy note: matcherVersion 77 stales every recipe; one zero-request
+sweep settles it; the kcal digest moves by the five recipes' per-serving ×
+servings energy.
 
 Since matcher v39 (edible yields, part 1 — the owner's "go with your
 recommendations", 2026-10-05, on prep39/plan.md Q1 (a), Q3 (b), Q4 (b);

@@ -1004,7 +1004,17 @@ const Map<String, String> _synonyms = {
 /// (engine `trimDepthRecords`' appended "trimmed" entry, grams
 /// `ah102Meats`), deducted at the dry-heat pair their steps print (engine
 /// `dryHeatKept`, `_dryHeatOf`).
-const int matcherVersion = 76;
+///
+/// v77 (the Matcher v80 commit, batch M80 — coats read in L50; prep50
+/// design_v2 §2 M80 as the planner corrected it, the orchestrator's Q11 (b)
+/// and the crumb-crust k 12.12; zero requests; replayed on snapshot 28):
+/// the oven-fried onion rings' coat sized on the onion at FNDDS 2710042's
+/// fried cauliflower coat, 50.53, a flagged stand-in (engine
+/// `_coatVegetables`, `_coatFigure`); a crumb crust on a baked chicken at
+/// FNDDS 2706442 Chicken parmigiana's separate breading inputs, 12.12 — a
+/// nut crust beside the crumbs flagged as its stand-in (engine
+/// `_parmigiana`, `_coatFlag`). R-G1 (a fried batter's ethanol) not built.
+const int matcherVersion = 77;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
