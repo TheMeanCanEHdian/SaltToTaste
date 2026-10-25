@@ -3608,6 +3608,24 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-25 — exit measurement of the prep50 round (M71–M80 shipped as
+  matcher v71–v80, 2026-10-17 to 2026-10-25).** Re-calibration against the
+  auditors' hand figures (the four calibration sets, 100 recipes): on the
+  audit-5 set that drove the round, the median error fell from 8.5 % to
+  5.3 % (the design's expected exit was 5.3 %), the mean from 16.4 % to
+  9.0 %, the recipes beyond 15 % from 7 to 3; the bias went +6.8 % → +0.9 %
+  by v78 and back to +3.3 % at v80, because the crumb-crust rule reads two
+  recipes higher than the auditors judged their coats (USDA-read figures
+  against judgment, the pattern to check in the next audit). Over all 100
+  recipes the median moved 6.6 → 6.2 % and the bias +3.3 → +2.3 %; the
+  earlier sets are unchanged, as expected for rules that did not target
+  them. Snapshot 29 is the post-v80 library (key-stripped, session-free; the
+  next replay base). Audit 6, a blind review of 238 lines across the nine
+  batch strata and the controls plus 25 recipes calibrated by hand,
+  found no wrong food among the 232 counted lines (audit 5: 1 of 197), mass LOW 5.0 % and HIGH 4.2 % (11.5 / 8.0), should-not-count 7.1 % (13.7 %), and a calibration median of 4.4 % (8.5 %) with the engine a signed +3.8 % high; its ranked patterns for the next design pass: coat parts sized at one share (the shaken-off dredge at the crust's figure, the egg wash on rolled pieces, the onion rings' coat whole — engine high), amount-less and served lines the steps measure (a drizzled oil, a dollop — engine low), piece weights against the corpus print (the sandwich-bread slice at 28 g where the corpus prints 45 g), the C4 pan-fat share (about half the auditors' kept film), and three owner rulings to put (the own-section rice route, the Foundation energy order, the kept share of a braise skim). Next: the two evidence-gated review pairs over the unreviewed
+  spans v47–v54 and v55–v62, then the read-only simplification audit the
+  owner added on 2026-10-15, then the next design pass from audit 6.
+
 - **2026-10-25 — matcher v80 (batch M80): the coats read in live step L50
   (prep50 §2 M80 as corrected by the planner; my Q11 (b) ruling and the
   k = 12.12 ruling).** Two rules; the round's last batch. The oven-fried
