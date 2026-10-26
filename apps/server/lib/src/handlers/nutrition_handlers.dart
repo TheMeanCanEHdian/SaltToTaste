@@ -267,7 +267,14 @@ Future<Map<String, Object?>> matchesBody(
                         db,
                         itemKey,
                         excluding: (recipeId: recipe.id, position: -1),
-                        fdcId: row?.fdcId,
+                        // v81 (Run 065/066 F5): the record the decision
+                        // names, as the PUT's apply reaches with it
+                        // ([decisionRecordOf]) — a canned bean the v49 twin
+                        // move put on the solids-and-liquids record decides
+                        // the can bought (chana-masala|11 offered 6, wrote 1).
+                        fdcId: row == null
+                            ? null
+                            : decisionRecordOf(recipe, weighed, row.fdcId),
                         memo: reads,
                       )
                     : child['state'] == 'routed'
@@ -636,9 +643,10 @@ Future<AppliedToOthers?> applyMatchOverride(
       );
     }
     // A share neither sent nor read from the line and the child's yield
-    // would store a counted row that counts nothing (v41 verify3 D1).
-    if (share == null &&
-        parseShare(line.raw, line.amounts, childRecipe.servings) == null) {
+    // would store a counted row that counts nothing (v41 verify3 D1) — read
+    // as the route reads it ([routeShareOf], v81 F15: an amount-less line
+    // takes rule WB's whole batch, as the GET offers it).
+    if (share == null && routeShareOf(recipe, line, childRecipe) == null) {
       throw const ValidationException(noShareMessage);
     }
   } else {
@@ -735,7 +743,7 @@ Future<AppliedToOthers?> applyMatchOverride(
           childRecipeId: picked.id,
           childShare: share is num
               ? share.toDouble()
-              : parseShare(line.raw, line.amounts, picked.servings),
+              : routeShareOf(recipe, line, picked),
           gramSource: GramSource.recipe.name,
           confidence: 1,
           clearHold: true,
@@ -1135,7 +1143,7 @@ const String badShareMessage =
     "'share' must be a positive number (at most 100).";
 
 /// A recipe picked with no share sent, for a line whose share of it the
-/// child's yield cannot read ([parseShare] null): a person sets the share.
+/// route cannot read ([routeShareOf] null): a person sets the share.
 const String noShareMessage = 'No share the yield can read — set the share.';
 
 /// A recipe picked for a marinade line with no share sent (v44, S10 a).

@@ -1897,7 +1897,8 @@ void main() {
     // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
     // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    expect(matcherVersion, 77);
+    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
+    expect(matcherVersion, 78);
   });
 
   test("748608 reads SR 171413's nutrients; the three other fat-only "

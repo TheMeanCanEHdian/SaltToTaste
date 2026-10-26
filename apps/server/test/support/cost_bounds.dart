@@ -1,6 +1,8 @@
 // The per-family count bounds of RULE C (Run 056 I4/O20): what every
 // cost pin checks its stepIndexCounts against, shared by the v25 and v26
 // cost files so no pin there is a clock alone.
+import 'dart:math';
+
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_shared/salt_shared.dart';
@@ -156,8 +158,46 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v76 (M79, Q10 (b′)): the dry-heat cooking a rack's pair reads —
       // grill, or oven and a fat pour-off — once per index.
       'memo:dryHeat',
+      // v81 (review Run 065/066 F10): whether the steps strain or discard a
+      // zest — once per index.
+      'memo:zestStrained',
+      // v81 (review Run 065/066 F7): the sentences naming a coat line — once
+      // per index.
+      'memo:coatLineSentences',
+      // v81 (review Run 065/066 F2): the alcohol reader's text facts and its
+      // recipe-level reads — each once per index.
+      'memo:alcoholTexts',
+      'memo:alcoholRecipe',
     ])
       once: 1,
+    // v81 (F2): each text the alcohol reader reads, its facts built once —
+    // a sentence, its side-stripped form, a prefix before a stop and a
+    // suffix after an offset at most twice each, and an adding sentence's
+    // tail per line.
+    'alcoholTexts': 8 * sentences + 2 * lines + 8,
+    // v81 (F2): its recipe-level reads, once per key — a candidate's
+    // mentions, a group's, a name's uses, part mentions, sharing lines and
+    // the uses other groups leave (at most 8 a line), the last hand-off and
+    // the mixture words.
+    'alcoholRecipeReads': 8 * lines + 2,
+    // v81 (F2): a run that reaches a state another run read takes what
+    // follows it — at most once per run, a line's runs at most 4.
+    'alcoholRunsShared': 4 * lines,
+    // v81 (F2): the sentences the runs read themselves (the run memo's
+    // RESIDUAL — count-pinned exactly by nutrition_v81_test's cap shapes;
+    // unbounded sharing cannot be proved, so the bound is a line's runs
+    // over every sentence).
+    'alcoholRunSentences': 4 * lines * max(sentences, 1),
+    // closer 2 (verify2 D1): the hash gate's TRUE path — a note folded by
+    // its own text (no step read) — once per hash, a path hashing at most
+    // four times (closer 1's `prepNoteScans`, the step scan, is gone).
+    'prepNoteFolds': 4,
+    // v81 closer 5 (verify5 D3): rule PV's choice of base, once per prose
+    // section a hash reads (each named by a line text) and hash; each line's
+    // share of it once per line and hash (the residual) — a path hashing at
+    // most four times. Pinned EXACTLY by nutrition_v81_test's PROSE shape.
+    'proseChoices': 4 * texts,
+    'proseShares': 4 * lines,
     // v71 closer 1 (verify1 D2): the D-E1 mixing test, once per sentence
     // whichever reader asks (`memo:mixes`, each test counted `mixTests`);
     // the lines the coat-mixture pass reads, once per index.
@@ -241,6 +281,12 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v71 (M71 pF R2): a fat head's reserved spoonfuls and remainders.
       'memo:reservedUse',
       'memo:remainingFat',
+      // v81 (review Run 065/066 F13): whether a can's head is added with
+      // its liquid.
+      'memo:canLiquid',
+      // v81 (review Run 065/066 F4): whether a frying sentence names a fried
+      // class's word (with the oil for a vegetable).
+      'memo:friedNamed',
     ])
       perHead: 3 * heads,
     'memo:says': 6 * heads,

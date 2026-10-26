@@ -113,6 +113,34 @@ void main() {
     });
   });
 
+  // v81 (Run 065/066 F14, the Sonnet critic): editor-accepted digit runs
+  // (STATED synthesized negative-path inputs — no corpus quantity comes
+  // near) parse to null past maxQuantity, never an overflow FormatException
+  // nor Infinity; the bound itself parses.
+  test('parseQuantity is bounded at maxQuantity (1e9): no overflow, no '
+      'Infinity', () {
+    expect(maxQuantity, 1e9);
+    expect(parseQuantity('1000000000'), 1e9);
+    expect(parseQuantity('1000000001'), isNull);
+    expect(parseQuantity('99999999999999999999'), isNull);
+    expect(parseQuantity('99999999999999999999 1/2'), isNull);
+    expect(parseQuantity('1 1/99999999999999999999'), isNull);
+    expect(parseQuantity('99999999999999999999¼'), isNull);
+    expect(parseQuantity('9' * 400), isNull);
+    expect(parseQuantity('${'9' * 400}.5'), isNull);
+    expect(parseQuantity('9' * 40), isNull);
+    expect(parseQuantity('999999999½'), 999999999.5);
+    expect(parseQuantity('4 1/4'), 4.25);
+    // closer 2 (verify2 D2): a NUMERATOR or DENOMINATOR is bounded by
+    // `_digits` alone (the outer bound reads only the value) — a 10-digit
+    // one past the bound is null, the bound itself parses (STATED synthesized).
+    expect(parseQuantity('1000000001/2'), isNull);
+    expect(parseQuantity('1/1000000001'), isNull);
+    expect(parseQuantity('1 1000000001/2'), isNull);
+    expect(parseQuantity('1000000000/2'), 5e8);
+    expect(parseQuantity('1/1000000000'), 1e-9);
+  });
+
   group('corpus coverage', skip: skipIfNoCorpus, () {
     // Every distinct quantity value in the real corpus is either a range
     // (which by design does not parse) or parses to a number.

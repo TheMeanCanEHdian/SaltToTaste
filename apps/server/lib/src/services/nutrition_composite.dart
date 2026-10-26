@@ -66,9 +66,14 @@ Map<String, Object?>? referenceChildJson(
             ? 'missing'
             : 'generic',
     };
-  } else if (row.childRecipeId != null) {
+  } else if (row.childRecipeId != null &&
+      !emptiedSectionChild(row.childRecipeId!, memo)) {
     state = 'routed';
     reason = null;
+  } else if (row.childRecipeId != null) {
+    // v81 (F11): a picked section its host emptied — the rule row's read.
+    state = 'not_routed';
+    reason = 'no_ingredients';
   } else {
     state = 'not_routed';
     reason = switch (found().kind) {
@@ -142,11 +147,9 @@ Map<String, Object?>? referenceChildJson(
           final picked = nutritionRecipeOf(db, library.id)?.recipe;
           final nutrition = db.nutritionFor(library.id);
           final batch = kcalOf(nutrition);
-          final lineShare = parseShare(
-            line.raw,
-            line.amounts,
-            picked?.servings,
-          );
+          final lineShare = picked == null
+              ? null
+              : routeShareOf(recipe, line, picked);
           final current = library.id == row.childRecipeId && state != 'held';
           return {
             'group': candidate.group,
@@ -244,7 +247,9 @@ Map<String, Object?> _sectionCandidateJson(
   final batch = nutrition == null
       ? null
       : batchTotalsOf(nutrition)['energy'] ?? 0;
-  final lineShare = parseShare(line.raw, line.amounts, section?.servings);
+  final lineShare = section == null
+      ? null
+      : routeShareOf(recipe, line, section);
   final current = key == row.childRecipeId && !held;
   return {
     'group': candidate.group,
@@ -351,14 +356,21 @@ referenceSummary(
     if (line.raw != row.raw) {
       continue;
     }
-    final routed = row.childRecipeId != null && row.hold == null;
+    // v81 (F11): a pick of a section its host emptied reads as the
+    // engine's `no_ingredients` rule row ([emptiedSectionChild]).
+    final emptied =
+        row.childRecipeId != null &&
+        row.hold == null &&
+        emptiedSectionChild(row.childRecipeId!, memo);
+    final routed = row.childRecipeId != null && row.hold == null && !emptied;
     final held =
         recipeChoiceHolds.contains(row.hold) ||
         (row.hold == discardedRecipeHold && row.status == 'auto');
     final notRouted =
+        emptied ||
         row.fdcId == null &&
-        row.status == 'confirmed' &&
-        row.description == subRecipeNote;
+            row.status == 'confirmed' &&
+            row.description == subRecipeNote;
     if (!routed && !held && !notRouted) {
       continue;
     }

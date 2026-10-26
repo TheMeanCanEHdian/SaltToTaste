@@ -3608,6 +3608,33 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-26 — matcher v81: the fixes of dual-fleet review Run 065/066
+  (pair A, the catch-up review of matcher v47–v54 at the tip of v80).**
+  Seventeen items from the two fleets and their critics, every one
+  reproduced before and after. Both fleets: an un-skip re-deriving a 0 g
+  discarded cured-pork row as counted bacon, and the alcohol retention
+  reader rescanning the steps per alcohol line (minutes at the editor caps;
+  the member GET too). Sonnet alone: prep notes read by two readers but
+  hashed only behind a reference line; v80's onion-ring rule taking any
+  onion named in a "coat" sentence as the coated food; the strained-solids
+  check keyed by head noun, so a stock's aromatics stayed counted when the
+  soup re-added the vegetable (the one fix that moves corpus rows: six
+  stock aromatics, −171 kcal); a 500 on the matches GET in the stale
+  window; a per-call zest-strain reader; a picked section emptied of its
+  lines; garlic strained from an infused oil; a per-call can regex; and
+  (critic) unbounded digits crashing the parser. Opus alone: the fried-food
+  scan per counted row (14.5 s a plan at the caps, now 0.8 s); the cubic
+  alcohol-stop regex; the "others" offer disagreeing with the apply-to-all
+  write; and (critics, missed on the first reading of the run and carried
+  in a follow-up) an amount-less reference pick refused by the PUT where
+  the engine routed it, a section's failure counted as the recipe's, and
+  the prose-reference base read by no hash term. One share function now
+  serves the route, the pick gate and every reader of a reference's share.
+  Eight verifier rounds across three workflows; the last three rounds were
+  pin gaps in the new memo keys and hash terms, now stated pins. The
+  version moves to 78 for the six rows; eleven more recipes re-stamp once
+  on identical rows for the two new hash terms.
+
 - **2026-10-25 — exit measurement of the prep50 round (M71–M80 shipped as
   matcher v71–v80, 2026-10-17 to 2026-10-25).** Re-calibration against the
   auditors' hand figures (the four calibration sets, 100 recipes): on the

@@ -330,7 +330,8 @@ void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
     // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    expect(matcherVersion, 77);
+    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
+    expect(matcherVersion, 78);
   });
 
   test("dryHeatKept[174377]: SR 172552's (roasted) and SR 174378's "

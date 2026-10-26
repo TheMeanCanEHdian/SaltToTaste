@@ -3531,15 +3531,16 @@ GramResolution? _parenVolumeGrams(
     caseSensitive: false,
   ).firstMatch(raw);
   final count = _countQty(amounts);
-  if (printed == null || count == null) {
+  // v81 (Run 065/066 F14): the bounded reader — "1.2.3" threw, a long
+  // digit run read to Infinity.
+  final size = printed == null ? null : parseQuantity(printed[1]!);
+  if (size == null || count == null) {
     return null;
   }
   // "(1-liter) bottle": no ATK line prints litres; other libraries do
   // (Run 048).
   final ml =
-      count *
-      double.parse(printed[1]!) *
-      (printed[2]!.toLowerCase().startsWith('l') ? 1000 : 1);
+      count * size * (printed![2]!.toLowerCase().startsWith('l') ? 1000 : 1);
   return _resolveGrams(
     amounts: [
       Amount(
@@ -4452,16 +4453,18 @@ GramResolution? _resolveGrams({
     // 230 g — the shrimp record's only portion is 3 ounces (v12 review, Opus
     // critic).
     final perPound = raw == null ? null : _perPound.firstMatch(raw);
-    if (perPound != null) {
-      final each =
-          _weightUnitGrams['pound']! /
-          ((int.parse(perPound[1]!) + int.parse(perPound[2]!)) / 2);
+    // v81 (Run 065/066 F14): the counts bounded (a 20-digit count
+    // overflowed int.parse) and never 0 a pound (Infinity grams).
+    final low = perPound == null ? null : parseQuantity(perPound[1]!);
+    final high = perPound == null ? null : parseQuantity(perPound[2]!);
+    if (low != null && high != null && low + high > 0) {
+      final each = _weightUnitGrams['pound']! / ((low + high) / 2);
       return GramResolution(
         grams: quantity * each,
         source: GramSource.piece,
         basis:
             '${_amountText(amount)} × ${each.round()} g each '
-            '(${perPound[1]} to ${perPound[2]} per pound)',
+            '(${perPound![1]} to ${perPound[2]} per pound)',
       );
     }
 

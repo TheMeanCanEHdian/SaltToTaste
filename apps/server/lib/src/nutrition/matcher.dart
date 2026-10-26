@@ -1014,7 +1014,16 @@ const Map<String, String> _synonyms = {
 /// FNDDS 2706442 Chicken parmigiana's separate breading inputs, 12.12 — a
 /// nut crust beside the crumbs flagged as its stand-in (engine
 /// `_parmigiana`, `_coatFlag`). R-G1 (a fried batter's ethanol) not built.
-const int matcherVersion = 77;
+///
+/// v78 (the Matcher v81 commit — the fixes of dual-fleet review Run 065/066
+/// on v47–v54; zero requests; replayed on snapshot 29): a stock's aromatics
+/// strained out and discarded stay discarded when the soup re-adds the same
+/// vegetable — the strain check reads only the mentions no line owns
+/// (engine `_strainedOut`; 6 rows, −170.99 kcal); the rest move no corpus
+/// row (the alcohol reader once per index, its stop reader linear, the
+/// coated vegetable's coat line, the un-skip, the offer, the prep note's
+/// hash, the bounded numerics).
+const int matcherVersion = 78;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

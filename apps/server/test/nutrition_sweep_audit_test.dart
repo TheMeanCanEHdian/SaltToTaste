@@ -1282,7 +1282,11 @@ void main() {
     // cold-brew coffee's held record — a hit in 'medium-grind bulgur' and
     // four more, equal in every digit): compared 540 -> 543, differ 413 ->
     // 415.
-    expect(compared, 543);
+    // RE-PIN (v81, the Run 065/066 fixes): v81 recorded from snapshot 29 the
+    // detail of SR 171977 (canned clam liquid — 0346's clam juice, a hit in
+    // a recorded answer, equal in every digit): compared 543 -> 544, differ
+    // 415 unchanged.
+    expect(compared, 544);
     expect(differ, 415);
   });
 

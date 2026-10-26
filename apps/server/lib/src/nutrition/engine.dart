@@ -3590,6 +3590,8 @@ DiscardedMedium? discardedMediumOf(
   IngredientLine line,
   String normalized, {
   bool bySentence = true,
+  // closer 2 (verify2 D3): stop after the coat arms — [_coatingAt]'s read.
+  bool coatOnly = false,
 }) {
   // The food the line names, not a word in it: 'without salt butter' is
   // butter, 'salt pork' is pork.
@@ -3619,9 +3621,12 @@ DiscardedMedium? discardedMediumOf(
         _coatLayer(recipe, line, head, () => ml, normalized)) {
       return DiscardedMedium.coating;
     }
-    if (keptLiquidOf(recipe, line) != null) {
-      return DiscardedMedium.partialPourAway;
-    }
+  }
+  if (coatOnly) {
+    return null;
+  }
+  if (bySentence && head != 'water' && keptLiquidOf(recipe, line) != null) {
+    return DiscardedMedium.partialPourAway;
   }
   // Shortening, lard, "for brining", "for soaking" and the dry-brine/cure
   // exclusion change no line of the library (audit 4 P9) but classify lines
@@ -4690,19 +4695,28 @@ DiscardedMedium? _strainedOut(
   final strained = [
     for (final m in _strainedMixture.allMatches(index.sentence(at))) m[0]!,
   ];
+  // v81 (Run 065/066 F8): only the mentions no line owns as its nth (A13,
+  // [_ownMentions]: the tail every line of the head shares) — another
+  // line's own mention after the strain is THAT line's (0002's soup onion
+  // re-added after the stock's strain left the stock's onion counted). The
+  // line's own nth mention stands before the strain (above), so this is
+  // [mine] read once per head.
   final returned = index.memo(('namedAfterStrain', head), () {
-    return _foodNaming(recipe, head).any(
-      (m) =>
-          _before(at, m) &&
-          !index.sentence(m).trimLeft().startsWith('discard') &&
-          _names(
-            strained.fold(
-              index.sentence(m),
-              (t, x) => t.replaceAll(x, ' '),
-            ),
-            head,
-          ),
-    );
+    final lines = _headsOf(recipe).where((h) => h == head).length;
+    return _foodNaming(recipe, head)
+        .skip(lines)
+        .any(
+          (m) =>
+              _before(at, m) &&
+              !index.sentence(m).trimLeft().startsWith('discard') &&
+              _names(
+                strained.fold(
+                  index.sentence(m),
+                  (t, x) => t.replaceAll(x, ' '),
+                ),
+                head,
+              ),
+        );
   });
   if (returned) {
     return null;
@@ -4887,6 +4901,14 @@ final RegExp _cutFine = RegExp(
   'thinly sliced',
 );
 
+/// A line's whole part beside its cut one ([_discardedByName], v81 F12): a
+/// piece left whole, halved, quartered, smashed or crushed, the remaining
+/// or a reserved part, a stem.
+final RegExp _wholePart = RegExp(
+  r'\b(?:whole|halved|halves|quartered|quarters|smashed|crushed|remaining|'
+  r'reserved|stems?)\b',
+);
+
 /// Q18 (D2) and Q17: [line] (head [head]) removed and discarded by name —
 /// the clause's step, and the medium: [DiscardedMedium.removedAromatic]
 /// (0 g, the policy) for a whole-piece aromatic ([_wholePieceHeads], never
@@ -4908,11 +4930,36 @@ final RegExp _cutFine = RegExp(
   }
   final raw = line.raw.toLowerCase();
   final cured = _curedPork.hasMatch(raw);
-  final whole = !_cutFine.hasMatch(raw) && !_passesStrainer.hasMatch(raw);
+  final cut = _cutFine.hasMatch(raw);
+  final whole = !cut && !_passesStrainer.hasMatch(raw);
+  // v81 (Run 065/066 F12): a line cut fine WHOLE — no whole part printed
+  // ([_wholePart]), no plus part ([plusPartOf]) — and the only line of its
+  // head is removed when a discard clause names its food (below; never a
+  // bundle): the cut-word guard keeps a cut PART eaten ("2 medium onions, 1
+  // quartered and 1 chopped fine"; "5 garlic cloves, … 3 peeled and smashed
+  // and 2 minced"), and a cut line beside another of its head stays (0481's
+  // "1 onion, sliced thin" beside the discarded onion rounds) — never a
+  // whole line a step strains out and discards by name ("Combine the oil,
+  // garlic, and salt …; … pour through a fine-mesh strainer into a medium
+  // bowl. Discard the garlic.", 0031's Garlic Croutons).
+  final cutWhole =
+      cut &&
+      !_passesStrainer.hasMatch(raw) &&
+      !_wholePart.hasMatch(raw) &&
+      plusPartOf(line.raw) == null &&
+      _headsOf(recipe).where((h) => h == head).length == 1;
   if (!cured &&
-      (!whole ||
+      (!(whole || cutWhole) ||
           !(_wholePieceHeads.contains(head) ||
               _strainedHeads.contains(head)))) {
+    return null;
+  }
+  // closer 2 (verify2 D3): a line not whole (cut, strained or cured)
+  // reaches the discard clauses alone (a bundle takes a whole line): its
+  // mentions are read only where a clause names its head — the same
+  // answer, never every cut line of a strained head through the by-name
+  // scan (v26 long-lines +14 %).
+  if (!whole && !_discardClauses(recipe).any((c) => _names(c.objects, head))) {
     return null;
   }
   final mine = _ownMentions(recipe, line, head);
@@ -4937,6 +4984,7 @@ final RegExp _cutFine = RegExp(
     // Never a citrus line: its juice is eaten ("12 (3-inch) strips lemon
     // zest plus 6 tablespoons juice", avgolemono's spice bundle).
     if (!cured &&
+        whole &&
         !_zestHeads.contains(head) &&
         _before(mine.first, at) &&
         _tiesBundle.hasMatch(index.sentence(mine.first))) {
@@ -7393,16 +7441,26 @@ int? decisionRecordOf(Recipe recipe, IngredientLine line, int? fdcId) {
 /// then "and|with their|its liquid" ("Add remaining 2 cups water, beans and
 /// their liquid", best ground beef chili; "Stir in cannellini beans and
 /// their liquid", soupe au pistou). Only a can line.
+///
+/// v81 (Run 065/066 F13, RULE C): read once per head per step index from
+/// its lower-cased steps (`memo:canLiquid`; Key: head — the noun the
+/// sentence is searched for) — it built the regex and lower-cased every
+/// step per lineGrams call.
 bool canLiquidEatenIn(Recipe recipe, IngredientLine line) {
   final head = headNounOf(normalizeItem(lineItemOf(line)));
-  if (head == null || !RegExp(r'\bcans?\b').hasMatch(line.raw.toLowerCase())) {
+  if (head == null || !_canWord.hasMatch(line.raw.toLowerCase())) {
     return false;
   }
-  final said = RegExp(
-    '\\b${RegExp.escape(head)}(?:e?s)?\\s+(?:and|with)\\s+(?:their|its)\\s+liquid\\b',
-  );
-  return recipe.steps.any((step) => said.hasMatch(step.text.toLowerCase()));
+  final index = _stepIndexOf(recipe);
+  return index.memo(('canLiquid', head), () {
+    final said = RegExp(
+      '\\b${RegExp.escape(head)}(?:e?s)?\\s+(?:and|with)\\s+(?:their|its)\\s+liquid\\b',
+    );
+    return index.lower.any(said.hasMatch);
+  });
 }
+
+final RegExp _canWord = RegExp(r'\bcans?\b');
 
 /// v59 (M60 P7a, prep48 design_v2 §2; pre-Q18): whether [recipe]'s steps
 /// pare [line]'s item raw — a sentence that BEGINS with the paring act
@@ -8202,6 +8260,29 @@ Set<String> pickedSectionKeysOf(SaltDatabase db, {String? recipeId}) => {
     if (nutritionRecipeOf(db, key) != null) key,
 };
 
+/// v81 (Run 065/066 F11): whether the child [childId] a row routes to is a
+/// SECTION its host has emptied of ingredient lines — a person's pick
+/// (the PUT refuses one at pick time; an edit can empty it after). The
+/// row reads as the engine's `no_ingredients` rule row: counted at 0 g,
+/// the label's `partial` naming it (`not_routed`, `no_ingredients`) —
+/// never a 0 g child counted complete, unflagged (the roast's pick of
+/// chraime#Tabil, emptied). The pick stays the person's: the section
+/// stays a child ([pickedSectionKeysOf]), so lines added back route it.
+/// closer 1 (verify1 D2, R1): the totals read it too ([recomputeTotals]) —
+/// the rule row is neither accounted nor contributing, so the parent reads
+/// PARTIAL as the engine's own route of the same emptied section does
+/// (chraime|7 → chraime#Tabil emptied: 15 of 16, partial). The host read
+/// through [memo], once per request or compute ([ResolverMemo.hostRecipe]).
+bool emptiedSectionChild(String childId, ResolverMemo memo) =>
+    hostOf(childId) != childId &&
+    switch (memo.hostRecipe(hostOf(childId))) {
+      final host? => switch (sectionOf(host, childId)) {
+        final section? => nutritionLines(section).isEmpty,
+        null => false,
+      },
+      null => false,
+    };
+
 /// A title or item as the resolver compares them: accents folded,
 /// punctuation a space, lowercase ("double-crust" is two words).
 String _refNorm(String text) => foldAccents(
@@ -8338,10 +8419,57 @@ bool servedWithMarked(Recipe recipe, IngredientLine line) {
 /// lemon-meringue-pie|0 → 0972's "Basic Single-Crust Pie Dough", 4 words
 /// against the host's 3), else the first such section. Null when no
 /// candidate shares a word, or the base reads no `routed` share (the
-/// `no_ingredients` row stays).
+/// `no_ingredients` row stays). The choice ([_proseChoice]) is the
+/// line-free half; the line reads its share of it ([_proseTail]).
 ReferenceResolution? _proseBase(
   Recipe recipe,
   IngredientLine line,
+  ResolverMemo memo,
+  ({String host, String title}) prose,
+) => switch (_proseChoice(recipe, memo, prose)) {
+  null => null,
+  final base => _proseTail(recipe, line, prose, base),
+};
+
+/// [_proseBase] on the base [base] PV chose for [prose]: [line]'s route to
+/// it at the share the route reads ([routeShareOf] — [_childTail]'s
+/// `routed` answer: the chosen base lists lines and is no `nested` child,
+/// [_proseChoice]), or null when no share reads. v81 closer 5 (verify5
+/// D3): a reader of many lines reads the choice once per prose section and
+/// this per line ([_proseReadsOf]).
+ReferenceResolution? _proseTail(
+  Recipe recipe,
+  IngredientLine line,
+  ({String host, String title}) prose,
+  _ProseChoice base,
+) {
+  final share = routeShareOf(recipe, line, base.child);
+  return share == null
+      ? null
+      : ReferenceResolution(
+          ReferenceKind.routed,
+          childId: base.child.id,
+          share: share,
+          section: switch (base.section) {
+            null => null,
+            final title => (host: base.host, title: title),
+          },
+          variation: prose,
+        );
+}
+
+/// Rule PV's base: the prose host itself (`child`), or its section copy
+/// (`section` the title; `host` the host's id).
+typedef _ProseChoice = ({Recipe child, String? section, String host});
+
+/// [_proseBase]'s choice of base for [prose] read by [recipe], its
+/// line-free half — a function of [recipe] and [prose] alone, so a reader
+/// of many lines reads it once per prose section ([_proseReadsOf]). Null:
+/// no candidate shares a word, or the chosen base is made from a recipe
+/// ([_madeFromRecipe]: every line routes to it `nested`, never `routed` —
+/// [_childTail]).
+_ProseChoice? _proseChoice(
+  Recipe recipe,
   ResolverMemo memo,
   ({String host, String title}) prose,
 ) {
@@ -8376,22 +8504,13 @@ ReferenceResolution? _proseBase(
   if (hostScore == 0 && bestScore == 0) {
     return null;
   }
-  final tail = hostScore >= bestScore
-      ? _childTail(line, host)
-      : _childTail(
-          line,
-          sectionRecipeOf(host, best!),
-          section: best.title,
-          host: host.id,
-        );
-  return tail.kind != ReferenceKind.routed
+  final child = hostScore >= bestScore ? host : sectionRecipeOf(host, best!);
+  return _madeFromRecipe(child)
       ? null
-      : ReferenceResolution(
-          ReferenceKind.routed,
-          childId: tail.childId,
-          share: tail.share,
-          section: tail.section,
-          variation: prose,
+      : (
+          child: child,
+          section: hostScore >= bestScore ? null : best!.title,
+          host: host.id,
         );
 }
 
@@ -8434,7 +8553,7 @@ ReferenceResolution _resolveInOrder(
   if (own.length == 1 || exactOwn.length == 1) {
     final title = own.length == 1 ? own.single : exactOwn.single;
     final key = sectionKeyOf(recipe.id, title);
-    return _childTail(line, sectionOf(recipe, key)!, section: title);
+    return _childTail(recipe, line, sectionOf(recipe, key)!, section: title);
   }
   final titles = memo.titles;
   final named = noteNamedTitles(recipe, item, memo);
@@ -8471,7 +8590,7 @@ ReferenceResolution _resolveInOrder(
       if (section == null) {
         return const ReferenceResolution(ReferenceKind.held, missing: true);
       }
-      return _childTail(line, section, section: title, host: host);
+      return _childTail(recipe, line, section, section: title, host: host);
     }
     final similar = similarTitles(recipe, item, memo);
     final sectionsAlike = [
@@ -8514,15 +8633,43 @@ ReferenceResolution _resolveInOrder(
   if (found == null) {
     return const ReferenceResolution(ReferenceKind.held, missing: true);
   }
-  return _childTail(line, found, named: named.length);
+  return _childTail(recipe, line, found, named: named.length);
 }
+
+/// The share of [child] at which the resolver routes [recipe]'s reference
+/// [line] — the ONE reading (v81, Run 065/066 Opus critic F15) of the
+/// route ([_childTail]), the PUT's recipe-pick gate and the share it
+/// stores, the derive of a decided child row ([_childRowOf]), a recipe
+/// decision's reach and write ([recipeReach], [applyRecipeToOthers]) and
+/// the fix sheet's candidates: [parseShare] against the child's own yield;
+/// a SECTION's A9 bare count of exactly 1 (S11; a section child is keyed
+/// `host#title`, as every section caller of [_childTail] passes); v52 rule
+/// WB's whole batch, 1.0, for a line with no amount of a child with lines —
+/// never one a served-with marker reads (rule SW: [resolveReference]
+/// answers `servedWith` before any route, so the route never reads it
+/// there). Null: no share reads (`noShare`; the PUT asks for one).
+double? routeShareOf(Recipe recipe, IngredientLine line, Recipe child) =>
+    parseShare(line.raw, line.amounts, child.servings) ??
+    (hostOf(child.id) != child.id &&
+            !isSubRecipeReference(line.raw) &&
+            line.amounts.length == 1 &&
+            line.amounts.single.unit == null &&
+            line.amounts.single.quantity.trim() == '1'
+        ? 1.0
+        : null) ??
+    (line.amounts.isEmpty &&
+            nutritionLines(child).isNotEmpty &&
+            !servedWithMarked(recipe, line)
+        ? 1.0
+        : null);
 
 /// The tail every resolved child runs (v41's library tail; v44 a section's
 /// too, design_v2 §2 v44.2): a SECTION with no ingredient lines is the
 /// `no_ingredients` rule row (S13: lemon-meringue-pie|0's prose dough); a
 /// child made from a recipe is `nested` (depth 1); else the share
-/// [parseShare] reads from the line against the CHILD's own yield (a
-/// section's `servings`, never its host's) — `routed`, or `noShare`. An
+/// [routeShareOf] reads ([parseShare] from the line against the CHILD's own
+/// yield — a section's `servings`, never its host's) — `routed`, or
+/// `noShare`. An
 /// A9 line's bare count of exactly 1 reads one recipe (S11); v52 (M51 Q22,
 /// rule WB) a line with no amount reads one whole batch, 1.0, of a child
 /// with lines (a lineless library recipe — latin-flan, best-baked-potatoes —
@@ -8531,6 +8678,7 @@ ReferenceResolution _resolveInOrder(
 /// computed yet routes all the same: its parent's engine row reads its
 /// recipe stale until the child's stamp lands (v41 F6), never a fetch.
 ReferenceResolution _childTail(
+  Recipe recipe,
   IngredientLine line,
   Recipe child, {
   int named = 0,
@@ -8547,23 +8695,14 @@ ReferenceResolution _childTail(
       noIngredients: true,
     );
   }
-  if (nutritionLines(child).any((l) => isReferenceIn(child, l))) {
+  if (_madeFromRecipe(child)) {
     return ReferenceResolution(
       ReferenceKind.nested,
       childId: child.id,
       section: at,
     );
   }
-  final share =
-      parseShare(line.raw, line.amounts, child.servings) ??
-      (section != null &&
-              !isSubRecipeReference(line.raw) &&
-              line.amounts.length == 1 &&
-              line.amounts.single.unit == null &&
-              line.amounts.single.quantity.trim() == '1'
-          ? 1.0
-          : null) ??
-      (line.amounts.isEmpty && nutritionLines(child).isNotEmpty ? 1.0 : null);
+  final share = routeShareOf(recipe, line, child);
   return ReferenceResolution(
     share == null ? ReferenceKind.noShare : ReferenceKind.routed,
     childId: child.id,
@@ -8572,6 +8711,11 @@ ReferenceResolution _childTail(
     section: at,
   );
 }
+
+/// Whether [child] is made from a recipe — a line of it reads a sub-recipe
+/// ([isReferenceIn]): the resolver's `nested` test ([_childTail]).
+bool _madeFromRecipe(Recipe child) =>
+    nutritionLines(child).any((l) => isReferenceIn(child, l));
 
 /// The library titles [recipe]'s prep note names for the reference [item],
 /// in the note's order (design_v3 §2.2 item 2): only a note that says
@@ -8826,7 +8970,23 @@ AlcoholReading? alcoholRetentionOf(
           (belowConfidenceGate(row.confidence) || row.hold != null))) {
     return null;
   }
-  final reading = alcoholReadingOf(recipe, row.position, fdcId);
+  // v81 (Run 065/066 F9): the line handed is read — never the row's stored
+  // position, which an edit leaves stale until the next compute lays the
+  // rows out (0005 cut to 8 lines: the GET read lines[8], a RangeError
+  // 500; in range, another line's reading). The handed line's own place in
+  // [recipe]'s lines; a line of an equal recipe (the totals') at the row's
+  // position by its text; else none.
+  final lines = nutritionLines(recipe);
+  final own = lines.indexWhere((l) => identical(l, line));
+  final at = own >= 0
+      ? own
+      : row.position < lines.length && lines[row.position].raw == line.raw
+      ? row.position
+      : -1;
+  if (at < 0) {
+    return null;
+  }
+  final reading = alcoholReadingOf(recipe, at, fdcId);
   return reading.kept >= 100 ? null : reading;
 }
 
@@ -8834,11 +8994,19 @@ AlcoholReading? alcoholRetentionOf(
 /// [fdcId], whatever the row — the gate's and the pins' reader. Once per
 /// line (RULE C, critic 10): Key: position — the line read (its head, its
 /// amounts, its group); fdcId — its record's class word (R1).
-AlcoholReading alcoholReadingOf(Recipe recipe, int position, int fdcId) =>
-    _stepIndexOf(recipe).memo(
-      ('alcohol', position, fdcId),
-      () => _alcoholRead(recipe, position, fdcId),
-    );
+AlcoholReading alcoholReadingOf(Recipe recipe, int position, int fdcId) {
+  final index = _stepIndexOf(recipe);
+  return index.memo(('alcohol', position, fdcId), () {
+    // v81 (F2): the index's text facts, shared by every line's reading.
+    final outer = _alcoholTexts;
+    _alcoholTexts = index.memo(#alcoholTexts, () => <String, _AlcoholText>{});
+    try {
+      return _alcoholRead(recipe, position, fdcId);
+    } finally {
+      _alcoholTexts = outer;
+    }
+  });
+}
 
 /// USDA R6 group 14 ("Alcohol, ethyl" retained, retn06.pdf p. 12): stirred
 /// in and baked or simmered at least `minutes` (5004–5009). Under 15
@@ -8967,6 +9135,7 @@ typedef _AlcoholSentence = ({
   bool side,
   bool sideStep,
   double? altBake,
+  _AlcoholText f,
 });
 
 /// A printed alternative bake ("(To serve right away, bake as directed in
@@ -9027,11 +9196,174 @@ List<_AlcoholSentence> _alcoholSentencesOf(Recipe recipe) {
           side: _alcoholSideOpening.hasMatch(text),
           sideStep: sideStep,
           altBake: alts[j],
+          f: _alc(text),
         ));
       }
     }
     return out;
   });
+}
+
+/// [words] with [more] (v81 F2): the same set when [more] adds nothing —
+/// the walk grows a trail's words on every put sentence.
+Set<String> _alcoholGrown(Set<String> words, Set<String> more) =>
+    words.containsAll(more) ? words : {...words, ...more};
+
+/// v81 (Run 065/066 F2, RULE C): the texts the alcohol reader has read in
+/// the step index being read ([alcoholReadingOf] sets it; `memo:alcoholTexts`,
+/// once per index), each text's facts read once (`alcoholTexts`) — every
+/// line's walk reads the facts, never the text again (v54 re-read every later
+/// sentence with ~20 regexes per line: 0.85 s a wine line at the editor caps).
+Map<String, _AlcoholText>? _alcoholTexts;
+
+/// [text]'s facts: the index's, else (no read active) its own.
+_AlcoholText _alc(String text) {
+  final texts = _alcoholTexts;
+  return texts == null
+      ? _AlcoholText(text)
+      : texts[text] ??= _AlcoholText(text);
+}
+
+/// The words of a sentence (`[a-z]+`), as the alcohol reader splits them.
+final RegExp _alcoholLetters = RegExp('[a-z]+');
+
+/// What [_alcoholHeadsIn] reads between two words: a noun and its modifier.
+final RegExp _alcoholJoin = RegExp(r'^[ -]+$');
+
+/// One text's facts for the alcohol reader — each the expression it
+/// replaced, read on first use and kept (pure functions of the text).
+class _AlcoholText {
+  _AlcoholText(this.text) {
+    _count('alcoholTexts');
+  }
+
+  final String text;
+  late final bool heats = _alcoholHeat.hasMatch(
+    text.replaceAll(_alcoholNotHeat, ' '),
+  );
+  late final List<int> heatStarts = [
+    for (final m in _alcoholHeat.allMatches(
+      text.replaceAll(_alcoholNotHeat, ' '),
+    ))
+      m.start,
+  ];
+  late final Set<String> vessels = _alcoholVesselsRead(text);
+  late final double minutes = _alcoholMinutesRead(text);
+  late final List<({int start, int end, String kind})> stops = _alcoholStopsIn(
+    text,
+  );
+  late final Set<String> mixWords = _alcoholMixWordsRead(text);
+  late final Set<String> coated = _alcoholCoatedRead(text);
+  late final bool putsIn = _alcoholPutsIn.hasMatch(text);
+  late final bool putsLiquid = _alcoholPutsLiquid.hasMatch(text);
+  late final List<RegExpMatch> letters = _alcoholLetters
+      .allMatches(text)
+      .toList();
+
+  /// Each word and its singular, in order (the walk's `seen`).
+  late final List<String> words = [
+    for (final w in letters) ...[w[0]!, _alcoholSingular(w[0]!)],
+  ];
+
+  /// Whether only spaces and hyphens join word i to word i + 1.
+  late final List<bool> joined = [
+    for (var i = 0; i + 1 < letters.length; i++)
+      _alcoholJoin.hasMatch(
+        text.substring(letters[i].end, letters[i + 1].start),
+      ),
+  ];
+  late final List<RegExpMatch> mixtures = RegExp(
+    r'\b([a-z]+)([ -])([a-z]+ )?mixture\b',
+  ).allMatches(text).toList();
+  final Map<String, bool> _own = {};
+  final Map<String, ({String? amount, bool rest})?> _parts = {};
+
+  /// [_alcoholPartIn] of [name], once per name.
+  ({String? amount, bool rest})? partIn(String name) =>
+      _parts.containsKey(
+        name,
+      )
+      ? _parts[name]
+      : _parts[name] = _alcoholPartIn(text, name);
+
+  /// [_alcoholOwnMentionRead] of [word], once per word.
+  bool ownMention(String word) =>
+      _own[word] ??= _alcoholOwnMentionRead(text, word);
+  late final bool returns = _alcoholReturns.hasMatch(text);
+  late final bool microwave = _alcoholMicrowave.hasMatch(text);
+  late final bool handOff = _alcoholHandOff.hasMatch(text);
+  late final bool beerCan = _alcoholBeerCan.hasMatch(text);
+  late final List<({String prep, String vessel, int end})> dests = [
+    for (final m in _alcoholIntoVessel.allMatches(text))
+      if (_alcoholVesselsIn(m.namedGroup('what')!).firstOrNull case final v?)
+        if (m.namedGroup('prep') != 'on' || v.endsWith('sheet'))
+          (prep: m.namedGroup('prep')!, vessel: v, end: m.end),
+  ];
+  late final List<({String prep, String vessel, int end})> into = [
+    for (final d in dests)
+      if (!d.vessel.startsWith('other|')) d,
+  ];
+  late final List<String> named = [
+    for (final v in vessels)
+      if (!v.startsWith('other|')) v,
+  ];
+  late final List<String> namedOther = [
+    for (final v in vessels)
+      if (v.startsWith('other|')) v,
+  ];
+  late final bool otherWater = _alcoholOtherWater.hasMatch(text);
+  late final bool transfersIt = RegExp(
+    r'^transfer (it |them )?to\b',
+  ).hasMatch(text);
+  late final bool poursIt = _alcoholPoursIt.hasMatch(text);
+  late final List<String?> mixtureWhats = [
+    for (final m in _alcoholPutsMixture.allMatches(text)) m.namedGroup('what'),
+  ];
+  late final bool intoMix = RegExp(
+    r'\b(to|into|in) (the )?([a-z]+ )?(batter|marinade|mixture|dough)\b'
+    '(?!-)',
+  ).hasMatch(text);
+  late final List<int> oilStarts = [
+    for (final m in RegExp(
+      r'\b(to|into) (the )?(hot )?oil\b',
+    ).allMatches(text))
+      m.start,
+  ];
+  late final bool addsTossesStirs = RegExp(
+    r'^(add|toss|stir)\b',
+  ).hasMatch(text);
+  late final bool setsAside = RegExp(r'\bset aside\b|\breserv').hasMatch(text);
+  late final List<String> coldRests = [
+    for (final m in _alcoholColdVessel.allMatches(text)) m.namedGroup('rest')!,
+  ];
+  late final bool rolledIn = _alcoholRolledIn.hasMatch(text);
+  late final bool bakes = _alcoholBakes.hasMatch(text);
+  late final bool startsMove = RegExp(
+    r'^(add|return|transfer|place|pour)\b',
+  ).hasMatch(text);
+  late final bool untilHeat = _alcoholUntilHeat.hasMatch(
+    text.replaceAll(_alcoholNotHeat, ' ').replaceAll(_alcoholHeatedWater, ' '),
+  );
+  late final bool seals = _alcoholSeals.hasMatch(text);
+  late final bool unseals = _alcoholUnseals.hasMatch(text);
+  late final bool broil = _alcoholBroil.hasMatch(text);
+  late final bool oven = _alcoholOven.hasMatch(text);
+  late final RegExpMatch? strainInto = _alcoholStrainInto.firstMatch(text);
+
+  /// The text without its side clause ([_alcoholSideClause]).
+  late final _AlcoholText stripped = _alc(
+    text.replaceFirst(_alcoholSideClause, ''),
+  );
+  final Map<int, _AlcoholText> _from = {};
+  final Map<int, _AlcoholText> _upTo = {};
+
+  /// The text from offset [at] on.
+  _AlcoholText from(int at) =>
+      at == 0 ? this : _from[at] ??= _alc(text.substring(at));
+
+  /// The text before offset [at].
+  _AlcoholText upTo(int at) =>
+      at >= text.length ? this : _upTo[at] ??= _alc(text.substring(0, at));
 }
 
 /// Q25's OWN heat vocabulary (critic 1: never the frying set
@@ -9062,8 +9394,7 @@ final RegExp _alcoholNotHeat = RegExp(
   'uncovered|covered|or|then|about|halfway)[a-z]+)',
 );
 
-bool _alcoholHeats(String text) =>
-    _alcoholHeat.hasMatch(text.replaceAll(_alcoholNotHeat, ' '));
+bool _alcoholHeats(String text) => _alc(text).heats;
 
 /// A flame (critic 2): read in the adding sentence and the next two of its
 /// step, before the off-heat arm.
@@ -9090,31 +9421,264 @@ final RegExp _alcoholReturns = RegExp(
 /// `removal` (off the heat, out of the oven: a later return takes it back,
 /// critic 4), `wait` (cooled, chilled, left to stand, set aside: a cold
 /// premix waits so before its heat) and `out` (strained, poured off, the
-/// liquid or the food moved out).
-final RegExp _alcoholStops = RegExp(
-  r'(?<final>\bserve\b)|'
-  r'(?<removal>\boff (the )?heat\b|\bremove\b[^.;]*\bfrom (the )?'
-  r'(heat|oven|grill)\b)|'
-  r'(?<wait>\b(let|allow)\b[^.;]*\b(cool|stand|rest|sit|settle)\b|'
-  r'\bcool (for|slightly|completely|to)\b|^cool\b|\brefrigerat\w*|'
+/// liquid or the food moved out) — each stop's start, end and kind, in
+/// order, as v54's single regex matched them:
+/// ```text
+/// (?<final>\bserve\b)|
+/// (?<removal>\boff (the )?heat\b|\bremove\b[^.;]*\bfrom (the )?(heat|oven|grill)\b)|
+/// (?<wait>\b(let|allow)\b[^.;]*\b(cool|stand|rest|sit|settle)\b|
+///   \bcool (for|slightly|completely|to)\b|^cool\b|\brefrigerat\w*|\bchill\b|
+///   \bfreez\w*|\bset aside\b|\bkeep warm\b)|
+/// (?<out>\bstrain\b|\bthrough (a )?fine-mesh\b|
+///   \btransfer (the )?(sauce|…|glaze)\b[^.;]* to (a |the )?([\w-]+ )*?(bowl|…|blender)\b|
+///   \b(transfer|place|stack)\b[^.;]*\b(to|on|onto) (a |the )?([\w-]+ )*(wire rack|…|carving board))
+/// ```
+/// v81 (Run 065/066 F3): that regex nested a greedy `[^.;]*` and a repeated
+/// `([\w-]+ )*` — CUBIC per sentence (≈ 35 ms a 1,000-character window, 42
+/// s one wine line under cap-sized steps). Read LINEAR: one pass of
+/// [_alcoholStopWords] for the stop words and the arms' anchors; each
+/// greedy arm's end from its period-free piece — the LAST tail after the
+/// anchor (`[^.;]*` is greedy), a vessel along the word chain after " to "
+/// (the first, `*?`) or after a "to"/"on"/"onto" (the last, `*`), each
+/// chain position read once per text. Pinned equal to the regex on a fuzz
+/// of corpus sentences (nutrition_v81_test).
+List<({int start, int end, String kind})> _alcoholStopsIn(String text) {
+  final out = <({int start, int end, String kind})>[];
+  final reader = _StopTails(text);
+  var pos = 0;
+  for (final m in _alcoholStopWords.allMatches(text)) {
+    if (m.start < pos) {
+      continue;
+    }
+    final kind = m.namedGroup('final') != null
+        ? 'final'
+        : m.namedGroup('offHeat') != null
+        ? 'removal'
+        : m.namedGroup('wait') != null
+        ? 'wait'
+        : m.namedGroup('out') != null
+        ? 'out'
+        : null;
+    final int? end;
+    if (kind != null) {
+      end = m.end;
+    } else if (m.namedGroup('remove') != null) {
+      end = reader.lastIn(_fromHeat, m.end);
+    } else if (m.namedGroup('let') != null) {
+      end = reader.lastIn(_coolsOrStands, m.end);
+    } else if (m.namedGroup('transfer') != null) {
+      end = reader.transferredLiquid(m.start) ?? reader.placed(m.end);
+    } else {
+      end = reader.placed(m.end);
+    }
+    if (end != null) {
+      out.add((
+        start: m.start,
+        end: end,
+        kind:
+            kind ??
+            (m.namedGroup('remove') != null
+                ? 'removal'
+                : m.namedGroup('let') != null
+                ? 'wait'
+                : 'out'),
+      ));
+      pos = end;
+    }
+  }
+  return out;
+}
+
+/// [_alcoholStopsIn] on [text] (the fuzz pin's reader).
+@visibleForTesting
+List<({int start, int end, String kind})> alcoholStopsForTest(String text) =>
+    _alcoholStopsIn(text);
+
+/// The stop words and the greedy arms' anchors, one pass.
+final RegExp _alcoholStopWords = RegExp(
+  r'(?<final>\bserve\b)|(?<offHeat>\boff (?:the )?heat\b)|'
+  r'(?<remove>\bremove\b)|(?<let>\b(?:let|allow)\b)|'
+  r'(?<wait>\bcool (?:for|slightly|completely|to)\b|^cool\b|\brefrigerat\w*|'
   r'\bchill\b|\bfreez\w*|\bset aside\b|\bkeep warm\b)|'
-  r'(?<out>\bstrain\b|\bthrough (a )?fine-mesh\b|'
-  r'\btransfer (the )?(sauce|mixture|liquid|braising liquid|stock|broth|'
-  r'gravy|soup|reduction|syrup|glaze)\b[^.;]* to (a |the )?([\w-]+ )*?'
-  '(bowl|container|measuring cup|jar|fat separator|serving|platter|'
-  r'gravy boat|pitcher|blender)\b|'
-  r'\b(transfer|place|stack)\b[^.;]*\b(to|on|onto) (a |the )?([\w-]+ )*'
-  '(wire rack|paper towels?|paper bag|(?<!pie )plate|platter|cutting board|'
-  'carving board))',
+  r'(?<out>\bstrain\b|\bthrough (?:a )?fine-mesh\b)|'
+  r'(?<transfer>\btransfer\b)|(?<place>\b(?:place|stack)\b)',
 );
 
-String _alcoholStopKind(RegExpMatch m) => m.namedGroup('final') != null
-    ? 'final'
-    : m.namedGroup('removal') != null
-    ? 'removal'
-    : m.namedGroup('wait') != null
-    ? 'wait'
-    : 'out';
+final RegExp _fromHeat = RegExp(r'\bfrom (?:the )?(?:heat|oven|grill)\b');
+
+final RegExp _coolsOrStands = RegExp(
+  r'\b(?:cool|stand|rest|sit|settle)\b',
+);
+
+/// The transfer arm's anchor, read at its own start.
+final RegExp _transfersLiquid = RegExp(
+  'transfer (?:the )?(?:sauce|mixture|liquid|braising liquid|stock|broth|'
+  r'gravy|soup|reduction|syrup|glaze)\b',
+);
+
+/// The transfer arm's vessel, read at a word-chain position.
+final RegExp _liquidVessel = RegExp(
+  '(?:bowl|container|measuring cup|jar|fat separator|serving|platter|'
+  r'gravy boat|pitcher|blender)\b',
+);
+
+/// The place arm's preposition, its space included.
+final RegExp _placesOn = RegExp(r'\b(?:to|on|onto) ');
+
+/// The place arm's surface, read at a word-chain position (no `\b` after).
+final RegExp _placedSurface = RegExp(
+  '(?:wire rack|paper towels?|paper bag|(?<!pie )plate|platter|'
+  'cutting board|carving board)',
+);
+
+/// [_alcoholStopsIn]'s tails of one text, each read once: a tail pattern's
+/// starts, the " to " and preposition starts, and each word-chain position's
+/// first liquid vessel and last surface (a chain: a `[\w-]+` run then one
+/// space, as the regex's `([\w-]+ )`).
+class _StopTails {
+  _StopTails(this.text);
+
+  final String text;
+  final Map<RegExp, List<RegExpMatch>> _tails = {};
+  late final List<int> _tos = () {
+    final at = <int>[];
+    for (var i = text.indexOf(' to '); i >= 0;) {
+      at.add(i);
+      i = text.indexOf(' to ', i + 1);
+    }
+    return at;
+  }();
+  late final List<RegExpMatch> _preps = _placesOn.allMatches(text).toList();
+  final Map<int, int> _firstVessel = {};
+  final Map<int, int> _lastSurface = {};
+
+  /// Each '.' and ';' of the text, in order.
+  late final List<int> _stops = [
+    for (var i = 0; i < text.length; i++)
+      if (text.codeUnitAt(i) == 0x2e || text.codeUnitAt(i) == 0x3b) i,
+  ];
+
+  /// The end of the period-free piece from [at]: its first '.' or ';' (a
+  /// binary search).
+  int _pieceEnd(int at) {
+    final i = _firstAfter(_stops, at, (p) => p);
+    return i < _stops.length ? _stops[i] : text.length;
+  }
+
+  /// The end of the LAST [tail] match starting in [from, piece end).
+  int? lastIn(RegExp tail, int from) {
+    final all = _tails[tail] ??= tail.allMatches(text).toList();
+    final end = _pieceEnd(from);
+    final i = _firstAfter(all, end, (m) => m.start) - 1;
+    return i >= 0 && all[i].start >= from ? all[i].end : null;
+  }
+
+  static bool _wordOrDash(int c) =>
+      (c >= 0x61 && c <= 0x7a) ||
+      (c >= 0x41 && c <= 0x5a) ||
+      (c >= 0x30 && c <= 0x39) ||
+      c == 0x5f ||
+      c == 0x2d;
+
+  /// The next word-chain position after [w]: past its `[\w-]+` run and
+  /// one space; null when none.
+  int? _next(int w) {
+    var x = w;
+    while (x < text.length && _wordOrDash(text.codeUnitAt(x))) {
+      x++;
+    }
+    return x > w && x < text.length && text.codeUnitAt(x) == 0x20
+        ? x + 1
+        : null;
+  }
+
+  /// The end of the first [_liquidVessel] along the chain from [w] (`*?`),
+  /// -1 when none; each position read once.
+  int _vesselFrom(int w) {
+    final path = <int>[];
+    int? at = w;
+    var found = -1;
+    while (at != null) {
+      if (_firstVessel[at] case final known?) {
+        found = known;
+        break;
+      }
+      path.add(at);
+      final m = _liquidVessel.matchAsPrefix(text, at);
+      if (m != null) {
+        found = m.end;
+        break;
+      }
+      at = _next(at);
+    }
+    for (final p in path) {
+      _firstVessel[p] = found;
+    }
+    return found;
+  }
+
+  /// The end of the last [_placedSurface] along the chain from [w] (`*`),
+  /// -1 when none; each position read once.
+  int _surfaceFrom(int w) {
+    final path = <int>[];
+    int? at = w;
+    var last = -1;
+    while (at != null) {
+      if (_lastSurface[at] case final known?) {
+        last = known;
+        break;
+      }
+      path.add(at);
+      at = _next(at);
+    }
+    for (final p in path.reversed) {
+      final m = _placedSurface.matchAsPrefix(text, p);
+      if (m != null && last < 0) {
+        last = m.end;
+      }
+      _lastSurface[p] = last;
+    }
+    return last;
+  }
+
+  /// The " to " starts whose chain reaches a vessel, in order (each chain
+  /// position read once: linear in the text).
+  late final List<int> _vesselTos = [
+    for (final p in _tos)
+      if (_vesselFrom(p + 4) >= 0) p,
+  ];
+
+  /// The prepositions whose chain reaches a surface, in order.
+  late final List<RegExpMatch> _surfacePreps = [
+    for (final m in _preps)
+      if (_surfaceFrom(m.end) >= 0) m,
+  ];
+
+  /// The transfer arm at [start]: its anchor, then the LAST " to " in the
+  /// piece whose chain reaches a vessel (a binary search).
+  int? transferredLiquid(int start) {
+    final anchor = _transfersLiquid.matchAsPrefix(text, start);
+    if (anchor == null) {
+      return null;
+    }
+    final end = _pieceEnd(anchor.end);
+    final i = _firstAfter(_vesselTos, end - 3, (p) => p) - 1;
+    return i >= 0 && _vesselTos[i] >= anchor.end
+        ? _vesselFrom(_vesselTos[i] + 4)
+        : null;
+  }
+
+  /// The place arm after its anchor (ending at [from]): the LAST
+  /// preposition in the piece whose chain reaches a surface (a binary
+  /// search).
+  int? placed(int from) {
+    final end = _pieceEnd(from);
+    final i = _firstAfter(_surfacePreps, end, (m) => m.start) - 1;
+    return i >= 0 && _surfacePreps[i].start >= from
+        ? _surfaceFrom(_surfacePreps[i].end)
+        : null;
+  }
+}
 
 /// A vessel a sentence names, by kind.
 final RegExp _alcoholVessel = RegExp(
@@ -9158,7 +9722,9 @@ const Set<String> _alcoholColdVessels = {
 /// The kinds of vessel [text] names; a now-empty, clean, second or
 /// separate one is `other|<kind>` (never the line's, closer1 D3: but the
 /// line put there goes with it, "transfer the pork to a clean bowl").
-Set<String> _alcoholVesselsIn(String text) => {
+Set<String> _alcoholVesselsIn(String text) => _alc(text).vessels;
+
+Set<String> _alcoholVesselsRead(String text) => {
   for (final m in _alcoholVessel.allMatches(text))
     if (text.substring(max(0, m.start - 40), m.start) case final before)
       RegExp(
@@ -9230,7 +9796,9 @@ final RegExp _alcoholOptional = RegExp(
 /// none, but a sentence OPENING "After 1 hour" is the elapsed time of the
 /// cook before it (0084); an alternative — after ", or", or "N minutes
 /// for X or M minutes for Y" — the SHORTER (P16).
-double _alcoholMinutesIn(String text) {
+double _alcoholMinutesIn(String text) => _alc(text).minutes;
+
+double _alcoholMinutesRead(String text) {
   double? least;
   final asked = _alcoholOptional.firstMatch(text)?.start;
   for (final alternative in text.substring(0, asked).split(', or ')) {
@@ -9251,7 +9819,8 @@ double _alcoholMinutesIn(String text) {
           ? value * 60
           : value;
       if (m.namedGroup('more') case final more?) {
-        minutes += double.parse(RegExp(r'\d+').firstMatch(more)![0]!);
+        // v81 (F14): bounded, never Infinity minutes.
+        minutes += parseQuantity(RegExp(r'\d+').firstMatch(more)![0]!) ?? 0;
       }
       if (m.namedGroup('side') != null) {
         minutes *= 2;
@@ -9297,43 +9866,43 @@ final RegExp _alcoholPutsIn = RegExp(
 /// group's word, a food it was poured over, or a "<word> mixture" of its
 /// adding sentence — never a bare "liquid" or "sauce".
 bool _alcoholNamesOwn(String text, _AlcoholTrail t) =>
-    _alcoholOwnMention(text, t.name) ||
-    _alcoholHeadsIn(
-      text,
-      t.foods,
-    ).any((f) => _alcoholOwnMention(text, f)) ||
-    RegExp(r'\b([a-z]+)([ -])([a-z]+ )?mixture\b')
-        .allMatches(text)
-        .any(
-          (m) => m[2] == '-'
-              // "garlic-shallot mixture": both words, never "garlic" alone
-              // from the line's "chili-garlic sauce" (0544; closer1 D3)
-              ? t.words.contains(m[1]) && t.words.contains(m[3]?.trim())
-              : switch (m[3]?.trim()) {
-                  // "soy sauce mixture": the word next to "mixture", or the one
-                  // before it — never across "and" ("very soft and mixture is
-                  // reduced", 0986; closer1 D3)
-                  final y? =>
-                    t.words.contains(y) ||
-                        t.foods.contains(y) ||
-                        (!const {
-                              'and',
-                              'or',
-                              'the',
-                              'with',
-                              'of',
-                              'is',
-                              'are',
-                            }.contains(y) &&
-                            (t.words.contains(m[1]) || t.foods.contains(m[1]))),
-                  null => t.words.contains(m[1]) || t.foods.contains(m[1]),
-                },
-        );
+    _alcoholNamesOwnIn(_alc(text), t);
+
+/// [_alcoholNamesOwn] on a text's facts (v81 F2).
+bool _alcoholNamesOwnIn(_AlcoholText x, _AlcoholTrail t) =>
+    x.ownMention(t.name) ||
+    _alcoholHeadsIn(x.text, t.foods).any(x.ownMention) ||
+    x.mixtures.any(
+      (m) => m[2] == '-'
+          // "garlic-shallot mixture": both words, never "garlic" alone
+          // from the line's "chili-garlic sauce" (0544; closer1 D3)
+          ? t.words.contains(m[1]) && t.words.contains(m[3]?.trim())
+          : switch (m[3]?.trim()) {
+              // "soy sauce mixture": the word next to "mixture", or the one
+              // before it — never across "and" ("very soft and mixture is
+              // reduced", 0986; closer1 D3)
+              final y? =>
+                t.words.contains(y) ||
+                    t.foods.contains(y) ||
+                    (!const {
+                          'and',
+                          'or',
+                          'the',
+                          'with',
+                          'of',
+                          'is',
+                          'are',
+                        }.contains(y) &&
+                        (t.words.contains(m[1]) || t.foods.contains(m[1]))),
+              null => t.words.contains(m[1]) || t.foods.contains(m[1]),
+            },
+    );
 
 /// Whether [text] names [word] as the trail's own portion — never "the
 /// remaining 4 teaspoons garlic" or "3 tablespoons of the cognac", another
-/// portion of it, nor "the stuffing ingredients" (all of a group's).
-bool _alcoholOwnMention(String text, String word) =>
+/// portion of it, nor "the stuffing ingredients" (all of a group's). Read
+/// once per text and word ([_AlcoholText.ownMention]).
+bool _alcoholOwnMentionRead(String text, String word) =>
     // the first mention decides: "add remaining ¼ cup broth and cook …
     // until broth evaporates" is the other portion throughout (1138)
     RegExp('\\b${RegExp.escape(word)}').allMatches(text).take(1).any((m) {
@@ -9399,16 +9968,11 @@ bool _alcoholReturnsAfter(List<_AlcoholSentence> s, int at, int from) {
     if (s[i].empty) {
       continue;
     }
-    final text = i == at ? s[i].text.substring(from) : s[i].text;
-    if (_alcoholReturns.hasMatch(text)) {
+    final f = i == at ? s[i].f.from(from) : s[i].f;
+    if (f.returns) {
       return true;
     }
-    if (i > at &&
-        _alcoholStops
-            .allMatches(text)
-            .any(
-              (m) => _alcoholStopKind(m) != 'removal',
-            )) {
+    if (i > at && f.stops.any((m) => m.kind != 'removal')) {
       return false;
     }
   }
@@ -9420,17 +9984,15 @@ bool _alcoholReturnsAfter(List<_AlcoholSentence> s, int at, int from) {
 /// stop after.
 bool _alcoholCarried(List<_AlcoholSentence> s, int at) {
   for (var i = at - 1; i >= 0 && s[i].step >= s[at].step - 1; i--) {
-    final text = s[i].text;
+    final f = s[i].f;
     if (s[i].empty ||
         s[i].side ||
         (s[i].sideStep && s[i].step != s[at].step) ||
-        _alcoholMicrowave.hasMatch(text)) {
+        f.microwave) {
       continue;
     }
-    final stops = _alcoholStops.allMatches(text).map((m) => m.start);
-    final heats = _alcoholHeat
-        .allMatches(text.replaceAll(_alcoholNotHeat, ' '))
-        .map((m) => m.start);
+    final stops = f.stops.map((m) => m.start);
+    final heats = f.heatStarts;
     if (stops.isEmpty && heats.isEmpty) {
       continue;
     }
@@ -9525,7 +10087,8 @@ _AlcoholRunRead _alcoholRun(
   List<_AlcoholSentence> s,
   int at,
   int from,
-  _AlcoholTrail start, {
+  _AlcoholTrail start,
+  _AlcoholRecipe r, {
   required bool onHeat,
   bool follow = true,
 }) {
@@ -9543,37 +10106,122 @@ _AlcoholRunRead _alcoholRun(
   var sealed = false;
   var underPressure = false;
   var step = s[at].step;
-  _AlcoholRunRead read() => (
-    minutes: total,
-    ovenMinutes: ovenTotal,
-    heated: heated,
-    sealed: sealed,
-    until: until,
-    closes: switch ((heatAt, stopAt)) {
-      (final h?, final t?) => t <= h + 2,
-      _ => false,
-    },
-  );
+  // v81 (Run 065/066 F2, RULE C): from a step's first sentence on, a run is
+  // a function of its state — never of its start — so every run of the
+  // index shares what follows a state once read ([_AlcoholRecipe.runs]):
+  // the minutes added after it, replayed in order (the same sums, bit for
+  // bit), and what the run ends with. A run marks the states it passes;
+  // its end fills them.
+  // ponytail: runs whose lines' own words the steps print never share —
+  // their narrowed vocabularies differ (closer 1's OWN-NAMED shape) — so
+  // O(lines × sentences) reads and every run's minutes kept: ≈ 10 s a path
+  // and 1.0 GB max RSS at the editor caps (count-pinned); a per-sentence
+  // transition table, independent of the line, if it matters.
+  final adds = <double>[];
+  final ovens = <bool>[];
+  _AlcoholAdds? tail;
+  final marks = <({String key, int adds, bool heatAt, bool stopAt})>[];
+  _AlcoholRunRead read() {
+    for (final m in marks) {
+      r.runs[m.key] = (
+        adds: _AlcoholAdds(adds, ovens, m.adds, tail),
+        heatAt: m.heatAt ? heatAt : null,
+        stopAt: m.stopAt ? stopAt : null,
+        heated: heated,
+        sealed: sealed,
+        until: until,
+      );
+    }
+    return (
+      minutes: total,
+      ovenMinutes: ovenTotal,
+      heated: heated,
+      sealed: sealed,
+      until: until,
+      closes: switch ((heatAt, stopAt)) {
+        (final h?, final t?) => t <= h + 2,
+        _ => false,
+      },
+    );
+  }
+
   // The words of the sentences read since the adding one: a "<word>
   // mixture" made of them is another mix.
   // (closer1 D3: the words of every sentence before the adding one too,
   // singular as well, but never the adding sentence's own — "the mushroom
   // mixture" is the mushrooms' (0448), "the water mixture" the line's.)
-  Set<String> wordsIn(String t) => {
-    for (final w in RegExp('[a-z]+').allMatches(t)) ...{
-      w[0]!,
-      _alcoholSingular(w[0]!),
-    },
-  };
+  // v81 (F2): only a "<word> mixture"'s or "<word> paste"'s word is ever
+  // asked of them ([_AlcoholRecipe.mixtureWords]) — those kept, from their
+  // first sentence.
+  final adding = s[at].f.words.toSet();
   final seen = <String>{
-    for (final x in s.take(at)) ...wordsIn(x.text),
-  }.difference(wordsIn(s[at].text));
+    for (final MapEntry(key: w, value: first) in r.mixtureWords.entries)
+      if (first < at && !adding.contains(w)) w,
+  };
+  String? seenKey;
+  void see(List<String> words) {
+    for (final w in words) {
+      if (r.mixtureWords.containsKey(w) && seen.add(w)) {
+        seenKey = null;
+      }
+    }
+  }
+
   for (var i = at; i < s.length; i++) {
     final x = s[i];
     if (x.step != step) {
       place = (trail: place.trail, aside: false, here: place.trail.vessel);
       step = x.step;
+      if (i > at) {
+        final t = place.trail;
+        seenKey ??= (seen.toList()..sort()).join(',');
+        final key = [
+          i,
+          started,
+          t.name,
+          t.vessel,
+          r.canonMixture(t.words),
+          r.canon(t.foods),
+          r.canon(t.vocab),
+          leaves,
+          altBake,
+          heated,
+          until,
+          sealed,
+          underPressure,
+          heatAt != null,
+          stopAt != null,
+          seenKey,
+          batter,
+          follow,
+        ].join('\u0000');
+        if (r.runs[key] case final rest?) {
+          _count('alcoholRunsShared');
+          for (_AlcoholAdds? a = rest.adds; a != null; a = a.next) {
+            for (var j = a.from; j < a.minutes.length; j++) {
+              total += a.minutes[j];
+              if (a.oven[j]) {
+                ovenTotal += a.minutes[j];
+              }
+            }
+          }
+          tail = rest.adds;
+          heatAt ??= rest.heatAt;
+          stopAt ??= rest.stopAt;
+          heated = rest.heated;
+          sealed = rest.sealed;
+          until = rest.until;
+          return read();
+        }
+        marks.add((
+          key: key,
+          adds: adds.length,
+          heatAt: heatAt == null,
+          stopAt: stopAt == null,
+        ));
+      }
     }
+    _count('alcoholRunSentences');
     if (x.altBake case final alt?) {
       altBake = alt;
     }
@@ -9588,49 +10236,38 @@ _AlcoholRunRead _alcoholRun(
     // stay in until the line or its vessel comes back (closer1 D3: never
     // the whole step, 0699, 0361, 0448).
     final sideTask = i != at && x.side;
-    final text = i == at
-        ? x.text.substring(from)
+    // v81 (F2): the text's facts, read once per index.
+    final f = i == at
+        ? x.f.from(from)
         : sideTask
-        ? x.text.replaceFirst(_alcoholSideClause, '')
-        : x.text;
+        ? x.f.stripped
+        : x.f;
     if (sideTask &&
-        !(_alcoholPutsIn.hasMatch(text) &&
-            (_alcoholNamesOwn(text, place.trail) ||
-                _alcoholPutsLiquid.hasMatch(text)))) {
-      seen.addAll([
-        for (final w in RegExp('[a-z]+').allMatches(text)) ...[
-          w[0]!,
-          _alcoholSingular(w[0]!),
-        ],
-      ]);
+        !(f.putsIn && (_alcoholNamesOwnIn(f, place.trail) || f.putsLiquid))) {
+      see(f.words);
       place = (
         trail: place.trail,
         aside: true,
-        here: _alcoholContext(text, place, waiting: !started).here,
+        here: _alcoholContext(f, place, waiting: !started).here,
       );
       continue;
     }
     if (i != at) {
       final was = place.trail.vessel;
-      place = _alcoholContext(text, place, waiting: !started, seen: seen);
-      seen.addAll([
-        for (final w in RegExp('[a-z]+').allMatches(text)) ...[
-          w[0]!,
-          _alcoholSingular(w[0]!),
-        ],
-      ]);
+      place = _alcoholContext(f, place, waiting: !started, seen: seen);
+      see(f.words);
       if (place.aside) {
         continue;
       }
       // What the line's vessel takes while it is in it names a later
       // "<word> mixture" of it ("Add reserved tomato juice and simmer …
       // stir in reserved tomato juice mixture", 0347; closer1 D3).
-      if (started && _alcoholPutsIn.hasMatch(text)) {
+      if (started && f.putsIn) {
         final t = place.trail;
         place = (
           trail: (
             name: t.name,
-            words: {...t.words, ..._alcoholMixWords(text)},
+            words: _alcoholGrown(t.words, f.mixWords),
             vessel: t.vessel,
             foods: t.foods,
             vocab: t.vocab,
@@ -9658,69 +10295,63 @@ _AlcoholRunRead _alcoholRun(
     }
     // A cold mix waiting for its heat is not stopped by a rest, a chill or
     // a move ("Transfer the dough pieces to a plate … refrigerate").
-    final stops = [
-      for (final m in _alcoholStops.allMatches(text))
-        if (started ||
-            _alcoholStopKind(m) == 'final' ||
-            _alcoholStopKind(m) == 'removal')
-          m,
-    ];
-    final stop = stops.firstOrNull;
-    final upTo = stop == null ? text : text.substring(0, stop.start);
+    final stop = f.stops
+        .where(
+          (m) => started || m.kind == 'final' || m.kind == 'removal',
+        )
+        .firstOrNull;
+    final u = stop == null ? f : f.upTo(stop.start);
     // D1 ruling (closer1): a stuffing rolled or wrapped inside a roast is
     // not cooked by the roast — the roasts that do so print a rare to
     // medium-rare doneness (85 °F, 120 °F), so the run ends where the
     // cooled mixture is rolled in (1129 beef-wellington|14, 0216|7).
-    if (!started && heated && _alcoholRolledIn.hasMatch(upTo)) {
+    if (!started && heated && u.rolledIn) {
       return read();
     }
     if (!started &&
-        _alcoholHeats(upTo) &&
+        u.heats &&
         // a dough or batter waiting starts at its own bake, fry or cook —
         // never another food put on to cook beside it ("Add remaining
         // strawberries to rhubarb liquid and cook …", 0986; closer1 D3)
         (!batter ||
-            _alcoholBakes.hasMatch(upTo) ||
-            _alcoholNamesOwn(upTo, place.trail) ||
-            !RegExp(r'^(add|return|transfer|place|pour)\b').hasMatch(upTo))) {
+            u.bakes ||
+            _alcoholNamesOwnIn(u, place.trail) ||
+            !u.startsMove)) {
       started = heated = true;
       heatAt ??= i;
     }
-    if (started &&
-        _alcoholUntilHeat.hasMatch(
-          upTo
-              .replaceAll(_alcoholNotHeat, ' ')
-              .replaceAll(_alcoholHeatedWater, ' '),
-        )) {
+    if (started && u.untilHeat) {
       until = true;
     }
-    if (_alcoholSeals.hasMatch(upTo)) {
+    if (u.seals) {
       underPressure = sealed = true;
     }
-    if (_alcoholUnseals.hasMatch(upTo)) {
+    if (u.unseals) {
       underPressure = false;
     }
-    double minutesIn(String t) {
-      if (!started ||
-          underPressure ||
-          _alcoholBroil.hasMatch(t) && !_alcoholOven.hasMatch(t)) {
+    double minutesIn(_AlcoholText t) {
+      if (!started || underPressure || t.broil && !t.oven) {
         return 0;
       }
-      return _alcoholMinutesIn(t);
+      return t.minutes;
     }
 
-    void count(String t) {
+    void count(_AlcoholText t) {
       var m = minutesIn(t);
-      if (altBake case final alt? when m > alt && _alcoholOven.hasMatch(t)) {
+      if (altBake case final alt? when m > alt && t.oven) {
         m = alt;
       }
       total += m;
-      if (_alcoholOven.hasMatch(t)) {
+      if (t.oven) {
         ovenTotal += m;
+      }
+      if (m != 0) {
+        adds.add(m);
+        ovens.add(t.oven);
       }
     }
 
-    count(upTo);
+    count(u);
     if (leaves) {
       leaves = false;
       started = false;
@@ -9732,10 +10363,10 @@ _AlcoholRunRead _alcoholRun(
     if (heatAt != null) {
       stopAt ??= i;
     }
-    final kind = _alcoholStopKind(stop);
+    final kind = stop.kind;
     if (kind == 'removal' &&
         _alcoholReturnsAfter(s, i, i == at ? from + stop.end : stop.end)) {
-      count(text.substring(stop.end));
+      count(f.from(stop.end));
       continue;
     }
     if (kind == 'final' || !started) {
@@ -9746,7 +10377,7 @@ _AlcoholRunRead _alcoholRun(
     // mixture through a fine-mesh strainer set over a small saucepan …
     // Place the saucepan over medium-high heat", 0184; "Strain stock …
     // set over bowl … Slowly whisk in stock", 1076).
-    if (_alcoholStrainInto.firstMatch(text) case final m?) {
+    if (f.strainInto case final m?) {
       if (_alcoholVesselsIn(m.namedGroup('v')!).firstOrNull case final v?) {
         final t = place.trail;
         final what = m.namedGroup('what')!.split(' ').last;
@@ -9800,7 +10431,7 @@ final RegExp _alcoholStrainInto = RegExp(
 /// and the vessel the step is working in.
 typedef _AlcoholPlace = ({_AlcoholTrail trail, bool aside, String? here});
 
-/// The place after reading [text] (R3, R6, critic 5): a sentence putting
+/// The place after reading [x] (R3, R6, critic 5): a sentence putting
 /// the line — its name, a liquid word, a "<word> mixture" of its adding
 /// sentence, a food it was poured over — to or into a vessel (or into the
 /// vessel the step works in) moves it there; one putting something in or
@@ -9808,38 +10439,27 @@ typedef _AlcoholPlace = ({_AlcoholTrail trail, bool aside, String? here});
 /// cold mix waits in its bowl ([waiting]); one naming the line's vessel
 /// ends it.
 _AlcoholPlace _alcoholContext(
-  String text,
+  _AlcoholText x,
   _AlcoholPlace at, {
   required bool waiting,
   Set<String> seen = const {},
 }) {
+  // v81 (F2): [x]'s facts, never its text read again.
+  final text = x.text;
   final trail = at.trail;
-  final dests = [
-    for (final m in _alcoholIntoVessel.allMatches(text))
-      if (_alcoholVesselsIn(m.namedGroup('what')!).firstOrNull case final v?)
-        if (m.namedGroup('prep') != 'on' || v.endsWith('sheet'))
-          (prep: m.namedGroup('prep')!, vessel: v, end: m.end),
-  ];
-  final into = [
-    for (final d in dests)
-      if (!d.vessel.startsWith('other|')) d,
-  ];
+  final dests = x.dests;
+  final into = x.into;
   final coldMix =
       waiting &&
       trail.vessel != null &&
       _alcoholColdVessels.contains(trail.vessel!.split('|').last);
-  final named = _alcoholVesselsIn(
-    text,
-  ).where((v) => !v.startsWith('other|'));
-  final namedOther = _alcoholVesselsIn(
-    text,
-  ).where((v) => v.startsWith('other|'));
+  final named = x.named;
+  final namedOther = x.namedOther;
   final here = into.lastOrNull?.vessel ?? named.lastOrNull ?? at.here;
   // The pasta pot's boiling water, a tap's running water: another vessel
   // ("Add noodles to boiling water … Rinse under hot running water … for
   // 1 minute", 1087; closer1 D3).
-  if (_alcoholOtherWater.hasMatch(text) &&
-      !_alcoholOwnMention(text, trail.name)) {
+  if (x.otherWater && !x.ownMention(trail.name)) {
     return (trail: trail, aside: true, here: 'other|pot');
   }
   // A premix whisked again in its bowl stays where it is ("Whisk mushroom
@@ -9847,28 +10467,22 @@ _AlcoholPlace _alcoholContext(
   if (text.contains('recombine') && !text.contains(' add')) {
     return (trail: trail, aside: false, here: trail.vessel ?? here);
   }
-  if ((_alcoholNamesOwn(text, trail) && _alcoholPutsIn.hasMatch(text)) ||
+  if ((_alcoholNamesOwnIn(x, trail) && x.putsIn) ||
       // the line's food, just cooked, moved on ("Cook … about 1 minute
       // longer. Transfer to bowl.", 0532; closer1 D3)
-      (!waiting && RegExp(r'^transfer (it |them )?to\b').hasMatch(text)) ||
-      _alcoholPutsLiquid.hasMatch(text) ||
-      _alcoholPoursIt.hasMatch(text) ||
+      (!waiting && x.transfersIt) ||
+      x.putsLiquid ||
+      x.poursIt ||
       (coldMix &&
-          _alcoholPutsMixture
-              .allMatches(text)
-              .any(
-                (m) => switch (m.namedGroup('what')) {
-                  final w? => trail.words.contains(w) || !seen.contains(w),
-                  null => true,
-                },
-              ))) {
+          x.mixtureWhats.any(
+            (what) => switch (what) {
+              final w? => trail.words.contains(w) || !seen.contains(w),
+              null => true,
+            },
+          ))) {
     // Food put into the line itself ("transfer to batter, tossing gently
     // to coat") joins it where it is.
-    if (into.isEmpty &&
-        RegExp(
-          r'\b(to|into|in) (the )?([a-z]+ )?(batter|marinade|mixture|dough)\b'
-          '(?!-)',
-        ).hasMatch(text)) {
+    if (into.isEmpty && x.intoMix) {
       return (
         trail: (
           name: trail.name,
@@ -9888,8 +10502,8 @@ _AlcoholPlace _alcoholContext(
     }
     // Into the frying oil after the last vessel named ("…drip back into
     // bowl; add to hot oil"): the pot on the heat, unnamed.
-    final oil = RegExp(r'\b(to|into) (the )?(hot )?oil\b').allMatches(text);
-    if (oil.isNotEmpty && into.every((m) => m.end < oil.last.start)) {
+    final oil = x.oilStarts;
+    if (oil.isNotEmpty && into.every((m) => m.end < oil.last)) {
       return (
         trail: (
           name: trail.name,
@@ -9919,8 +10533,8 @@ _AlcoholPlace _alcoholContext(
         (here != null && here != trail.vessel
             ? here
             : cold &&
-                  !(RegExp(r'^(add|toss|stir)\b').hasMatch(text) &&
-                      (text.contains('coat') || !_alcoholNamesOwn(text, trail)))
+                  !(x.addsTossesStirs &&
+                      (text.contains('coat') || !_alcoholNamesOwnIn(x, trail)))
             ? null
             : trail.vessel);
     final food = switch (to == null
@@ -9936,13 +10550,11 @@ _AlcoholPlace _alcoholContext(
     // small bowl and set aside", 0448) leaves the foods and the group it
     // was with: they no longer name it (closer1 D3).
     final apart =
-        _alcoholCold(target) &&
-        _alcoholOwnMention(text, trail.name) &&
-        RegExp(r'\bset aside\b|\breserv').hasMatch(text);
+        _alcoholCold(target) && x.ownMention(trail.name) && x.setsAside;
     return (
       trail: (
         name: trail.name,
-        words: {...trail.words, ..._alcoholMixWords(text)},
+        words: _alcoholGrown(trail.words, x.mixWords),
         vessel: target,
         foods: apart
             ? {?food}
@@ -9964,19 +10576,17 @@ _AlcoholPlace _alcoholContext(
       // mushroom mixture to the bowl with the pureed chicken", 0448), the
       // line's own only when it names the line ("strainer over bowl
       // containing soy sauce mixture", 1178; closer1 D3).
-      !_alcoholColdVessel
-          .allMatches(text)
-          .any((m) => !_alcoholNamesOwn(m.namedGroup('rest')!, trail)) &&
+      !x.coldRests.any((rest) => !_alcoholNamesOwn(rest, trail)) &&
       // A bare "pan" in a side task is the side task's ("simmer, shaking
       // the pan occasionally", 0457; closer1 D3).
       !(at.aside && named.every((v) => v == 'pan')) &&
       named.any((v) => _alcoholSameVessel(v, trail.vessel!))) {
     // Food added to the line's vessel joins it ("Add potatoes to skillet").
     return (
-      trail: _alcoholPutsIn.hasMatch(text)
+      trail: x.putsIn
           ? (
               name: trail.name,
-              words: {...trail.words, ..._alcoholMixWords(text)},
+              words: _alcoholGrown(trail.words, x.mixWords),
               vessel: trail.vessel,
               foods: {...trail.foods, ..._alcoholFoodsIn(text, trail)},
               vocab: trail.vocab,
@@ -9992,7 +10602,7 @@ _AlcoholPlace _alcoholContext(
     // A food tossed in the waiting mix, no other vessel named, takes it on
     // ("Transfer meat to bowl with rice wine mixture … Toss chicken to
     // coat", 0513; closer1 D3).
-    final coated = _alcoholCoatedIn(text);
+    final coated = x.coated;
     if (coated.isNotEmpty && named.isEmpty && namedOther.isEmpty) {
       return (
         trail: (
@@ -10008,7 +10618,7 @@ _AlcoholPlace _alcoholContext(
     }
     return (trail: trail, aside: true, here: here);
   }
-  if (_alcoholNamesOwn(text, trail)) {
+  if (_alcoholNamesOwnIn(x, trail)) {
     return (trail: trail, aside: false, here: here);
   }
   // Another vessel worked in — a now-empty, clean or second one ("Heat oil
@@ -10041,7 +10651,7 @@ _AlcoholPlace _alcoholContext(
       // small saucepan" heats the ganache, 0906)
       !waiting &&
       into.isNotEmpty &&
-      _alcoholPutsIn.hasMatch(text)) {
+      x.putsIn) {
     return (
       trail: (
         name: trail.name,
@@ -10075,8 +10685,8 @@ _AlcoholPlace _alcoholContext(
       !_alcoholCold(trail.vessel) &&
       named.isEmpty &&
       namedOther.isEmpty &&
-      !_alcoholMicrowave.hasMatch(text) &&
-      _alcoholHeats(text)) {
+      !x.microwave &&
+      x.heats) {
     return (trail: trail, aside: false, here: trail.vessel);
   }
   return (trail: trail, aside: at.aside, here: here);
@@ -10086,8 +10696,9 @@ _AlcoholPlace _alcoholContext(
 /// into its vessel, adds to what a later "<word> mixture" of it is named by
 /// ("transfer ¾ cup cooking liquid, almonds … to blender. … Return almond
 /// mixture to skillet", 0126; "Add reserved tomato juice … stir in reserved
-/// tomato juice mixture", 0347; closer1 D3).
-Set<String> _alcoholMixWords(String text) => {
+/// tomato juice mixture", 0347; closer1 D3). Read once per text
+/// ([_AlcoholText.mixWords]).
+Set<String> _alcoholMixWordsRead(String text) => {
   for (final w in RegExp('[a-z]+').allMatches(text))
     if (!_alcoholPutsIn.hasMatch(w[0]!)) ...{w[0]!, _alcoholSingular(w[0]!)},
 }.difference(_alcoholCommonWords);
@@ -10099,7 +10710,9 @@ Set<String> _alcoholFoodsIn(String text, _AlcoholTrail t) =>
 /// The food [text] tosses or coats with the line, named however the step
 /// names it ("gently toss the chunks with …", "toss until beef is evenly
 /// coated", closer1 D3), singular too.
-Set<String> _alcoholCoatedIn(String text) => {
+Set<String> _alcoholCoatedIn(String text) => _alc(text).coated;
+
+Set<String> _alcoholCoatedRead(String text) => {
   for (final m in _alcoholCoats.allMatches(text))
     if (m.namedGroup('a') ??
             m.namedGroup('b') ??
@@ -10158,16 +10771,15 @@ const Set<String> _alcoholModified = {
 /// wedges": wedges, never peach; "chicken, soy sauce": chicken (closer1
 /// D3: "peach chunks" is not the "peach wedges" a line soaks).
 Set<String> _alcoholHeadsIn(String text, Set<String> vocab) {
-  final words = RegExp('[a-z]+').allMatches(text).toList();
+  final f = _alc(text);
+  final words = f.letters;
   bool known(String w) =>
       vocab.contains(w) || vocab.contains(_alcoholSingular(w));
   return {
     for (final (i, w) in words.indexed)
       if (known(w[0]!) &&
           !(i + 1 < words.length &&
-              RegExp(r'^[ -]+$').hasMatch(
-                text.substring(w.end, words[i + 1].start),
-              ) &&
+              f.joined[i] &&
               (known(words[i + 1][0]!) ||
                   // "mushroom liquid", "orange juice": a modifier (0542)
                   _alcoholModified.contains(words[i + 1][0]))))
@@ -10196,30 +10808,26 @@ Set<String> _alcoholHeadsIn(String text, Set<String> vocab) {
     if (x.empty) {
       continue;
     }
-    final text = x.side ? x.text.replaceFirst(_alcoholSideClause, '') : x.text;
+    // v81 (F2): the text's facts, read once per index.
+    final f = x.side ? x.f.stripped : x.f;
     if (x.side &&
-        !(_alcoholPutsIn.hasMatch(text) &&
-            (_alcoholNamesOwn(text, place.trail) ||
-                _alcoholPutsLiquid.hasMatch(text)))) {
+        !(f.putsIn && (_alcoholNamesOwnIn(f, place.trail) || f.putsLiquid))) {
       continue;
     }
-    final serves = _alcoholStops
-        .allMatches(text)
-        .where((m) => _alcoholStopKind(m) == 'final')
-        .firstOrNull;
-    final upTo = serves == null ? text : text.substring(0, serves.start);
+    final serves = f.stops.where((m) => m.kind == 'final').firstOrNull;
+    final u = serves == null ? f : f.upTo(serves.start);
     final before = place.trail;
-    place = _alcoholContext(upTo, place, waiting: false);
+    place = _alcoholContext(u, place, waiting: false);
     if (!place.aside &&
-        _alcoholPutsIn.hasMatch(upTo) &&
-        (_alcoholNamesOwn(upTo, before) ||
-            _alcoholPutsLiquid.hasMatch(upTo) ||
+        u.putsIn &&
+        (_alcoholNamesOwnIn(u, before) ||
+            u.putsLiquid ||
             // (a batter or a dough leaves with its food: never followed
             // by its pan alone — the crepes' skillet takes the next sauce,
             // 0960; closer1 D3)
             (before.vessel != null &&
                 !before.foods.any(_alcoholBatter.hasMatch) &&
-                _alcoholVesselsIn(upTo).any(
+                u.vessels.any(
                   (v) =>
                       v.split('|').last == before.vessel!.split('|').last &&
                       _alcoholSameVessel(v, before.vessel!),
@@ -10356,6 +10964,7 @@ _AlcoholUse _alcoholUseAt(
   IngredientLine line,
   String? group,
   Set<String> ingredients,
+  _AlcoholRecipe r,
 ) {
   final here = s[at];
   final offset =
@@ -10390,12 +10999,15 @@ _AlcoholUse _alcoholUseAt(
   );
   // R5: a mass rule's line (critic 8).
   final can = RegExp(r'\bcans?\b').hasMatch(line.raw.toLowerCase());
-  for (var i = at; i < s.length; i++) {
-    final text = i == at ? here.text.substring(offset) : s[i].text;
-    if (_alcoholHandOff.hasMatch(text) ||
-        (can && _alcoholBeerCan.hasMatch(text))) {
-      return _alcoholKept('handoff');
-    }
+  // v81 (F2): the adding sentence from the line's name, then any later
+  // sentence — the last hand-off read once per index.
+  final adding = here.f.from(offset);
+  final last = r.lastHandOffs;
+  if (adding.handOff ||
+      (can && adding.beerCan) ||
+      last.handOff > at ||
+      (can && last.beerCan > at)) {
+    return _alcoholKept('handoff');
   }
   // R2.1: a flame in the adding sentence or the next two of its step
   // (critic 2) — the minutes after it, if 15 or more, the lower row.
@@ -10408,6 +11020,7 @@ _AlcoholUse _alcoholUseAt(
                 i + 1,
                 0,
                 trail,
+                r,
                 onHeat: true,
                 follow: false,
               ).minutes
@@ -10450,7 +11063,7 @@ _AlcoholUse _alcoholUseAt(
       // The dish taken on to its next heat (closer1 D3: "Off the heat,
       // whisk in … sherry. … Turn the mixture into a … gratin dish … bake
       // … 13 to 15 minutes", 0303; else Q-f's hot dish, 5002).
-      final later = _alcoholRun(s, at, offset, trail, onHeat: false);
+      final later = _alcoholRun(s, at, offset, trail, r, onHeat: false);
       return later.heated
           ? _alcoholHeated(s, at, later, poured: poured)
           : _alcoholOffHeat;
@@ -10458,7 +11071,7 @@ _AlcoholUse _alcoholUseAt(
     return _alcoholHeated(
       s,
       at,
-      _alcoholRun(s, at, offset, trail, onHeat: true),
+      _alcoholRun(s, at, offset, trail, r, onHeat: true),
       poured: poured,
     );
   }
@@ -10483,7 +11096,7 @@ _AlcoholUse _alcoholUseAt(
     return _alcoholHeated(
       s,
       at,
-      _alcoholRun(s, at, offset, trail, onHeat: true),
+      _alcoholRun(s, at, offset, trail, r, onHeat: true),
       poured: poured,
     );
   }
@@ -10517,6 +11130,7 @@ _AlcoholUse _alcoholUseAt(
         foods: {...foods, ...batter},
         vocab: ingredients,
       ),
+      r,
       onHeat: false,
     );
     return read.heated
@@ -10545,6 +11159,7 @@ _AlcoholUse _alcoholUseAt(
       foods: foods,
       vocab: ingredients,
     ),
+    r,
     onHeat: false,
   );
   return read.heated
@@ -10558,16 +11173,14 @@ _AlcoholUse _alcoholUseAt(
 /// read sentence that heats or cools (of its step or the two before) heats.
 bool _alcoholHotBefore(List<_AlcoholSentence> s, int at) {
   for (var i = at - 1; i >= 0 && s[i].step >= s[at].step - 2; i--) {
-    final text = s[i].text;
+    final f = s[i].f;
     if (s[i].empty || s[i].side || (s[i].sideStep && s[i].step != s[at].step)) {
       continue;
     }
-    if (_alcoholStops
-        .allMatches(text)
-        .any((m) => _alcoholStopKind(m) == 'wait')) {
+    if (f.stops.any((m) => m.kind == 'wait')) {
       return false;
     }
-    if (_alcoholHeats(text)) {
+    if (f.heats) {
       return true;
     }
   }
@@ -10674,12 +11287,273 @@ double? _alcoholLineMl(IngredientLine line) {
   final size = RegExp(
     r'^(\d+) \((\d+)-(ml|milliliter|ounce)\)',
   ).firstMatch(line.raw.toLowerCase());
-  if (size == null) {
+  // v81 (Run 065/066 F14): the bounded reader — a 20-digit count or size
+  // overflowed int.parse and crashed the compute and the matches GET.
+  final count = size == null ? null : parseQuantity(size[1]!);
+  final each = size == null ? null : parseQuantity(size[2]!);
+  if (count == null || each == null) {
     return null;
   }
-  return int.parse(size[1]!) *
-      int.parse(size[2]!) *
-      (size[3] == 'ounce' ? 29.5735 : 1.0);
+  return count * each * (size![3] == 'ounce' ? 29.5735 : 1.0);
+}
+
+/// v81 (Run 065/066 F2, RULE C): what [_alcoholRead] reads of a recipe that
+/// no line changes, once per step index (`memo:alcoholRecipe`) — each part
+/// once per its key, counted (`alcoholRecipeReads`): each line's group, group
+/// word, alternatives and words; the sentences naming a candidate or a group
+/// title; a name's uses, its part-printing mentions, the lines sharing it and
+/// the uses another line's group leaves; the last hand-off. v54 derived each
+/// per line (O(lines × text): 0.85 s a wine line at the editor caps).
+class _AlcoholRecipe {
+  _AlcoholRecipe(this.recipe, this.s);
+
+  final Recipe recipe;
+  final List<_AlcoholSentence> s;
+  late final List<IngredientLine> lines = nutritionLines(recipe);
+
+  /// A sentence's place in [s] by (step, index).
+  late final Map<(int, int), int> _flat = {
+    for (final (i, x) in s.indexed) (x.step, x.index): i,
+  };
+
+  /// Each line's ingredient group title.
+  late final List<String?> _titles = [
+    for (final g in recipe.ingredients)
+      for (final _ in g.items) g.group?.toLowerCase(),
+  ];
+
+  /// Each line's group word: its title's last word.
+  late final List<String?> groups = [
+    for (final t in _titles) _alcoholLetters.allMatches(t ?? '').lastOrNull?[0],
+  ];
+
+  /// Each line's one-word group title, else null.
+  late final List<String?> groupWords = [
+    for (final t in _titles)
+      if (_alcoholLetters.allMatches(t ?? '').toList() case final w
+          when w.length == 1)
+        w.single[0]
+      else
+        null,
+  ];
+
+  /// Each line's alternatives' heads (never water).
+  late final List<List<String>> alternatives = [
+    for (final l in lines)
+      [
+        for (final alt in normalizeItem(lineItemOf(l)).split(' or '))
+          if (headNounOf(alt.trim()) case final head? when head != 'water')
+            head,
+      ],
+  ];
+
+  /// Each line's item words over three letters, singular too.
+  late final List<Set<String>> wordsOf = [
+    for (final l in lines)
+      {
+        for (final w in _alcoholLetters.allMatches(
+          normalizeItem(lineItemOf(l)),
+        ))
+          if (w[0]!.length > 3) ...{w[0]!, _alcoholSingular(w[0]!)},
+      },
+  ];
+
+  /// How many lines print each word of [wordsOf].
+  late final Map<String, int> wordLines = () {
+    final n = <String, int>{};
+    for (final words in wordsOf) {
+      for (final w in words) {
+        n[w] = (n[w] ?? 0) + 1;
+      }
+    }
+    return n;
+  }();
+
+  /// Whether each line is measured by volume.
+  late final List<bool> measuredByVolume = [
+    for (final l in lines) volumeMlOf(l.amounts) != null,
+  ];
+
+  /// The words a "<word> mixture" or "<word> paste" can name — the three
+  /// words before each — with the first sentence printing each: every word
+  /// a run's trail words or its seen words are ever asked about (the run
+  /// memo's key narrows them to these, [_alcoholRun]).
+  late final Map<String, int> mixtureWords = () {
+    _count('alcoholRecipeReads');
+    final near = <String>{
+      for (final x in s)
+        for (final (j, w) in x.f.letters.indexed)
+          if (w[0]!.startsWith('mixture') || w[0]!.startsWith('paste'))
+            for (var k = max(0, j - 3); k < j; k++) x.f.letters[k][0]!,
+    };
+    final first = <String, int>{};
+    for (final (i, x) in s.indexed) {
+      for (final w in x.f.words) {
+        if (near.contains(w)) {
+          first.putIfAbsent(w, () => i);
+        }
+      }
+    }
+    return {for (final w in near) w: first[w] ?? s.length};
+  }();
+
+  /// Every word of [s] and its singular ([_AlcoholText.words]): all a
+  /// line's foods vocabulary can ever match ([_alcoholHeadsIn] reads only
+  /// these sentences' texts, cut at word boundaries — a side clause, a
+  /// name's offset, a stop's start). closer 1 (verify1 D1, RULE C): each
+  /// line's vocabulary narrowed to it, so lines whose own words the steps
+  /// never print read one vocabulary and share their runs (400 lines
+  /// "1 (750-ml) bottle <its own word> dry white wine": 13.3 million run
+  /// sentences, 0 shared, before).
+  late final Set<String> sentenceWords = {for (final x in s) ...x.f.words};
+
+  /// What a run reads after each state it marked ([_alcoholRun]).
+  final Map<String, _AlcoholRest> runs = {};
+  final Expando<String> _canon = Expando();
+  final Expando<String> _canonMixture = Expando();
+
+  /// [set] in one sorted string, once per set.
+  String canon(Set<String> set) =>
+      _canon[set] ??= (set.toList()..sort()).join(',');
+
+  /// [words] that are [mixtureWords], in one sorted string, once per set.
+  String canonMixture(Set<String> words) => _canonMixture[words] ??= ([
+    for (final w in words)
+      if (mixtureWords.containsKey(w)) w,
+  ]..sort()).join(',');
+
+  /// The last sentence a mass rule's hand-off (R5) and a beer can read.
+  late final ({int handOff, int beerCan}) lastHandOffs = () {
+    _count('alcoholRecipeReads');
+    var handOff = -1;
+    var beerCan = -1;
+    for (final (i, x) in s.indexed) {
+      if (x.f.handOff) {
+        handOff = i;
+      }
+      if (x.f.beerCan) {
+        beerCan = i;
+      }
+    }
+    return (handOff: handOff, beerCan: beerCan);
+  }();
+
+  T _read<T>(Map<Object, Object?> memo, Object key, T Function() read) {
+    if (memo.containsKey(key)) {
+      return memo[key] as T;
+    }
+    _count('alcoholRecipeReads');
+    return memo[key] = read();
+  }
+
+  final Map<Object, Object?> _reads = {};
+
+  /// The sentences naming [candidate] ([_naming]).
+  List<int> mentionsOf(String candidate) => _read(
+    _reads,
+    ('mentions', candidate),
+    () => [
+      for (final m in _naming(recipe, candidate)) ?_flat[m],
+    ],
+  );
+
+  /// The sentences (no side task) naming the group title [group] — never a
+  /// soy, fish, hot … sauce.
+  List<int> groupMentions(String group) =>
+      _read(_reads, ('groupMentions', group), () {
+        final own = RegExp(
+          '(?<!soy |fish |hot |oyster |hoisin |worcestershire |chili '
+          '|tomato |barbecue |dipping |tartar )'
+          '\\b${RegExp.escape(group)}\\b',
+        );
+        return [
+          for (final (i, x) in s.indexed)
+            if (!x.side && own.hasMatch(x.text)) i,
+        ];
+      });
+
+  List<int> _mentions(String name, bool fromGroup) =>
+      fromGroup ? groupMentions(name) : mentionsOf(name);
+
+  /// The mentions of [name] that are no "<name> mixture".
+  List<int> uses0(String name, {required bool fromGroup}) =>
+      _read(_reads, ('uses0', name, fromGroup), () {
+        final mixture = RegExp(
+          '\\b${RegExp.escape(name)}( [a-z]+)? mixture\\b',
+        );
+        return [
+          for (final m in _mentions(name, fromGroup))
+            if (!mixture.hasMatch(s[m].text)) m,
+        ];
+      });
+
+  /// The mentions of [name] printing a part of it ([_alcoholPartIn]).
+  List<int> partMentions(String name, {required bool fromGroup}) => _read(
+    _reads,
+    ('partMentions', name, fromGroup),
+    () => [
+      for (final m in _mentions(name, fromGroup))
+        if (s[m].f.partIn(name) != null) m,
+    ],
+  );
+
+  /// The lines whose head or an alternative is [name].
+  List<int> sharing(String name) => _read(_reads, ('sharing', name), () {
+    final heads = _headsOf(recipe);
+    return [
+      for (var p = 0; p < lines.length; p++)
+        if (heads[p] == name || alternatives[p].contains(name)) p,
+    ];
+  });
+
+  /// [uses0] of [name] less those naming one of [otherGroups].
+  List<int> mine(
+    String name, {
+    required bool fromGroup,
+    required Set<String> otherGroups,
+  }) => _read(
+    _reads,
+    ('mine', name, fromGroup, (otherGroups.toList()..sort()).join('|')),
+    () => _alcoholMine(s, uses0(name, fromGroup: fromGroup), otherGroups),
+  );
+}
+
+/// The minutes a run added after a state, in order: [minutes] from [from]
+/// on (each [oven] or not), then [next]'s.
+class _AlcoholAdds {
+  _AlcoholAdds(this.minutes, this.oven, this.from, this.next);
+
+  final List<double> minutes;
+  final List<bool> oven;
+  final int from;
+  final _AlcoholAdds? next;
+}
+
+/// What a run reads after a state: its minutes, where its heat and its stop
+/// fell (when unset at the state) and what it ends with.
+typedef _AlcoholRest = ({
+  _AlcoholAdds adds,
+  int? heatAt,
+  int? stopAt,
+  bool heated,
+  bool sealed,
+  bool until,
+});
+
+/// The [uses] whose sentence names none of [otherGroups].
+List<int> _alcoholMine(
+  List<_AlcoholSentence> s,
+  List<int> uses,
+  Set<String> otherGroups,
+) {
+  final named = [
+    for (final g in otherGroups)
+      RegExp('(?<!soy |fish |hot |oyster |hoisin )\\b$g'),
+  ];
+  return [
+    for (final m in uses)
+      if (!named.any((g) => g.hasMatch(s[m].text))) m,
+  ];
 }
 
 AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
@@ -10687,72 +11561,38 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
   if (s.isEmpty) {
     return (kept: 100, code: '', rule: 'fallback:no_steps', flag: null);
   }
-  final lines = nutritionLines(recipe);
+  // v81 (F2): what no line changes, read once per index.
+  final r = _stepIndexOf(
+    recipe,
+  ).memo(#alcoholRecipe, () => _AlcoholRecipe(recipe, s));
+  final lines = r.lines;
   final line = lines[position];
   final heads = _headsOf(recipe);
-  List<String> alternatives(IngredientLine l) => [
-    for (final alt in normalizeItem(lineItemOf(l)).split(' or '))
-      if (headNounOf(alt.trim()) case final head? when head != 'water') head,
-  ];
   // A line's group word: its ingredient group title's last word ("ORANGE
   // SAUCE": sauce).
-  String? groupOf(int p) {
-    var n = 0;
-    for (final g in recipe.ingredients) {
-      if (p < n + g.items.length) {
-        return RegExp(
-          '[a-z]+',
-        ).allMatches(g.group?.toLowerCase() ?? '').lastOrNull?[0];
-      }
-      n += g.items.length;
-    }
-    return null;
-  }
-
-  final group = groupOf(position);
+  final group = r.groups[position];
   // A one-word group title, the only one a food or a step can name as the
   // line's (closer1 D3).
-  final groupWord = () {
-    var n = 0;
-    for (final g in recipe.ingredients) {
-      if (position < n + g.items.length) {
-        final words = RegExp('[a-z]+').allMatches(g.group?.toLowerCase() ?? '');
-        return words.length == 1 ? words.single[0] : null;
-      }
-      n += g.items.length;
-    }
-    return null;
-  }();
+  final groupWord = r.groupWords[position];
   // R1 (critic 6): the head; never named — an alternative's head, the
   // record's class word, the group's title.
-  final flat = {for (final (i, x) in s.indexed) (x.step, x.index): i};
   String? name;
   var mentions = const <int>[];
-  final groupMentions = group == null
-      ? const <int>[]
-      : [
-          for (final (i, x) in s.indexed)
-            if (!x.side &&
-                RegExp(
-                  '(?<!soy |fish |hot |oyster |hoisin |worcestershire |chili '
-                  '|tomato |barbecue |dipping |tartar )'
-                  '\\b${RegExp.escape(group)}\\b',
-                ).hasMatch(x.text))
-              i,
-        ];
+  var fromGroup = false;
   for (final candidate in [
     if (heads[position] case final head? when head != 'water') head,
-    ...alternatives(line),
+    ...r.alternatives[position],
     ?alcoholRecords[fdcId],
     'liquor',
     ?group,
   ]) {
     final at = candidate == group
-        ? groupMentions
-        : [for (final m in _naming(recipe, candidate)) ?flat[m]];
+        ? r.groupMentions(candidate)
+        : r.mentionsOf(candidate);
     if (at.isNotEmpty) {
       name = candidate;
       mentions = at;
+      fromGroup = candidate == group;
       break;
     }
   }
@@ -10766,77 +11606,53 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
   // mix: a mix group's line ("SAUCE: 1 tablespoon dry sherry") beside one
   // outside a mix (the chicken's sherry) reads its group's word, the other
   // the name's uses (0528, 0529).
-  bool sharesName(int p) =>
-      heads[p] == name || alternatives(lines[p]).contains(name);
-  bool mixLine(int p) => _alcoholMixGroups.contains(groupOf(p));
+  bool mixLine(int p) => _alcoholMixGroups.contains(r.groups[p]);
   final mixed = mixLine(position);
-  final uses0 = <int>[
-    for (final m in mentions)
-      if (!RegExp(
-        '\\b${RegExp.escape(name)}( [a-z]+)? mixture\\b',
-      ).hasMatch(s[m].text))
-        m,
-  ];
+  final uses0 = [...r.uses0(name, fromGroup: fromGroup)];
   // Only when the unmixed lines take every use of the name (the steps
   // never name the sauce's sherry: 0528, 0529; the crepes' cognac they do).
-  final unmixed = [
-    for (var p = 0; p < lines.length; p++)
-      if (sharesName(p) && !mixLine(p)) p,
-  ];
+  final sharing = r.sharing(name);
+  final unmixed = sharing.where((p) => !mixLine(p)).length;
   final groupRead =
-      unmixed.isNotEmpty &&
-      unmixed.length >= uses0.length &&
-      [
-        for (var p = 0; p < lines.length; p++)
-          if (sharesName(p) && mixLine(p)) p,
-      ].isNotEmpty;
+      unmixed > 0 && unmixed >= uses0.length && sharing.any(mixLine);
   var k = 0;
-  for (var p = 0; p < position; p++) {
-    if (sharesName(p) && !(groupRead && mixLine(p))) {
+  for (final p in sharing) {
+    if (p >= position) {
+      break;
+    }
+    if (!(groupRead && mixLine(p))) {
       k++;
     }
   }
   // A line past the uses whose group is a mix ("SAUCE") reads its group's
   // word: "Whisk sauce to recombine" (0513).
+  var single = false;
   if (group != null && mixed && (groupRead || (k > 0 && k >= uses0.length))) {
-    final own = RegExp(
-      '(?<!soy |fish |hot |oyster |hoisin |worcestershire |chili |tomato '
-      '|barbecue |dipping |tartar )\\b${RegExp.escape(group)}\\b',
-    );
-    final at = s.indexWhere((x) => !x.side && own.hasMatch(x.text));
-    if (at >= 0) {
+    final at = r.groupMentions(group).firstOrNull;
+    if (at != null) {
       name = group;
       mentions = [at];
       uses0
         ..clear()
         ..add(at);
       k = 0;
+      single = true;
     }
   }
   // Two lines of one name (critic 10): a use whose sentence names the
   // OTHER line's group word is the other line's ("whisk … rice wine … for
   // the sauce" is the SAUCE line's, not the PORK line's).
-  final sharedName = [
-    for (var p = 0; p < lines.length; p++)
-      if (p != position &&
-          (heads[p] == name || alternatives(lines[p]).contains(name)))
-        p,
-  ].isNotEmpty;
-  final otherGroups = {
-    for (var p = 0; p < lines.length; p++)
-      if (p != position &&
-          (heads[p] == name || alternatives(lines[p]).contains(name)))
-        ?groupOf(p),
-  }.difference({?group, name});
-  final mine = [
-    for (final m in uses0)
-      if (!otherGroups.any(
-        (g) => RegExp(
-          '(?<!soy |fish |hot |oyster |hoisin )\\b$g',
-        ).hasMatch(s[m].text),
-      ))
-        m,
+  final others = [
+    for (final p in r.sharing(name))
+      if (p != position) p,
   ];
+  final sharedName = others.isNotEmpty;
+  final otherGroups = {
+    for (final p in others) ?r.groups[p],
+  }.difference({?group, name});
+  final mine = single
+      ? _alcoholMine(s, uses0, otherGroups)
+      : r.mine(name, fromGroup: fromGroup, otherGroups: otherGroups);
   final first = mine.isNotEmpty && mine.length < uses0.length
       ? mine.first
       : k == 0 && mentions.length == 1
@@ -10846,12 +11662,18 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
       : uses0[min(k, uses0.length - 1)];
   // The line's parts (a "divided" or "plus" line, P18–P21): its first use,
   // then each later mention printing a volume or "remaining", until the
-  // parts fill the line.
+  // parts fill the line — after the first use, only a mention printing one
+  // can be a part (v81 F2: those mentions read once per name and index).
   final lineMl = _alcoholLineMl(line);
   final parts = <({int at, double? ml, String words})>[];
   var used = 0.0;
-  for (final at in mentions.where((m) => m >= first)) {
-    final part = _alcoholPartIn(s[at].text, name);
+  for (final at in [
+    first,
+    for (final m
+        in single ? mentions : r.partMentions(name, fromGroup: fromGroup))
+      if (m > first) m,
+  ]) {
+    final part = s[at].f.partIn(name);
     if (parts.isNotEmpty && part == null) {
       continue;
     }
@@ -10884,24 +11706,20 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
   // ("1 teaspoon garlic", "¼ cup orange juice") — that only that line's
   // item prints ("porcini mushrooms" and "cremini mushrooms": two foods,
   // so "mushrooms" names neither).
-  Set<String> wordsOf(IngredientLine l) => {
-    for (final w in RegExp('[a-z]+').allMatches(normalizeItem(lineItemOf(l))))
-      if (w[0]!.length > 3) ...{w[0]!, _alcoholSingular(w[0]!)},
-  };
-  final wordLines = <String, int>{};
-  for (final l in lines) {
-    for (final w in wordsOf(l)) {
-      wordLines[w] = (wordLines[w] ?? 0) + 1;
-    }
-  }
   final ingredients = <String>{
-    for (final (p, l) in lines.indexed)
-      if (p != position && volumeMlOf(l.amounts) == null)
-        for (final w in wordsOf(l))
-          if (wordLines[w] == 1) w,
+    for (final (p, words) in r.wordsOf.indexed)
+      if (p != position && !r.measuredByVolume[p])
+        for (final w in words)
+          if (r.wordLines[w] == 1) w,
     for (final (p, _) in lines.indexed)
       if (p != position && _alcoholLiquids.contains(heads[p])) heads[p]!,
   }.difference(_alcoholCommonWords);
+  // closer 1 (verify1 D1, RULE C): narrowed to what the sentences print
+  // ([_AlcoholRecipe.sentenceWords]) — only so that runs share; derived
+  // whole under [memoOffForTest], the oracle pin's exactness check.
+  final vocab = memoOffForTest
+      ? ingredients
+      : ingredients.intersection(r.sentenceWords);
   // A part added by "Repeat with … the remaining 2 tablespoons wine" is
   // used as the part before it was (0540; closer1 D3).
   final uses = <_AlcoholUse>[];
@@ -10909,7 +11727,7 @@ AlcoholReading _alcoholRead(Recipe recipe, int position, int fdcId) {
     uses.add(
       i > 0 && s[p.at].text.startsWith('repeat')
           ? uses[i - 1]
-          : _alcoholUseAt(s, p.at, name, line, groupWord, ingredients),
+          : _alcoholUseAt(s, p.at, name, line, groupWord, vocab, r),
     );
   }
   // Split, weighted by the printed volumes (decision 7); a part no volume
@@ -11566,15 +12384,25 @@ const Map<String, ({int fdcId, String words})> _citrusPeel = {
 /// after its first mention — "Strain the juice mixture" (fresh margaritas),
 /// "Strain milk mixture …; discard lemon zest" (lemon pudding cakes), the
 /// curd poured "through a fine-mesh strainer" (lemon tart).
+/// v81 (Run 065/066 F10, RULE C): read once per step index from its
+/// lower-cased steps (`memo:zestStrained`) — it joined and lower-cased
+/// every step per call, 3 calls a zest line in a compute (7.4 s at the
+/// editor caps).
 bool _zestStrained(Recipe recipe) {
-  final text = recipe.steps.map((step) => step.text).join(' ').toLowerCase();
-  final at = RegExp(r'\b(zest|peel)\b').firstMatch(text)?.start;
-  return at != null &&
-      RegExp(
-        r'\bstrain|\bdiscard\w*\s+(?:the\s+)?(?:(?:lemon|lime|orange)\s+)?'
-        r'(?:zest|peel)\b',
-      ).hasMatch(text.substring(at));
+  final index = _stepIndexOf(recipe);
+  return index.memo(#zestStrained, () {
+    final text = index.lower.join(' ');
+    final at = _zestOrPeel.firstMatch(text)?.start;
+    return at != null && _strainsZest.hasMatch(text.substring(at));
+  });
 }
+
+final RegExp _zestOrPeel = RegExp(r'\b(zest|peel)\b');
+
+final RegExp _strainsZest = RegExp(
+  r'\bstrain|\bdiscard\w*\s+(?:the\s+)?(?:(?:lemon|lime|orange)\s+)?'
+  r'(?:zest|peel)\b',
+);
 
 /// The whole-egg record [eggPartsMassSumOn] counts on: "Eggs, Grade A,
 /// Large, egg whole" (Foundation).
@@ -12682,8 +13510,8 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
   final lines = nutritionLines(recipe);
   final references = lines.any((line) => isReferenceIn(recipe, line));
   final prose = references
-      ? proseSectionsReadBy(recipe, memo)
-      : const <String>[];
+      ? _proseReadsOf(recipe, memo)
+      : (sections: const <String>[], bases: const <String?>[]);
   final payload = jsonEncode({
     'matcher': matcherVersion,
     'title': recipe.title,
@@ -12695,16 +13523,23 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
       'step_labels': [for (final step in recipe.steps) step.label],
     // v41 (S12): what the sub-recipe resolver reads beside the line — the
     // note naming a dough, the sections a reference names — for a recipe
-    // holding a reference line ([resolveReference]).
+    // holding a reference line ([resolveReference]). v81 (Run 065/066 F6):
+    // the note too wherever another reader reads it ([_prepNotesRead]) —
+    // a recipe or a section copy (0790's "(½ pound)" edited read fresh);
+    // every other recipe hashes as before.
+    if (references || _prepNotesRead(recipe)) 'prep_notes': recipe.prepNotes,
     if (references) ...{
-      'prep_notes': recipe.prepNotes,
       'sections': [for (final sub in recipe.subsections) sub.title],
       // v52 (M51 Q8): the group headings — rule SW reads a CONDIMENTS one.
       'groups': [for (final group in recipe.ingredients) group.group],
       // v47 (F2): and whether the section a line names lists lines — only
       // when one does not, so every other recipe hashes as before (v52: or
       // the child an amount-less line names, [proseSectionsReadBy]).
-      if (prose.isNotEmpty) 'prose_sections': prose,
+      if (prose.sections.isNotEmpty) 'prose_sections': prose.sections,
+      // v81 (Run 066 Opus critic F17): the base rule PV counts for each
+      // prose section ([_proseReadsOf]) — only where one is read, so every
+      // other recipe hashes as before.
+      if (prose.bases.isNotEmpty) 'prose_bases': prose.bases,
     },
     // v70 (Run 063 F7): the ingredient GROUPS — each heading and its line
     // count — which M52's plan (the fried-product, cut-dough and batter
@@ -12759,6 +13594,35 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
   return sha256.convert(utf8.encode(payload)).toString();
 }
 
+/// v81 (Run 065/066 F6): whether a reader beside the reference resolver
+/// reads [recipe]'s prep note: the shell reader's "eaten shell and all"
+/// ([shellEatenIn]: the note's phrase, so an edit adding or dropping it
+/// changes this answer), or v50's potato `cooked` kind ([_partialUseOf]),
+/// which takes a kept-cooked sentence's weight from the note's
+/// "<packed >cup(s) (…)" when the sentence prints none (0790). closer 2
+/// (verify2 D1, RULE C): the NOTE alone, never the steps — every freshness
+/// check runs this (the recipe nutrition GET too), and a step scan cost
+/// 733 ms a hash on editor-accepted text ("transfer 1" and a run of
+/// spaces: the amount run's backtracking). A superset of the kind's read
+/// ([_noteCupParen]: the 6 corpus notes printing one fold, read or not —
+/// a re-stamp on identical rows, never a stale fresh); an edit adding one
+/// flips this gate, which the payload's key carries.
+bool _prepNotesRead(Recipe recipe) {
+  final note = recipe.prepNotes;
+  if (note == null) {
+    return false;
+  }
+  if (shellEatenIn(recipe) || _noteCupParen.hasMatch(note.toLowerCase())) {
+    _count('prepNoteFolds');
+    return true;
+  }
+  return false;
+}
+
+/// What the potato `cooked` kind reads of a note ([_partialUseOf]'s
+/// "<packed >cup(s) (…)"), any packing: the [_prepNotesRead] gate.
+final RegExp _noteCupParen = RegExp(r'cups?\s+\(');
+
 /// The section keys [recipe]'s reference lines resolve to that list NO
 /// ingredient lines — each line's `no_ingredients` rule row (v47, F2; Run
 /// 062 O2: lemon-meringue-pie|0's prose "Single-Crust Pie Dough for Custard
@@ -12777,24 +13641,66 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
 /// recipe (`nested`): those lines decide `noAmount` against `routed` and no
 /// stamp ties the 0 g rule row to the child. A served-with marked line with
 /// no amount reads no child ([resolveReference]), so it folds nothing.
-List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) => [
-  for (final (i, line) in nutritionLines(recipe).indexed)
-    if (subRecipeRowFor(recipe, i, line) != null &&
-        !(line.amounts.isEmpty && servedWithMarked(recipe, line)))
-      if (switch (_resolveInOrder(memo.db, recipe, line, memo)) {
-            ReferenceResolution(noIngredients: true, section: final at?) =>
-              sectionKeyOf(at.host, at.title),
-            ReferenceResolution(
-              kind: ReferenceKind.nested || ReferenceKind.noShare,
-              childId: final id?,
-            )
-                when line.amounts.isEmpty =>
-              id,
-            _ => null,
-          }
-          case final key?)
-        key,
-];
+List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) =>
+    _proseReadsOf(recipe, memo).sections;
+
+/// [proseSectionsReadBy] and, for each line it reads a prose section by,
+/// the BASE rule PV routes that line to ([_proseBase]'s child, null for
+/// none) — read in ONE pass of the resolver. v81 (Run 066 Opus critic
+/// F17): PV's choice reads the prose host's title and its other sections'
+/// titles and lines, and no stamp ties the parent to them — the routed
+/// row's `child_stamp` is the chosen base's, and the abandoned base keeps
+/// its stamp while another recipe routes to it (0972's Basic Single-Crust
+/// Pie Dough, pumpkin-pie|0's own): a host retitled to a tie, or a sibling
+/// gaining lines under a closer title, left lemon-meringue-pie fresh on the
+/// old base through every stale sweep. The hash folds the choice itself —
+/// it moves exactly when PV's answer does. closer 5 (verify5 D3, RULE C):
+/// PV's choice ([_proseChoice] — the host's and every sibling's title
+/// words and lines, and whether the base is made from a recipe) read ONCE
+/// per prose section (`proseChoices`); per line it cost +81 % a hash on 400
+/// lines of lemon's prose reference. Each line reads only its own share of
+/// the base ([_proseTail], `proseShares`): the share is the line's — its
+/// text and amounts against the base's yield, which no stamp ties to a
+/// line PV leaves unrouted — the residual, count-pinned.
+({List<String> sections, List<String?> bases}) _proseReadsOf(
+  Recipe recipe,
+  ResolverMemo memo,
+) {
+  final sections = <String>[];
+  final bases = <String?>[];
+  final choices = <String, _ProseChoice?>{};
+  for (final (i, line) in nutritionLines(recipe).indexed) {
+    if (subRecipeRowFor(recipe, i, line) == null ||
+        (line.amounts.isEmpty && servedWithMarked(recipe, line))) {
+      continue;
+    }
+    switch (_resolveInOrder(memo.db, recipe, line, memo)) {
+      case ReferenceResolution(noIngredients: true, section: final at?):
+        final key = sectionKeyOf(at.host, at.title);
+        sections.add(key);
+        final choice = choices.containsKey(key)
+            ? choices[key]
+            : choices[key] = () {
+                _count('proseChoices');
+                return _proseChoice(recipe, memo, at);
+              }();
+        String? base;
+        if (choice != null) {
+          _count('proseShares');
+          base = _proseTail(recipe, line, at, choice)?.childId;
+        }
+        bases.add(base);
+      case ReferenceResolution(
+            kind: ReferenceKind.nested || ReferenceKind.noShare,
+            childId: final id?,
+          )
+          when line.amounts.isEmpty:
+        sections.add(id);
+      default:
+    }
+  }
+  return (sections: sections, bases: bases);
+}
 
 /// Whether [recipe]'s stored totals ([row], else read) are FRESH: stamped
 /// for its current inputs ([ingredientsHashOf]) AND on its current layout
@@ -15487,6 +16393,12 @@ bool recomputeTotals(
     // child with no nutrition row (or gone): a decided row is underived, an
     // engine row's recipe stale — never FDC's [missing] (F6).
     if (row.childRecipeId case final childId?) {
+      // closer 1 (verify1 D2, R1 parity): a pick of a section its host
+      // emptied is the engine's `no_ingredients` rule row — neither
+      // accounted nor contributing ([emptiedSectionChild]).
+      if (emptiedSectionChild(childId, children)) {
+        continue;
+      }
       // The compute's memo: its child read once with the row it wrote (F14).
       final child = children.childNutrition(childId);
       final share = row.childShare;
@@ -16915,7 +17827,8 @@ List<ReferenceCandidate> referenceCandidates(
 /// ([SaltDatabase.undecidedRoutedMatchesForItemKey]) on ANOTHER child, or
 /// on [childId] by a flagged default ([isDefaultRoute]); an unflagged row
 /// on the same child waits on nothing. Only a line whose share of [childId]
-/// reads ([parseShare]) — each target keeps its OWN share. What `others` /
+/// reads ([routeShareOf], v81 F15: WB's whole batch too) — each target
+/// keeps its OWN share. What `others` /
 /// `others_lines` count on a routed row and exactly what
 /// [applyRecipeToOthers] writes. Never a food row (S18), never a held
 /// reference line (a LINE hold, A2). v44 (S9 a): a SECTION pick is
@@ -16949,7 +17862,7 @@ List<IngredientMatchRow> recipeReach(
           if (nutritionLines(recipe).elementAtOrNull(row.position)
               case final line?
               when line.raw == row.raw &&
-                  parseShare(line.raw, line.amounts, child.servings) != null &&
+                  routeShareOf(recipe, line, child) != null &&
                   (row.childRecipeId != childId ||
                       isDefaultRoute(db, recipe, line, row, memo)))
             row,
@@ -17053,7 +17966,7 @@ applyRecipeToOthers(
             status: 'overridden',
             childRecipeId: childId,
             // Its OWN line's share of the child (never the old child's).
-            childShare: parseShare(line.raw, line.amounts, child!.servings),
+            childShare: routeShareOf(recipe, line, child!),
             clearChildStamp: true,
             clearHold: true,
             clearParts: true,
@@ -17859,14 +18772,31 @@ Future<IngredientMatchRow> unskippedRow(
           hold: outcome.hold,
         )
       : out.copyWith(hold: outcome.hold);
-  // Rule B1 (v41) on the line's raw weight: a skip kept the rendered sum;
-  // v49: every rule's parts ([withParts]).
+  // Rule B1 (v41) on the grams a compute hands it: a skip kept the
+  // rendered sum, so the line's engine grams from its own derivation; v49:
+  // every rule's parts ([withParts]). v81 (Run 065/066 F1): the ENGINE's
+  // grams, never the raw weight over them — a v50 cured pork the steps
+  // discard is 0 g, and B1 never touches it (G7: beef-braised-in-barolo|2
+  // came back 63.22 g rendered).
   out = withParts(
     db,
     recipe,
     eaten,
     out,
-    raw: out.fdcId == rawBaconFdcId ? derived?.grams : null,
+    raw: out.fdcId != rawBaconFdcId
+        ? null
+        : (medium
+                  ? outcome
+                  : engineOutcome(
+                      recipe,
+                      eaten,
+                      onRow,
+                      derived,
+                      picked: !personal,
+                      decided: personal,
+                      confidence: out.confidence,
+                    ))
+              .grams,
   );
   return subRecipeRowFor(
         recipe,
@@ -18018,6 +18948,7 @@ derivedFor(
     return (
       row: _childRowOf(
         db,
+        recipe,
         line,
         placed,
         sameAmount: sameAmount,
@@ -18327,12 +19258,13 @@ IngredientMatchRow withDerived(
 /// its stamp kept. The child with no nutrition row: the row as stored (the
 /// totals leave it underived — never FDC's `missing` path, F6). Else
 /// counted: the share a person saved while the line's amount is the one it
-/// was saved on ([sameAmount], as typed grams), else re-read from the line
-/// and the child's yield ([parseShare]); grams = the child's total grams ×
+/// was saved on ([sameAmount], as typed grams), else re-read as the route
+/// reads it ([routeShareOf], v81 F15); grams = the child's total grams ×
 /// the share; the stamp = the child's `computed_at`; any recipe hold
 /// answered (the child is back).
 IngredientMatchRow _childRowOf(
   SaltDatabase db,
+  Recipe recipe,
   IngredientLine line,
   IngredientMatchRow placed, {
   required bool sameAmount,
@@ -18363,7 +19295,7 @@ IngredientMatchRow _childRowOf(
   }
   final share = sameAmount && placed.childShare != null
       ? placed.childShare
-      : parseShare(line.raw, line.amounts, child.servings);
+      : routeShareOf(recipe, line, child);
   return placed.copyWith(
     grams: share == null ? 0 : (stored.totalGrams ?? 0) * share,
     gramSource: GramSource.recipe.name,
@@ -18417,6 +19349,7 @@ Future<List<String>> recomputeParentsOf(
         }
         final derived = _childRowOf(
           db,
+          parent,
           line,
           row,
           sameAmount: true,
@@ -19208,10 +20141,11 @@ IngredientMatchRow? _coatedVegetable(
         // Key: head — the food a coating sentence is searched for.
         index.memo(
           ('coatNamed', head),
-          () => _naming(
-            recipe,
-            head,
-          ).any((at) => _coatsSentence.hasMatch(index.sentence(at))),
+          () => _naming(recipe, head).any(
+            (at) =>
+                _coatsSentence.hasMatch(index.sentence(at)) &&
+                _coatLineSentences(recipe).contains(at),
+          ),
         )) {
       food = r;
     }
@@ -19221,6 +20155,32 @@ IngredientMatchRow? _coatedVegetable(
       ? food
       : null;
 }
+
+/// v81 (Run 065/066 F7): the sentences naming a coat line — a line whose
+/// medium is the dredge ([DiscardedMedium.coating]) — or a batter (the coat
+/// a batter's lines make, v56 M58 W), once per index
+/// (`memo:coatLineSentences`): [_coatedVegetable]'s coating sentence must
+/// coat the vegetable WITH the coat, as the eggplant's does ("Place 8 to 10
+/// eggplant slices in the bag with the flour; … shake to coat", 0407; the
+/// rings' "dredge each onion ring in the flour", 0315; v68's battered
+/// eggplant "… slices in the batter and turn to coat") — never "toss the
+/// onions with … butter to coat" beside a crumbed food (the onion sized
+/// the crumbs' budget).
+Set<(int, int)> _coatLineSentences(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#coatLineSentences, () {
+      final index = _stepIndexOf(recipe);
+      final heads = _headsOf(recipe);
+      return {
+        for (var k = 0; k < heads.length; k++)
+          if (heads[k] case final head? when _coatingAt(recipe, k))
+            ..._naming(recipe, head),
+        for (final (i, sentences) in index.sentences.indexed)
+          for (final (j, s) in sentences.indexed)
+            if (s.contains('batter') && _batterWord.hasMatch(s)) (i, j),
+      };
+    });
+
+final RegExp _batterWord = RegExp(r'\bbatter\b');
 
 /// v67 (M69 R1, Q4 (i)): a step pounding the coated food thin — "pound
 /// cutlets to even ¼-inch thickness" (0418), "pound the cutlets to an even
@@ -19292,6 +20252,9 @@ final RegExp _bakesSentence = RegExp(r'\bbake\b');
 final RegExp _secondDredge = RegExp(
   r'\b(?:coat|dredg)\w*\b[^.]*\bflour again\b',
 );
+
+/// The word "oil" (v81 F4: hoisted from the fried-food scan).
+final RegExp _oilWord = RegExp(r'\boil\b');
 
 /// A sentence putting a food in the oil ("add to hot oil", "place in the
 /// oil") — a frying sentence with [_fryVerb].
@@ -20446,13 +21409,20 @@ Map<int, _M52Row> _m52Plan(
     // oil …", 0317; "Transfer the potatoes and remaining 1 cup oil to the
     // skillet", 0215's pour-off the M49 mark found) — or a "Fried …" title
     // does (0706 Plátanos Maduros (Fried Sweet Plantains) prints no steps).
+    // v81 (Run 065/066 F4, RULE C): once per fried word per index
+    // (`memo:friedNamed`; Key: the class's word pattern — the food the
+    // sentence is searched for — and whether it is a meat, the oil arm's
+    // gate), never per counted row (14.5 s a plan at the editor caps).
     if ((friedTitle && kind.word.hasMatch(title)) ||
-        all.any(
-          (s) =>
-              kind.word.hasMatch(s) &&
-              (_fryVerb.hasMatch(s) ||
-                  _intoOil.hasMatch(s) ||
-                  (!kind.meat && RegExp(r'\boil\b').hasMatch(s))),
+        _stepIndexOf(recipe).memo(
+          ('friedNamed', kind.word.pattern, kind.meat),
+          () => all.any(
+            (s) =>
+                kind.word.hasMatch(s) &&
+                (_fryVerb.hasMatch(s) ||
+                    _intoOil.hasMatch(s) ||
+                    (!kind.meat && _oilWord.hasMatch(s))),
+          ),
         )) {
       fried.add((kind: kind, grams: r.grams!, at: r.position));
     }
@@ -21087,6 +22057,23 @@ bool _m52KeysAlike(
               _dredgeHeads.contains(_headsOf(recipe)[row.position]))) &&
       _m52RowKey(row, dip: dip, offB: false) ==
           _m52RowKey(confirmed, dip: dip, offB: false);
+}
+
+/// Whether [_mediumAt] of [recipe]'s line [i] is [DiscardedMedium.coating],
+/// read by [discardedMediumOf]'s arms up to the coat's ALONE (closer 2,
+/// verify2 D3: [_coatLineSentences] asked the whole detector of every line
+/// — the recompute of v80's ONION shape ran the oil, set-aside and bundle
+/// passes it never needs, +62 %): the same answer (coating is returned
+/// there or nowhere).
+bool _coatingAt(Recipe recipe, int i) {
+  final line = nutritionLines(recipe)[i];
+  return discardedMediumOf(
+        recipe,
+        line,
+        normalizeItem(lineItemOf(line)),
+        coatOnly: true,
+      ) ==
+      DiscardedMedium.coating;
 }
 
 /// [discardedMediumOf] of [recipe]'s line [i], once per Recipe instance (a

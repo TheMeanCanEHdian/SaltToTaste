@@ -266,6 +266,13 @@ text' must be 1-10000 characters.", …); before, only the 2 MB body bounded
 a subsection. The import and the rescan apply it too; every corpus recipe
 validates (its largest subsection: 18 lines, 9 steps, 906 characters).
 
+**v81 (F14, review Run 065/066's critic):** an amount's `quantity` may not
+print a number of 10 or more digits (a recipe's line or a subsection's) →
+`422 validation` "'amount quantity' must print numbers of at most 9
+digits."; the import and the rescan apply it too (the import counts the
+file failed, the rescan skips it with `reason` "fails validation: …" and
+keeps the stored version). No corpus quantity prints more than 2 digits.
+
 ### `DELETE /api/v1/recipes/{idOrSlug}` (admin, full scope)
 
 Takes a backup first, then removes the database row and the library YAML
@@ -5144,6 +5151,228 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Review Run 065/066 fixes (matcher v81; matcherVersion 78 — the catch-up
+review of v47–v54, both fleets; zero requests; server and salt_shared;
+replayed on snapshot 29).** Each restores an invariant the dual-fleet
+review found broken; one (F8) moves corpus rows:
+- **F1 — an un-skip is the compute's row.** `unskippedRow` hands rule B1
+  the line's ENGINE grams (`engineOutcome` on its own derivation, as the
+  compute hands `withParts`), never its raw weight: a v50 cured pork the
+  steps strain or discard stays 0 g (beef-braised-in-barolo|2 came back
+  63.22 g rendered, +406.55 kcal under a fresh stamp). A skip and un-skip
+  of every parts, alcohol, discarded and coating row of snapshot 29 (829
+  rows) returns the compute's row and energy.
+- **F2 — the alcohol reader reads the steps once per index.** Every fact a
+  text gives it (stops, heats, minutes, vessels, words, mixtures, own
+  mentions, printed parts …) is read once per text of the step index
+  (`memo:alcoholTexts`); a name's mentions, uses, part-printing mentions
+  and sharing lines, each line's group, alternatives and words, and the
+  last hand-off once per recipe (`memo:alcoholRecipe`); and a run (the
+  walk from a use to its end) is a function of its state from a step's
+  first sentence on — a later run reaching a state an earlier one read
+  takes what follows it, the minutes replayed in order (the same sums, bit
+  for bit). The 20-line wine GET at the editor caps: 16.5 s → 0.37 s (stock
+  0.31 s); 400 lines: a first run of every sentence plus 399 runs each to
+  its first step boundary (98,553 sentence reads, not ≈ 13 million).
+  Each line's foods vocabulary (the other lines' words a trail can take
+  on) is narrowed to the words the index's sentences print — the only
+  words `_alcoholHeadsIn` can match (a sentence, or a cut of one at a word
+  boundary) — so lines that differ only by words the steps never print
+  share their runs (closer 1, verify1 D1: 400 lines "1 (750-ml) bottle
+  <own word> dry white wine" read 13,264,077 run sentences, none shared,
+  10.9 s a compute; now 98,553 and 399, 1.5 s). Against base (verify1's
+  ABBA rounds): the 400-line wine shapes −99.7 % (344 s → 1.1 s a path),
+  their QUIET twin −55 to −74 %. Residual, stated and count-pinned
+  (nutrition_v81_test's ALCOHOL OWN-NAMED): lines whose OWN words the
+  steps print read different vocabularies and never share — each run
+  reads from its use to its end, at most the lines' runs over the steps
+  (`alcoholRunSentences`): at the editor caps 13,312,877 run sentences,
+  ≈ 10 s a path and 1.0 GB max RSS (the run memo keeps every run's
+  minutes); the identical-vocabulary shapes ≈ 0.4 GB.
+- **F3 — the stop reader is linear.** The run's end ("serve", off the
+  heat, a rest or chill, a strain or a move out) is read by one pass of
+  its stop words and, for each greedy arm, the period-free piece's LAST
+  tail — the last "from the heat", the last "cool/stand/rest", the last
+  " to " whose word chain reaches a vessel (the first vessel on it), the
+  last "to/on/onto" whose chain reaches a surface (the last on it) — each
+  chain position read once per text; v54's single regex nested a greedy
+  `[^.;]*` and a repeated `([\w-]+ )*` (cubic: ≈ 35 ms a 1,000-character
+  sentence, 42 s one wine line under cap-sized steps; now 0.39 s). Equal to
+  the regex — start, end and kind — on 120,000 sentences built from the
+  corpus's.
+- **F4 — the fried-food scan once per word.** The frying-oil block reads
+  whether a frying sentence names a fried class's word once per word and
+  index (`memo:friedNamed`), never per counted row (399 potato lines and
+  an oil: 14.2 s a plan → 0.8 s compute, 0.4 s recompute; −95 % against
+  base, verify1's ABBA rounds; the one scan left ≈ 30 ms against the scan
+  stubbed, count-pinned once per index).
+- **F5 — the offer is the write.** The matches GET counts `others` with the
+  record the decision names (`decisionRecordOf`, the PUT's own): a canned
+  bean the v49 twin move put on the solids-and-liquids record, and a
+  skinless meat-only row, decide the record bought (chana-masala|11 was
+  offered 6 recipes and wrote 1; 23 of the 96 twin-moved rows disagreed).
+- **F6 — a prep note read is hashed.** `ingredientsHashOf` folds
+  `prep_notes` wherever a reader beside the resolver can read it — the
+  shell reader's "eaten shell and all", v50's potato kept-cooked kind,
+  which takes a weight from the note's "cup(s) (…)" — for a recipe and a
+  section copy alike. The gate reads the NOTE alone, never a step (closer
+  2, verify2 D1: every freshness check runs it — the recipe nutrition GET
+  too — and closer 1's linear step scan backtracked its amount run, 733 ms
+  a hash and a nutrition GET 13–19 → 729–746 ms on "transfer 1" and a run
+  of spaces at the caps; v81's first gate 9.8 s a hash on "Transfer 1 cup
+  (warm "): a note printing "cup(s) (" folds whether or not a step reads
+  it — a superset, so a re-stamp on identical rows, never a stale fresh.
+  Deploy (F6 alone): 9 keys recompute once on identical rows — 7 re-stamp
+  (their hash moves: 0279 (the shell), 0365, 0783, 0790, 0958, 1086 and the
+  section 0393#The America's Test Kitchen All-Purpose Gluten-Free Flour
+  Blend — the 6 notes printing one: 5 recipes', 1 section's — pinned
+  corpus-wide) and the section's 2 routed parents, 0393 the-best-gluten-
+  free-pizza and 0819 gluten-free-chocolate-chip-cookies, re-derive through
+  its `child_stamp` (their hash and totals unchanged; closer 3, verify3
+  D1 — pinned on a note edit of the section). Count-pinned (`prepNoteFolds`: a compute 2, a recompute 1,
+  the nutrition GET 1, the matches GET 0; never on a note printing none);
+  the hash = base on every shape (9–11 ms at the caps, both).
+- **F7 — the coated vegetable is the one the coat coats.** A coating
+  sentence sizes a held coat from a vegetable only when it names a coat
+  line beside it (a line whose medium is the dredge) or a batter
+  (`memo:coatLineSentences`): "Toss the onions with … butter to coat" beside
+  a crumbed food no longer sizes the crumbs from the onion. The onion
+  rings and the eggplant unchanged. Each line's medium is read by the coat
+  arms alone (`discardedMediumOf`'s `coatOnly` — the same answer: coating is
+  returned there or nowhere; closer 2, verify2 D3: the whole detector of
+  every line made v80's ONION recompute run the oil, set-aside and bundle
+  passes, +21 / +18 / +62 %); count-pinned = base on that shape but the
+  reader's own memo and one more naming on the GET; against base (ABBA,
+  medians of 5) compute +1.5–1.9 %, GET +0.3–0.5 %, recompute +2.0 % —
+  the reader's own pass (one coat-arm read per line, one substring test
+  per sentence for "batter"); the v26 ONION test +1.7 %.
+- **F8 — a strained aromatic is the line's.** Whether a strained solid
+  went back into the dish reads only the mentions of its food no line owns
+  (A13's shared tail): the soup's own onion re-added after the stock's
+  strain is the soup's line. **6 rows**, each now 0 g `discarded`
+  ("approximate (strained out and discarded — what it gives the liquid is
+  not counted)"): classic-chicken-noodle-soup|2 onion 110 g,
+  hearty-chicken-noodle-soup|2 onion 70 g, |3 carrot 61 g, |4 celery 40 g,
+  roast-butterflied-leg-of-lamb…|3 shallots 90 g, thai-style-chicken-soup|3
+  cilantro 8 g — −170.99 kcal (per serving 531.36 → 524.40, 530.91 →
+  515.27, 899.22 → 891.12, 401.31 → 401.00). Unchanged: a tail mention
+  every line shares (0415's porcini, re-named by the cremini).
+- **F9 — the stored position is never read.** The alcohol flag reads the
+  line it is handed (its own place in the recipe's lines), never the row's
+  stored position, which an edit leaves stale until the next compute (a
+  matches GET after a save that shortened 0005's lines threw a 500).
+- **F10 / F13 — two readers once per index.** Whether the steps strain a
+  zest (`memo:zestStrained`) and whether a can's head is added with its
+  liquid (`memo:canLiquid`, per head), both over the index's lower-cased
+  steps — its windowed sentences, where v80 read the raw step text (they
+  differ only past a 1,000-character sentence) — the regexes hoisted (7.4 s
+  and 8.8 s computes at the caps before).
+- **F11 — an emptied pick reads as the rule row.** A person's pick of a
+  section its host later empties of ingredient lines reads as the engine's
+  `no_ingredients` rule row: counted at 0 g and named in the label's
+  `partial` (`not_routed`, `no_ingredients`), never `includes`; the pick
+  stays the person's and the section a child, so lines added back route it.
+  The totals read it too (closer 1, verify1 D2 — R1's parity): the line is
+  neither matched nor accounted, so the parent reads PARTIAL exactly as the
+  engine's own route of the same emptied section does (chraime|7 → its
+  emptied Tabil: partial, 15 of 16; the roast's pick of it: partial, 5 of
+  6). Sections only: a library recipe printing no lines is never one; and
+  EMPTY only — a section cut to one line still routes (closer 3, verify3
+  D2: Tabil cut to one real line keeps both parents complete, 16 of 16 and
+  6 of 6).
+- **F12 — the cut-word guard yields to a discard of the whole line.** A
+  line cut fine WHOLE (no whole, halved, quartered, smashed, crushed,
+  remaining, reserved or stem part; no plus part) and the only line of its
+  head is removed when a discard clause names its food ("… pour through a
+  fine-mesh strainer … Discard the garlic.", 0031's Garlic Croutons — a
+  variation, so no computed row moves); a cut PART stays eaten. 0346|2
+  already counts only its 5 minced cloves (15 g). A cut line reaches its
+  mentions only where a discard clause names its head (closer 2, verify2
+  D3: every cut line of a whole-piece or strained head read the by-name
+  scan, v26 long-lines +14 %): count-pinned = base; the v26 long-lines
+  tests +1.8 % end to end, +0.2 % at the loop level.
+- **F14 — numbers are bounded.** `parseQuantity` (salt_shared) reads at
+  most `maxQuantity` (1e9): a longer digit run — whole, numerator or
+  denominator — or a non-finite decimal parses to null (an unmeasured
+  amount), never an `int.parse` overflow or Infinity grams (each bound
+  pinned, a 10-digit numerator and denominator included); the server's
+  own digit reads (a bottle's count and size, a paren volume, a per-pound
+  count, a duration's minutes) go through it, and a per-pound count of 0
+  reads nothing. The editor refuses a quantity printing a number of 10 or
+  more digits — a recipe's line or a subsection's, on create and update —
+  `422 validation` "'amount quantity' must print numbers of at most 9
+  digits." (closer 4, verify4 D2 — the v47 F11 / v70 F10 convention:) the
+  import and the library rescan apply the same check on the way in: the
+  import counts such a file failed, the rescan skips it with `reason`
+  "fails validation: 'amount quantity' must print numbers of at most 9
+  digits." and keeps the stored version. No corpus quantity prints a digit
+  run longer than 2.
+- **F15 — a recipe pick reads the route's share** (closer 4, the Opus
+  critic). One function, `routeShareOf`, is the share the resolver routes a
+  line at — the yield's (`parseShare`), a section's bare count of 1 (A9),
+  rule WB's whole batch (1.0) for a line with no amount of a child with
+  lines, never one a served-with marker reads (rule SW: the route never
+  reads such a line) — and every reader of a line's share of a child reads
+  it: the route, the PUT's recipe-pick gate and the share it stores, the
+  derive of a decided child row when its line's amount moved, a recipe
+  decision's reach and its apply-to-all write, and the fix sheet's
+  candidates' `kcal_per_serving`. red-beans-and-rice|14 "Basic White Rice
+  (this page)" (WB: 0521's section, 402.2 g): its section or its host
+  picked with no share was refused "No share the yield can read" while the
+  GET offered share 1.0 and `pickable`; now stored at 1.0 (402.2 g; the host
+  1,791.6 g), and the candidate offers 240.45 kcal a serving (was null);
+  the shared contract golden `nutrition_matches_wb.json` moves by that one
+  value (panna-cotta|6's own-section coulis candidate: 80.35 a serving,
+  the routed row's own; was null).
+  Pinned beside it on a STATED amount-less copy of deep-dish-apple-pie|0
+  (no corpus WB line routes to a library recipe): the library candidates
+  382.09 / 440.00 / 456.17 a serving (were null), the reach takes the line
+  (base: left out) and the apply writes it at 1.0; a decided row whose line
+  is edited amount-less keeps 1.0 and 658.2 g (base: share 1.0 shown, 0 g
+  counted). Served-with lines keep asking for the share (tortilla|8). A9's
+  bare count of 1 stays a SECTION's (closer 5, verify5 D1): vegan-baja-
+  style-cauliflower-tacos|14 "1 Vegan Cilantro Sauce" (its own section at
+  1.0) picked as the library recipe 0521 with no share is refused, as
+  before. No corpus row moves (person paths).
+- **F16 — a section's job failure is the section's** (closer 4). In the
+  per-recipe job a child section's failure was logged under the recipe's
+  id; in a sweep a section's failure counted in `failed` (a 1-recipe sweep
+  read "done 1, failed 2"). Now the log names the compute that failed and
+  `failed` counts recipes (`GET /api/v1/nutrition/jobs/{id}`).
+- **F17 — rule PV's choice is hashed** (closer 4). `ingredientsHashOf`
+  folds, for each prose section a line reads (`prose_sections`), the base
+  rule PV counts for it (`prose_bases`): PV reads the prose host's title
+  and its other sections' titles and lines, and no stamp tied the parent to
+  them — lemon-meringue-pie|0 → 0972's Basic Single-Crust Pie Dough, with
+  0972's host retitled to a tie (→ the host) or given a sibling with lines
+  under a closer title, read FRESH on the old base through every stale sweep
+  while pumpkin-pie|0 still routed to it (the section GC heals only an
+  abandoned base). Now the parent reads stale at once and ONE sweep
+  re-routes it. Deploy (F17 alone, snapshot 29, zero requests): 2 recipes
+  re-stamp once on identical rows — the two PV parents, 0983 fresh-plum-
+  ginger-pie and 0989 lemon-meringue-pie (their hash moves; rows and totals
+  unchanged); with F6, 11 keys in one round (the version bump re-stamps
+  every recipe in any case). Pinned on both edits. Cost (closer 5, verify5
+  D3; RULE C): every freshness check hashes, so PV's choice of base — the
+  host's and every sibling's title words and lines, and whether the base
+  is made from a recipe — is read ONCE per prose section a hash reads
+  (`proseChoices`); read per line it cost +81 % a hash, +18–23 % a compute
+  at the caps. What a line still reads is its own share of the base (the
+  route's `routeShareOf`: the line's text and amounts against the base's
+  yield — a line PV leaves unrouted has no stamp to carry it), once per
+  prose-reference line and hash (`proseShares`): the residual, count-pinned
+  exactly on the STATED cap shape (lemon's real line 0 repeated to 400
+  lines beside real 0972; compute 2 / 800, recompute 1 / 400, the recipe
+  nutrition GET 3 / 1,200, the matches GET none). Measured there (ABBA, two
+  rounds, against cae00d4): a hash 14.0–14.7 ms vs 13.0–13.5 (+5–11 %;
+  closer 4 read 22.4–23.1), a compute 84–86 ms vs 82–85 (+1–4 %), the
+  recipe nutrition GET 145–149 vs 145–152 and the matches GET 263–268 vs
+  267–276 (within noise); lemon itself (14 lines, one prose line) 0.86–
+  0.94 ms vs 0.81–0.89.
+Deploy note: matcherVersion 78 stales every recipe; one zero-request sweep
+settles it; the kcal digest moves by the four recipes' per-serving changes
+(−6.96 −15.64 −8.10 −0.31 = −31.01).
+
 **Since matcher v71 (batch M71 — step prints: printed amounts, strained
 solids, kept spoonfuls, frying media; matcherVersion 69; prep50 design_v2
 §2 M71, decided under the 2026-10-07 standing authorization; zero
@@ -6991,7 +7220,7 @@ The 422s, each before anything is written:
 | `child` with no stored totals | `That recipe has no totals yet — compute it first.` |
 | `share` not a number, ≤ 0 or > 100 | `'share' must be a positive number (at most 100).` |
 | `share` without `child` | `Pick a recipe first, then set the share.` |
-| `child` with no `share`, on a line whose share of that recipe its yield cannot read | `No share the yield can read — set the share.` |
+| `child` with no `share`, on a line whose share of that recipe the route cannot read (its yield; v81 F15: an amount-less line not served with reads rule WB's whole batch, 1.0) | `No share the yield can read — set the share.` |
 | a food, a confirm or grams refused on a routed row | `This line is made from a recipe — confirm it, choose another recipe, or skip the line.` |
 | a confirm, a food or grams on `choose_recipe` / `nested_recipe` | `This line is made from a recipe — choose a recipe, or skip the line.` |
 | a food or grams on `discarded_recipe` | `This marinade is poured away — confirm it, choose a recipe, or skip the line.` |
@@ -7036,7 +7265,7 @@ delta §6; the v41 table's rows stand):
 | a `discarded_recipe` marinade picked with no `share` (S10 (a): the share eaten is a person's) | `Set the share that is eaten — the rest is poured away.` |
 | `section` that lists no ingredients | `That section lists no ingredients — it cannot be counted.` |
 | `section` with no stored totals | `That section has no totals yet — compute its recipe first.` |
-| `section` with no `share`, the section's yield gives none | `No share the yield can read — set the share.` |
+| `section` with no `share`, the section's yield gives none (a bare count of 1 reads one; v81 F15: so does an amount-less line not served with) | `No share the yield can read — set the share.` |
 
 A food decided here — a pick (`fdc_id`), or `confirmed: true` on a line that
 has a food — becomes the INGREDIENT's decision, library-wide: it is stored in
@@ -7625,6 +7854,12 @@ this a [side-effectful GET](#cross-site-gets): a cookie session with neither
 `{id, status, total, done, failed, log, started_at, finished_at}`.
 `total` / `done` count recipes (v47, F12); a `log` line names a recipe by
 its id and a section as `{host slug} · {title}` (never its storage key).
+v81 (F16, review Run 066's Opus critic): `failed` counts recipes too — a
+section's failure moves no count, its log line names the section (in the
+per-recipe job as in a sweep: it was logged under the recipe's id), and
+each parent of it in the job fails with it ("still stale after 3 compute
+passes"); a job stopped at a section by a provider failure logs `stopped at
+{host slug} · {title}: …` with `status` `failed`.
 
 ### `GET /api/v1/import/candidates` (admin)
 

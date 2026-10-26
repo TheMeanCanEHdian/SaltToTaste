@@ -284,7 +284,8 @@ void main() {
       'bump)', () {
     // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
     // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    expect(matcherVersion, 77);
+    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
+    expect(matcherVersion, 78);
   });
 
   test("the records: FNDDS 2705980's oil (the share's 2 / 125.77); total "

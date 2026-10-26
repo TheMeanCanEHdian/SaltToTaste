@@ -477,6 +477,9 @@ void _validateRecipe(Recipe recipe) {
   }
 }
 
+/// A digit run of ten or more: a number the editor refuses in a quantity.
+final RegExp _longDigitRun = RegExp(r'\d{10,}');
+
 /// The ingredient caps of a recipe and of each subsection: 60 groups, 400
 /// lines, each line's fields and amounts.
 void _checkIngredients(List<IngredientGroup> groups) {
@@ -498,6 +501,13 @@ void _checkIngredients(List<IngredientGroup> groups) {
       }
       for (final amount in line.amounts) {
         _requireLength('amount quantity', amount.quantity, min: 0, max: 40);
+        // v81 (Run 065/066 F14): no number past parseQuantity's bound
+        // (maxQuantity, 1e9) — a 20-digit quantity crashed the compute.
+        if (_longDigitRun.hasMatch(amount.quantity)) {
+          throw const ValidationException(
+            "'amount quantity' must print numbers of at most 9 digits.",
+          );
+        }
         _checkLength('amount unit', amount.unit, 40);
       }
     }

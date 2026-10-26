@@ -54,6 +54,11 @@ Future<void> _runOne(
   int jobId,
   Recipe recipe,
 ) async {
+  // v81 (Run 066 Opus critic F16): a failure is logged under the compute
+  // it stopped — a child section by its host and title ([jobLogName]),
+  // never the recipe's id; the job's one recipe is still the one counted
+  // (it is not computed).
+  var at = recipe.id;
   try {
     final notes = <String>[];
     // The job's outage watch, across its passes ([jobProvider]).
@@ -69,17 +74,19 @@ Future<void> _runOne(
         continue;
       }
       _recipeJobs[key] = jobId;
+      at = jobLogName(db, key);
       try {
         await computeUntilFresh(
           db,
           watched,
           section,
-          onFoodFailure: (error) => notes.add('${jobLogName(db, key)}: $error'),
+          onFoodFailure: (error) => notes.add('$at: $error'),
         );
       } finally {
         _recipeJobs.remove(key);
       }
     }
+    at = recipe.id;
     await computeUntilFresh(
       db,
       watched,
@@ -100,7 +107,7 @@ Future<void> _runOne(
       done: 0,
       failed: 1,
       status: 'failed',
-      logJson: jsonEncode(['${recipe.id}: $error']),
+      logJson: jsonEncode(['$at: $error']),
     );
     // ignore: avoid_catches_without_on_clauses
   } catch (error) {
@@ -109,7 +116,7 @@ Future<void> _runOne(
       done: 0,
       failed: 1,
       status: 'failed',
-      logJson: jsonEncode(['${recipe.id}: $error']),
+      logJson: jsonEncode(['$at: $error']),
     );
   } finally {
     _recipeJobs.remove(recipe.id);
@@ -486,7 +493,9 @@ Future<void> _run(
       : const <String, int>{};
   // v47 (F12): `total` and `done` count RECIPES; a section key (computed
   // first, its parents' input) moves neither, and the log names it by its
-  // host and title ([jobLogName]) — a key never reaches the wire.
+  // host and title ([jobLogName]) — a key never reaches the wire. v81 (Run
+  // 066 Opus critic F16): nor `failed` — a section's failure is its log
+  // line; the parents it fails (still stale, their child unstamped) count.
   final total = recipeCountOf(ids);
   try {
     for (final id in ids) {
@@ -533,7 +542,7 @@ Future<void> _run(
         db.updateNutritionJob(
           jobId,
           done: done,
-          failed: failed + 1,
+          failed: failed + step,
           status: 'failed',
           logJson: jsonEncode(log),
         );
@@ -541,7 +550,7 @@ Future<void> _run(
         // One bad recipe must not sink the batch; the log carries it.
         // ignore: avoid_catches_without_on_clauses
       } catch (error) {
-        failed += 1;
+        failed += step;
         log.add('$name: $error');
       } finally {
         // Balanced on EVERY exit, including the provider-failure `return`

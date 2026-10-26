@@ -40,14 +40,33 @@ final RegExp _wholeNumber = RegExp(r'^\d+$');
 final RegExp _asciiFraction = RegExp(r'^(?:(\d+)\s+)?(\d+)\s*/\s*(\d+)$');
 final RegExp _decimal = RegExp(r'^(?:\d+(?:\.\d+)?|\.\d+)$');
 
+/// The largest quantity [parseQuantity] reads: a billion of any unit is no
+/// recipe's (v81, Run 065/066 F14 — a longer digit run overflowed
+/// `int.parse`, a FormatException, or read to Infinity grams, and either
+/// crashed the server's compute and its matches GET on text the editor
+/// accepts). Anything larger parses to null: an unmeasured amount.
+const double maxQuantity = 1e9;
+
 /// Parses a corpus quantity string to its numeric value.
 ///
 /// Accepts integers (`'2'`), ASCII fractions (`'1/2'`), mixed numbers
 /// (`'4 1/4'`), unicode vulgar fractions standalone (`'¼'`) or mixed
 /// (`'1¾'`, `'1 ¾'`), and plain decimals (`'1.5'`). Leading/trailing
 /// whitespace is ignored. Returns null for anything else — in particular,
-/// ranges are not quantities and do not parse.
+/// ranges are not quantities and do not parse — and for any value above
+/// [maxQuantity] (a whole, numerator or denominator past it included).
 double? parseQuantity(String text) {
+  final value = _parseQuantity(text);
+  return value == null || !(value <= maxQuantity) ? null : value;
+}
+
+/// A digit run as a number, null past [maxQuantity] (never an overflow).
+double? _digits(String digits) {
+  final n = int.tryParse(digits);
+  return n == null || n > maxQuantity ? null : n.toDouble();
+}
+
+double? _parseQuantity(String text) {
   final trimmed = text.trim();
   if (trimmed.isEmpty) return null;
 
@@ -58,17 +77,20 @@ double? parseQuantity(String text) {
     final whole = trimmed.substring(0, trimmed.length - 1).trimRight();
     if (whole.isEmpty) return vulgar;
     if (!_wholeNumber.hasMatch(whole)) return null;
-    return int.parse(whole) + vulgar;
+    final n = _digits(whole);
+    return n == null ? null : n + vulgar;
   }
 
   // ASCII fraction ('1/2') or mixed number ('4 1/4').
   final fraction = _asciiFraction.firstMatch(trimmed);
   if (fraction != null) {
     final whole = fraction.group(1);
-    final numerator = int.parse(fraction.group(2)!);
-    final denominator = int.parse(fraction.group(3)!);
+    final numerator = _digits(fraction.group(2)!);
+    final denominator = _digits(fraction.group(3)!);
+    final n = whole == null ? 0.0 : _digits(whole);
+    if (numerator == null || denominator == null || n == null) return null;
     if (denominator == 0) return null;
-    return (whole == null ? 0 : int.parse(whole)) + numerator / denominator;
+    return n + numerator / denominator;
   }
 
   // Integer ('2') or plain decimal ('1.5').

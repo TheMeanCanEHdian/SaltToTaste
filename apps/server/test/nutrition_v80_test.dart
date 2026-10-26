@@ -591,7 +591,8 @@ Recipe friedOnionRings() {
 void main() {
   test('the matcher version carries the batch (update the literal with a '
       'bump)', () {
-    expect(matcherVersion, 77);
+    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
+    expect(matcherVersion, 78);
   });
 
   test("the figures: 2706442's crust k from the records the coat reads (SR "
