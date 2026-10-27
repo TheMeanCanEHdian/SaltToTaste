@@ -274,7 +274,13 @@ Future<Map<String, Object?>> matchesBody(
                         // the can bought (chana-masala|11 offered 6, wrote 1).
                         fdcId: row == null
                             ? null
-                            : decisionRecordOf(recipe, weighed, row.fdcId),
+                            : decisionRecordOf(
+                                recipe,
+                                weighed,
+                                row.fdcId,
+                                db: db,
+                                description: row.description,
+                              ),
                         memo: reads,
                       )
                     : child['state'] == 'routed'
@@ -904,7 +910,13 @@ Future<AppliedToOthers?> applyMatchOverride(
   // ([decisionRecordOf]) — the key's other lines move again only where
   // their own recipe discards the skin. This line's row keeps its food.
   final skinOnId = decidedFood
-      ? decisionRecordOf(recipe, weighed, row.fdcId)
+      ? decisionRecordOf(
+          recipe,
+          weighed,
+          row.fdcId,
+          db: db,
+          description: row.description,
+        )
       : row.fdcId;
   final skinOn = skinOnId == null || skinOnId == row.fdcId
       ? null

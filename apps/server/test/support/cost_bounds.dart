@@ -168,8 +168,19 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // recipe-level reads — each once per index.
       'memo:alcoholTexts',
       'memo:alcoholRecipe',
+      // v82 (review Run 067/068 F3): each step's last drain and last rinse
+      // sentence — once per index.
+      'memo:rinseTails',
     ])
       once: 1,
+    // v82 (review Run 067/068 F8): the M52 keys built — the request's plan
+    // and each decided coat, dip or oil row a derivation keys (a confirm
+    // that keys alike in O(1) builds none), at most four passes a line.
+    'm52Keys': 4 * lines + 8,
+    // v82 (review Run 067/068 F1, F2): the last sentence a tail guard reads
+    // — the strain's solids once per index, the reserved fat's heat once
+    // per frying fat's owners (oil, shortening, lard).
+    'lastMatching': 4,
     // v81 (F2): each text the alcohol reader reads, its facts built once —
     // a sentence, its side-stripped form, a prefix before a stop and a
     // suffix after an offset at most twice each, and an adding sentence's
@@ -291,7 +302,19 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       perHead: 3 * heads,
     'memo:says': 6 * heads,
     // Once per line TEXT: 398 identical oil lines read one.
-    for (final perText in ['memo:keptOil', 'memo:plusNamed'])
+    for (final perText in [
+      'memo:keptOil',
+      'memo:plusNamed',
+      // v82 (review Run 067/068 F3): whether the steps rinse a plus part off,
+      // once per lead amount and head.
+      'memo:rinsedOff',
+      // v82 (review Run 067/068 F10): R2's lean-only record bought, once per
+      // line text and record while no FDC cache write lands.
+      'leanOnlyReads',
+      // v82 closer 2 (verify2 D5): a decision's moves on a line, once per
+      // line text and record while no FDC cache write lands.
+      'carriedReads',
+    ])
       perText: 3 * texts,
     'mentions': mentions,
     // v61 (M62 E-w): the dip lines a plan weighs — at most two plans per

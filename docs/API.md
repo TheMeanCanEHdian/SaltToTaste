@@ -5151,6 +5151,208 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Review Run 067/068 fixes (matcher v82; matcherVersion 78 — no corpus row
+moves; the catch-up review of v55–v62, both fleets; zero requests; server
+only; replayed on snapshot 29, byte-identical to v81).** Each restores an
+invariant the dual-fleet review found broken:
+- **F1 — the strain-the-liquid guard reads its tail once.** v56's guard
+  ("no sentence from the strain to the end names solids, vegetables, a
+  blender, a food processor or a purée") is "the LAST such sentence comes
+  before the strain": that last sentence is found once per index (counted
+  `lastMatching`), each guarded strain answered by position — the tail was
+  rebuilt and rescanned per guarded strain (O(S²): 615 s for one
+  `discardedMediumOf` at the editor caps, on the compute, the GET and the
+  PUT). The strain sentence itself still counts as its own tail ("strain
+  the liquid … over the vegetables" is guarded).
+- **F2 — the reserved frying oil's heat is read once.** v58's "a later
+  sentence heats the reserved oil" is "the LAST heating sentence comes after
+  the reserve sentence", found once per fat's owners derivation
+  (`lastMatching`): every later sentence was rebuilt per "reserve N oil"
+  sentence (110 s at the caps). A reserve sentence that heats the oil
+  itself is no reuse, as before.
+- **F3 — the rinsed plus part is read once per amount and head.**
+  `_rinsedOff` (v58 F1) is memoised per index on the plus part's lead
+  amount and the fat (`memo:rinsedOff`), each step's last drain and last
+  rinse sentence found once (`memo:rinseTails`): it ran per line, twice
+  (engineOutcome and the GET's basis), rescanning the rest of the step per
+  toss sentence (249–500 s for 400 plus-part oils). A toss sentence that
+  drains and rinses itself rinses nothing, as before.
+- **F4 — a dip sentence is never a mixing sentence.** `_dipsOf` reads a
+  mixing sentence by the verb as a word (`_mixesWord`: never "mixture") and
+  never a dip sentence: a second egg dip read the first ("dip each steak
+  into the egg mixture …") as the mix, claimed the coated steaks as a dip
+  line and sized them `discarded` (0304 + one repeated dip: 850.49 → 64.78
+  g, the compute and the recompute planning apart). No corpus recipe holds
+  two first-arm dip sentences (no corpus row moves).
+- **F5 — a dip is never off C5's B.** The C5 batter budget's subtraction of
+  the counted flour and starch, and `_m52Key`'s `offB`, skip a dip line: E-w
+  writes it `discarded`, so it came off B in its engine form on the compute
+  and not on the recompute (0255 + a tapioca-starch egg dip: the flour
+  67.71 g on the compute, 89.12 on the recompute; now 89.12 on both).
+- **F6 — the coated food is never a coat part.** The plan's coated food —
+  a row on a meat record, or one on a coated-vegetable record (Eggplant,
+  Onions) whose head a coating sentence names with a coat (the row the
+  coated-vegetable route reads, whatever the shape) — mixed into a coat
+  (0279's "Transfer shrimp to bowl, add 3 tablespoons cornstarch … and toss
+  until well combined") is decided as any counted food (`derivedFor` never
+  routes it to the plan) and the plan's held coat never holds it: a
+  Confirm of the shrimp stored 0 g `discarded` for good (1,465.37 → 410.40
+  kcal), a pick held it `coating`; on a coat held with no budget the engine
+  held the shrimp itself. The same for the eggplant (closer 1): 0407 with
+  "Toss the eggplant slices with the flour until well combined." in S3 (a
+  stated copy; the engine's rows unchanged) stored 0 g on a Confirm (2,735.29
+  → 1,938.5 kcal) and held it on a pick; now 907.18 g counted. A vegetable no
+  coating sentence names (a minced onion stirred into the flour) and a
+  seasoning named in the coating sentence (paprika) stay parts.
+- **F7 — a Confirm the plan stops covering follows its food.** The v70 F9
+  revert in `recomputeTotals` covers a person's CONFIRM (no grams typed) in
+  the plan's form too: re-read as the compute derives it with no plan entry
+  (`engineOutcome` decided; a held medium resolves to its eaten part or 0 g
+  poured away) — a confirmed batter, dip, coat, uptake or product-fry row
+  kept the old plan's grams through every PUT once its coated or fried food
+  was skipped or picked (0511's confirmed egg 23.45 g, a compute 50.00;
+  1194's oil 99.34, a compute 0.00). A person's PUT, a recompute and a full
+  compute now total the same rows: confirm every discarded or coating row of
+  the 241 corpus recipes holding one, then skip / pick / type / confirm each
+  of the three largest counted foods, both orders — 5,448 cases, 53
+  divergent at base, 0. Closer 4 (verify4 D1): a person's PICK of a plan row
+  too (a dip or a coat's mixture part picked on a record, no grams typed) —
+  derived on the PUT as `derivedFor` derives it: held `coating`, no grams,
+  while its coat has no budget (M62 H: the hold a pick keeps), the line's
+  own weight (`engineOutcome` decided, RULE A by hold kind — one block,
+  `_byHoldKind`, read by both) once the coated food is back. The plan never
+  weighs a pick, so the PUT kept the pick's grams once the food was skipped
+  (0114's egg picked, the cutlets skipped: 100.00 g, 274.00 kcal, where the
+  GET and a compute held it, 126.00; 0255's cornstarch 1,749.54 against
+  1,506.16) and kept the hold after an un-skip. The hold is read from the
+  plan's own entry (no extra plan); the line test reads a picked coat line's
+  mixing sentences once each (`mixTests`, count-pinned). The sweep
+  (verify4's, extended): every M52 row of the 268 recipes holding one
+  confirmed, picked on its own record, or all confirmed × the two largest
+  counted foods × skip / un-skip / pick / typed / confirm × the plan row
+  first or the food first — 28,310 cases, 196 divergent at base, 41 before
+  this closer (every one a pick, then the food skipped), 0; and the food
+  skipped, the plan row decided, the food un-skipped — 2,831 cases, 41 picks
+  divergent at base and before this closer, 0. Closer 5 (verify5 D1): a
+  coat's mixture part CONFIRMED while H held it is stored resolved (0 g
+  poured away, no hold); once the food was back the plan had no entry for it
+  and the confirm arm read a part only while held `coating`, so the 0 g
+  stood through every PUT (the food skipped, every M52 row confirmed, the
+  food un-skipped: 0254's eggs, mayonnaise and seasonings 0 g, 943.56 kcal
+  stored against a compute's 1,382.58; 0149's buttermilk 0 against 305.00 g,
+  2,550.27 against 2,721.73). The revert now reads a row on a coat-mixture
+  line (`_coatOfPart`) in either plan form — budgeted or resolved
+  (`discarded`, no hold) as well as held `coating`, the v70 F9 rule's own
+  scope; an engine part read only while held before — so a Confirm H
+  resolved follows its food; the coated food's row too (`derivedFor` decides
+  it as any counted food, the same derivation: a 0 g a base F6 Confirm
+  stored heals on the next PUT). Order C (the food skipped, every plan row
+  decided, the food un-skipped): 2,831 cases, 46 divergent at base, 5 before
+  this closer (the five confirm-all), 0; verify5's whole sweep (36,828
+  cases, with every M52 row picked) 0; a person's skip, typed grams, or skip
+  and un-skip of each plan row itself (1,833) 0.
+- **F8 — confirmed coat parts key as dips.** `_m52Key` and `_m52KeysAlike`
+  read a coat's mixture part on its line, record and hold, never its medium
+  bit (a part has no medium; a Confirm keyed `discarded` against its stored
+  engine source): one plan per confirmed part on the GET and the compute
+  (0149's five parts confirmed: the GET 6 → 1 plans, a compute 6 → 2).
+- **F9 — the fried cauliflower's batter reads each row once a plan.** C, the
+  carbohydrate of the group's counted rows, reads each row's record once per
+  plan, never once per fried cauliflower row (the GET and the PUT read
+  [knownFood]: 161,214 reads and 9.9 s at 399 cauliflower lines; now 1,219
+  reads and 0.46 s).
+- **F10 — a line-conditioned move never travels as the decision.**
+  `decisionRecordOf` maps every move of the ranked path back to the record
+  bought, the last move first: the step-printed trim (173128 → the 0" flat
+  168743, M74), a `trimDepthRecords` entry the line prints (v55 R3, Q7's
+  "fat caps removed", the whole brisket, the flat's ¼ inch, v79's
+  "trimmed" racks), then R2's lean-only top of the line's own cached answer
+  (`leanAndFatSibling`; read once per line text and record while no FDC
+  cache write lands, `leanOnlyReads`) — after the skin, shell and can maps.
+  Each trim or R2 reverse stands only where the line's own moves land a
+  decision on the record bought back on the row's record (the round trip —
+  the line's phrase, the step-printed trim and the target in the line's
+  answer are its gates, none of their own): a person's pick of a record
+  the line's moves never reach decides that record. 0228|0 ("fat trimmed to
+  ⅛ to ¼ inch") picked to 174414 decides 174414 — the v55 entry's 172641
+  never re-lands there (0228's answer holds no 174414) and had been carried
+  to 0622|5, a record nobody chose; 0187|0 picked to 171751 decides 171751;
+  0223|0 or 0090|6 picked to 173128 decide R2's 174057 (carried back to
+  173128); 0224|0 picked to the 0" flat 168743 decides 168743 (closer 2,
+  verify2 D1 / D2). The compute's carried decision and apply_to_all's targets re-apply the
+  ranked path's chain (`carriedFoodOf`: freshOverCured → leanAndFatSibling
+  → trimDepthRecord, with the recipe) with the decided record as the top of
+  the line's own cached answer, so each line lands as its own engine pick
+  does, zero requests. Before, a Confirm of 0586's strip steak (Q7's
+  171751) decided 171751 for every 'boneless strip steak' (six lines), a
+  decision on 2727572 cancelled 0586's move, and a Confirm of a moved
+  brisket decided 173128 for every brisket; now 0586 decides 2727572, the
+  flat decides 168657 (R2 → 168743 → the trim → 173128: 0090|6 and 0223|0
+  on 168743, 0091|0 and 0224|0 on 173128), the whole brisket 168607, the
+  racks 172493 (R2 → 174321 → "trimmed" → 174377). The GET's others offer
+  reads the same function (offer == write), and the reach (`decisionReach`,
+  the offer's and the write's) leaves out a row the decision's moves leave
+  on its own record — an unheld row above the gate on a lean-and-fat record
+  (every move target is one: R2's, each `trimDepthRecords` target, 173128)
+  whose line's chain lands the decision there, read on the row's text (the
+  step-printed trim on its recipe), once per text and record a request — as
+  it leaves out a row already on the decided food (0228's Confirm offers
+  nothing: 0622's trimmed rack lands 174377 again; without it the offer
+  counted no-op rows and the GET decoded the recipe it reached again). No
+  corpus row moves (ingredient_decisions holds none). Not mapped back:
+  freshOverCured's choice (no fixed pair — a word overlap); a carried
+  decision re-applies it, and a row it would leave in place stays offered.
+- **F11 — the stale window reads the coated food as the totals do** (folded
+  into F7). The plan (and its key) read a row whose line was edited and not
+  yet computed when it is still the same ingredient (its item key the
+  line's, never an empty one: an amount edit) at its stored grams, as
+  `recomputeTotals` counts
+  it: crispy-fried-chicken's confirmed flour (144.06 g), its chicken line
+  edited 4 → 10 pounds, read 0 g "poured away after your confirm" on the
+  GET, and a Confirm in that window stored 0 g and held the dips (3,329.77
+  → 2,723.81 kcal); now the window reads and keeps 144.06 g and the next
+  compute writes 360.15 g, a fresh compute's.
+Cost (RULE C, the editor caps: 120 steps × 10,000 characters, 400 lines;
+medians, ABBA against 6ede11c): the quiet shapes within ±1.2 % (the strain
+shape −1.0 / −0.4 / −0.0 % on the compute / the matches GET / a recompute,
+the reserve shape −0.4 / +0.6 / −1.2 %, a 400-line R2 roast +0.5 / +0.7 /
+−1.0 %); the TRUE paths from minutes to under 1.3 s (every strain guarded
+417 / 384 / 276 ms; every reserve sentence unheated 437 / 392 ms — base 103
+s each; 400 rinsed plus-part oils 1,276 / 1,136 / 781 ms — and with no toss
+at all 1.28 / 1.14 / 0.78 s against base's 6.7 / 6.5 / 3.4 s; 389 fried
+cauliflower lines 496 / 477 / 171 ms against 512 / 9,850 / 9,552; 400
+confirmed coat parts 830 / 470 / 370 against 1,994 / 1,932 / 370). Each new
+reader is count-pinned exactly on its quiet and TRUE shapes
+(nutrition_v82_test: `lastMatching`, `memo:rinsedOff`, `memo:rinseTails`,
+`leanOnlyReads`, `m52Keys` — the GET of 400 confirmed parts builds one M52
+key, 395 without F8's O(1) path — the plans and the record reads). The
+compute's carried decision (closer 2, verify2 D5) reads its moves once per
+line text, item and record while no FDC cache write lands (`carriedReads`;
+the moved food with it, once): 0239's roast line 390 more times under a
+decision (169194, each line moved to 168381 by R2) computes in 254 / 250 ms
+against base's 246 / 255 (ABBA medians; base carries 168381 unmoved;
+before the memo 795 ms — the line's answer ranked 391 times), the GET
++0.3 % and a recompute +1.4 %;
+with every memo voided before each path (a cache write) 250.5 / 699.5 /
+144 ms against 250 / 688 / 141.5 (+0.2 / +1.7 / +1.8 %); the shape pinned
+exactly (compute 1 read, 401 record reads — base 400: the moved food once).
+The freed Confirm (closer 5): 0149 at the caps (389 more paprika parts), the
+chicken skipped, every M52 row confirmed, then un-skipped — the PUT
+re-derives each part once (797 record reads, the coat's mixing sentences
+once each, the plan twice: the v70 revert's second pass) in 517 / 522 ms
+against base's 320 / 325 (ABBA medians), where base keeps the 396 parts
+at 0 g a compute counts; count-pinned exactly (nutrition_v82_test,
+CONFIRMED PARTS FREED; the verifier's own run 522.5 against 317.5, +64.6 %);
+the next recompute (the compute's own state) −1.1 to +0.4 % against base
+across closer 5's and verify6's ABBA runs (369 / 371 ms against 372 / 375;
+369 against 367.5); the quiet strain, reserve and parts shapes — where the
+revert now asks an engine row in a plan's form whether its line is a coat's
+mixture part (memoised per index) — within ±2 % of base: −2.0 to +1.2 %
+across those runs (closer 5 −0.4 to −2.0 %; verify6, two rounds of 7 and 9
+reps, −0.2 to +1.2 % on every path, the parts recompute 0.0 to +0.3 %).
+Deploy note: no matcherVersion bump and no hash term — nothing stales, no
+sweep; the kcal digest does not move.
+
 **Review Run 065/066 fixes (matcher v81; matcherVersion 78 — the catch-up
 review of v47–v54, both fleets; zero requests; server and salt_shared;
 replayed on snapshot 29).** Each restores an invariant the dual-fleet

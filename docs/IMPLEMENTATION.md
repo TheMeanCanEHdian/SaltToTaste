@@ -3608,6 +3608,30 @@ spent on a scratch copy (snapshot 20) and its answers seeded.
 
 ## Decision log (deviations & clarifications)
 
+- **2026-10-27 — matcher v82: the fixes of dual-fleet review Run 067/068
+  (pair B, the catch-up review of matcher v55–v62 at the tip of v81).**
+  Eleven items from the two fleets and their critics, every one reproduced
+  before and after; no corpus row moves, so the version stays 78 and the
+  deploy moves nothing. Both fleets: three step readers that rescanned the
+  rest of the recipe per sentence or per line (the strain-the-liquid guard,
+  the reserved-frying-oil check, the rinsed plus part — minutes at the
+  editor caps on the compute, the GET and the PUT), each now read once per
+  index. Sonnet alone: a dip sentence read as a mixing sentence through an
+  unterminated verb prefix; a dip taken off the batter budget on one path
+  only; the coated food itself mixed into its coat and stored 0 g for good;
+  confirmed coat parts keying one plan each; and (critic) the fried
+  cauliflower's batter re-reading every row per cauliflower row. Opus
+  alone: a confirmed plan row escaping the plan once its food was skipped
+  or picked (the stale window with it); and (critic) a line-conditioned
+  move travelling as the decision — one function now maps every move of the
+  ranked path back to the record bought, and the compute's carried decision
+  re-applies the chain. The verifier's sweeps then found two pre-existing
+  siblings of the escape — a picked plan row, and a coat part confirmed
+  while held — closed in the follow-up: the revert pass reads a coat's
+  mixture line in either plan form, and the person paths total the same
+  rows as a compute on every combination swept (55,893, 519 divergent at
+  base). Six verifier rounds across two workflows; the last was a cost
+  sentence restated from both measurements.
 - **2026-10-26 — matcher v81: the fixes of dual-fleet review Run 065/066
   (pair A, the catch-up review of matcher v47–v54 at the tip of v80).**
   Seventeen items from the two fleets and their critics, every one

@@ -1798,13 +1798,17 @@ void eggDips() {
         expect(rows, hasLength(capLines));
         expect(
           {for (final row in rows.skip(2)) (row.grams, row.hold)},
-          {
-            switch (shape) {
-              'held-dips' => (null, 'coating'),
-              'flag-dips' => (100.0, null),
-              'w-batter' => (7.91, null),
-              _ => (0.11, null),
-            },
+          switch (shape) {
+            'held-dips' => {(null, 'coating')},
+            'flag-dips' => {(100.0, null)},
+            'w-batter' => {(7.91, null)},
+            // RE-PIN (v82, review Run 067/068 F4): a dip sentence is no
+            // mixing sentence ("dip in the egg mixture" — "mixture" read as
+            // a mix before): the 398 identical egg lines take A13's nth
+            // "egg" mention, alternately the whisk's and the dip's, so half
+            // are the dip's (E-w's 0.21 g each on 199) and half are counted
+            // whole (100.0 g); was every line the dip's at 0.11.
+            _ => {(0.21, null), (100.0, null)},
           },
           reason: shape,
         );
@@ -1858,12 +1862,19 @@ void eggDips() {
               (row.status, row.grams, row.hold),
           },
           switch (shape) {
-            'egg-dips' => {('confirmed', 0.11, null)},
+            // RE-PIN (v82, F4): the dip's half at E-w's 0.21 g, the half
+            // counted whole 100.0 g (above); was every confirm at 0.11.
+            'egg-dips' => {
+              ('confirmed', 0.21, null),
+              ('confirmed', 100.0, null),
+            },
             'flag-dips' => {('confirmed', 100.0, null)},
             'w-batter' => {('confirmed', 7.91, null)},
-            // The picked half counted whole; the auto half at E-w's grams
-            // on its 199 dips.
-            'egg-picks' => {('overridden', 100.0, null), ('auto', 0.21, null)},
+            // The picked half counted whole. RE-PIN (v82, F4): the auto half
+            // — the odd lines, whose A13 mention is the dip sentence, no
+            // longer the dip's — counted whole too (was E-w's 0.21 g on its
+            // 199 dips): the picks are the dip's lines.
+            'egg-picks' => {('overridden', 100.0, null), ('auto', 100.0, null)},
             _ => {('overridden', null, 'coating')},
           },
           reason: shape,
@@ -1926,7 +1937,10 @@ void eggDips() {
             (row.status, row.raw, row.grams),
         };
         final before = shown();
-        expect(before, hasLength(dips ? 3 : 2), reason: '$before');
+        // RE-PIN (v82, F4): the eggs split as in dipShapes' egg-dips — the
+        // dip's half (0.42 g each) and the half counted whole (100.0 g); was
+        // one egg row form (3 forms).
+        expect(before, hasLength(dips ? 4 : 2), reason: '$before');
         stepIndexCounts.clear();
         reachDecodes = 0;
         m52PlanRuns = 0;
