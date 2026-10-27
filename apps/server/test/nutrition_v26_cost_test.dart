@@ -482,6 +482,127 @@ void main() {
       });
     }
   }, skip: skipIfNoCorpus);
+
+  group('RULE C, the two memo families no pin counted (R3, simplification '
+      'ledger L8-5): the dredge set-out and the crumb coat sentence', () {
+    // STATED synthesized cost inputs (cap shapes no corpus recipe holds):
+    // the real 0206 Crunchy Baked Pork Chops padded to the 400-line cap with
+    // its own real line [flour] under 115 × 10,000-character steps of "Stir
+    // ¼ cup flour into the sauce." (every sentence holds the lead amount and
+    // the head, none sets the coat out) before its own steps; the real 0416
+    // Lighter Chicken Parmesan padded with its own [panko] under steps of
+    // "Coat the cutlets." (every sentence opens the coat pattern, none names
+    // crumbs). TRUE: the real [setOut] / [coat] sentence stays, in the last
+    // steps; quiet: that one sentence reads "in a bowl" / "press both sides
+    // of the chicken into the bread crumbs" — each reader scans every
+    // sentence and answers false. ABBA at these caps (R3, 5 warm reps per
+    // side): dropping the memos took the compute 0.9 → 5.5 s (set-out, both
+    // shapes) and 0.8 → 4.9 s quiet / 13.0 s TRUE (crumb coat), the GET 0.7
+    // → 5.3 s and 0.6 → 12.7 / 24.8 s.
+    const flour = '¼ cup plus 6 tablespoons unbleached all-purpose flour';
+    const setOut = 'Place ¼ cup of the flour in a pie plate.';
+    const panko = '1½ cups panko (Japanese-style bread crumbs)';
+    const coat =
+        'Finally, coat both sides of the chicken with the bread crumbs.';
+    for (final (name, file, line, filler, sentence, quietly, family) in [
+      (
+        'SET-OUT',
+        '0206-crunchy-baked-pork-chops.yaml',
+        flour,
+        'Stir ¼ cup flour into the sauce. ',
+        setOut,
+        'Place ¼ cup of the flour in a bowl.',
+        'memo:setsOut',
+      ),
+      (
+        'CRUMB COAT',
+        '0416-lighter-chicken-parmesan.yaml',
+        panko,
+        'Coat the cutlets. ',
+        coat,
+        'Finally, press both sides of the chicken into the bread crumbs.',
+        'memo:coatsWithCrumbs',
+      ),
+    ]) {
+      for (final loud in [false, true]) {
+        test('$name (${loud ? 'TRUE' : 'quiet'}): the reader derived once '
+            'per index on the compute, the GET and the recompute', () async {
+          final base = loadCorpusRecipe(file);
+          final own = [for (final g in base.ingredients) ...g.items];
+          final r = capped(
+            base,
+            [
+              for (final l in own) l.raw,
+              for (var i = own.length; i < capLines; i++) line,
+            ],
+            [
+              for (var i = base.steps.length; i < capSteps; i++)
+                fill(filler, capStep),
+              for (final st in base.steps)
+                loud ? st.text : st.text.replaceFirst(sentence, quietly),
+            ],
+          );
+          expect(
+            r.steps.where((st) => st.text.contains(sentence)),
+            hasLength(loud ? 1 : 0),
+          );
+          final db = wp.tempDb();
+          final provider = FixtureProvider(pending: pendingSearches);
+          wp.saveRecipe(db, r);
+          Recipe stored() => db.recipeByIdOrSlug(r.id)!.recipe;
+          // EXACTLY, each path before its clock (the count kills, never the
+          // backstop): one index, the reader once — but the quiet crumb
+          // coat's recompute, whose panko rows are counted (no medium read).
+          Future<void> timed(
+            String step,
+            Future<Object?> Function() run,
+          ) async {
+            stepIndexCounts.clear();
+            final sw = Stopwatch()..start();
+            await run();
+            final ms = sw.elapsedMilliseconds;
+            final counts = Map.of(stepIndexCounts);
+            expectBounded(r, counts, '$name $step');
+            expect(
+              {
+                for (final k in ['indexes', family]) k: counts[k],
+              },
+              {
+                'indexes': 1,
+                family:
+                    step == 'recompute' &&
+                        family == 'memo:coatsWithCrumbs' &&
+                        !loud
+                    ? null
+                    : 1,
+              },
+              reason: '$name $step',
+            );
+            expect(ms, lessThan(backstopMs), reason: '$name $step: $counts');
+          }
+
+          await timed('compute', () => matchAndCompute(db, provider, stored()));
+          // The TRUE path moves the line: the set-out ¼ cup is the dredge
+          // (the 6 tablespoons eaten), the crumbs the held coat's.
+          expect(
+            {
+              for (final row in db.ingredientMatchesFor(r.id))
+                if (row.raw == line)
+                  (row.gramSource, row.hold, row.grams?.toStringAsFixed(2)),
+            },
+            switch ((family, loud)) {
+              ('memo:setsOut', false) => {('discarded', null, '30.34')},
+              ('memo:setsOut', true) => {('discarded', null, '45.42')},
+              (_, false) => {('density', null, '88.72')},
+              _ => {('discarded', null, '0.28')},
+            },
+          );
+          await timed('GET', () => matchesBody(db, provider, stored()));
+          await timed('recompute', () async => recomputeTotals(db, stored()));
+        });
+      }
+    }
+  }, skip: skipIfNoCorpus);
 }
 
 void pins() {

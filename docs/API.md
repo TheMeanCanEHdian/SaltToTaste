@@ -2880,7 +2880,7 @@ snapshot 21).** Eight steps, each on a shipped mechanism:
 shrimp on SR 175179 × 0.81, flagged `approximate (USDA AH-102 item 2333:
 shrimp, headless, in shell → shelled, deveined 81 % (77–82))`; mussels move
 off FNDDS 2706350 "Mussels" (cooked meat) to cached SR 174216 "Mollusks,
-mussel, blue, raw" (engine `shellRecords`, the `skinlessRecords` record
+mussel, blue, raw" (engine `_shellRecords`, the `_skinlessRecords` record
 move; the decision names the record bought) × 0.29, flagged `approximate
 (USDA AH-102 item 1531: mussels, whole → drained solids, raw 29 % (25–33);
 the liquor in the pot is not counted)` — every mussel recipe serves the
@@ -3173,12 +3173,13 @@ rest)"): pasta with tomato, bacon and onion 170.10 g raw → 56.13 + 15.87 =
 72.00 g (audit L145 94.3 → 72.0, auditors 75.5), its olive oil 27.21 →
 9.93 g; salade lyonnaise 46.78 + 14.73, its oil 11.07 g; gricia's ⅓ cup
 (68.80 g) now below R + O (57.95 + 13.60): 74.84 + 55.72, its oil 13.08 g.
-(5) **The frying MARK (critic F13):** `keptOilFries` names the food a
-frying oil's kept-part pour-off step fries before it ("Transfer the
-potatoes and remaining 1 cup oil to the skillet" → `potato`), read by the
-coats-and-uptake batch (M52) to add that food's uptake on top of the kept
-part; no grams move on it here (the crispy tempeh, fried a step before its
-pour-off, carries none). The four cured-pork rows M50 settled (Barolo,
+(5) **The frying MARK (critic F13):** the food a frying oil's kept-part
+pour-off step fries before it ("Transfer the potatoes and remaining 1 cup
+oil to the skillet" → the potato) takes its uptake on top of the kept part
+through the coats-and-uptake batch's (M52) own fried-food arm in
+`_m52Plan` — a vegetable a sentence names with the oil
+(`memo:friedNamed`); no grams move on it here (the crispy tempeh, fried a
+step before its pour-off, carries none). The four cured-pork rows M50 settled (Barolo,
 coq au Riesling, the Calvados chops, the split pea soup) are untouched.
 Reach (replay of snapshot 21, rp43, 0 requests): 35 rows — 13 rule-B1 rows
 (10 the yield, 5 of them on slices; 3 the split), 11 slices, 1 thick-cut,
@@ -6956,7 +6957,7 @@ and over (neck and giblets off 78 of 85); carcass → meat and skin, item
 2592, fryer-roaster class, 71 % (67–75))"` (a 12- to 14-pound turkey
 3,864 → 4,137.40 g). A skin-discarded breast on 2727569 now moves to
 Foundation 2646170 "Chicken, breast, boneless, skinless, raw" (Y3,
-`skinlessRecords`) at 584's meat 65 %; a Confirm records 2727569. All
+`_skinlessRecords`) at 584's meat 65 %; a Confirm records 2727569. All
 five breast lines the v40 live step named trip the skin signal and move
 (hearty chicken noodle soup, old-fashioned slow-cooker chicken noodle soup,
 French-style chicken and stuffing in a pot, tortilla soup, white chicken
@@ -7013,7 +7014,7 @@ parts, washed" eats the whole leek and stays `"from 1 1/2 pound"`:
 | yellow summer squash (2685569) | trimmed | 2444 | all samples → flesh and skin | 95 % (84–99) |
 | strawberries (2346409) | hulled, stemmed | 2473 | good quality → flesh | 94 % (86–99) |
 
-**Scallions (Y9, `scallionPartOf`)**: a COUNTED scallion (FNDDS 2709794,
+**Scallions (Y9, `_scallionPartOf`)**: a COUNTED scallion (FNDDS 2709794,
 "1 whole" 15 g) whose tail begins "white parts only" counts × 0.37
 (`"(USDA AH-102 item 1575: white part 37 % (22–50) of the whole scallion
 with rootlets)"`), "green parts only" × 0.59 — DERIVED: 1575's green tops

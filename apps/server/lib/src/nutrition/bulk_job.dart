@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
 import 'package:salt_server/src/nutrition/fdc_provider.dart';
@@ -13,6 +14,7 @@ final Logger _log = Logger('nutrition');
 bool _bulkRunning = false;
 
 /// Whether a bulk compute is currently in flight (only one at a time).
+@visibleForTesting
 bool get bulkJobRunning => _bulkRunning;
 
 /// Per-recipe compute jobs currently in flight: recipe id -> job id.

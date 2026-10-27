@@ -171,6 +171,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v82 (review Run 067/068 F3): each step's last drain and last rinse
       // sentence — once per index.
       'memo:rinseTails',
+      // R3 (simplification ledger L8-5): whether a sentence coats the food
+      // with crumbs (v33, [_crumbLineOfTheCoat]) — once per index.
+      'memo:coatsWithCrumbs',
     ])
       once: 1,
     // v82 (review Run 067/068 F8): the M52 keys built — the request's plan
@@ -314,6 +317,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v82 closer 2 (verify2 D5): a decision's moves on a line, once per
       // line text and record while no FDC cache write lands.
       'carriedReads',
+      // R3 (simplification ledger L8-5): whether a sentence sets a plus
+      // line's lead amount of its head out as a dredge's coat (v33), once
+      // per lead amount and head.
+      'memo:setsOut',
     ])
       perText: 3 * texts,
     'mentions': mentions,

@@ -88,7 +88,7 @@ const Set<String> _prepWords = {
 
 /// Items that are nutritionally (effectively) zero — matched locally so
 /// they never cost an FDC request and never dilute the match ratio.
-const Set<String> waterLikeItems = {
+const Set<String> _waterLikeItems = {
   'water',
   'boiling water',
   'cold water',
@@ -539,7 +539,7 @@ const Map<String, String> _synonyms = {
 /// v40: edible yields, part 2 — the live step's answers (the owner's 13
 /// requests, 2026-10-05; snapshot 17), each enabled only on the plan's own
 /// condition. A whole bird or pieces on 171447 whose recipe discards the
-/// skin moves to SR 171052 (`skinlessRecords`), read at its own
+/// skin moves to SR 171052 (`_skinlessRecords`), read at its own
 /// ready-to-cook yield 197 g a pound — the whole bird unflagged, pieces
 /// flagged (grams: 5 lines). Clams bought in the shell by weight rank as SR
 /// 174214 and read its "lb (with shell)" shell yield, counted, no longer
@@ -581,7 +581,7 @@ const Map<String, String> _synonyms = {
 /// the whole turkey 78/85 × 2592 = 0.6515; the RECORD decides meat or meat
 /// and skin (`ah102Records`, Y13), so a skin-discarded part reads its meat
 /// figure in one step (Y12 retired the v39 skin-share stack, `skinShares`);
-/// a skin-discarded breast moves to 2646170 (`skinlessRecords`, Y3: the
+/// a skin-discarded breast moves to 2646170 (`_skinlessRecords`, Y3: the
 /// five lines; "reserved cooked chicken" no longer vetoes the skin). Whole
 /// chickens keep FDC's own ready-to-cook yields (Y4); the bone-in turkey
 /// breast keeps the interim figure (Y7, deferred). Produce (grams, Y8): a
@@ -652,7 +652,7 @@ const Map<String, String> _synonyms = {
 /// the owner's 2026-10-07 standing authorization, prep47 design_v2 §1 (B);
 /// zero requests): shell-on shrimp at AH-102 item 2333 (0.81) and mussels
 /// by weight moved to raw SR 174216 at item 1531 (0.29), flagged
-/// (grams.dart `ah102Shells`, engine `shellRecords`); kiwi 75 g a fruit
+/// (grams.dart `ah102Shells`, engine `_shellRecords`); kiwi 75 g a fruit
 /// (FNDDS 2709239; a sized line flagged); a zest over a tablespoon plus
 /// juice as two parts unless a step strains it (juice only), and a zest
 /// plus a COUNT of lemons or limes the fruit; a can whose steps add it
@@ -1423,7 +1423,7 @@ String _keyWord(String word) {
 
 /// Whether the normalized item is water/ice (skip FDC, contribute zeros).
 bool isWaterLike(String normalizedItem) =>
-    waterLikeItems.contains(normalizedItem);
+    _waterLikeItems.contains(normalizedItem);
 
 /// v37 (the class ruling, 2026-10-04 — the owner's "go with your
 /// recommendations" on the planners' §3): whether [normalizedItem] is one
@@ -3079,6 +3079,7 @@ const Set<String> noFdcRecordItems = {
 }
 
 /// The rank-as items ([_rankAs]), for the tests.
+@visibleForTesting
 Iterable<String> get rankAsKeys => _rankAs.keys;
 
 /// The first alternative of an "A or B" item (the second when A is a
@@ -3883,24 +3884,12 @@ List<String> brandTokensOf(String description, {String queryLower = ''}) => [
 /// default until the user answers) keeps the count noun in the query for a
 /// dried record the line does not ask for, so those lines stay in `check`,
 /// and the engine holds any fresh line an engine pick put on a dried or
-/// ground spice ([driedForFresh], `hold: dried_for_fresh`) — 'fresh oregano'
+/// ground spice ([freshHoldOf], `hold: dried_for_fresh`) — 'fresh oregano'
 /// keys 'oregano', has no count noun, and A5's portion density would count
 /// it on the dried record (25 lines, audit 3). True accepts both.
 const bool allowDriedForFresh = false;
 
-/// Whether [raw] asks for a fresh herb and [description] is a dried or
-/// ground spice record: '1 tablespoon minced fresh oregano' on "Spices,
-/// oregano, dried", 'fresh sage' on "Spices, sage, ground". A line that
-/// also offers the dried form ("1 tablespoon minced fresh oregano or 1
-/// teaspoon dried") is held too: counting the FRESH amount on the dried
-/// record sized it three times over (albóndigas, refix). Not "fresh grated
-/// nutmeg" or "fresh ground pepper" — there the ground spice is the food.
-/// A cured meat is the same mistake: "bone-in fresh half ham with skin"
-/// (0249) scored exactly 0.50 on "Pork, cured, ham, rump, …" (audit 4).
-bool driedForFresh(String raw, String description) =>
-    freshHoldOf(raw, description) != null;
-
-/// The hold [driedForFresh] puts on a fresh line: `cured_for_fresh` for a
+/// The hold a fresh [raw] takes on [description]: `cured_for_fresh` for a
 /// cured record (a preserved meat — the 0249 fresh ham), `dried_for_fresh`
 /// for a dried or ground one; null when the line is not fresh or the record
 /// is (checkpoint 5: the ham was held under the herb's label).
@@ -4147,7 +4136,7 @@ bool freshHerbOnSpiceRecord(String description) {
 /// Nor may the cap leave only a dish word: 'curry leaves' as 'curry' scored
 /// every curry dish 0.89 (audit 4). ('half' stays a count noun: kept, it
 /// sent breast halves and spiral-sliced half hams to check; the fresh half
-/// ham it lifted onto a cured record is held by [driedForFresh].)
+/// ham it lifted onto a cured record is held by [freshHoldOf].)
 ///
 /// A count noun that IS an alternative's food stays: the spice of "ground
 /// cloves or allspice" (0241), whose 'ground cloves' names nothing else
@@ -4718,4 +4707,5 @@ bool sameFoodAsTop(String query, String top, String candidate) {
 /// [normalizeItem] produces it — a key the normalizer would rewrite first is
 /// dead (pinned by a test): 'crushed red pepper' once sat in the table while
 /// the line normalized to 'red pepper' and searched the vegetable.
+@visibleForTesting
 Iterable<String> get queryRewriteKeys => _queryRewrites.keys;

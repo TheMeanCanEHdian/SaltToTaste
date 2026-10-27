@@ -3454,7 +3454,7 @@ const List<String> engineRuleNotes = [
   'Flavouring — no nutrients, counts as zero',
   // v44 (S6 a): a section line that is its main recipe's own part — an
   // amount-less reserved part or pan drippings; the main recipe's own
-  // spice rub (engine.dart `mainRecipePartNote`).
+  // spice rub (engine.dart `_mainRecipePartNote`).
   'Reserved from the main recipe — no amount on the line, counts as zero',
   'Reserved from the main recipe — counted in the main recipe’s spice rub',
 ];

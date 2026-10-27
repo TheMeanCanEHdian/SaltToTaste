@@ -549,39 +549,44 @@ void main() {
       // Real corpus lines; the records are real answers' (thyme's answer
       // holds "Thyme, fresh" beside the dried spice).
       expect(
-        driedForFresh(
-          '1 teaspoon minced fresh thyme',
-          'Spices, thyme, dried',
-        ),
+        freshHoldOf(
+              '1 teaspoon minced fresh thyme',
+              'Spices, thyme, dried',
+            ) !=
+            null,
         isTrue,
       );
       expect(
-        driedForFresh(
-          '1 tablespoon minced fresh oregano',
-          'Spices, oregano, dried',
-        ),
+        freshHoldOf(
+              '1 tablespoon minced fresh oregano',
+              'Spices, oregano, dried',
+            ) !=
+            null,
         isFalse,
       );
       expect(
-        driedForFresh(
-          '1 tablespoon minced fresh sage leaves',
-          'Spices, sage, ground',
-        ),
+        freshHoldOf(
+              '1 tablespoon minced fresh sage leaves',
+              'Spices, sage, ground',
+            ) !=
+            null,
         isFalse,
       );
       // Albóndigas en Chipotle: the line itself offers the dried form.
       expect(
-        driedForFresh(
-          '1 tablespoon minced fresh oregano or 1 teaspoon dried',
-          'Spices, oregano, dried',
-        ),
+        freshHoldOf(
+              '1 tablespoon minced fresh oregano or 1 teaspoon dried',
+              'Spices, oregano, dried',
+            ) !=
+            null,
         isFalse,
       );
       expect(
-        driedForFresh(
-          '½ teaspoon fresh grated nutmeg, plus extra for serving',
-          'Spices, nutmeg, ground',
-        ),
+        freshHoldOf(
+              '½ teaspoon fresh grated nutmeg, plus extra for serving',
+              'Spices, nutmeg, ground',
+            ) !=
+            null,
         isFalse,
       );
     });

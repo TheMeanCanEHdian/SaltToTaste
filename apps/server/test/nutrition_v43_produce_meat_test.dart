@@ -17,7 +17,7 @@ import 'support/fdc_fixtures.dart';
 /// 102 yields (the owner's 2026-10-06 rulings Y8–Y11): a produce weight
 /// printed in the line's head with a prep word in its tail counts the
 /// handbook's paring/trimming yield ([produceYields]), a counted scallion
-/// its part words ([scallionPartOf]), a bone-in beef/pork/lamb cut the
+/// its part words (grams `_scallionPartOf`), a bone-in beef/pork/lamb cut the
 /// handbook names its boning yield ([ah102Meats]). Each row is a real
 /// corpus line at the record, grams and basis the cache-only replay of
 /// snapshot 19 derives at v43 — the moved rows and the rows pinned NOT to

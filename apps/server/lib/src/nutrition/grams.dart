@@ -1058,6 +1058,7 @@ String _amountText(Amount amount) {
 }
 
 /// The grams of a parenthetical weight in [raw] (see [_parenWeight]).
+@visibleForTesting
 double? parenWeightGrams(String raw) => _parenWeight(raw)?.grams;
 
 double? _quantityValue(String quantity) =>
@@ -2504,7 +2505,7 @@ const Map<int, ({double share, String flag})> ah102Meats = {
 // record): the whole bird and pieces ENABLED in v40 — the search "chicken
 // broilers or fryers meat only raw" ranked SR 171052 first, whose detail
 // publishes "unit (yield from 1 lb ready-to-cook chicken)" 197 g
-// ([meatOnlyBroiler]; engine `skinlessRecords` 171447 → 171052: pressure-
+// ([meatOnlyBroiler]; engine `_skinlessRecords` 171447 → 171052: pressure-
 // cooker-chicken-noodle-soup|8, moroccan-chicken-with-olives-and-lemon|8,
 // grilled-lemon-chicken-with-rosemary|0 whole; pollo-en-mole-poblano-
 // chicken-in-puebla-style-mole|15, tandoori-chicken|9 pieces, flagged).
@@ -2518,7 +2519,7 @@ const Map<int, ({double share, String flag})> ah102Meats = {
 // breast meat share.
 /// v40 (E1): SR 171052 "Chicken, broilers or fryers, meat only, raw", where
 /// a skin-discarded whole bird or pieces on 171447 moves (engine
-/// `skinlessRecords`): its "unit (yield from 1 lb ready-to-cook chicken)"
+/// `_skinlessRecords`): its "unit (yield from 1 lb ready-to-cook chicken)"
 /// 197 g is the meat of a ready-to-cook pound (0.43; 171447's meat and skin
 /// 276 g).
 const int meatOnlyBroiler = 171052;
@@ -2604,7 +2605,7 @@ const String shellYieldLabel = 'USDA yield after shell removed';
 /// (critic probe 12; .claude/diag/2026-10-06/ah102_produce_meat.md), keyed
 /// by the raw record a weight bought in the shell ([boughtInShell]) sits on
 /// (the mussel lines move there from FNDDS "Mussels", engine
-/// `shellRecords`), each flagged with its item and range. The mussel flag
+/// `_shellRecords`), each flagged with its item and range. The mussel flag
 /// names the liquor (critic F19): every mussel recipe serves the cooking
 /// liquid, which raw 174216 does not carry (item 1530, solids and liquor,
 /// is 51 %).
@@ -3192,7 +3193,7 @@ GramResolution? _resolveLine({
   }
   // v43 (Y12, Y13): the skin is no longer a second step. The record
   // decides ([ah102Records]): a meat-only record — where the engine moves a
-  // row whose recipe discards the skin (`skinOffFood`), or where a person
+  // row whose recipe discards the skin (`_skinOffFood`), or where a person
   // put it — reads the part's meat figure from the printed weight; v39's
   // stack (the bone yield × FDC SR's skin share, 0.795 thigh / 0.770 leg)
   // is retired. [skinOff] now only names the part a meat-only whole bird
@@ -3279,9 +3280,9 @@ GramResolution? _resolveLine({
   final prep = first?.source == GramSource.weight && raw != null
       ? produceYieldOf(food, raw, stepsPeel: stepsPeel)
       : null;
-  // v43 (Y9): a counted scallion's part words ([scallionPartOf]).
+  // v43 (Y9): a counted scallion's part words ([_scallionPartOf]).
   final scallion = first?.source == GramSource.piece && raw != null
-      ? scallionPartOf(food, raw)
+      ? _scallionPartOf(food, raw)
       : null;
   final trim = prep ?? scallion;
   if (trim != null) {
@@ -3758,7 +3759,7 @@ final RegExp _keepsBeanLiquid = RegExp(
 /// a drained-and-rinsed can record ([cannedBeanShares]), the food as a line
 /// that keeps the liquid uses it — the SR can pairs' whole-can halves, each
 /// a cached detail: chickpeas 175206, pinto 175201, kidney 175195. A can
-/// kept whole moves there (engine `skinOffFood`), the undrained can of the
+/// kept whole moves there (engine `_skinOffFood`), the undrained can of the
 /// half rule is a part there (engine `withParts`), grams unchanged, no
 /// flag. Black, cannellini and navy have none cached (SR 173747 "Beans,
 /// navy, mature seeds, canned" names no state: not read).
@@ -4083,7 +4084,7 @@ bool _otherPartUsed(String tail, int end) => RegExp(
 /// (the printed base; 37/96 if FNDDS's whole is trimmed is not known). Not
 /// "white and light green parts only" nor "dark green parts only" (no
 /// figure is printed for them); never a carrot or an onion.
-({double share, String flag})? scallionPartOf(FdcFood? food, String raw) {
+({double share, String flag})? _scallionPartOf(FdcFood? food, String raw) {
   if (food?.fdcId != 2709794) return null;
   final tail = _tailAfterComma(raw);
   final m = RegExp(r'^\s*(white|green) parts? only\b').firstMatch(tail);

@@ -822,7 +822,6 @@ String _family(Object key) => switch (key) {
   (final Object? f, _) => '$f',
   (final Object? f, _, _) => '$f',
   (final Object? f, _, _, _) => '$f',
-  (final Object? f, _, _, _, _) => '$f',
   final Symbol s => '$s'.replaceAll(RegExp(r'^Symbol\("|"\)$'), ''),
   _ => '$key',
 };
@@ -2980,44 +2979,6 @@ String? _keptFryingOilText(Recipe recipe, IngredientLine line) {
   return pourOff == null
       ? null
       : _fats[head]!.keptPart(pourOff, reused: true)?[1];
-}
-
-/// v51 (M49 Q19, critic F13): the food a frying oil's kept-part pour-off
-/// ([_keptFryingOil]) fried — a sentence of the pour-off's step, before
-/// it, that names the oil and a food line ("Transfer the potatoes and
-/// remaining 1 cup oil to the skillet. … Reserve 1 tablespoon oil from the
-/// skillet and discard the remainder", 0215): that line's head ('potato'),
-/// else null (1193's tempeh is fried a step before its pour-off). The MARK
-/// M52 reads to add the food's frying uptake on top of the kept part; no
-/// grams move on it here.
-String? keptOilFries(Recipe recipe, IngredientLine line) {
-  final head = headNounOf(normalizeItem(lineItemOf(line)));
-  final pourOff = head == null || _keptFryingOil(recipe, line) == null
-      ? null
-      : _oilOwnersOf(recipe, head)[line.raw]?.pourOff;
-  if (pourOff == null) {
-    return null;
-  }
-  final index = _stepIndexOf(recipe);
-  final heads = _headsOf(recipe);
-  for (final sentences in index.sentences) {
-    final at = sentences.indexOf(pourOff);
-    if (at < 0) {
-      continue;
-    }
-    for (final s in sentences.take(at)) {
-      if (!_fats[head]!.word.hasMatch(s)) {
-        continue;
-      }
-      for (final food in heads) {
-        if (food != null && food != head && _names(s, food)) {
-          return food;
-        }
-      }
-    }
-    return null;
-  }
-  return null;
 }
 
 /// v51 (M49 Q19 a, P1 D3a): a pour-off of the PAN's fat down to a printed
@@ -7368,7 +7329,7 @@ bool shellEatenIn(Recipe recipe) => RegExp(
 /// Foundation 2646170 (boneless skinless breast, cached). Each is weighed
 /// there by its composition ([ah102Records], Y12/Y13: the part's AH-102
 /// meat figure in one step; a whole bird its ready-to-cook yield).
-const Map<int, int> skinlessRecords = {
+const Map<int, int> _skinlessRecords = {
   2727567: 2646171,
   172378: 173619,
   171447: meatOnlyBroiler,
@@ -7379,24 +7340,24 @@ const Map<int, int> skinlessRecords = {
 /// ([boughtInShell]) moves to from a cooked-meat one, weighed there at its
 /// AH-102 shell row ([ah102Shells]): FNDDS 2706350 "Mussels" (cooked meat,
 /// "1 mussel" 15 g) → SR 174216 "Mollusks, mussel, blue, raw" (cached,
-/// second in the 'mussels' answer). Record-keyed, as [skinlessRecords]: a
+/// second in the 'mussels' answer). Record-keyed, as [_skinlessRecords]: a
 /// count ("1 dozen mussels", paella) stays on the FNDDS meat portion.
-const Map<int, int> shellRecords = {2706350: 174216};
+const Map<int, int> _shellRecords = {2706350: 174216};
 
 /// [eaten]'s food and grams once the skin is off: an auto row on a
-/// skin-on record of [skinlessRecords] — the engine's pick, or a person's
+/// skin-on record of [_skinlessRecords] — the engine's pick, or a person's
 /// decision carried here from another line — whose line, weighed from a
 /// printed weight, buys refuse in a recipe that discards the skin
 /// ([skinDiscarded]) moves to the meat-only record (cached; else its detail
 /// fetched once), weighed there at the meat share — or (v49) one on a
-/// cooked-meat record of [shellRecords] whose weight is bought in the shell
+/// cooked-meat record of [_shellRecords] whose weight is bought in the shell
 /// moves to the raw record, weighed there at its AH-102 shell row — or
 /// (v49, M47 Q14 (ii)) a can of beans kept whole ([keepsWholeCan]) on a
 /// drained-and-rinsed record moves to its cached solids-and-liquids record
 /// ([cannedBeanLiquids]), grams unchanged. Else [food] and [resolution] as
 /// they are. Never a person's own row on this
 /// line: it shows the food they chose.
-Future<(FdcFood, GramResolution?)> skinOffFood(
+Future<(FdcFood, GramResolution?)> _skinOffFood(
   SaltDatabase db,
   NutritionProvider provider,
   Recipe recipe,
@@ -7404,8 +7365,8 @@ Future<(FdcFood, GramResolution?)> skinOffFood(
   FdcFood food,
   GramResolution? resolution,
 ) async {
-  final skinless = skinlessRecords[food.fdcId];
-  final shelled = shellRecords[food.fdcId];
+  final skinless = _skinlessRecords[food.fdcId];
+  final shelled = _shellRecords[food.fdcId];
   final beanLiquid = cannedBeanLiquids[food.fdcId];
   final weighed = resolution?.source == GramSource.weight;
   // v49 (M47 Q11): or a weight bought in the shell, to its raw record.
@@ -7434,12 +7395,12 @@ Future<(FdcFood, GramResolution?)> skinOffFood(
 }
 
 /// The record a decision on [fdcId] names for [line]'s ingredient: on a
-/// meat-only record of [skinlessRecords] in a recipe that discards the
+/// meat-only record of [_skinlessRecords] in a recipe that discards the
 /// skin of a cut bought with it, the SKIN-ON record bought — so a Confirm
 /// of a moved row (or apply_to_all) never carries the skinless food, nor
 /// its meat share, to a line whose skin is eaten; each line that discards
-/// it moves again ([skinOffFood]). v49: on the raw record of
-/// [shellRecords] for a line bought in the shell, the record bought (a
+/// it moves again ([_skinOffFood]). v49: on the raw record of
+/// [_shellRecords] for a line bought in the shell, the record bought (a
 /// count — paella's dozen mussels — stays on it). Else [fdcId].
 /// v82 (Run 067/068 F10, the Opus critic): every line-conditioned move of
 /// the ranked path maps back too, the last move first — the step-printed
@@ -7480,7 +7441,7 @@ int? decisionRecordOf(
     }
   }
   for (final MapEntry(key: skinOn, value: meatOnly)
-      in skinlessRecords.entries) {
+      in _skinlessRecords.entries) {
     if (meatOnly == fdcId &&
         buysRefuse(line.raw) &&
         skinDiscarded(recipe, line)) {
@@ -7489,7 +7450,7 @@ int? decisionRecordOf(
   }
   // v49: the record bought for a line the shell move put on the raw one,
   // or the can move on the solids-and-liquids one.
-  for (final MapEntry(key: bought, value: raw) in shellRecords.entries) {
+  for (final MapEntry(key: bought, value: raw) in _shellRecords.entries) {
     if (raw == fdcId && boughtInShell(line.raw)) {
       return bought;
     }
@@ -7846,6 +7807,7 @@ bool namesOwnSection(Recipe recipe, IngredientLine line) {
 /// (`_ownTitles`); a marked line keeps v47's forms (barbecued-pulled-pork's
 /// "2 cups barbecue sauce (recipes follow)" stays rule PO's).
 /// [re-point → `item`]
+@visibleForTesting
 bool yieldNamesOwnSection(IngredientLine line, String item, Subsection sub) =>
     _yieldTailOf(line, item)(sub, _refNorm(sub.title ?? ''));
 
@@ -11946,7 +11908,7 @@ const String baconYieldFlag =
     'cooked 33 % (18–43))';
 
 /// 172345's own portion, "tsp" 4.3 g over 4.92892 mL.
-const double baconGreaseGramsPerMl = 0.8724;
+const double _baconGreaseGramsPerMl = 0.8724;
 
 /// B1's (a): the meat lifted out of its fat.
 final RegExp _baconOut = RegExp(
@@ -12169,7 +12131,7 @@ final RegExp _baconCooksOn = RegExp(
 );
 
 /// P7b's flag: [baconYieldFlag] with the drip ([_baconDrips]).
-const String baconDripFlag =
+const String _baconDripFlag =
     'approximate (USDA AH-102 item 1981: bacon, sliced, all methods → '
     'cooked 33 % (18–43); the fat drips off the food)';
 
@@ -12244,7 +12206,7 @@ double? _baconPanOilShare(_BaconPan pan) {
     return null;
   }
   final rendered = raw * baconRenderedPerGram;
-  final pooled = min(pan.ml * baconGreaseGramsPerMl, rendered + oil);
+  final pooled = min(pan.ml * _baconGreaseGramsPerMl, rendered + oil);
   return pooled * oil / (rendered + oil);
 }
 
@@ -12291,7 +12253,7 @@ IngredientMatchRow withRenderedBacon(
       ? 0.0
       : _panOilGrams(pan) ?? 0.0;
   final rendered = grams * baconRenderedPerGram;
-  final pooled = min(keptMl * baconGreaseGramsPerMl, rendered + oil);
+  final pooled = min(keptMl * _baconGreaseGramsPerMl, rendered + oil);
   final kept = round2(
     oil == 0 ? pooled : pooled * rendered / (rendered + oil),
   );
@@ -12355,7 +12317,7 @@ IngredientMatchRow withParts(
     final zest = rule.gramsOn(knownFood(db, rule.fdcId, line: line));
     final juice = second.grams(knownFood(db, second.fdcId, line: line));
     // Either record not cached (never after the compute's own fetch,
-    // [ruleRowFor]): held, as before v49.
+    // [_ruleRowFor]): held, as before v49.
     return zest == null || juice == null
         ? bacon.copyWith(hold: 'second_food')
         : split(
@@ -12900,7 +12862,7 @@ bool _participle(String word) =>
 /// teaspoon rub and set aside for glaze") — counted there. Null otherwise
 /// (a main line: chicken-and-dumplings' "3 tablespoons reserved chicken
 /// fat" is a food).
-String? mainRecipePartNote(
+String? _mainRecipePartNote(
   SaltDatabase db,
   Recipe recipe,
   IngredientLine line,
@@ -12912,7 +12874,7 @@ String? mainRecipePartNote(
   final reserved = normalized.startsWith('reserved ');
   if (line.amounts.isEmpty) {
     return reserved || normalized.contains('drippings from ')
-        ? reservedNoAmountNote
+        ? _reservedNoAmountNote
         : null;
   }
   if (!reserved) {
@@ -12924,16 +12886,16 @@ String? mainRecipePartNote(
           host.ingredients.any(
             (group) => normalizeItem(group.group ?? '') == mixture,
           )
-      ? reservedMixtureNote
+      ? _reservedMixtureNote
       : null;
 }
 
-/// [mainRecipePartNote]'s note for an amount-less part (an
+/// [_mainRecipePartNote]'s note for an amount-less part (an
 /// [engineRuleNotes] entry).
-final String reservedNoAmountNote = engineRuleNotes[6];
+final String _reservedNoAmountNote = engineRuleNotes[6];
 
-/// [mainRecipePartNote]'s note for the main recipe's own mixture.
-final String reservedMixtureNote = engineRuleNotes[7];
+/// [_mainRecipePartNote]'s note for the main recipe's own mixture.
+final String _reservedMixtureNote = engineRuleNotes[7];
 
 /// v68 (batch M70; prep49 design_v2 §2 M70, the owner's Q13 G2): the grams
 /// of a SECTION's amount-less "Reserved turkey giblets, …" line that a
@@ -13779,6 +13741,7 @@ final RegExp _noteCupParen = RegExp(r'cups?\s+\(');
 /// recipe (`nested`): those lines decide `noAmount` against `routed` and no
 /// stamp ties the 0 g rule row to the child. A served-with marked line with
 /// no amount reads no child ([resolveReference]), so it folds nothing.
+@visibleForTesting
 List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) =>
     _proseReadsOf(recipe, memo).sections;
 
@@ -13918,7 +13881,7 @@ String? staleSectionsReadBy(
 /// names it (v28/v29), or null when it is fresh: `interrupted` — a writer
 /// holds its mark or never finished (migration 017); `underived` — the
 /// stamp is on the current inputs and layout but a decision is waiting on
-/// USDA, or the totals were stamped waiting on USDA ([unavailableStampOf]
+/// USDA, or the totals were stamped waiting on USDA ([_unavailableStampOf]
 /// the current inputs; never `inputs` when nothing changed, Run 059 O23);
 /// `inputs` — the inputs or layout moved since. The page reads it for the
 /// recipe's own stamp and, through [staleSectionsReadBy], for each section
@@ -13934,7 +13897,8 @@ String? staleReasonOf(
     ? 'interrupted'
     : nutritionStampCurrent(db, recipe, row, memo)
     ? (db.hasUnderivedRows(recipe.id) ? 'underived' : null)
-    : row.ingredientsHash == unavailableStampOf(ingredientsHashOf(recipe, memo))
+    : row.ingredientsHash ==
+          _unavailableStampOf(ingredientsHashOf(recipe, memo))
     ? 'underived'
     : 'inputs';
 
@@ -14395,11 +14359,11 @@ Future<NutritionProviderException?> _computePass(
       continue;
     }
     // v44 (S6 a): a SECTION line that is its main recipe's own part
-    // ([mainRecipePartNote]) is the engine's 0 g rule row — never a search.
+    // ([_mainRecipePartNote]) is the engine's 0 g rule row — never a search.
     // v68 (M70, Q13 G2): unless the steps stir its giblets back — then it
     // is matched (matcher `_rankAs`: SR 171083 in the cached 'giblet pan
     // gravy' answer) and weighed off the host's bird ([hostWeighedGiblets]).
-    if (mainRecipePartNote(db, recipe, eaten, normalized) case final note?
+    if (_mainRecipePartNote(db, recipe, eaten, normalized) case final note?
         when hostWeighedGiblets(db, recipe, eaten, normalized) == null) {
       write(
         IngredientMatchRow(
@@ -14500,7 +14464,7 @@ Future<NutritionProviderException?> _computePass(
       // A second food the engine counts by rule ([secondFoodRuleOf]): the
       // line's own record, ahead of any key decision — a decision names the
       // first food only.
-      final byRule = await ruleRowFor(
+      final byRule = await _ruleRowFor(
         db,
         lineProvider,
         recipe,
@@ -14546,7 +14510,7 @@ Future<NutritionProviderException?> _computePass(
           );
           // v39 (Y3): a carried decision on the skin-on record moves like
           // the engine's pick.
-          final (food, resolution) = await skinOffFood(
+          final (food, resolution) = await _skinOffFood(
             db,
             lineProvider,
             recipe,
@@ -14740,7 +14704,7 @@ Future<NutritionProviderException?> _computePass(
       );
       // v39 (Y3): a skin-discarded bone-in part moves to its meat-only
       // record, weighed there (v43: the part's AH-102 meat figure).
-      final (gramsFood, resolution) = await skinOffFood(
+      final (gramsFood, resolution) = await _skinOffFood(
         db,
         lineProvider,
         recipe,
@@ -15587,7 +15551,7 @@ List<RankedCandidate> leanAndFatSibling(
 /// v54 (batch M56 R3, prep48 design_v2 §2): a trim the line PRINTS that its
 /// record does not name, read on the cached record that does — record-keyed
 /// (phrase → {top's record → target}), the target a hit in the line's own
-/// answer, so zero requests (never a [skinOffFood] entry, which fetches a
+/// answer, so zero requests (never a [_skinOffFood] entry, which fetches a
 /// detail). "fat trimmed to ⅛ to ¼ inch, rib bones frenched" (roast-rack-
 /// of-lamb|0): NZ 172641 "rack - fully frenched" → Australian 174414 "rib
 /// chop/rack roast, frenched, bone-in, …, trimmed to 1/8" fat, raw", the
@@ -16243,7 +16207,7 @@ List<RankedCandidate> _movedFirst(
 /// rule's words, with the rule's grams — what a fresh compute writes, and
 /// what an un-skip of an engine row moves to. Null when no rule applies, or
 /// FDC has no such record; a provider failure fetching it propagates.
-Future<({IngredientMatchRow row, FdcFood food})?> ruleRowFor(
+Future<({IngredientMatchRow row, FdcFood food})?> _ruleRowFor(
   SaltDatabase db,
   NutritionProvider provider,
   Recipe recipe,
@@ -17008,7 +16972,7 @@ bool recomputeTotals(
     null
         when stored != null &&
             (stored.ingredientsHash == currentHash ||
-                stored.ingredientsHash == unavailableStampOf(currentHash)) =>
+                stored.ingredientsHash == _unavailableStampOf(currentHash)) =>
       (stored.ingredientsHash, stored.layoutSeq),
     null => ('', null),
     (:final layoutSeq, :final current) =>
@@ -17017,7 +16981,7 @@ bool recomputeTotals(
   // A food these totals could not count (an engine row's no cache holds,
   // [unavailable]: an apply-to-all target FDC could not weigh) stamps the
   // inputs STALE as waiting on USDA, never as changed (v29, Run 059 O23):
-  // [unavailableStampOf] the hash — no current hash equals it, and the
+  // [_unavailableStampOf] the hash — no current hash equals it, and the
   // page's `stale_reason` reads `underived`.
   // M52's rows land with the totals, at the layout read here (no await
   // between), while a re-match's inputs are still its own.
@@ -17038,7 +17002,7 @@ bool recomputeTotals(
       (engineMissing || unavailable) &&
           stampHash.isNotEmpty &&
           !stampHash.startsWith(_unavailableStamp)
-      ? (unavailableStampOf(stampHash), null)
+      ? (_unavailableStampOf(stampHash), null)
       : (stampHash, stampSeq);
   db.upsertRecipeNutrition(
     recipeId: recipe.id,
@@ -17236,7 +17200,7 @@ IngredientMatchRow? _unplannedOf(
 /// The stamp of totals that could not count a food FDC cannot serve now,
 /// on inputs hashed [hash] ([recomputeTotals]): stale, and read as waiting
 /// on USDA (`stale_reason: underived`) while the inputs are still [hash].
-String unavailableStampOf(String hash) => '$_unavailableStamp$hash';
+String _unavailableStampOf(String hash) => '$_unavailableStamp$hash';
 
 const String _unavailableStamp = 'unavailable:';
 
@@ -17854,7 +17818,7 @@ String? _gramBasis(
     // v53 (M52): a coat budgeted from its food, a frying oil whose fried
     // food absorbs part of it, or — bone-in skin-on chicken — none net.
     if (m52 != null && m52.noNetUptake) {
-      return o1cBasis;
+      return _o1cBasis;
     }
     // v75 (M78): a row the plan words itself (a crust counted whole).
     if (m52?.basis case final said?) {
@@ -18108,7 +18072,7 @@ String? compositeFlagOf(
   if (row.parts != null &&
       row.gramSource != GramSource.override.name &&
       row.fdcId == rawBaconFdcId) {
-    flags.add(_baconDrips(recipe) ? baconDripFlag : baconYieldFlag);
+    flags.add(_baconDrips(recipe) ? _baconDripFlag : baconYieldFlag);
   }
   // Q25 (v54): the share of an alcohol line's ethanol its cooking keeps —
   // a fact about the row, kept on a Confirm, as B1's (design §5).
@@ -19198,7 +19162,7 @@ Future<IngredientMatchRow> unskippedRow(
   final byRule =
       personal || secondFoodRuleOf(line, recipe: recipe)?.fdcId == out.fdcId
       ? null
-      : await ruleRowFor(db, provider, recipe, position, line);
+      : await _ruleRowFor(db, provider, recipe, position, line);
   if (byRule != null) {
     return byRule.row;
   }
@@ -20150,7 +20114,7 @@ applyDecisionToOthers(
           }
           // v39 (Y3): a target that discards the skin moves as its
           // compute would; [food] stays the decision for the next target.
-          (onFood, resolution) = await skinOffFood(
+          (onFood, resolution) = await _skinOffFood(
             db,
             provider,
             found.recipe,
@@ -21215,7 +21179,7 @@ final Expando<Map<(int, String), bool>> _friedLines = Expando();
 /// O1c's basis (p3_read_figures.md): a bone-in skin-on chicken fried in the
 /// oil absorbs none of it net — USDA's skin-on fried legs carry less fat
 /// than the raw parts the engine already counts.
-const String o1cBasis =
+const String _o1cBasis =
     'frying oil: 0 g — USDA FNDDS 2705996 recipe adds 7 g oil per 100 g, '
     'but the fried skin-on parts carry less fat (17.2 g) than the raw parts '
     'counted here: no net uptake';

@@ -10,7 +10,7 @@ final Logger _log = Logger('fdc');
 /// Requests per hour the provider allows itself (the token-bucket
 /// capacity default) — under api.data.gov's 1,000/hr default so
 /// interactive traffic never trips the hard limit.
-const int fdcRequestsPerHour = 900;
+const int _fdcRequestsPerHour = 900;
 
 /// A token-bucket rate limiter: at most [capacity] acquisitions per
 /// window (default one hour). Excess callers poll-wait for a free slot
@@ -18,7 +18,7 @@ const int fdcRequestsPerHour = 900;
 class TokenBucket {
   /// Creates a bucket allowing [capacity] acquisitions per [window]
   /// (default one hour).
-  TokenBucket({this.capacity = fdcRequestsPerHour, Duration? window})
+  TokenBucket({this.capacity = _fdcRequestsPerHour, Duration? window})
     : _window = window ?? const Duration(hours: 1);
 
   /// Maximum acquisitions per window.

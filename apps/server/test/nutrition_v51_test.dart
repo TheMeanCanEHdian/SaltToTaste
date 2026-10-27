@@ -583,23 +583,11 @@ void main() {
         discardedMediumOf(horseradish, oil, normalizeItem(lineItemOf(oil))),
         DiscardedMedium.fryingOil,
       );
-      expect(keptOilFries(horseradish, oil), 'potato');
+      // The uptake's value pin: nutrition_v53_test's 0215|3 row (38.09 g).
       expect(
         nutritionLines(horseradish)[10].raw,
         '1 small russet potato (about 6 ounces), peeled and grated on the large holes of a box grater',
       );
-      // The tempeh fries a step before its pour-off: no mark.
-      final tempeh = loadCorpusRecipe(
-        '1193-crispy-tempeh-with-sambal-sauce.yaml',
-      );
-      final tempehOil = nutritionLines(tempeh)[5];
-      expect(tempehOil.raw, '1 cup vegetable oil');
-      expect(keptOilFries(tempeh, tempehOil), isNull);
-      // A browning oil (no frying medium) carries none.
-      final ribs = loadCorpusRecipe(
-        '0088-slow-cooker-beer-braised-short-ribs.yaml',
-      );
-      expect(keptOilFries(ribs, nutritionLines(ribs)[2]), isNull);
     });
 
     test('a STATED synthesized negative (no corpus pour-off has one): an oil '

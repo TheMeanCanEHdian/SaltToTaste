@@ -13,7 +13,7 @@ import 'package:salt_shared/salt_shared.dart';
 /// The recipe a nutrition route reads (v44, P3 §3.4): [found] itself, or —
 /// with `?section=<title>` — its section of exactly that title, a recipe of
 /// its own ([nutritionRecipeOf] on [sectionKeyOf]; the key never reaches a
-/// URL). An unknown title: 404 [noSectionRouteMessage].
+/// URL). An unknown title: 404 [_noSectionRouteMessage].
 Recipe routeRecipeOf(SaltDatabase db, Recipe found, String? section) {
   if (section == null) {
     return found;
@@ -21,7 +21,7 @@ Recipe routeRecipeOf(SaltDatabase db, Recipe found, String? section) {
   final key = sectionKeyOf(found.id, section);
   final recipe = section.isEmpty ? null : nutritionRecipeOf(db, key)?.recipe;
   if (recipe == null) {
-    throw const NotFoundException(noSectionRouteMessage);
+    throw const NotFoundException(_noSectionRouteMessage);
   }
   return recipe;
 }
@@ -83,7 +83,7 @@ Map<String, Object?> nutritionBody(
     // apply target, or one a hung await holds — or a stamp the boot or a
     // throw cleared); `underived` also when the stamp
     // says the last totals could not count a food USDA could not serve
-    // ([unavailableStampOf] the current inputs) — never `inputs` when
+    // (`_unavailableStampOf` the current inputs) — never `inputs` when
     // nothing changed (Run 059 O23). [staleReasonOf] reads the recipe's
     // own stamp; v47 (F5): a section its totals count that is not fresh
     // names the reason when the recipe's own stamp is on its inputs — read
@@ -502,7 +502,7 @@ Future<AppliedToOthers?> applyMatchOverride(
       (position < 0 ||
           position >= lines.length ||
           lines[position].raw != seen)) {
-    throw LineMovedException(nearestLineOf(lines, seen, position));
+    throw LineMovedException(_nearestLineOf(lines, seen, position));
   }
   if (position < 0 || position >= lines.length) {
     throw NotFoundException('No ingredient line at position $position.');
@@ -603,7 +603,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     throw const ValidationException(sectionLineChildMessage);
   }
   if (section != null && child == null) {
-    throw const ValidationException(sectionWithoutChildMessage);
+    throw const ValidationException(_sectionWithoutChildMessage);
   }
   final Recipe? childRecipe;
   if (child != null) {
@@ -622,7 +622,7 @@ Future<AppliedToOthers?> applyMatchOverride(
           ? nutritionRecipeOf(db, sectionKeyOf(host.id, section))?.recipe
           : null;
       if (childRecipe == null) {
-        throw const ValidationException(noSuchSectionMessage);
+        throw const ValidationException(_noSuchSectionMessage);
       }
     }
     // An OWN section is the point of a section pick (its key is not this
@@ -638,10 +638,10 @@ Future<AppliedToOthers?> applyMatchOverride(
     if (share == null &&
         resolveReference(db, recipe, line, ResolverMemo(db)).kind ==
             ReferenceKind.marinade) {
-      throw const ValidationException(marinadeShareMessage);
+      throw const ValidationException(_marinadeShareMessage);
     }
     if (section != null && nutritionLines(childRecipe).isEmpty) {
-      throw const ValidationException(sectionNoIngredientsMessage);
+      throw const ValidationException(_sectionNoIngredientsMessage);
     }
     if (db.nutritionFor(childRecipe.id) == null) {
       throw ValidationException(
@@ -666,7 +666,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   void gate(IngredientMatchRow row) {
     if (refuses(row)) {
       throw ValidationException(
-        refusalOf(
+        _refusalOf(
           row.hold,
           routed: row.childRecipeId != null,
           reference: madeFromRecipe,
@@ -766,7 +766,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     // shipped (Run 051 B3): not refused.
     if (madeFromRecipe && grams == null && foodAlternativeOf(line) == null) {
       throw ValidationException(
-        refusalOf(
+        _refusalOf(
           row.hold,
           routed: row.childRecipeId != null,
           reference: true,
@@ -901,7 +901,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   }
   if (!holdActionsOf(stored.hold, routed: routedNow).decidesLibraryWide) {
     if (applyToAll == true) {
-      throw ValidationException(refusalOf(stored.hold, routed: routedNow));
+      throw ValidationException(_refusalOf(stored.hold, routed: routedNow));
     }
     decidedFood = false;
   }
@@ -988,7 +988,7 @@ Future<AppliedToOthers?> applyMatchOverride(
         (throw const NotFoundException('Recipe not found.'));
     final now = nutritionLines(recipe);
     if (position >= now.length || now[position].raw != line.raw) {
-      throw LineMovedException(nearestLineOf(now, line.raw, position));
+      throw LineMovedException(_nearestLineOf(now, line.raw, position));
     }
     layoutMatchRows(db, recipe);
     final laid = db
@@ -1116,18 +1116,18 @@ const String noSuchRecipeMessage = 'No recipe with that id.';
 
 /// The 404 of `?section=` naming no section of the recipe (v44, the
 /// approved copy delta §6).
-const String noSectionRouteMessage = 'No section with that title.';
+const String _noSectionRouteMessage = 'No section with that title.';
 
 /// The 422s of a section pick (v44, P3 §4; the approved copy delta §6).
-const String sectionWithoutChildMessage =
+const String _sectionWithoutChildMessage =
     'Pick a recipe first, then its section.';
 
 /// `section` not a string, or no section of `child` has that title.
-const String noSuchSectionMessage =
+const String _noSuchSectionMessage =
     'No section with that title in that recipe.';
 
 /// A section with no ingredient lines (a prose variation).
-const String sectionNoIngredientsMessage =
+const String _sectionNoIngredientsMessage =
     'That section lists no ingredients — it cannot be counted.';
 
 /// A section with no stored totals (a child section not swept yet).
@@ -1159,7 +1159,7 @@ const String badShareMessage =
 const String noShareMessage = 'No share the yield can read — set the share.';
 
 /// A recipe picked for a marinade line with no share sent (v44, S10 a).
-const String marinadeShareMessage =
+const String _marinadeShareMessage =
     'Set the share that is eaten — the rest is poured away.';
 
 /// A share sent with no recipe.
@@ -1201,7 +1201,7 @@ const String needsRecipeDecisionMessage =
 /// row (it carries a child) and on a line made from a recipe the engine
 /// does not route ([reference]), what the line accepts (v41, N2) — never
 /// "no record of this food" on a line that takes no food.
-String refusalOf(
+String _refusalOf(
   String? hold, {
   bool routed = false,
   bool reference = false,
@@ -1216,7 +1216,7 @@ String refusalOf(
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.
-int? nearestLineOf(List<IngredientLine> lines, String raw, int position) {
+int? _nearestLineOf(List<IngredientLine> lines, String raw, int position) {
   int? best;
   for (final (at, line) in lines.indexed) {
     if (line.raw == raw &&
