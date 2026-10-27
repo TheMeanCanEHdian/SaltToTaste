@@ -12309,7 +12309,7 @@ IngredientMatchRow withParts(
   }
 
   // Only a row on a peel record reads the rule (its regexes run per row).
-  final rule = _citrusPeel.values.any((peel) => peel.fdcId == bacon.fdcId)
+  final rule = _citrus.values.any((c) => c.peel.fdcId == bacon.fdcId)
       ? secondFoodRuleOf(line, recipe: recipe)
       : null;
   final second = rule?.second;
@@ -12404,17 +12404,34 @@ const bool citrusJuiceRuleOn = true;
 /// held: the whole-egg record misstates them most. False holds them all.
 const bool eggPartsMassSumOn = true;
 
-/// The juice record of each citrus fruit [citrusJuiceRuleOn] counts on.
-const Map<String, int> _citrusJuice = {
-  'lemon': 167747, // Lemon juice, raw
-  'lime': 168156, // Lime juice, raw
-  'orange': 169098, // Orange juice, raw
+/// Each citrus fruit's records: the `juice` [citrusJuiceRuleOn] counts on;
+/// the whole `fruit` a zest-plus-counted-fruit line counts on (v44, S7 a:
+/// oranges; v49: the records the library's bare lemon and lime counts sit
+/// on); v49 (M47 Q6): the `peel` a zest over a tablespoon counts on — lime
+/// zest on lemon peel, the shipped flagged approximation
+/// ([approximationRecords] 'lime zest').
+const _citrus = {
+  'lemon': (
+    juice: 167747, // Lemon juice, raw
+    fruit: 2709168, // Lemon, raw
+    peel: (fdcId: 167749, words: 'lemon peel'), // Lemon peel, raw
+  ),
+  'lime': (
+    juice: 168156, // Lime juice, raw
+    fruit: 168155, // Limes, raw
+    peel: (fdcId: 167749, words: 'lemon peel'),
+  ),
+  'orange': (
+    juice: 169098, // Orange juice, raw
+    fruit: 746771, // Oranges, raw, navels
+    peel: (fdcId: 169103, words: 'orange peel'), // Orange peel, raw
+  ),
 };
 
 /// v44 (S7 a): the rule of a zest of at most a tablespoon plus a COUNT of
 /// the same fruit ("½ teaspoon grated orange zest plus 5 oranges peeled and
 /// segmented", grill-roasted-bone-in-pork-rib-roast's salsa): the fruit counted
-/// on its whole-fruit record ([_citrusFruit]), the zest dropped as the
+/// on its whole-fruit record ([_citrus]), the zest dropped as the
 /// juice rule drops it. v49 (M47 Q6, critic F17): lemons and limes too
 /// ("1 tablespoon grated lemon zest, plus 2 lemons, halved", grilled
 /// swordfish; "2 teaspoons grated lemon zest, plus 1 lemon", fava beans),
@@ -12435,7 +12452,7 @@ SecondFoodRule? _zestPlusFruit(
   final zestMl = zestVolume == null ? null : volumeMlOf([zestVolume]);
   if (!citrus ||
       zestOf == null ||
-      _citrusFruit[zestOf[1]] == null ||
+      _citrus[zestOf[1]] == null ||
       plus.amount.unit != null ||
       // "5 oranges peeled …": the count, then the fruit itself.
       !RegExp(
@@ -12446,7 +12463,7 @@ SecondFoodRule? _zestPlusFruit(
     return null;
   }
   final fruit = '${zestOf[1]}s';
-  return SecondFoodRule._(_citrusFruit[zestOf[1]]!, fruit, (food) {
+  return SecondFoodRule._(_citrus[zestOf[1]]!.fruit, fruit, (food) {
     final grams = resolveGrams(
       amounts: [plus.amount],
       food: food,
@@ -12461,24 +12478,6 @@ SecondFoodRule? _zestPlusFruit(
           );
   });
 }
-
-/// The whole-fruit record a zest-plus-counted-fruit line counts on (v44,
-/// S7 a: oranges; v49: the records the library's bare lemon and lime
-/// counts sit on).
-const Map<String, int> _citrusFruit = {
-  'orange': 746771, // Oranges, raw, navels
-  'lemon': 2709168, // Lemon, raw
-  'lime': 168155, // Limes, raw
-};
-
-/// v49 (M47 Q6): the peel record a zest over a tablespoon counts on, by
-/// fruit — lime zest on lemon peel, the shipped flagged approximation
-/// ([approximationRecords] 'lime zest').
-const Map<String, ({int fdcId, String words})> _citrusPeel = {
-  'lemon': (fdcId: 167749, words: 'lemon peel'), // Lemon peel, raw
-  'lime': (fdcId: 167749, words: 'lemon peel'),
-  'orange': (fdcId: 169103, words: 'orange peel'), // Orange peel, raw
-};
 
 /// v49 (M47 Q6): whether [recipe]'s steps strain or discard the zest at or
 /// after its first mention — "Strain the juice mixture" (fresh margaritas),
@@ -12615,7 +12614,7 @@ SecondFoodRule? secondFoodRuleOf(
     }
 
     if (large && !strained) {
-      final peel = _citrusPeel[fruit]!;
+      final peel = _citrus[fruit]!.peel;
       return SecondFoodRule._(
         peel.fdcId,
         peel.words,
@@ -12625,13 +12624,13 @@ SecondFoodRule? secondFoodRuleOf(
           normalizedItem: '$fruit zest',
         ),
         (
-          fdcId: _citrusJuice[fruit]!,
+          fdcId: _citrus[fruit]!.juice,
           grams: (food) => juiceOn(food, ''),
         ),
       );
     }
     return SecondFoodRule._(
-      _citrusJuice[fruit]!,
+      _citrus[fruit]!.juice,
       '$fruit juice',
       (food) => juiceOn(
         food,

@@ -314,7 +314,7 @@ const List<(String, double)> _densities = [
   // ATK's own "3 ounces (¾ cup) tapioca starch" (the All-Purpose
   // Gluten-Free Flour Blend, spooned, not packed), 113.4 g a cup — ahead of
   // the stand-in pearl record's own cup (169717, 152 g: the denser form),
-  // as every key outside [_recordFirstDensities] is.
+  // as every key not `recordFirst` ([_approximateDensities]) is.
   ('tapioca starch', 3 * 28.3495 / (0.75 * 236.588)),
   // v68 (batch M70, pF F1; the owner's Q11 standing rule: a label's grams
   // for a volume the line prints): powdered pectin on SR 168821 (no volume
@@ -338,34 +338,42 @@ const List<(String, double)> _densities = [
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
 /// approximations the user approved (v21, J2): a line sized by one says so
 /// in its basis ("· approximate (paprika density)") — or a figure ATK
-/// prints, named with its source (v31).
-const Map<String, String> _approximateDensities = {
+/// prints, named with its source (v31). `recordFirst` (v37): the key sizes
+/// a line only when its record has no volume figure of its own — a printed
+/// figure for a portion-less record, never over a record's portion:
+/// 'lentil' read "1 cup dried red lentils" at 198 g over 174284's own cup,
+/// 192 g (the replay).
+const Map<String, (String label, bool recordFirst)> _approximateDensities = {
   // The label names the figure used: 'parmesan' 0.42, since v23 no longer
   // grated Parmesan's (0.24) — Run 054 O16.
-  'pecorino': 'Parmesan density',
-  'ghee': 'oil density',
-  'aleppo pepper': 'paprika density',
-  'anchovy paste': 'ATK: 2 anchovy fillets ≈ 1 to 1½ teaspoons paste',
+  'pecorino': ('Parmesan density', false),
+  'ghee': ('oil density', false),
+  'aleppo pepper': ('paprika density', false),
+  'anchovy paste': ('ATK: 2 anchovy fillets ≈ 1 to 1½ teaspoons paste', false),
   // v37 (Z5, Z6, Z11, Z15).
-  'pearl onion': 'ATK: 8 ounces frozen pearl onions ≈ 2 cups',
-  'lentil': 'ATK: 1 cup lentils = 7 ounces',
-  'strawberries': 'ATK: 8 cups strawberries = 40 ounces',
-  'grape tomato': 'ATK: 12 ounces cherry or grape tomatoes ≈ 2½ cups',
-  'cooked boneless turkey or chicken meat':
-      'ATK: 6 ounces cooked chicken, torn = 1 cup',
-  'granny smith apple':
-      'ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups',
-  'roasted red pepper': 'pimento density, FDC 168559 cup 192 g',
-  'crushed tomato': 'tomato sauce density, FDC 170054 cup 245 g',
+  'pearl onion': ('ATK: 8 ounces frozen pearl onions ≈ 2 cups', true),
+  'lentil': ('ATK: 1 cup lentils = 7 ounces', true),
+  'strawberries': ('ATK: 8 cups strawberries = 40 ounces', true),
+  'grape tomato': ('ATK: 12 ounces cherry or grape tomatoes ≈ 2½ cups', true),
+  'cooked boneless turkey or chicken meat': (
+    'ATK: 6 ounces cooked chicken, torn = 1 cup',
+    true,
+  ),
+  'granny smith apple': (
+    'ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups',
+    true,
+  ),
+  'roasted red pepper': ('pimento density, FDC 168559 cup 192 g', true),
+  'crushed tomato': ('tomato sauce density, FDC 170054 cup 245 g', true),
   // v37 (S14): crème fraîche at heavy cream's table figure.
-  'creme fraiche': 'heavy cream density',
+  'creme fraiche': ('heavy cream density', false),
   // v49 (M47 Q5).
-  'tapioca starch': "ATK's printed 3 ounces per ¾ cup",
+  'tapioca starch': ("ATK's printed 3 ounces per ¾ cup", false),
   // v68 (M70, Q11).
-  'fruit pectin': _sureJellLabel,
-  'sure-jell': _sureJellLabel,
+  'fruit pectin': (_sureJellLabel, false),
+  'sure-jell': (_sureJellLabel, false),
   // v76 (M79, Q9 (a)).
-  'crystallized ginger': _crystallizedGingerLabel,
+  'crystallized ginger': (_crystallizedGingerLabel, false),
 };
 
 /// The Sure-Jell label the pectin densities read (v68, M70 — the owner's
@@ -381,21 +389,6 @@ const String _crystallizedGingerLabel =
     'crystallized ginger labels (FDC Branded 2132938 CIBO VITA, 2106313 Sugar '
     "'N Spice, 1900068 Tree of Life, 1981078 Price Chopper; the modal of "
     'nine ¼-cup labels, 28–50 g): ¼ cup = 30 g';
-
-/// v37: the [_densities] keys that size a line only when its record has no
-/// volume figure of its own — a printed figure for a portion-less record,
-/// never over a record's portion: 'lentil' read "1 cup dried red lentils"
-/// at 198 g over 174284's own cup, 192 g (the replay).
-const Set<String> _recordFirstDensities = {
-  'pearl onion',
-  'lentil',
-  'strawberries',
-  'grape tomato',
-  'cooked boneless turkey or chicken meat',
-  'granny smith apple',
-  'roasted red pepper',
-  'crushed tomato',
-};
 
 /// Grated and shredded Parmesan and Pecorino Romano weigh what the corpus
 /// prints for them — the user's Q6 ruling (a weight ATK prints wins):
@@ -2451,33 +2444,15 @@ const Map<int, ({double share, String flag})> ah102Meats = {
         'USDA AH-102 item 228: beef shank, fore, raw → lean and fat meat '
         '61 % (59–62; bones 39); weighed on a lean-only record',
   ),
-  172641: (
-    share: 0.73,
-    flag:
-        'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
-        'and fat meat, slightly trimmed 73 % (61–88), as measured '
-        'unfrenched; a frenched rack yields less',
-  ),
+  172641: _lambRack,
   // v54 (batch M56 R3): the rack a printed trim depth moves to (engine
   // `trimDepthRecords`, 172641 → 174414) keeps 172641's AH-102 row
   // verbatim — the yield is record-keyed.
-  174414: (
-    share: 0.73,
-    flag:
-        'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
-        'and fat meat, slightly trimmed 73 % (61–88), as measured '
-        'unfrenched; a frenched rack yields less',
-  ),
+  174414: _lambRack,
   // v76 (batch M79, Q10 (b′)): the domestic ⅛-inch rib the racks move to
   // (engine `trimDepthRecords`, 174321 → 174377) keeps the same AH-102 row
   // verbatim.
-  174377: (
-    share: 0.73,
-    flag:
-        'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
-        'and fat meat, slightly trimmed 73 % (61–88), as measured '
-        'unfrenched; a frenched rack yields less',
-  ),
+  174377: _lambRack,
   172513: (
     share: 0.70,
     flag:
@@ -2499,6 +2474,14 @@ const Map<int, ({double share, String flag})> ah102Meats = {
         'the fat 18: lean 60 %)',
   ),
 };
+
+const _lambRack = (
+  share: 0.73,
+  flag:
+      'USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean '
+      'and fat meat, slightly trimmed 73 % (61–88), as measured '
+      'unfrenched; a frenched rack yields less',
+);
 
 /// v40 (E1): SR 171052 "Chicken, broilers or fryers, meat only, raw", where
 /// a skin-discarded whole bird or pieces on 171447 moves (engine
@@ -2954,6 +2937,16 @@ GramResolution? resolveGrams({
   stepsPeel: stepsPeel,
 );
 
+/// [first] × [share] edible, flagged approximate by [flag].
+GramResolution _edible(GramResolution first, double share, String flag) =>
+    GramResolution(
+      grams: first.grams * share,
+      source: first.source,
+      basis:
+          '${first.basis} × ${share.toStringAsFixed(2)} edible · '
+          'approximate ($flag)',
+    );
+
 GramResolution? _resolveLine({
   required List<Amount> amounts,
   required FdcFood? food,
@@ -3107,19 +3100,19 @@ GramResolution? _resolveLine({
         : '';
     // v49 (M47 Q11): an AH-102 shell row names its item, flagged.
     final shell = readyToCook ? null : _ah102ShellOf(food, shellEaten);
-    first = GramResolution(
-      grams: first!.grams * yieldFactor,
-      source: first.source,
-      basis: shell != null
-          ? '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible · '
-                'approximate (${shell.flag})'
-          : '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
+    first = shell != null
+        ? _edible(first!, yieldFactor, shell.flag)
+        : GramResolution(
+            grams: first!.grams * yieldFactor,
+            source: first.source,
+            basis:
+                '${first.basis} × ${yieldFactor.toStringAsFixed(2)} edible '
                 '(${readyToCook
                     ? 'USDA ready-to-cook yield'
                     : _shellYield(food) != null
                     ? shellYieldLabel
                     : 'USDA refuse'})$keptFlag',
-    );
+          );
   } else if (refuse) {
     // The record publishes no refuse portion: the bone (a whole turkey's,
     // a Foundation chicken part's, a lamb chop's; pieces on the whole-bird
@@ -3149,21 +3142,12 @@ GramResolution? _resolveLine({
         ? boneInClassYields[food.fdcId]
         : null;
     first = part != null
-        ? GramResolution(
-            grams: first!.grams * part.share,
-            source: first.source,
-            basis:
-                '${first.basis} × ${part.share.toStringAsFixed(2)} edible '
-                '· approximate (${part.flag})',
-          )
+        ? _edible(first!, part.share, part.flag)
         : byClass != null
-        ? GramResolution(
-            grams: first!.grams * byClass.share,
-            source: first.source,
-            basis:
-                '${first.basis} × ${byClass.share.toStringAsFixed(2)} edible '
-                '· approximate (yield of ${byClass.yieldOf} from FDC '
-                '${byClass.from})',
+        ? _edible(
+            first!,
+            byClass.share,
+            'yield of ${byClass.yieldOf} from FDC ${byClass.from}',
           )
         : GramResolution(
             grams: first!.grams,
@@ -3266,15 +3250,7 @@ GramResolution? _resolveLine({
       ? _scallionPartOf(food, raw)
       : null;
   final trim = prep ?? scallion;
-  if (trim != null) {
-    first = GramResolution(
-      grams: first!.grams * trim.share,
-      source: first.source,
-      basis:
-          '${first.basis} × ${trim.share.toStringAsFixed(2)} edible · '
-          'approximate (${trim.flag})',
-    );
-  }
+  if (trim != null) first = _edible(first!, trim.share, trim.flag);
   final plus = raw == null || first == null ? null : plusPartOf(raw);
   // A counted extra of the same food ("plus 1 lemon, cut into wedges") is
   // for serving, not in the dish; only a measured second amount is added.
@@ -4346,7 +4322,7 @@ GramResolution? _resolveGrams({
         ? printed.$1
         : entry != null &&
               ownVolume != null &&
-              (_recordFirstDensities.contains(entry.$1) ||
+              ((_approximateDensities[entry.$1]?.$2 ?? false) ||
                   (entry.$1 == 'nuts'
                       ? _namesTheRecord(normalizedItem, volumeFood!)
                       : _keyModifiesTheRecordsFood(
@@ -4365,7 +4341,7 @@ GramResolution? _resolveGrams({
           ? 'shredded Parmesan density'
           : printed != null
           ? null
-          : _approximateDensities[entry?.$1];
+          : _approximateDensities[entry?.$1]?.$1;
       return GramResolution(
         grams: quantity * ml * density,
         source: GramSource.density,
