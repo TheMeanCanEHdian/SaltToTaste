@@ -7801,11 +7801,13 @@ bool namesOwnSection(Recipe recipe, IngredientLine line) {
 /// keeps simple-grill-roasted-turkey's "1 (12- to 14-pound) turkey …" off
 /// its "Gravy for Simple Grill-Roasted Turkey" (MAKES 6 CUPS) and
 /// fried-rice-with-shrimp-pork-and-shiitakes' "1 cup bean sprouts" off its
-/// "Fried Rice with Peas and Bean Sprouts" (SERVES 4 TO 6). Read by
+/// "Fried Rice with Peas and Bean Sprouts" (SERVES 4 TO 6). The rule's
+/// TEST entry point: production reads [_yieldTailOf], from
 /// [namesOwnSection] (so [isReferenceIn], the stale hash, the parent test
-/// and [routedSectionKeysOf] follow) and by the resolver's own-section list
-/// (`_ownTitles`); a marked line keeps v47's forms (barbecued-pulled-pork's
-/// "2 cups barbecue sauce (recipes follow)" stays rule PO's).
+/// and [routedSectionKeysOf] follow) and from the resolver's own-section
+/// list (`_ownTitles`); a marked line keeps v47's forms
+/// (barbecued-pulled-pork's "2 cups barbecue sauce (recipes follow)" stays
+/// rule PO's).
 /// [re-point → `item`]
 @visibleForTesting
 bool yieldNamesOwnSection(IngredientLine line, String item, Subsection sub) =>
@@ -8124,8 +8126,9 @@ class ReferenceResolution {
 
   /// v52 (M51 Q9, rule PV): the prose section (no ingredient lines) the
   /// line names when it is counted as its BASE ([childId]) instead — its
-  /// host and title. The parent's hash folds it ([proseSectionsReadBy]),
-  /// the row carries [pvFlagOf]'s flag. Null on every other answer.
+  /// host and title. The parent's hash folds it ([_proseReadsOf]; its test
+  /// entry point [proseSectionsReadBy]), the row carries [pvFlagOf]'s flag.
+  /// Null on every other answer.
   final ({String host, String title})? variation;
 }
 
@@ -13597,8 +13600,9 @@ final Expando<List<IngredientLine>> _lines = Expando();
 
 /// Hash of everything nutrition depends on — when it changes, stored
 /// results are stale. [memo] serves the library reads of a recipe holding
-/// a reference line (v47, F2: [proseSectionsReadBy]); one per request or
-/// compute, as every resolver read.
+/// a reference line (v47, F2: [_proseReadsOf]; its test entry point
+/// [proseSectionsReadBy]); one per request or compute, as every resolver
+/// read.
 String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
   // The matcher version is part of it: a bump makes every computed recipe
   // stale, so the stale sweep re-resolves its engine rows instead of leaving
@@ -13633,7 +13637,8 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
       'groups': [for (final group in recipe.ingredients) group.group],
       // v47 (F2): and whether the section a line names lists lines — only
       // when one does not, so every other recipe hashes as before (v52: or
-      // the child an amount-less line names, [proseSectionsReadBy]).
+      // the child an amount-less line names, [_proseReadsOf]; its test
+      // entry point [proseSectionsReadBy]).
       if (prose.sections.isNotEmpty) 'prose_sections': prose.sections,
       // v81 (Run 066 Opus critic F17): the base rule PV counts for each
       // prose section ([_proseReadsOf]) — only where one is read, so every

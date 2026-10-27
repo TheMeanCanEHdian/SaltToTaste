@@ -329,6 +329,69 @@ void main() {
       '1 whole side salmon fillet, about 3½ pounds, white belly fat trimmed',
     ]);
   }, skip: skipIfNoCorpus);
+
+  // The record-first marks ([_approximateDensities]' `recordFirst`, Run 069
+  // S1): a marked key sizes a volume line only when its record has no
+  // volume figure of its own. No corpus landing of these seven keys is on
+  // such a record (lentil's is: 1176-red-lentil-kibbeh|9 in `_rows`), so
+  // each pairing is SYNTHESIZED — a real corpus line at its position, a
+  // real recorded FDC record carrying its own volume figure, the pairing
+  // the pin's — and weighed by the resolver the engine calls on a record
+  // (`resolveGrams`, as `lineGrams` calls it with no recipe). The record's
+  // volume wins, '· USDA portion'; the mark dropped, the line reads the
+  // key's figure, '≈ N mL · approximate (<label>)' (each row's comment).
+  test("record-first: a marked key yields to the record's own volume "
+      '(a real line on a real record; the pairing synthesized)', () async {
+    for (final (file, position, raw, fdcId, grams, basis) in _recordFirst) {
+      final line = lineOf(raw);
+      final record = (await FixtureProvider().food(fdcId))!;
+      final resolved = resolveGrams(
+        amounts: line.amounts,
+        food: record,
+        normalizedItem: normalizeItem(lineItemOf(line)),
+        raw: line.raw,
+      )!;
+      expect(record.fdcId, fdcId, reason: raw);
+      expect(resolved.grams.toStringAsFixed(2), grams, reason: raw);
+      expect(resolved.basis, basis, reason: raw);
+      if (corpusAvailable) {
+        final corpus = nutritionLines(loadCorpusRecipe(file))[position];
+        expect(corpus.raw, raw, reason: file);
+        expect(line.amounts, corpus.amounts, reason: raw);
+      }
+    }
+  });
+
+  // The converse (Run 069 S1, F1b): a key NOT record-first keeps its
+  // figure over a record's own volume. Synthesized as above: 0109's ghee
+  // line on SR 173430 "Butter, without salt" (its 'tbsp' 14.2 g); the
+  // corpus line lands on 171314, which publishes no portion. Marked
+  // record-first, the line would read the butter's tablespoon: 42.60,
+  // '3 tablespoon · USDA portion'.
+  test("a key not record-first keeps its figure over the record's own "
+      'volume (ghee on butter; the pairing synthesized)', () async {
+    const raw = '3 tablespoons ghee';
+    final line = lineOf(raw);
+    final record = (await FixtureProvider().food(173430))!;
+    final resolved = resolveGrams(
+      amounts: line.amounts,
+      food: record,
+      normalizedItem: normalizeItem(lineItemOf(line)),
+      raw: line.raw,
+    )!;
+    expect(record.description, 'Butter, without salt');
+    expect(resolved.grams.toStringAsFixed(2), '40.81');
+    expect(resolved.basis, '3 tablespoon ≈ 44 mL · approximate (oil density)');
+    if (corpusAvailable) {
+      final corpus = nutritionLines(
+        loadCorpusRecipe(
+          '0109-palak-dal-spinach-dal-with-cumin-and-mustard-seeds.yaml',
+        ),
+      )[5];
+      expect(corpus.raw, raw);
+      expect(line.amounts, corpus.amounts);
+    }
+  });
 }
 
 const String _monkfishZest = '3 (2-inch) strips orange zest, divided';
@@ -949,5 +1012,103 @@ const List<(String, int, String)> _flavourings = [
     '0615-oven-barbecued-spareribs.yaml',
     10,
     '¼ cup finely ground Lapsang Souchong tea leaves (from about 10 tea bags, or ½ cup loose tea leaves ground to a powder in a spice grinder)',
+  ),
+];
+
+/// The record-first pins (Run 069 S1): (corpus file, position, raw, the
+/// real record the pairing puts it on, grams, basis). Each comment names
+/// the record and what the line reads with the key's mark dropped.
+const List<(String, int, String, int, String, String)> _recordFirst = [
+  // 'pearl onion' on SR 170000 "Onions, raw" (no record of frozen pearl
+  // onions carries a volume): its two cups' median, 137.5 g a cup. The
+  // mark dropped: 170.10, '1 1/2 cup ≈ 355 mL · approximate (ATK: 8 ounces
+  // frozen pearl onions ≈ 2 cups)'.
+  (
+    '0005-best-beef-stew.yaml',
+    14,
+    '1½ cups frozen pearl onions, thawed',
+    170000,
+    '206.25',
+    '1 1/2 cup · USDA portion',
+  ),
+  // 'strawberries' on FNDDS 2709271 "Berries, NFS" '1 cup' 150 g — no
+  // strawberry record in the fixtures or snapshot 29 carries a volume
+  // (2346409 publishes a RACC only); the quart is not the record's cup, so
+  // the resolver reaches the mark. The mark dropped: 566.99, '1 quart ≈
+  // 946 mL · approximate (ATK: 8 cups strawberries = 40 ounces)'.
+  (
+    '0776-strawberries-and-grapes-with-balsamic-and-red-wine-reduction.yaml',
+    7,
+    '1 quart strawberries, hulled and halved lengthwise (about 4 cups)',
+    2709271,
+    '600.00',
+    '1 quart · USDA portion',
+  ),
+  // 'grape tomato' on SR 170457's 'cup cherry tomatoes' 149 g. The mark
+  // dropped: 272.16, '1 pint ≈ 473 mL · approximate (ATK: 12 ounces cherry
+  // or grape tomatoes ≈ 2½ cups)'.
+  (
+    '0044-mediterranean-chopped-salad.yaml',
+    1,
+    '1 pint grape tomatoes, quartered (about 1½ cups)',
+    170457,
+    '298.00',
+    '1 pint · USDA portion',
+  ),
+  // 'cooked boneless turkey or chicken meat' (the corpus's one line) on SR
+  // 167694 "Sausage, turkey and pork, … cooked" 'cup, cooked' 130 g — NOT
+  // the line's food. Of the 61 chicken- or turkey-named records in the
+  // fixtures and snapshot 29 (1,138 records; 409 of every food reach the
+  // mark on this line), four reach it: this sausage, chicken fat 173564
+  // and the broths 171609 / 174536 — none a plain cooked chicken or turkey
+  // meat. Twelve are FNDDS '1 cup …' (cooked chicken 2705961 '1 cup,
+  // cooked, diced' 135 g: 540.00 either way), which serves a cup line
+  // before the mark is read; the other 45 carry no volume (331960, the
+  // line's own landing, among them). The mark dropped: 680.39, '4 cup ≈
+  // 946 mL · approximate (ATK: 6 ounces cooked chicken, torn = 1 cup)'.
+  (
+    '0303-turkey-tetrazzini.yaml',
+    17,
+    '4 cups leftover cooked boneless turkey or chicken meat, cut into ¼-inch pieces',
+    167694,
+    '520.00',
+    '4 cup · USDA portion',
+  ),
+  // 'granny smith apple' on SR 168202 "Apples, raw, golden delicious,
+  // with skin" 'cup, sliced' 109 g (1750342, the Granny Smith record,
+  // publishes a RACC only). The mark dropped: 283.49, '1 1/4 cup ≈ 296 mL ·
+  // approximate (ATK: 1½ pounds Granny Smith apples, peeled, cored,
+  // shredded = 3 cups)'.
+  (
+    '0777-classic-strawberry-jam.yaml',
+    2,
+    '1¼ cups peeled and shredded Granny Smith apple (1 large apple)',
+    168202,
+    '136.25',
+    '1 1/4 cup · USDA portion',
+  ),
+  // 'roasted red pepper' on SR 168559 "Pimento, canned" 'cup' 192 g — the
+  // key's own figure, so the grams coincide and the BASIS is the proof.
+  // The mark dropped: 96.00, '1/2 cup ≈ 118 mL · approximate (pimento
+  // density, FDC 168559 cup 192 g)'.
+  (
+    '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
+    4,
+    '½ cup jarred roasted red peppers, rinsed, patted dry, and chopped fine',
+    168559,
+    '96.00',
+    '1/2 cup · USDA portion',
+  ),
+  // 'crushed tomato' on SR 170054 "Tomato products, canned, sauce" 'cup'
+  // 245 g — the key's own figure (the grams coincide; the basis is the
+  // proof). The mark dropped: 245.00, '1 cup ≈ 237 mL · approximate
+  // (tomato sauce density, FDC 170054 cup 245 g)'.
+  (
+    '0495-chili-con-carne.yaml',
+    11,
+    '1 cup canned crushed tomatoes or plain tomato sauce',
+    170054,
+    '245.00',
+    '1 cup · USDA portion',
   ),
 ];

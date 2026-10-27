@@ -1286,8 +1286,14 @@ void main() {
     // detail of SR 171977 (canned clam liquid — 0346's clam juice, a hit in
     // a recorded answer, equal in every digit): compared 543 -> 544, differ
     // 415 unchanged.
-    expect(compared, 544);
-    expect(differ, 415);
+    // RE-PIN (simplification batch F, F1): the record-first pins recorded
+    // from snapshot 29 the details of SR 170054 (tomato sauce — a hit in
+    // 'canned chipotle chile in adobo sauce' and two more, equal in every
+    // digit) and SR 167694 (turkey-and-pork sausage — a hit in 'bulk pork
+    // sausage' and 'hot italian sausage links'; monounsaturated 9.72 /
+    // 9.719): compared 544 -> 546, differ 415 -> 416.
+    expect(compared, 546);
+    expect(differ, 416);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
