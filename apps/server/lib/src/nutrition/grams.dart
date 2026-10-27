@@ -2185,8 +2185,7 @@ const _bony = (
 /// Handbook 102 (1975), Table 1 raw boning data — a bone-in bird part's
 /// edible yield of its printed weight, by `"<species> <part>"`: the
 /// meat-and-skin figure, and the meat figure read IN ONE STEP when the
-/// record is meat only ([ah102Records]; Y12 retired the v39 stack of the
-/// bone yield × FDC SR's skin share 0.795 / 0.770). Each flag cites the
+/// record is meat only ([ah102Records]). Each flag cites the
 /// item and its range. Derived (no printed row; flagged "derived"): the
 /// chicken LEG (thigh + drumstick, 585–586 by 583's carcass shares 19/17 —
 /// no leg-quarter row exists, so a leg quarter's back is not in it) and
@@ -2501,22 +2500,6 @@ const Map<int, ({double share, String flag})> ah102Meats = {
   ),
 };
 
-// LIVE STEP (plan §3 requests 1–3, spent by the owner 2026-10-05; the
-// record): the whole bird and pieces ENABLED in v40 — the search "chicken
-// broilers or fryers meat only raw" ranked SR 171052 first, whose detail
-// publishes "unit (yield from 1 lb ready-to-cook chicken)" 197 g
-// ([meatOnlyBroiler]; engine `_skinlessRecords` 171447 → 171052: pressure-
-// cooker-chicken-noodle-soup|8, moroccan-chicken-with-olives-and-lemon|8,
-// grilled-lemon-chicken-with-rosemary|0 whole; pollo-en-mole-poblano-
-// chicken-in-puebla-style-mole|15, tandoori-chicken|9 pieces, flagged).
-// The breast NOT enabled: 171077 (request 1) publishes "oz" 113 g,
-// "package" 926 g and "piece" 272 g — no half breast to set against
-// 171474's "0.5 breast, bone removed" 145 g, so no share is formed and the
-// five breast lines (hearty-chicken-noodle-soup|9, old-fashioned-slow-
-// cooker-chicken-noodle-soup|12, french-style-chicken-and-stuffing-in-a-
-// pot|15, tortilla-soup|3, white-chicken-chili|0) stayed at the bone yield
-// until v43 (Y3) moved those that discard the skin to 2646170 at AH-102's
-// breast meat share.
 /// v40 (E1): SR 171052 "Chicken, broilers or fryers, meat only, raw", where
 /// a skin-discarded whole bird or pieces on 171447 moves (engine
 /// `_skinlessRecords`): its "unit (yield from 1 lb ready-to-cook chicken)"
@@ -3157,8 +3140,8 @@ GramResolution? _resolveLine({
         noRefuse && (wholeBirdYield || !_wholeBirdLine.hasMatch(raw));
     // v43 (Y1–Y6, Y12, Y13): a bird part reads AH-102's figure for the part
     // the line buys, in one step, the record deciding meat or meat and skin
-    // ([ah102YieldOf]) — pieces on the meat-only broiler 171052 too (v40's
-    // whole-bird 0.43 retired); the v40 wing flag stays on the whole bird.
+    // ([ah102YieldOf]) — pieces on the meat-only broiler 171052 too; the v40
+    // wing flag stays on the whole bird.
     final part = classed
         ? ah102YieldOf(food, raw) ?? ah102Meats[food.fdcId]
         : null;
@@ -3191,13 +3174,11 @@ GramResolution? _resolveLine({
                 : '${first.basis} · no edible yield read',
           );
   }
-  // v43 (Y12, Y13): the skin is no longer a second step. The record
-  // decides ([ah102Records]): a meat-only record — where the engine moves a
-  // row whose recipe discards the skin (`_skinOffFood`), or where a person
-  // put it — reads the part's meat figure from the printed weight; v39's
-  // stack (the bone yield × FDC SR's skin share, 0.795 thigh / 0.770 leg)
-  // is retired. [skinOff] now only names the part a meat-only whole bird
-  // keeps its skin on (the flag above).
+  // v43 (Y12, Y13): the record decides ([ah102Records]): a meat-only record
+  // — where the engine moves a row whose recipe discards the skin
+  // (`_skinOffFood`), or where a person put it — reads the part's meat
+  // figure from the printed weight. [skinOff] only names the part a
+  // meat-only whole bird keeps its skin on (the flag above).
   final drained = first?.source == GramSource.weight && raw != null
       ? drainedCanGrams(first!.grams, food, raw)
       : null;

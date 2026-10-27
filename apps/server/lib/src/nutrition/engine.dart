@@ -12317,7 +12317,7 @@ IngredientMatchRow withParts(
     final zest = rule.gramsOn(knownFood(db, rule.fdcId, line: line));
     final juice = second.grams(knownFood(db, second.fdcId, line: line));
     // Either record not cached (never after the compute's own fetch,
-    // [_ruleRowFor]): held, as before v49.
+    // [_ruleRowFor]): held.
     return zest == null || juice == null
         ? bacon.copyWith(hold: 'second_food')
         : split(
@@ -14073,10 +14073,9 @@ Future<NutritionProviderException?> _computePass(
   // job's: returned only when no GLOBAL failure is, and the job loops go on.
   NutritionProviderException? foodFailure;
   // The FOOD failures of this pass, counted once the line loop ends —
-  // ALWAYS (the owner's ruling on Run 059 O11, superseding the v28
-  // closer's D8: a GLOBAL failure stops further requests and the job, it
-  // never discards the counts already taken), the request that tipped a
-  // detail outage included ([_Escalated]).
+  // ALWAYS (the owner's ruling on Run 059 O11: a GLOBAL failure stops
+  // further requests and the job, it never discards the counts already
+  // taken), the request that tipped a detail outage included ([_Escalated]).
   final foodFailed =
       <
         ({
@@ -14797,8 +14796,8 @@ Future<NutritionProviderException?> _computePass(
   // The stamp names the inputs and layout the totals were computed on —
   // never whether the decided rows are derived: that is each row's own
   // fact, read by [nutritionIsFresh] over the rows as they are when it is
-  // read (Run 057 S15/O1/O15: `derivedAll`, this compute's snapshot,
-  // stamped fresh over a person's underived write during an await).
+  // read (Run 057 S15/O1/O15: a flag of this compute's snapshot stamped
+  // fresh over a person's underived write during an await).
   recomputeTotals(
     db,
     recipe,
@@ -15603,7 +15602,7 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// deduction never part); the row's grams and kcal column stay gross.
 /// v70 (batch M72; prep50 design_v2 §2 M72, pE R-E1/R-E2 and R-E3, §0.3 the
 /// braised-pair doctrine; decided under the 2026-10-07 standing
-/// authorization): `braisedEnergyShare` became [braisedKept] — the share of
+/// authorization): [braisedKept] is the share of
 /// the energy AND of each fat column (total, saturated, mono, poly) a
 /// braise keeps, each column's own pair share by the same protein tracer
 /// (cooked × P raw / P cooked ÷ raw; every value a cached record's): protein,
