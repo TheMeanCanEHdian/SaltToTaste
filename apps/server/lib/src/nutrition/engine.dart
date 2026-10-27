@@ -327,16 +327,6 @@ final RegExp _kept = RegExp(
   caseSensitive: false,
 );
 
-/// The step texts of [recipe] itself — never a subsection's: a variation
-/// or sub-recipe is out of the main totals (the user's ruling, 2026-09-27),
-/// and its own pot and its own salt must not make a main line a medium
-/// (v11, Sonnet: a variation's bare "Add the spaghetti and salt … Drain"
-/// held the recipe's one seasoning salt as cooking water). Measured: no line
-/// of the library moves, so the bound is pinned on a synthesized subsection
-/// (a stated exception).
-/// Read through the recipe's [_StepIndex], so each sentence is windowed.
-List<String> _stepsOf(Recipe recipe) => _stepIndexOf(recipe).raw;
-
 /// RULE C (v25, Run 055 I3/S4/O2/O3/S5/S7/S18): what the detectors read of
 /// [recipe]'s steps, built ONCE per Recipe instance (immutable, so the
 /// instance is the key, as [_headsOf]) and read by every detector: the
@@ -397,7 +387,14 @@ class _StepIndex {
     _logWindows(recipe, raw);
   }
 
-  /// Each step's text, every sentence windowed ([_windowed]).
+  /// Each step's text, every sentence windowed ([_windowed]) — the step
+  /// texts of the recipe itself, never a subsection's: a variation or
+  /// sub-recipe is out of the main totals (the user's ruling, 2026-09-27),
+  /// and its own pot and its own salt must not make a main line a medium
+  /// (v11, Sonnet: a variation's bare "Add the spaghetti and salt … Drain"
+  /// held the recipe's one seasoning salt as cooking water). Measured: no
+  /// line of the library moves, so the bound is pinned on a synthesized
+  /// subsection (a stated exception).
   final List<String> raw;
 
   /// [raw], lower-cased once.
@@ -1149,17 +1146,18 @@ const maxScannedSentence = 1000;
 final String _amountRun =
     '[\\d$vulgarFractionChars][\\d$vulgarFractionChars/ ]{0,12}';
 
+final RegExp _remainingStarterDiscard = RegExp(
+  r'\bdiscard (?:the )?remaining starter\b',
+  caseSensitive: false,
+);
+
 /// Whether a step of [steps] keeps a little sourdough starter and discards
 /// the rest — a feeding ([DiscardedMedium.starterDiscard], Q1). Measured:
 /// Sourdough Starter (0799) is the one recipe of the library whose steps
 /// say it; every other "discard" (fat, solids, dough scraps, whey) names no
 /// starter.
-bool _feedsStarter(List<String> steps) => steps.any(
-  RegExp(
-    r'\bdiscard (?:the )?remaining starter\b',
-    caseSensitive: false,
-  ).hasMatch,
-);
+bool _feedsStarter(List<String> steps) =>
+    steps.any(_remainingStarterDiscard.hasMatch);
 
 /// The head nouns of a dredge: flour, starch, crumbs (the ruling's words;
 /// 'cornmeal' and 'meal' reached no line and were deleted, v23 — a typed
@@ -1171,6 +1169,8 @@ const Set<String> _dredgeHeads = {
   'crumb',
   'panko',
 };
+
+final RegExp _forDredging = RegExp(r'\bfor (dredging|coating)\b');
 
 /// Whether a line ([raw]) is a [DiscardedMedium.coating] (Q2): its text
 /// says "for dredging" / "for coating", or ¼ cup or more of flour, starch
@@ -1193,12 +1193,11 @@ bool _dredge(
   String raw,
   String? head,
   double Function() ml,
-  List<String> steps,
 ) {
   if (!_dredgeHeads.contains(head)) {
     return false;
   }
-  if (RegExp(r'\bfor (dredging|coating)\b').hasMatch(raw)) {
+  if (_forDredging.hasMatch(raw)) {
     return true;
   }
   if (ml() < _quarterCupMl || !(_fries(recipe) || _leavesExcess(recipe))) {
@@ -2259,7 +2258,7 @@ Map<String, _OilOwner> _oilOwnersOf(Recipe recipe, String head) {
     (int, int)? lastHeat;
     bool reused((int, int) at) {
       final l = lastHeat ??= _lastMatching(index.sentences, fat.heatsReserved);
-      return l.$1 > at.$1 || (l.$1 == at.$1 && l.$2 > at.$2);
+      return _before(at, l);
     }
 
     for (final at in _naming(recipe, head)) {
@@ -2724,14 +2723,12 @@ bool _layerSized(IngredientLine line, double Function() ml) {
 /// Whether [recipe] holds a dredge ([_dredge]) — once per recipe.
 bool _dredgedIn(Recipe recipe) => _stepIndexOf(recipe).memo(#dredged, () {
   final heads = _headsOf(recipe);
-  final steps = _stepIndexOf(recipe).raw;
   return nutritionLines(recipe).indexed.any(
     (e) => _dredge(
       recipe,
       e.$2.raw.toLowerCase(),
       heads[e.$1],
       () => _mediumMl(e.$2, normalizeItem(lineItemOf(e.$2))),
-      steps,
     ),
   );
 });
@@ -3223,6 +3220,16 @@ String? keptLiquidOf(Recipe recipe, IngredientLine line) {
       : null;
 }
 
+final RegExp _keptLiquidCups = RegExp(
+  '$_amountRun\\s*'
+  r'cups?\s+(?:(?:reserved|defatted)\s+)*(?:cooking\s+)?liquid\b',
+);
+final RegExp _remainingLiquid = RegExp(
+  r'\bremaining (?:\w+ )?(?:cooking )?liquid\b',
+);
+final RegExp _braiseOpens = RegExp(r'^(whisk|bring)\b');
+final RegExp _braiseAdds = RegExp(r'^(add|arrange)\b');
+
 /// What [keptLiquidOf] reads of [recipe]'s steps alone, once per recipe
 /// ([_StepIndex]; Run 055 S16): the strained braise's kept liquid as written
 /// and the sentences that make the liquid (opening "whisk" or "bring", the
@@ -3242,25 +3249,18 @@ String? keptLiquidOf(Recipe recipe, IngredientLine line) {
           .skip(strain)
           .expand((s) => s)
           .where((s) => s.contains('liquid'));
-      final keptIn = RegExp(
-        '$_amountRun\\s*'
-        r'cups?\s+(?:(?:reserved|defatted)\s+)*(?:cooking\s+)?liquid\b',
-      );
-      final kept = after.map(keptIn.firstMatch).nonNulls.firstOrNull;
-      final remaining = RegExp(r'\bremaining (?:\w+ )?(?:cooking )?liquid\b');
-      if (kept == null || after.any(remaining.hasMatch)) {
+      final kept = after.map(_keptLiquidCups.firstMatch).nonNulls.firstOrNull;
+      if (kept == null || after.any(_remainingLiquid.hasMatch)) {
         return null;
       }
-      final opens = RegExp(r'^(whisk|bring)\b');
-      final adds = RegExp(r'^(add|arrange)\b');
       return (
         kept: kept[0]!,
         openers: [
           for (final sentences in index.sentences.take(strain))
             for (final (i, s) in sentences.indexed)
               if (i + 1 < sentences.length &&
-                  opens.hasMatch(s.trimLeft()) &&
-                  adds.hasMatch(sentences[i + 1].trimLeft()))
+                  _braiseOpens.hasMatch(s.trimLeft()) &&
+                  _braiseAdds.hasMatch(sentences[i + 1].trimLeft()))
                 s,
         ],
       );
@@ -3282,12 +3282,11 @@ String? keptLiquidOf(Recipe recipe, IngredientLine line) {
   }
   final index = _stepIndexOf(recipe);
   final sentences = index.sentences[at.$1];
-  final remaining = RegExp(r'\bremaining (?:\w+ )?(?:cooking )?liquid\b');
   final later = [
     ...sentences.skip(at.$2 + 1),
     ...index.sentences.skip(at.$1 + 1).expand((s) => s),
   ];
-  return later.any(remaining.hasMatch)
+  return later.any(_remainingLiquid.hasMatch)
       ? null
       : (
           kept: _poursAway.firstMatch(sentences[at.$2])![1]!,
@@ -3598,9 +3597,7 @@ bool _rinsedCure(Recipe recipe, String head) {
       // Key: head — the food rubbed before the rinse.
       index.memo(('rinsedCure', head), () {
         return _naming(recipe, head).any(
-          (at) =>
-              (at.$1 < rinse.$1 || (at.$1 == rinse.$1 && at.$2 < rinse.$2)) &&
-              _rub.hasMatch(index.sentence(at)),
+          (at) => _before(at, rinse) && _rub.hasMatch(index.sentence(at)),
         );
       });
 }
@@ -3640,7 +3637,7 @@ DiscardedMedium? discardedMediumOf(
     if (index.memo(#starter, () => _feedsStarter(steps))) {
       return DiscardedMedium.starterDiscard;
     }
-    if (_dredge(recipe, raw, head, () => ml, steps) ||
+    if (_dredge(recipe, raw, head, () => ml) ||
         (head == 'bread' && _crumbsForTheCoat(recipe, raw)) ||
         _crumbLineOfTheCoat(recipe, head, () => ml) ||
         _coatLayer(recipe, line, head, () => ml, normalized)) {
@@ -3707,34 +3704,34 @@ DiscardedMedium? discardedMediumOf(
     // Sugar dunked with a salt-bath salt goes with it (Grilled
     // Cauliflower, 0656: "Whisk 2 cups water, salt, and sugar … gently dunk
     // in salt-sugar mixture"; checkpoint 8).
-    if (head == 'sugar' && bySentence && _dunkedWithSalt(recipe, steps)) {
+    if (head == 'sugar' && bySentence && _dunkedWithSalt(recipe)) {
       return DiscardedMedium.saltBath;
     }
     if (head == 'salt' &&
         bySentence &&
-        (_dissolvedWithBrineSalt(recipe, line, normalized, steps) ||
-            _dissolvedInWater(recipe, line, steps))) {
+        (_dissolvedWithBrineSalt(recipe, line, normalized) ||
+            _dissolvedInWater(recipe, line))) {
       return DiscardedMedium.brine;
     }
     // Sugar in the pot too: New York Bagels (0810) boils its bagels in "4
     // quarts water, sugar, and baking soda" and lifts them out with a wire
     // skimmer — the sugar leaves with the water, like the soda (R2).
-    if (bySentence && _drainedWater(recipe, line, steps)) {
+    if (bySentence && _drainedWater(recipe, line)) {
       return DiscardedMedium.cookingWater;
     }
-    if (head == 'salt' && bySentence && _rinsedSalt(recipe, line, steps)) {
+    if (head == 'salt' && bySentence && _rinsedSalt(recipe, line)) {
       return DiscardedMedium.saltBath;
     }
-    if (bySentence && _intoCheeseMilk(recipe, line, head!, steps)) {
+    if (bySentence && _intoCheeseMilk(recipe, line, head!)) {
       return DiscardedMedium.cheeseMilk;
     }
     if (head == 'sugar' && bySentence) {
-      final coSolute = _brineCoSolute(recipe, line, head!, steps);
+      final coSolute = _brineCoSolute(recipe, line, head!);
       if (coSolute != null) {
         return coSolute;
       }
     }
-    final away = bySentence ? _drainedAway(recipe, line, head!, steps) : null;
+    final away = bySentence ? _drainedAway(recipe, line, head!) : null;
     if (away != null) {
       return away;
     }
@@ -3759,10 +3756,10 @@ DiscardedMedium? discardedMediumOf(
       index.memo(#whey, () => steps.any(_wheyStep.hasMatch))) {
     return DiscardedMedium.cheeseMilk;
   }
-  if (head == 'soda' && bySentence && _drainedWater(recipe, line, steps)) {
+  if (head == 'soda' && bySentence && _drainedWater(recipe, line)) {
     return DiscardedMedium.cookingWater;
   }
-  if (head == 'soda' && bySentence && _rinsedSalt(recipe, line, steps)) {
+  if (head == 'soda' && bySentence && _rinsedSalt(recipe, line)) {
     return DiscardedMedium.saltBath;
   }
   if (!bySentence) {
@@ -3773,13 +3770,13 @@ DiscardedMedium? discardedMediumOf(
     // counted — yet Oven-Roasted Pork Chops (0202) adds "the garlic, bay
     // leaves, cloves, and peppercorns" to its brine: the item's last word
     // is the food there ([_names] never reads it in "garlic cloves").
-    return _brineCoSolute(recipe, line, normalized.split(' ').last, steps);
+    return _brineCoSolute(recipe, line, normalized.split(' ').last);
   }
-  if (_intoCheeseMilk(recipe, line, head, steps)) {
+  if (_intoCheeseMilk(recipe, line, head)) {
     return DiscardedMedium.cheeseMilk;
   }
-  return _brineCoSolute(recipe, line, head, steps) ??
-      _drainedAway(recipe, line, head, steps) ??
+  return _brineCoSolute(recipe, line, head) ??
+      _drainedAway(recipe, line, head) ??
       // v50 (M50): what a strain, a discard by name or a printed part
       // kept leaves of the line — after every shipped reader (the lentil
       // salad's drained pot stays `discarded_medium`).
@@ -3793,7 +3790,7 @@ DiscardedMedium? discardedMediumOf(
 /// The fraction of [line] its [_drainedMention]'s written pot share is
 /// (1½ of 2 teaspoons: 0.75), or null when the whole line goes in the pot.
 double? _potShareOf(Recipe recipe, IngredientLine line) {
-  final share = _drainedMention(recipe, line, _stepsOf(recipe))?.share;
+  final share = _drainedMention(recipe, line)?.share;
   final own = volumeMlOf(line.amounts);
   final part = share == null
       ? null
@@ -4011,8 +4008,10 @@ DiscardedMedium? _brineCoSolute(
   Recipe recipe,
   IngredientLine line,
   String head,
-  List<String> steps,
-) => _brineCoSoluteMention(recipe, line, head, steps)?.medium;
+) => _brineCoSoluteMention(recipe, line, head)?.medium;
+
+final RegExp _brineSubmerge = RegExp(r'submerg|\bweigh\w*\s+\w+\s+down\b');
+final RegExp _brineWord = RegExp(r'\bbrine\b');
 
 /// The [_brineCoSolute] of [line] and the sentence naming it. Weighing the
 /// food down submerges it too: Home-Corned Beef (0091) dissolves its salt,
@@ -4025,7 +4024,6 @@ DiscardedMedium? _brineCoSolute(
   Recipe recipe,
   IngredientLine line,
   String head,
-  List<String> steps,
 ) {
   if (!_firstOfItsHead(recipe, line, head)) {
     return null;
@@ -4034,11 +4032,10 @@ DiscardedMedium? _brineCoSolute(
   // sentence from the marker on, and the sentences before the marker.
   final index = _stepIndexOf(recipe);
   final brines = index.memo(#brines, () {
-    final marker = RegExp(r'submerg|\bweigh\w*\s+\w+\s+down\b');
     return [
       for (final (i, text) in index.lower.indexed)
-        if (marker.firstMatch(text) case final submerge?
-            when RegExp(r'\bbrine\b').hasMatch(text))
+        if (_brineSubmerge.firstMatch(text) case final submerge?
+            when _brineWord.hasMatch(text))
           (
             object: _sentenceAt(index, i, submerge.start),
             word: submerge[0]!,
@@ -4127,36 +4124,36 @@ int? _firstWhere(int n, bool Function(int) test) {
   return null;
 }
 
+final RegExp _poachWord = RegExp(r'\bpoach');
+
 /// Whether [recipe] poaches (its title says so): its brine is the liquid
 /// the food cooks in.
-bool _poached(Recipe recipe) =>
-    RegExp(r'\bpoach').hasMatch(recipe.title.toLowerCase());
+bool _poached(Recipe recipe) => _poachWord.hasMatch(recipe.title.toLowerCase());
 
 /// Whether a salt line of [recipe] is a [DiscardedMedium.saltBath] whose
 /// own mention's sentence names the sugar too.
 /// Once per recipe: it names no line of its own.
-bool _dunkedWithSalt(Recipe recipe, List<String> steps) =>
-    _stepIndexOf(recipe).memo(#dunked, () {
-      final index = _stepIndexOf(recipe);
-      return nutritionLines(recipe).any((salt) {
-        final item = normalizeItem(lineItemOf(salt));
-        // Read once per sentence, whichever mentions share it.
-        return headNounOf(item) == 'salt' &&
-            _firstOwn(recipe, salt, #sugarBeside, (step, at) {
-                  final k = index.sentenceAt(step, at).index;
-                  return index.memo(
-                        // Key: step and k — the sentence (its step, its index
-                        // there).
-                        ('sugarBeside', step, k),
-                        () => _names(_sentenceAt(index, step, at), 'sugar'),
-                      )
-                      ? true
-                      : null;
-                }) !=
-                null &&
-            discardedMediumOf(recipe, salt, item) == DiscardedMedium.saltBath;
-      });
-    });
+bool _dunkedWithSalt(Recipe recipe) => _stepIndexOf(recipe).memo(#dunked, () {
+  final index = _stepIndexOf(recipe);
+  return nutritionLines(recipe).any((salt) {
+    final item = normalizeItem(lineItemOf(salt));
+    // Read once per sentence, whichever mentions share it.
+    return headNounOf(item) == 'salt' &&
+        _firstOwn(recipe, salt, #sugarBeside, (step, at) {
+              final k = index.sentenceAt(step, at).index;
+              return index.memo(
+                    // Key: step and k — the sentence (its step, its index
+                    // there).
+                    ('sugarBeside', step, k),
+                    () => _names(_sentenceAt(index, step, at), 'sugar'),
+                  )
+                  ? true
+                  : null;
+            }) !=
+            null &&
+        discardedMediumOf(recipe, salt, item) == DiscardedMedium.saltBath;
+  });
+});
 
 /// The fraction of [line] a [_brineCoSoluteMention] writes as the brine's
 /// share — "3 garlic cloves" of "6 garlic cloves, peeled", "1 tablespoon
@@ -4166,12 +4163,7 @@ double? _brineShareOf(Recipe recipe, IngredientLine line, String? head) {
   if (head == null) {
     return null;
   }
-  final sentence = _brineCoSoluteMention(
-    recipe,
-    line,
-    head,
-    _stepsOf(recipe),
-  )?.sentence;
+  final sentence = _brineCoSoluteMention(recipe, line, head)?.sentence;
   final written = sentence == null
       ? null
       : RegExp(
@@ -4211,7 +4203,6 @@ DiscardedMedium? _drainedAway(
   Recipe recipe,
   IngredientLine line,
   String head,
-  List<String> steps,
 ) {
   if (line.amounts.any((a) => a.unit == 'sprig')) {
     return null;
@@ -4311,23 +4302,25 @@ int? _firstAbove(List<int>? sorted, int k) {
   return i < sorted.length ? sorted[i] : null;
 }
 
+final RegExp _drainedFood = RegExp(r'(?<!not )\bdrain\s+(?:the\s+)?([a-z]+)');
+final RegExp _dripBack = RegExp(r'excess (\w+) mixture to drip back');
+final RegExp _cookWord = RegExp(r'\bcook');
+
 /// What each sentence of a step does for [_drainedAway], read once: it
 /// cooks; the mixture it drips back ("excess milk mixture to drip back",
 /// 1084); the food it drains ("Drain slaw"; not "do not drain", Run 048) by
 /// its key word, and whether it discards; whether it adds and tosses.
 class _Parting {
   _Parting(List<String> sentences) {
-    final drain = RegExp(r'(?<!not )\bdrain\s+(?:the\s+)?([a-z]+)');
-    final drip = RegExp(r'excess (\w+) mixture to drip back');
     var cooked = 0;
     cookSum.add(0);
     for (final (j, s) in sentences.indexed) {
-      cooked += RegExp(r'\bcook').hasMatch(s) ? 1 : 0;
+      cooked += _cookWord.hasMatch(s) ? 1 : 0;
       cookSum.add(cooked);
-      if (drip.firstMatch(s)?[1] case final word?) {
+      if (_dripBack.firstMatch(s)?[1] case final word?) {
         (dripped[word] ??= []).add(j);
       }
-      final key = switch (drain.firstMatch(s)?[1]) {
+      final key = switch (_drainedFood.firstMatch(s)?[1]) {
         final word? => keyWordOf(word),
         null => null,
       };
@@ -5938,8 +5931,6 @@ Map<int, ({String text, (int, int) at})> _dipsOf(
   Recipe recipe,
 ) => _stepIndexOf(recipe).memo(#dips, () {
   final index = _stepIndexOf(recipe);
-  bool before((int, int) a, (int, int) b) =>
-      a.$1 < b.$1 || (a.$1 == b.$1 && a.$2 < b.$2);
   final dips = <RegExp, List<(int, int)>>{};
   for (final (i, sentences) in index.sentences.indexed) {
     for (final (j, s) in sentences.indexed) {
@@ -5974,12 +5965,12 @@ Map<int, ({String text, (int, int) at})> _dipsOf(
         continue;
       }
       for (final p in _lineMentionsOf(recipe, k)) {
-        if (!before(p, dipped.last)) {
+        if (!_before(p, dipped.last)) {
           break;
         }
         if (mixes(p)) {
-          final dip = dipped.firstWhere((d) => before(p, d));
-          if (at[k] == null || before(dip, at[k]!)) {
+          final dip = dipped.firstWhere((d) => _before(p, d));
+          if (at[k] == null || _before(dip, at[k]!)) {
             at[k] = dip;
           }
           break;
@@ -6412,18 +6403,15 @@ bool _bundled(Recipe recipe, String head) {
   ).any((at) => index.sentence(at).contains('cheesecloth'));
 }
 
+final RegExp _milkWord = RegExp(r'\bmilk\b');
+
 /// Whether [line] goes into the milk of a [DiscardedMedium.cheeseMilk] line
 /// of [recipe] — its salt, its acid, its buttermilk: named in the step that
 /// first names the milk, whose whey drains (the user's ruling R2: Saag
 /// Paneer, 0563, "Whisk in buttermilk and salt … let curds drain"; Homemade
 /// Ricotta, 0380, "Heat milk and salt", its lemon juice and vinegar). Held
 /// with it: how much the curds keep nothing says.
-bool _intoCheeseMilk(
-  Recipe recipe,
-  IngredientLine line,
-  String head,
-  List<String> steps,
-) {
+bool _intoCheeseMilk(Recipe recipe, IngredientLine line, String head) {
   if (!_firstOfItsHead(recipe, line, head)) {
     return false;
   }
@@ -6444,7 +6432,7 @@ bool _intoCheeseMilk(
   final step = index.memo(
     #milkStep,
     () => index.lower.firstWhere(
-      (s) => RegExp(r'\bmilk\b').hasMatch(s),
+      _milkWord.hasMatch,
       orElse: () => '',
     ),
   );
@@ -6467,7 +6455,7 @@ bool _intoCheeseMilk(
 /// cup cold water and baking soda in bowl. Let sit … 15 minutes" then
 /// "Rinse pork in cold water", Sichuan Stir-Fried Pork in Garlic Sauce,
 /// 0540; the rinse in the same step, 0553 and 0558).
-bool _rinsedSalt(Recipe recipe, IngredientLine line, List<String> steps) {
+bool _rinsedSalt(Recipe recipe, IngredientLine line) {
   final soda = headNounOf(normalizeItem(lineItemOf(line))) == 'soda';
   // Each mention looks up the step's matches, located once per recipe
   // ([_StepIndex]; Run 055 O9: a rescan of the step per mention).
@@ -6476,7 +6464,7 @@ bool _rinsedSalt(Recipe recipe, IngredientLine line, List<String> steps) {
   return _firstOwn(recipe, line, #rinsedSalt, (step, at) {
         if (soda) {
           return index.startsIn(_rinseWord, step, at) ||
-                  (step + 1 < steps.length &&
+                  (step + 1 < index.lower.length &&
                       index.hits(_rinseWord, step + 1).isNotEmpty)
               ? true
               : null;
@@ -6667,6 +6655,13 @@ List<({double part, String written})> _sharesOf(Recipe recipe, String kind) =>
   };
 }
 
+final RegExp _bakingSodaWord = RegExp(r'\bbaking soda\b');
+final RegExp _sugarWord = RegExp(r'\bsugar\b');
+final RegExp _saltNotPork = RegExp(r'\bsalt\b(?!\s+pork)');
+final RegExp _spoonAmountEnd = RegExp(
+  '($_amountRun(?:teaspoons?|tablespoons?))\\s+(?:of the\\s+)?\$',
+);
+
 /// The mentions of a [kind] of [recipe] ([_ownsOf]) — each step, the
 /// offset and the amount written before it — the [kind]'s lines, the bare
 /// ones among them and the bare mentions: located ONCE per recipe and kind
@@ -6683,11 +6678,11 @@ List<({double part, String written})> _sharesOf(Recipe recipe, String kind) =>
 _mentionsOf(Recipe recipe, String kind) =>
     // Key: kind — the word located.
     _stepIndexOf(recipe).memo(('mentions', kind), () {
-      final word = RegExp(switch (kind) {
-        'soda' => r'\bbaking soda\b',
-        'sugar' => r'\bsugar\b',
-        _ => r'\bsalt\b(?!\s+pork)',
-      });
+      final word = switch (kind) {
+        'soda' => _bakingSodaWord,
+        'sugar' => _sugarWord,
+        _ => _saltNotPork,
+      };
       final salts = [
         for (final (i, other) in nutritionLines(recipe).indexed)
           if (_headsOf(recipe)[i] == kind) other,
@@ -6695,16 +6690,13 @@ _mentionsOf(Recipe recipe, String kind) =>
       // Bounded ([_amountRun]) and read on the 64 characters before the
       // mention only (Run 054: an unbounded run re-scanned the whole step
       // prefix from every start, once per mention).
-      final amount = RegExp(
-        '($_amountRun(?:teaspoons?|tablespoons?))\\s+(?:of the\\s+)?\$',
-      );
       final mentions = [
         for (final (i, step) in _stepIndexOf(recipe).lower.indexed)
           for (final mention in word.allMatches(step))
             (
               step: i,
               at: mention.start,
-              written: amount
+              written: _spoonAmountEnd
                   .firstMatch(
                     step.substring(
                       mention.start < 64 ? 0 : mention.start - 64,
@@ -6793,16 +6785,12 @@ String _sentenceAt(_StepIndex index, int step, int at) {
 /// a drain follows it, AFTER the mention in that step
 /// or in the next ("Drain the noodles"; not "do not drain"): the water
 /// leaves with its salt ([DiscardedMedium.cookingWater]).
-bool _drainedWater(Recipe recipe, IngredientLine line, List<String> steps) =>
-    _drainedMention(recipe, line, steps) != null;
+bool _drainedWater(Recipe recipe, IngredientLine line) =>
+    _drainedMention(recipe, line) != null;
 
 /// The [_drainedWater] mention of [line]: its written pot share ([_sharesOf],
 /// null when the line's whole amount goes in the pot), or null for none.
-({String? share})? _drainedMention(
-  Recipe recipe,
-  IngredientLine line,
-  List<String> steps,
-) {
+({String? share})? _drainedMention(Recipe recipe, IngredientLine line) {
   // Every lookup below is a binary search over a step's matches, located
   // once per recipe ([_StepIndex]; Run 055 O2/O3: each mention re-scanned
   // its step, its next step and every later step).
@@ -6914,10 +6902,9 @@ bool _lifted(_StepIndex index, int step) => index.memo(('lifted', step), () {
 /// not drain"), by its key word ([keyWordOf]) — once per recipe.
 Map<String, int> _lastDrainedOf(_StepIndex index) => index.memo(#drained, () {
   _count('drained');
-  final drained = RegExp(r'(?<!not )\bdrain\s+(?:the\s+)?([a-z]+)');
   return {
     for (final (i, text) in index.lower.indexed)
-      for (final m in drained.allMatches(text)) keyWordOf(m[1]!): i,
+      for (final m in _drainedFood.allMatches(text)) keyWordOf(m[1]!): i,
   };
 });
 
@@ -6991,11 +6978,7 @@ bool namesForTest(String text, String head) => _names(text, head);
 /// after it changed no line of the library: removed, refix round 3; the
 /// written amount stays — "in remaining 2 tablespoons warm water" is
 /// a dough's, Easy Sandwich Bread 0807.)
-bool _dissolvedInWater(
-  Recipe recipe,
-  IngredientLine line,
-  List<String> steps,
-) {
+bool _dissolvedInWater(Recipe recipe, IngredientLine line) {
   // The verb keeps a whisked or simmered salt out ("Whisk together flour
   // and salt in 8-cup liquid measuring cup", Popovers 1109).
   // Read in the mention's own sentence by binary search over the step's
@@ -7020,6 +7003,8 @@ final RegExp _submerg = RegExp('submerg');
 final RegExp _dissolvVerb = RegExp(r'\bdissolv\w*\b');
 final RegExp _inAmount = RegExp('\\bin [\\d$vulgarFractionChars]');
 
+final RegExp _dissolvWord = RegExp(r'\bdissolv');
+
 /// Whether a step dissolves [line] (a salt, [normalized]) in the SAME
 /// sentence as another salt line of [recipe] that is brine by its volume:
 /// "Dissolve salt, sugar, and curing salt in 4 quarts water" — 2 teaspoons
@@ -7030,16 +7015,14 @@ bool _dissolvedWithBrineSalt(
   Recipe recipe,
   IngredientLine line,
   String normalized,
-  List<String> steps,
 ) {
   final own = _ownSalt(normalized);
   // The dissolving sentences, once per recipe.
   final index = _stepIndexOf(recipe);
   final dissolving = index.memo(#dissolving, () {
-    final dissolv = RegExp(r'\bdissolv');
     return [
       for (final s in index.allSentences)
-        if (dissolv.hasMatch(s)) s,
+        if (_dissolvWord.hasMatch(s)) s,
     ];
   });
   // (Another line is brine only when its head is salt, and a twin of the
@@ -7700,6 +7683,9 @@ final RegExp _cooksItem = RegExp(
   r'\b(?:boil|simmer|steam|roast|bake|baking|microwav|cook)\w*',
 );
 
+final RegExp _skinRemoved = RegExp(r'\bskin removed\b|\bskinned\b');
+final RegExp _skinWord = RegExp(r'\bskin\b');
+
 /// Whether [recipe] discards the skin of [line]'s cut: the line says "skin
 /// removed" or "skinned", or a step sentence removes or discards the skin
 /// ("remove and discard the browned chicken skin", "discard skin", "peel
@@ -7717,9 +7703,7 @@ final RegExp _cooksItem = RegExp(
 /// skin, so it never vetoes: Hearty Chicken Noodle Soup (0002) "remove the
 /// skin and bones from the reserved cooked chicken and discard" trips.
 bool skinDiscarded(Recipe recipe, IngredientLine line) {
-  if (RegExp(
-    r'\bskin removed\b|\bskinned\b',
-  ).hasMatch(line.raw.toLowerCase())) {
+  if (_skinRemoved.hasMatch(line.raw.toLowerCase())) {
     return true;
   }
   final item = (line.item ?? line.raw).toLowerCase();
@@ -7729,7 +7713,7 @@ bool skinDiscarded(Recipe recipe, IngredientLine line) {
     #skinSentences,
     () => [
       for (final sentence in _stepIndexOf(recipe).allSentences)
-        if (RegExp(r'\bskin\b').hasMatch(sentence)) sentence,
+        if (_skinWord.hasMatch(sentence)) sentence,
     ],
   );
   return !skin.any(_skinKept.hasMatch) &&
@@ -9306,6 +9290,8 @@ final RegExp _alcoholSideOpening = RegExp(
   r'^(meanwhile|while)\b|^if\b[^.;]*\b(desired|using|you like|preferred)\b',
 );
 
+final RegExp _whitespaceRun = RegExp(r'\s+');
+
 /// [recipe]'s sentences ([_StepIndex.sentences], every step in order), the
 /// parentheses dropped (critic 5: "(Check the chicken after 15 minutes)"
 /// is no time the wine cooks). Once per recipe.
@@ -9331,7 +9317,7 @@ List<_AlcoholSentence> _alcoholSentencesOf(Recipe recipe) {
             dropped.write(c);
           }
         }
-        texts.add(kept.toString().replaceAll(RegExp(r'\s+'), ' ').trim());
+        texts.add(kept.toString().replaceAll(_whitespaceRun, ' ').trim());
         alts.add(switch (_alcoholAltBake.firstMatch(dropped.toString())) {
           final m? => _alcoholMinutesIn(m[0]!),
           null => null,
@@ -11150,7 +11136,7 @@ _AlcoholUse _alcoholUseAt(
     vocab: ingredients,
   );
   // R5: a mass rule's line (critic 8).
-  final can = RegExp(r'\bcans?\b').hasMatch(line.raw.toLowerCase());
+  final can = _canWord.hasMatch(line.raw.toLowerCase());
   // v81 (F2): the adding sentence from the line's name, then any later
   // sentence — the last hand-off read once per index.
   final adding = here.f.from(offset);
@@ -12616,7 +12602,7 @@ SecondFoodRule? secondFoodRuleOf(
     r'^(lemon|lime|orange) (zest|peel) plus juice$',
   ).firstMatch(lineKeyOf(line));
   if (citrus && citrusKey != null) {
-    final zestFirst = RegExp(r'\b(zest|peel)\b').hasMatch(firstText);
+    final zestFirst = _zestOrPeel.hasMatch(firstText);
     final lineVolume = line.amounts
         .where((amount) => amount.measure == Measure.volume)
         .firstOrNull;
@@ -12697,7 +12683,7 @@ SecondFoodRule? secondFoodRuleOf(
       ? 'yolk'
       : RegExp(r'\bwhites?\b').hasMatch(text)
       ? 'white'
-      : RegExp(r'\beggs?\b').hasMatch(text)
+      : _eggWord.hasMatch(text)
       ? 'egg'
       : null;
   final first = part(firstText);
@@ -13494,7 +13480,7 @@ String decisionItemOf(IngredientLine line, {bool dropPrep = true}) {
   final fruit = _citrusWord.firstMatch(line.raw.toLowerCase());
   if (fruit != null &&
       !_citrusWord.hasMatch(item.toLowerCase()) &&
-      RegExp(r'\b(zest|peel)\b').hasMatch(item.toLowerCase())) {
+      _zestOrPeel.hasMatch(item.toLowerCase())) {
     item = '${fruit[1]} $item';
   }
   return plusPartOf(item) != null ? item : '$item plus ${plus.text}';
@@ -21402,8 +21388,6 @@ Set<int> _panFatLines(Recipe recipe) =>
       if (wiped == null) {
         return const <int>{};
       }
-      bool after((int, int) a, (int, int) b) =>
-          a.$1 > b.$1 || (a.$1 == b.$1 && a.$2 > b.$2);
       final heads = _headsOf(recipe);
       final pans = <int>{};
       for (final (k, head) in heads.indexed) {
@@ -21416,7 +21400,7 @@ Set<int> _panFatLines(Recipe recipe) =>
         if (_lineMentionsOf(
               recipe,
               k,
-            ).any((m) => after(m, coat!) && after(wiped!, m)) &&
+            ).any((m) => _before(coat!, m) && _before(m, wiped!)) &&
             // closer 1 (verify1 D4): a line the engine reads as a medium
             // (a frying oil — 0114|5, 0042|7, 0115|4, 1133|8/|9) keeps that
             // rule: the fryer pass reads its medium bit, which [_m52Key]
@@ -21477,6 +21461,10 @@ typedef _M52Row = ({
   bool cut,
   String? basis,
 });
+
+final RegExp _chipsWord = RegExp(r'\bchips\b');
+final RegExp _friedWord = RegExp(r'\bfried\b');
+final RegExp _gratedOrShredded = RegExp(r'\b(?:grated|shredded)\b');
 
 /// What M52 counts on the rows of [recipe] the engine weighs ([_m52Weighs]:
 /// `auto`, or a person's confirm with no typed grams — a pick or typed grams
@@ -21949,9 +21937,9 @@ Map<int, _M52Row> _m52Plan(
     return plan;
   }
   final all = _stepIndexOf(recipe).allSentences;
-  final chips = all.any(RegExp(r'\bchips\b').hasMatch);
+  final chips = all.any(_chipsWord.hasMatch);
   final title = recipe.title.toLowerCase();
-  final friedTitle = RegExp(r'\bfried\b').hasMatch(title);
+  final friedTitle = _friedWord.hasMatch(title);
   final fried = <({_FriedClass kind, double grams, int at})>[];
   _FriedClass? kindOf(IngredientMatchRow r) {
     final line = lines[r.position];
@@ -21962,7 +21950,7 @@ Map<int, _M52Row> _m52Plan(
       words,
       coatHeld: coats.isNotEmpty,
       shape: shape,
-      chips: chips || RegExp(r'\b(?:grated|shredded)\b').hasMatch(words),
+      chips: chips || _gratedOrShredded.hasMatch(words),
     );
   }
 
