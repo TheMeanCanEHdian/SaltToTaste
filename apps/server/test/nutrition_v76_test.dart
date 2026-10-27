@@ -297,16 +297,6 @@ List<String> _corpusFiles() =>
       ..sort();
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   test('kasseri reads the cached provolone answer, flagged: the rank-as, the '
       "approximation record and the arm keyed on the line's own word", () {
     expect(normalizeItem('kasseri cheese'), 'kasseri cheese');

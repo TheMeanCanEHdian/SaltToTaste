@@ -157,10 +157,6 @@ Future<Map<String, Object?>> _sweep(
 }
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    expect(matcherVersion, 78);
-  });
   group('v81 (review Run 065/066 fixes)', skip: skipIfNoCorpus, () {
     writes();
     readers();

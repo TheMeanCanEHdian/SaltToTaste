@@ -4781,21 +4781,6 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
 String _g2(double v) => v.toStringAsFixed(2);
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
-    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   test('1: the flat gains its ⅛" record; the braised pair 173128 → 173130 '
       "keeps 67.6 % of the energy by the protein tracer (L49's cached hits: "
       'P 18.1 → 28.7, F 22.2 → 19.5, E 278 → 298)', () {

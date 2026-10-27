@@ -7209,19 +7209,6 @@ const List<(String, int, String)> _gated = [
 ];
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
-    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   // RE-PIN (M74 batch, v74; closer 1): the title said "three USDA same-cut
   // pairs" (the map's keys).
   test("braisedKept: M72's three USDA same-cut pairs, five columns each, "

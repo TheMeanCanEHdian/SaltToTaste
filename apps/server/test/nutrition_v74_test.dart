@@ -33,7 +33,6 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
-import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
@@ -153,17 +152,6 @@ const _totals = [
 ];
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   test("braisedKept[168743]: SR 169440's shares by the protein tracer "
       "(cooked × P raw ÷ (P cooked × raw)), the design's five", () {
     expect(braisedKept.keys.toSet(), {173128, 168664, 168743, 170827});

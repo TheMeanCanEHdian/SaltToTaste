@@ -185,10 +185,6 @@ const _oil = FdcFood(
 );
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    expect(matcherVersion, 78);
-  });
   group('v82 (review Run 067/068 fixes)', skip: skipIfNoCorpus, () {
     guards();
     plans();

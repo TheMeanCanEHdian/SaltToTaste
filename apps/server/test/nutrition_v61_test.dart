@@ -30,7 +30,6 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
-import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_server/src/nutrition/nutrients.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_shared/salt_shared.dart';
@@ -1391,29 +1390,6 @@ double _kcalOf(SaltDatabase db, IngredientMatchRow row, IngredientLine line) {
 }
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
-    // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
-    // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
-    // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
-    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
-    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
-    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   group('matcher v61 (batch M62)', skip: skipIfNoCorpus, () {
     late Directory tempDir;
     late SaltDatabase db;

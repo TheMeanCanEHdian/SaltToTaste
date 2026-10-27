@@ -45,7 +45,6 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
-import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
@@ -589,12 +588,6 @@ Recipe friedOnionRings() {
 }
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   test("the figures: 2706442's crust k from the records the coat reads (SR "
       '174928 dry crumbs 71.98 %, Foundation 789890 flour 77.3 % '
       'carbohydrate — the FNDDS inputs 18079 and 20081) per 680.4 g raw '

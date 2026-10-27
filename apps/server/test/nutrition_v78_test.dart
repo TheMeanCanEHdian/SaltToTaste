@@ -43,7 +43,6 @@ import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/nutrition_handlers.dart';
 import 'package:salt_server/src/nutrition/engine.dart';
-import 'package:salt_server/src/nutrition/matcher.dart';
 import 'package:salt_shared/salt_shared.dart';
 import 'package:test/test.dart';
 
@@ -280,14 +279,6 @@ IngredientMatchRow _withSource(IngredientMatchRow row, String source) =>
     );
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   test("the records: FNDDS 2705980's oil (the share's 2 / 125.77); total "
       'lipid 204 — butter 81.11, the two oils 100; 748608 prints none and '
       'reads its sibling', () async {

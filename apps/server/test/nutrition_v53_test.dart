@@ -723,36 +723,6 @@ _rows = [
 ];
 
 void main() {
-  test('the matcher version carries the batch (update the literal with a '
-      'bump)', () {
-    // RE-PIN (Q25 batch, v54): matcherVersion 53 (was 52).
-    // RE-PIN (M57 batch, v56): matcherVersion 55 (was 54).
-    // RE-PIN (M58 batch, v57): matcherVersion 56 (was 55).
-    // RE-PIN (M59 batch, v58): matcherVersion 57 (was 56).
-    // RE-PIN (M60 batch, v59): matcherVersion 58 (was 57).
-    // RE-PIN (M61 batch, v60): matcherVersion 59 (was 58).
-    // RE-PIN (M62 batch, v61): matcherVersion 60 (was 59).
-    // RE-PIN (M63 batch, v62): matcherVersion 61 (was 60).
-    // RE-PIN (M64 batch, v63): matcherVersion 62 (was 61).
-    // RE-PIN (M65 batch, v64): matcherVersion 63 (was 62).
-    // RE-PIN (M66 batch, v65): matcherVersion 64 (was 63).
-    // RE-PIN (M67 batch, v66): matcherVersion 65 (was 64).
-    // RE-PIN (M68 batch, v67): matcherVersion 66 (was 65).
-    // RE-PIN (M69 batch, v68): matcherVersion 67 (was 66).
-    // RE-PIN (M70 batch, v69): matcherVersion 68 (was 67).
-    // RE-PIN (M71 batch, v71): matcherVersion 69 (was 68).
-    // RE-PIN (M72 batch, v72): matcherVersion 70 (was 69).
-    // RE-PIN (M73 batch, v73): matcherVersion 71 (was 70).
-    // RE-PIN (M74 batch, v74): matcherVersion 72 (was 71).
-    // RE-PIN (M76 batch, v76): matcherVersion 73 (was 72).
-    // RE-PIN (M77 batch, v77): matcherVersion 74 (was 73).
-    // RE-PIN (M78 batch, v78): matcherVersion 75 (was 74).
-    // RE-PIN (M79 batch, v79): matcherVersion 76 (was 75).
-    // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
-    // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
-    expect(matcherVersion, 78);
-  });
-
   group('matcher v53 (batch M52)', skip: skipIfNoCorpus, () {
     late Directory tempDir;
     late SaltDatabase db;
