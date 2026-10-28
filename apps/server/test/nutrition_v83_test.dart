@@ -154,12 +154,15 @@ Future<(SaltDatabase, _Counted, AppliedToOthers?, List<String>)> _applied({
       (await _compute(db, fdc, loadCorpusRecipe(f))).id,
   ];
   // Settled at the v82 figures, each bacon row on 168277 with B1's parts.
+  // RE-PIN (M82 batch, v84, C3a): the meatloaf's garlic |5 and the chili's
+  // |9 at their printed teaspoons (the replay 575.11 → 575.01, 787.78 →
+  // 787.54): was 575.11, 787.78.
   expect(
     [for (final id in ids) db.nutritionFor(id)!.caloriesPerServing],
     [
-      575.11,
+      575.01,
       350.84,
-      787.78,
+      787.54,
     ],
   );
   for (final (id, at, cooked) in [(ids[0], 17, 65.49), (ids[1], 0, 110.88)]) {
@@ -264,7 +267,8 @@ void main() {
       );
       expect(
         [for (final id in ids.take(2)) db.nutritionFor(id)!.caloriesPerServing],
-        [575.11, 350.84],
+        // RE-PIN (M82 batch, v84, C3a): the meatloaf's garlic — was 575.11.
+        [575.01, 350.84],
       );
       expect(
         [for (final id in ids.take(2)) _staleReason(db, id)],
@@ -862,7 +866,9 @@ void main() {
         // bulkScopeIds(all) ids on a snapshot-29 copy reads this for the
         // section on base 4325a3d and on v83 alike (verify3). Re-pin it with
         // each matcherVersion bump (the version alone moves it).
-        '3b204f376c3730d9dae531e3c3191f40b66e03546da6955b4b3e9287c6bde852',
+        // RE-PIN (M82 batch, v84): the hash at matcherVersion 79 (was
+        // 3b204f37…; the base tree with only the bump gives this literal).
+        '8aab695d59ce9e326db958118fc2806852bc656bcfae41bfdf01336ee52eebcd',
       );
     });
   });

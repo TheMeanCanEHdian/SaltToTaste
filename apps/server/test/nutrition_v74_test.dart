@@ -142,13 +142,16 @@ const _negatives = [
 const _totals = [
   (_newEngland, 'complete', '592.11', '4736.91'),
   (_corned, 'complete', '628.01', '5024.10'),
-  (_onion, 'complete', '588.82', '3532.95'),
-  (_pomegranate, 'complete', '794.35', '4766.11'),
+  // RE-PIN (M82 batch, v84): was 588.82, 3532.95 (the replay 588.82 → 590.30).
+  (_onion, 'complete', '590.30', '3541.81'),
+  // RE-PIN (M82 batch, v84): was 794.35, 4766.11 (the replay 794.35 → 797.57).
+  (_pomegranate, 'complete', '797.57', '4785.41'),
   (_barbecued, 'complete', '697.49', '12554.79'),
   // 586.71 / 2,346.84 in the replay (the flank steak's hit, above).
   // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 586.89 / 2347.57 (the replay
   // 586.71 → 590.86).
-  (_tacos, 'partial', '591.05', '2364.18'),
+  // RE-PIN (M82 batch, v84): was 591.05, 2364.18 (the replay 590.86 → 589.59).
+  (_tacos, 'partial', '589.77', '2359.09'),
 ];
 
 void main() {
@@ -343,8 +346,11 @@ void main() {
 
       // The replay's KCAL CHECK lines: rows 6,964.52 (6,964.56 over the
       // fixtures) / 4,317.93 gross.
+      // RE-PIN (M82 batch, v84): the onion brisket's garlic |5 (C3a, 9.00 →
+      // 8.45 g) and flour |9 (C5a, 15.08 → 17.72 g) — the v84 replay's KCAL
+      // CHECK reads rows 4,326.79: was 4317.93.
       expect(gross(_corned).toStringAsFixed(2), '6964.56');
-      expect(gross(_onion).toStringAsFixed(2), '4317.93');
+      expect(gross(_onion).toStringAsFixed(2), '4326.79');
       final corned = row(_corned) * (1 - braisedKept[173128]!['energy']!);
       expect(corned.toStringAsFixed(2), '1940.46');
       expect(

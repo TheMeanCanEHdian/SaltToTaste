@@ -192,7 +192,9 @@ void main() {
           normalizedItem: normalizeItem(lineItemOf(line)),
         ),
       );
-      expect(out.grams, closeTo(45.25, 0.01));
+      // RE-PIN (M82 batch, v84, C5a): the eaten 6 tablespoons at 5 oz a cup
+      // (88.72 mL × 0.5991): was 45.25 (at 0.51), the bound unchanged.
+      expect(out.grams, closeTo(53.16, 0.01));
       expect((out.source, out.hold), ('discarded', 'coating'));
     });
   });

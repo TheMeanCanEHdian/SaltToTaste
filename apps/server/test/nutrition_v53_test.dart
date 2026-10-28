@@ -94,25 +94,27 @@ _rows = [
     'frying oil: 0 g — USDA FNDDS 2705996 recipe adds 7 g oil per 100 g, but the fried skin-on parts carry less fat (17.2 g) than the raw parts counted here: no net uptake',
   ),
   // C2 fish 7.41 (2706243), B split by CHO with |5: the bread at 49 % carbohydrate
+  // RE-PIN (M82 batch, v84, C1+C5a): was 59.82 g, 159.12 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     null,
     0,
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
-    '59.82',
+    '65.12',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge's excess not counted)",
   ),
   // C2 fish: its eaten 5 tablespoons (37.71) + f × the ¼ cup
+  // RE-PIN (M82 batch, v84, C1+C5a): was 53.82 g, 196.98 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     null,
     5,
     '¼ cup plus 5 tablespoons unbleached all-purpose flour',
     789890,
-    '53.82',
+    '57.01',
     'discarded',
     null,
     'discarded in cooking — only "plus 5 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge\'s excess not counted)',
@@ -147,13 +149,14 @@ _rows = [
   // RE-PIN (M58 batch, v57, W): the batter's lines are coat parts, never
   // off B — every part at one f 0.4924 (was 59.95, the batter's excess
   // "the dredge's")
+  // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
     2,
     '1½ cups unbleached all-purpose flour',
     789890,
-    '89.12',
+    '93.89',
     'discarded',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
@@ -162,13 +165,14 @@ _rows = [
   // the counted cornstarch (the batter): unchanged, off the budget
   // RE-PIN (M58 batch, v57, W): a coat part at f (was 63.88 g counted
   // whole, `density`, the D5 flag)
+  // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
     3,
     '½ cup cornstarch',
     169698,
-    '31.45',
+    '28.21',
     'discarded',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
@@ -240,38 +244,41 @@ _rows = [
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.5 % of the raw plantains\' weight — derived from USDA SR Legacy 168200 "Plantains, yellow, fried, Latino restaurant")',
   ),
   // C1 breast 5.73: its eaten teaspoon + f × the dredge
+  // RE-PIN (M82 batch, v84, C5a): was 61.35 g, 224.54 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     null,
     5,
     '¾ cup all-purpose flour, divided',
     789890,
-    '61.35',
+    '61.79',
     'discarded',
     null,
     "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
   // O1a split by grams: the olive oil
+  // RE-PIN (M82 batch, v84, C6a): was 26.13 g, 230.99 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     null,
     8,
     '⅓ cup extra-virgin olive oil for frying',
     748608,
-    '26.13',
+    '25.94',
     'discarded',
     null,
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
     'discarded in cooking — only the oil the fried food absorbs counted · nutrients of "Oil, olive, salad or cooking" · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
   // O1a split by grams: the vegetable oil
+  // RE-PIN (M82 batch, v84, C6a): was 26.89 g, 242.01 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     null,
     9,
     '⅓ cup vegetable oil for frying',
     2710180,
-    '26.89',
+    '27.08',
     'discarded',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)",
@@ -329,26 +336,28 @@ _rows = [
   // C2 chicken 3.18 by the LAST cook (browned, then baked; critic F2).
   // RE-PIN (M80 batch, v80, M80-2): a C2 chicken with a crumb part (|13's
   // bread) reads FNDDS 2706442's crust, 12.12 (was 14.32 g at C2's 3.18).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 54.59 g, 199.80 kcal (the v84 replay's row).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
-    '54.59',
+    '46.76',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // C2 with |10, split by carbohydrate.
   // RE-PIN (M80 batch, v80, M80-2): at 12.12 (was 17.73 g at 3.18).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 67.57 g, 179.74 kcal (the v84 replay's row).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
-    '67.57',
+    '79.81',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -426,13 +435,14 @@ _rows = [
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw salmon's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast (no record for salmon; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw))",
   ),
   // C1 5.73 (a crumb line in the cake: not C3), f capped at 1
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.39 kcal (the v84 replay's row).
   (
     '0288-maryland-crab-cakes.yaml',
     null,
     8,
     '¼ cup unbleached all-purpose flour',
     789890,
-    '30.16',
+    '33.62',
     'discarded',
     null,
     // RE-PIN (M58 batch, v57, S): the stand-in named (was without it).
@@ -549,13 +559,14 @@ _rows = [
   // negative: a baked vegetable coat (no meat line) stays held
   // RE-PIN (M69 batch, v68, R2 — Q6 (a)): a coated eggplant sizes the coat
   // on FNDDS 2710050's read 7.93 — f 0.340944, 41.14 g, no hold.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 41.14 g, 150.57 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     null,
     5,
     '1 cup unbleached all-purpose flour',
     789890,
-    '41.14',
+    '34.46',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g batter is water and carries no carbohydrate); the dredge's excess not counted)",
@@ -564,13 +575,14 @@ _rows = [
   // RE-PIN (M61 batch, v60): falafel takes its uptake on the raw mix (R-e:
   // 21.64 % derived from SR 172455 × the FALAFEL group's 395.35 g; was
   // 0.00, "discarded in cooking — counted as 0 g").
+  // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
   (
     '0570-falafel.yaml',
     null,
     11,
     '2 quarts vegetable oil for frying',
     2710180,
-    '85.55',
+    '86.69',
     'discarded',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix\'s weight — derived from USDA SR Legacy 172455 "Falafel, home-prepared")',
@@ -601,25 +613,27 @@ _rows = [
   ),
   // verify2 D2: the read/derived figures with corpus reach no row pinned
   // C2 pork 6.61 (2705871; P3 had 6.42): B = 793.79 × 6.61 / 100 = 52.47 g CHO over bread 112 × 49.42 % + flour 30.16 × 77.3 % = 78.66 → f 0.66701
+  // RE-PIN (M82 batch, v84, C1+C5a): was 74.70 g, 198.70 kcal (the v84 replay's row).
   (
     '0206-crunchy-baked-pork-chops.yaml',
     null,
     2,
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
     174924,
-    '74.70',
+    '81.33',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge's excess not counted)",
   ),
   // C2 pork: its eaten 6 tablespoons (45.25) + f × the ¼ cup (30.16)
+  // RE-PIN (M82 batch, v84, C1+C5a): was 65.37 g, 239.25 kcal (the v84 replay's row).
   (
     '0206-crunchy-baked-pork-chops.yaml',
     null,
     10,
     '¼ cup plus 6 tablespoons unbleached all-purpose flour',
     789890,
-    '65.37',
+    '69.04',
     'discarded',
     null,
     'discarded in cooking — only "plus 6 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge\'s excess not counted)',

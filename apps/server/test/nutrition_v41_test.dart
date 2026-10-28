@@ -630,7 +630,10 @@ void main() {
         (_keyLime, 3, _graham, 220.6, 1135.14, 450.14, 'complete'),
         (_coconut, 9, _graham, 220.6, 1135.14, 598.27, 'complete'),
         // v44: its |5 now routes to its own One-Minute Salsa (+23.00).
-        (_nachos, 6, _guacamole, 522.5, 1032.78, 1098.56, 'complete'),
+        // RE-PIN (M82 batch, v84, C3a; critic K-5's whole-recipe hop): the
+        // guacamole's garlic clove at its printed ¼ teaspoon, and the salsa's
+        // (the replay 1,098.56 → 1,097.92): was 522.5, 1032.78, 1098.56.
+        (_nachos, 6, _guacamole, 522.3, 1032.49, 1097.92, 'complete'),
         // RE-PIN (M47 batch, v49): the lemon tart's strained zest line counts
         // its juice (Q6; was 399.33), the fruit tart's kiwis 150 g (Q12; was
         // 547.59, partial).
@@ -828,7 +831,9 @@ void main() {
       expect(baconYieldFlag, _ah102Flag);
       expect(label(salad).status, 'complete');
       // RE-PIN (M49 batch, v51): the v51 replay's 277.44 (was 301.66).
-      expect(label(salad).caloriesPerServing, closeTo(277.44, 0.005));
+      // RE-PIN (M82 batch, v84, C3a): its garlic |7 at its printed ½
+      // teaspoon, 3.00 → 1.40 g — the v84 replay's 276.87 (was 277.44).
+      expect(label(salad).caloriesPerServing, closeTo(276.87, 0.005));
       // Its "3 hard-cooked eggs (recipe follows)": counted on its food, as
       // in v40 (a count of the food itself — no route).
       final eggs = rowAt(salad, 8);

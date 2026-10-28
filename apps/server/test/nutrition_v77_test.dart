@@ -1796,26 +1796,32 @@ const List<(String, String?, int, String, String)> _evoo = [
 /// position, raw, gram source, grams, kcal as the totals read it, basis).
 const _rows = [
   // L022 — the section page's density row (the dressing is unrouted).
+  // RE-PIN (M82 batch, v84, C6a): 748608's own '100 milliliter' now weighs
+  // every volume line on it — the density shape is a portion row (the v84
+  // replay's): was 'density', 13.60 g, 120.26 kcal, '1 tablespoon ≈ 15 mL'.
   (
     _fennel,
     _dressing,
     0,
     '1 tablespoon extra-virgin olive oil',
-    'density',
-    '13.60',
-    '120.26',
-    '1 tablespoon ≈ 15 mL$_sibling',
+    'portion',
+    '13.41',
+    '118.56',
+    '1 tablespoon · USDA portion$_sibling',
   ),
   // A main density row.
+  // RE-PIN (M82 batch, v84, C6a): the record's own volume (the v84
+  // replay's row): was 'density', 136.04 g, 1202.58 kcal, '1/2 cup ≈ 118
+  // mL + …'.
   (
     _mashed,
     null,
     3,
     '½ cup plus 2 tablespoons extra-virgin olive oil',
-    'density',
-    '136.04',
-    '1202.58',
-    '1/2 cup ≈ 118 mL + 2 tablespoons extra-virgin olive oil$_sibling',
+    'portion',
+    '134.12',
+    '1185.58',
+    '1/2 cup · USDA portion + 2 tablespoons extra-virgin olive oil$_sibling',
   ),
   // A poured-off oil's kept part (the discarded shape).
   (
@@ -1840,15 +1846,17 @@ const _rows = [
     'no amount on the line — counted as 0 g',
   ),
   // The routed section's density row (its parent reads it × 0.222).
+  // RE-PIN (M82 batch, v84, C6a): the record's own volume (the v84
+  // replay's row): was 'density', 54.42 g, 481.03 kcal, '1/4 cup ≈ 59 mL'.
   (
     _tapenade,
     _olives,
     7,
     '¼ cup extra-virgin olive oil',
-    'density',
-    '54.42',
-    '481.03',
-    '1/4 cup ≈ 59 mL$_sibling',
+    'portion',
+    '53.65',
+    '474.23',
+    '1/4 cup · USDA portion$_sibling',
   ),
 ];
 
@@ -1856,24 +1864,32 @@ const _rows = [
 /// the compute; the v76 replay's figures in each comment.
 const _totals = [
   // v76 165.67 / 165.67 / 12.7778: 13.60 g × (8.84 − 8.433), fat × 0.063.
-  (_fennel, _dressing, 'complete', '171.21', '171.21', '13.6349'),
+  // RE-PIN (M82 batch, v84, C6a): 13.41 g at 0.907 (the replay 171.21 →
+  // 169.51): was 171.21, 171.21, 13.6349.
+  (_fennel, _dressing, 'complete', '169.51', '169.51', '13.4426'),
   // v76 121.75 / 487.01 / 42.5787: the dressing is unrouted — unmoved.
   (_fennel, null, 'partial', '121.75', '487.01', '42.5787'),
   // The replay 321.76 / 1930.57 → 330.99 / 1985.94 (fat 130.8528 →
   // 139.4232): the fixtures hold russet 2346401's search hit (83.4 kcal),
   // which a weight line reads with no detail fetched, and the library its
   // detail (83.42) — 907.18 g × 0.02 = 0.18 kcal below the replay here.
-  (_mashed, null, 'complete', '330.96', '1985.76', '139.4232'),
+  // RE-PIN (M82 batch, v84, C3a + C6a): its garlic |1 and EVOO |3 (the
+  // replay 330.99 → 327.92): was 330.96, 1985.76, 139.4232.
+  (_mashed, null, 'complete', '327.89', '1967.34', '137.4971'),
   // The replay 478.07 / 2868.40 / 116.1660 → 478.95 / 2873.72 / 116.9901:
   // the Pecorino Romano 171249 is a search hit here (fat 26.9), its detail
   // in the library (26.94) — 0.0227 g of fat below the replay, both trees.
   (_gricia, null, 'complete', '478.95', '2873.72', '116.9674'),
   // v76 1102.13 / 1102.13 / 108.3599.
-  (_tapenade, _olives, 'complete', '1124.27', '1124.27', '111.7880'),
+  // RE-PIN (M82 batch, v84, C6a): its EVOO |7 at 0.907 (the v84 replay's
+  // section row 54.42 → 53.65 g): was 1124.27, 1124.27, 111.7880.
+  (_tapenade, _olives, 'complete', '1117.48', '1117.48', '111.0191'),
   // The replay 233.77 / 935.06 / 26.3914 → 235.00 / 939.98 / 27.1532 (|2
   // reads the section × 2/9): the red potatoes 2346402 are a search hit
   // here, a detail in the library — 0.38 kcal above the replay, both trees.
-  (_tapenade, null, 'partial', '235.09', '940.37', '27.1578'),
+  // RE-PIN (M82 batch, v84, C6a): the section × 2/9 and the main EVOO
+  // (the replay 235.00 → 234.62): was 235.09, 940.37, 27.1578.
+  (_tapenade, null, 'partial', '234.71', '938.86', '26.9869'),
 ];
 
 /// [row]'s energy as the totals read it: on its nutrient sibling's record
@@ -2121,11 +2137,14 @@ void main() {
         ((batchTotalsOf(db.nutritionFor(key)!)['energy'] ?? 0) *
                 parent.childShare!)
             .toStringAsFixed(2),
-        '249.84',
+        // RE-PIN (M82 batch, v84, C6a): the section's EVOO at 0.907: was
+        // 249.84.
+        '248.33',
       );
       expect(
         gramBasisFor(db, nutritionLines(tapenade)[2], parent, recipe: tapenade),
-        'from the recipe $_olives: 92 g, 250 kcal',
+        // RE-PIN (M82 batch, v84): was '… 92 g, 250 kcal'.
+        'from the recipe $_olives: 92 g, 248 kcal',
       );
     });
 

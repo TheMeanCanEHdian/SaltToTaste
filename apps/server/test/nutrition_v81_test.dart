@@ -894,7 +894,9 @@ void critics() {
         (row().status, row().childRecipeId, row().childShare, row().grams),
         ('overridden', rice.id, 1.0, db.nutritionFor(rice.id)!.totalGrams),
       );
-      expect(row().grams, 1791.6);
+      // RE-PIN (M82 batch, v84, C3a): 0521's garlic |8 at its printed 2
+      // teaspoons (6.00 → 5.60 g): was 1791.6.
+      expect(row().grams, 1791.2);
     },
   );
 
@@ -1931,7 +1933,9 @@ void readers() {
           for (var p = 0; p < 8; p++)
             _row(db, rings.id, p).grams!.toStringAsFixed(2),
         ],
-        ['60.33', '50.00', '122.00', '3.01', '0.58', '0.45', '90.00', '100.00'],
+        // RE-PIN (M82 batch, v84, C5a): the flour |0 at 5 oz a cup (the v84
+        // replay's row): was 60.33.
+        ['70.87', '50.00', '122.00', '3.01', '0.58', '0.45', '90.00', '100.00'],
       );
       final eggplant = await _compute(
         db,
@@ -1943,7 +1947,10 @@ void readers() {
           for (final p in [2, 3, 5, 6])
             _row(db, eggplant.id, p).grams!.toStringAsFixed(2),
         ],
-        ['76.37', '19.33', '41.14', '84.39'],
+        // RE-PIN (M82 batch, v84, C1 + C5a): the coat parts re-solve on the
+        // 45.36 g slice and the 5 oz flour (the v84 replay's rows): was 76.37,
+        // 19.33, 41.14.
+        ['88.21', '13.78', '34.46', '84.39'],
       );
     },
   );
@@ -2072,10 +2079,12 @@ void readers() {
       loadCorpusRecipe('0346-garlicky-shrimp-pasta.yaml'),
     );
     final row = _row(db, pasta.id, 2);
-    expect(row.grams!.toStringAsFixed(2), '15.00');
+    // RE-PIN (M82 batch, v84, C3a): the cloves' printed 5 teaspoons on SR
+    // 169230 (the v84 replay's row): was 15.00, '5 × 3 g each'.
+    expect(row.grams!.toStringAsFixed(2), '14.00');
     expect(
       gramBasisFor(db, nutritionLines(pasta)[2], row, recipe: pasta),
-      '5 × 3 g each',
+      '5 teaspoon · USDA portion of "Garlic, raw"',
     );
   });
 

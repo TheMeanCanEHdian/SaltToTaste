@@ -129,15 +129,24 @@ const String _kosherSaltBasis =
     "'1 tsp' 6.0 g)";
 
 /// Density fallbacks (g/ml) for pantry staples, keyed by tokens matched
-/// against the normalized item — used only when the matched food carries no
-/// usable volume portion. Values are round kitchen figures, flagged as
-/// estimates in the UI.
+/// against the normalized item — used when the matched food has no portion
+/// in the line's own unit, and then ahead of the food's other volume figures
+/// unless the key is `recordFirst` ([_approximateDensities]; v84: 'virgin
+/// olive oil' yields to 748608's own '100 milliliter'), or is 'nuts' on a
+/// record of the nut the item names, or only modifies the item's head on a
+/// record of the key's food ([_keyModifiesTheRecordsFood]). Values are round
+/// kitchen figures unless a comment names their source.
 const List<(String, double)> _densities = [
-  ('all-purpose flour', 0.51),
+  // v84 (batch M82 C5a, the v37 Z5 form): the corpus's printed cup on the
+  // portion-less flour records (Foundation 789890 and 790085 publish only
+  // a 30 g racc) — "1 cup (5 ounces) all-purpose flour" (199 of its 203
+  // prints) and "(5½ ounces)" whole-wheat (12 of 16), flagged
+  // ([_approximateDensities]).
+  ('all-purpose flour', 5 * 28.3495 / 236.588),
   ('bread flour', 0.52),
   ('cake flour', 0.46),
-  ('whole-wheat flour', 0.54),
-  ('flour', 0.51),
+  ('whole-wheat flour', 5.5 * 28.3495 / 236.588),
+  ('flour', 5 * 28.3495 / 236.588),
   ('granulated sugar', 0.85),
   ('brown sugar', 0.93),
   ('confectioners sugar', 0.51),
@@ -156,6 +165,16 @@ const List<(String, double)> _densities = [
   ('yogurt', 1.03),
   ('water', 1.0),
   ('oil', 0.92),
+  // v84 (batch M82 C6a): the kitchen 0.92 for an extra-virgin olive oil
+  // whose record publishes no volume figure; one that does weighs by its
+  // own ([_approximateDensities] recordFirst) — never another oil's record
+  // (critic K-8: "no OTHER oil record moves"). 'oil' stays table-first
+  // (ruling4): FNDDS spoon portions are rounded to the gram (2710180's '1
+  // tablespoon' 14 g = 0.947 g/mL, 3 % off an oil's 0.92), so record-first
+  // standing goes to the record whose own volume figure is a precise
+  // per-100-mL portion (748608 '100 milliliter' 90.7 g), not to every oil
+  // record.
+  ('virgin olive oil', 0.92),
   ('honey', 1.42),
   ('maple syrup', 1.32),
   ('corn syrup', 1.38),
@@ -342,8 +361,9 @@ const List<(String, double)> _densities = [
 /// a line only when its record has no volume figure of its own — a printed
 /// figure for a portion-less record, never over a record's portion:
 /// 'lentil' read "1 cup dried red lentils" at 198 g over 174284's own cup,
-/// 192 g (the replay).
-const Map<String, (String label, bool recordFirst)> _approximateDensities = {
+/// 192 g (the replay). A null label (v84: 'virgin olive oil') flags
+/// nothing — the key only yields to the record's own figure.
+const Map<String, (String? label, bool recordFirst)> _approximateDensities = {
   // The label names the figure used: 'parmesan' 0.42, since v23 no longer
   // grated Parmesan's (0.24) — Run 054 O16.
   'pecorino': ('Parmesan density', false),
@@ -374,6 +394,15 @@ const Map<String, (String label, bool recordFirst)> _approximateDensities = {
   'sure-jell': (_sureJellLabel, false),
   // v76 (M79, Q9 (a)).
   'crystallized ginger': (_crystallizedGingerLabel, false),
+  // v84 (M82 C5a): the Z5 form.
+  'all-purpose flour': ('ATK: 1 cup all-purpose flour = 5 ounces', true),
+  'flour': ('ATK: 1 cup all-purpose flour = 5 ounces', true),
+  'whole-wheat flour': ('ATK: 1 cup whole-wheat flour = 5½ ounces', true),
+  // v84 (M82 C6a): no stand-in — an extra-virgin olive oil's record's own
+  // volume figure wins over the kitchen 0.92 (748608 "Oil, olive, extra
+  // virgin" '100 milliliter' 90.7 g); a record that publishes none keeps
+  // it, unflagged.
+  'virgin olive oil': (null, true),
 };
 
 /// The Sure-Jell label the pectin densities read (v68, M70 — the owner's
@@ -477,7 +506,13 @@ const List<(String, double)> _pieceWeights = [
   ('leek', 89),
   ('fennel bulb', 200),
   ('fennel', 200),
-  ('poblano', 45),
+  // v84 (batch M82 C2, the CP9 Q6 corpus-print class; re-rules the
+  // unsourced 45 g of d614c2e — Foundation 2747662 publishes no portion):
+  // "1 pound (3 to 4) poblano chiles, stemmed, halved, and seeded"
+  // (Skillet Chicken Fajitas), read at the count's midpoint as v37 Z9 reads
+  // the sea scallops' range: 453.59 g over 3.5, flagged
+  // ([_approximatePieces]) — as bought, on a seeded record.
+  ('poblano', 129.6),
   ('serrano', 6),
   ('thai chile', 2),
   // v30 (Q6, ruled: a weight ATK prints in the corpus where one exists): a
@@ -520,7 +555,18 @@ const List<(String, double)> _pieceWeights = [
   ('cubanelle pepper', 99),
   ('eggplant', 300), // longer key than "egg", so it wins the substring match
   // Counted-in-slices/sheets staples (per counted unit).
-  ('sandwich bread', 28),
+  // v84 (batch M82 C1, the CP9 Q6 corpus-print class): the unsourced 28 g
+  // 'sandwich bread' of d614c2e is deleted (SR 174924 publishes 'slice' 29 /
+  // 25 g, 'slice, large' 30 g, 'slice, thin' 20 g, none 28) for ATK's own
+  // loaves, "1½ pounds (about 15 slices) high-quality white sandwich bread"
+  // (Old-Fashioned Stuffed Turkey) and "10 ounces (about 7 slices) hearty
+  // white sandwich bread" (Apple-Blackberry Betty), flagged
+  // ([_approximatePieces]). The longer key wins, so a hearty slice never
+  // reads the plain one. A loaf no print names weighs on its record's own
+  // slice (ruling4): "10 slices potato sandwich bread" (French Toast
+  // Casserole) on SR 167943 "Bread, potato" 'slice' 32 g.
+  ('white sandwich bread', 45.36),
+  ('hearty white sandwich bread', 40.5),
   // v51 (M49 Q4 b, re-rules the unsourced 24 g of d614c2e): SR 168277
   // "Pork, cured, bacon, unprepared" weighs its own 'slice raw' 28 g (the
   // corpus's "1 ounce a slice", 28.35 g, agrees to 1.3 %); a thick-cut
@@ -659,6 +705,12 @@ const Map<String, String> _approximatePieces = {
   'gyoza wrapper': "FDC's 3½-inch square wonton wrapper, ATK's substitute",
   // v51 (M49 Q4 b): the CP9 Q6 corpus-print class.
   'thick-cut bacon': "the corpus's printed thick-cut slice, median of three",
+  // v84 (M82 C1, C2): the CP9 Q6 corpus-print class.
+  'poblano': 'ATK: 1 pound poblano chiles, as bought, ≈ 3 to 4',
+  'white sandwich bread':
+      'ATK: 1½ pounds high-quality white sandwich bread ≈ 15 slices',
+  'hearty white sandwich bread':
+      'ATK: 10 ounces hearty white sandwich bread ≈ 7 slices',
   // v68 (M70, Q11): the maker's label.
   'hershey s kisses':
       "Hershey's label: 9 pieces = 41 g (FDC Branded 1642930 and four more; "
@@ -968,7 +1020,8 @@ const Map<int, int> fineCutSiblings = {2709780: 172232};
 }
 
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
-/// distinct from soft sandwich bread (which keeps its 28 g/slice table entry).
+/// distinct from soft sandwich bread (the piece table's white loaves, else
+/// its record's own slice).
 /// FDC gives these breads no usable per-slice or per-loaf portion, and the flat
 /// [_pieceWeights] table can't serve them: a recipe counts them BOTH ways
 /// ("8 slices country bread", "1 loaf crusty bread"), which need different
@@ -993,7 +1046,7 @@ const Set<String> _loafUnits = {'loaf', 'loaves'};
 /// used: a thick artisan SLICE ≈ 50 g (ATK's own "(9 ounces)" for 5 slices is
 /// ~51 g/slice), a whole LOAF ≈ 454 g (its standard "1 (1-pound) loaf"). Only
 /// for the crusty/rustic breads above; returns null for soft sandwich bread
-/// (handled by the piece table) and for any non-slice/loaf unit. An estimate,
+/// (the piece table's or its record's slice) and for any non-slice/loaf unit. An estimate,
 /// flagged as such — and only a FALLBACK: a real FDC slice/loaf portion is
 /// preferred (matched earlier in the count loop).
 double? _rusticBreadGrams(String normalizedItem, String unit) {
@@ -1997,6 +2050,8 @@ const Map<String, String> _volumeAliases = {
   'fl': 'fluid ounce',
   'pint': 'pint',
   'quart': 'quart',
+  // v84 (M82 C6a): 748608's (and canola 748278's) '100 milliliter'.
+  'milliliter': 'milliliter',
 };
 
 /// The second amount of a "plus" line: "¾ cup plus 2 tablespoons vegetable
@@ -3167,10 +3222,14 @@ GramResolution? _resolveLine({
       ? drainedCanGrams(first!.grams, food, raw)
       : null;
   if (drained != null) {
+    final cross = _drainedCanShares[food?.fdcId];
     first = GramResolution(
       grams: drained,
       source: GramSource.weight,
-      basis: '${first!.basis} · drained (USDA can portion)',
+      basis: cross == null
+          ? '${first!.basis} · drained (USDA can portion)'
+          : '${first!.basis} × ${cross.share.toStringAsFixed(3)} drained · '
+                'approximate (drained weight: ${cross.from})',
     );
   }
   // v39 (T1, the owner's ruling Q6 (a)): a canned tomato drained in the
@@ -4107,8 +4166,22 @@ double? drainedCanGrams(
       return net * share;
     }
   }
-  return null;
+  final cross = _drainedCanShares[food.fdcId];
+  return cross == null ? null : net * cross.share;
 }
+
+/// v84 (batch M82 C6b; design Q7 (ii) (b), the 2026-10-06 bean ruling's
+/// cross-record drained share applied to one more record): a drained can or
+/// jar on a record that publishes no sized drained portion reads another
+/// record's, flagged — SR 175157 "Fish, tuna, white, canned in oil, drained
+/// solids" ('can' 178 g, no size) on SR 173708 "Fish, tuna, light, canned
+/// in oil, drained solids" 'can (12.5 oz), drained' 321 g ([drainedCanGrams]).
+const Map<int, ({double share, String from})> _drainedCanShares = {
+  175157: (
+    share: 321 / (12.5 * 28.3495),
+    from: "FDC's oil-packed light tuna can, 321 g of 12.5 oz",
+  ),
+};
 
 /// "from 4 (24-ounce) jars": the containers a measured volume came from
 /// ([_resolveGrams] step 1b). One corpus line (0949's Morellos).

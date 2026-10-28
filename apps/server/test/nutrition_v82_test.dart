@@ -581,7 +581,9 @@ void plans() {
   test('F4: 0304 as printed — the cube steaks 850.485 g, 3,206.9 kcal (the '
       'baseline the edits below must keep)', () async {
     expect(loadCorpusRecipe(steaks).steps[1].text, contains(dip));
-    expect(await steaksWith((t) => t), ('850.485', '3206.9'));
+    // RE-PIN (M82 batch, v84): 0304's garlic |11 (C3a, 6.00 → 5.60 g) and
+    // flour |12 (C5a, 22.62 → 26.58 g) — the replay's rows: was 3206.9.
+    expect(await steaksWith((t) => t), ('850.485', '3220.7'));
   });
 
   test("F4 (the fleet's, STATED): one more dip sentence appended to S2 — "
@@ -594,7 +596,9 @@ void plans() {
             '$t Dip each remaining steak into the egg mixture, allowing the '
             'excess to drip off.',
       ),
-      ('850.485', '3206.9'),
+      // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
+      // 3206.9.
+      ('850.485', '3220.7'),
     );
   });
 
@@ -608,7 +612,9 @@ void plans() {
             'Dip each remaining steak into the egg mixture, allowing the '
             'excess to drip off.',
       ),
-      ('850.485', '3206.9'),
+      // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
+      // 3206.9.
+      ('850.485', '3220.7'),
     );
   });
 
@@ -625,7 +631,9 @@ void plans() {
             'remaining steak into the egg mixture, allowing the excess to '
             'drip off.',
       ),
-      ('850.485', '3206.9'),
+      // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
+      // 3206.9.
+      ('850.485', '3220.7'),
     );
   });
 
@@ -639,7 +647,9 @@ void plans() {
           'Set the steaks beside the egg mixture. Pat the steaks dry',
         ),
       ),
-      ('850.485', '3206.9'),
+      // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
+      // 3206.9.
+      ('850.485', '3220.7'),
     );
   });
 
@@ -682,9 +692,11 @@ void plans() {
       "dip line is never off C5's B: compute == recompute == compute, the "
       'flour |2 89.12 g, 3,632.74 kcal (base: the compute 67.71 / 3,451.64, '
       'the recompute 89.12 / 3,632.74)', () async {
+    // RE-PIN (M82 batch, v84, C5a): the batter flour at 5 oz a cup
+    // re-solves the coat (|2 93.89 g, the replay's row): was 89.12, 3632.74.
     expect(
       await fishWith('¼ cup tapioca starch', 'tapioca starch'),
-      ('89.12', '3632.74'),
+      ('93.89', '3630.71'),
     );
   });
 
@@ -740,8 +752,9 @@ void plans() {
       [
         for (final p in [2, 3, 12]) _sig(_row(db, r.id, p)),
       ],
+      // RE-PIN (M82 batch, v84, C5a): the flour |2's share — was 89.12.
       [
-        'confirmed|789890|89.12|discarded|null',
+        'confirmed|789890|93.89|discarded|null',
         'overridden|169717|28.35|density|null',
         'confirmed|748967|100.00|discarded|null',
       ],
@@ -751,7 +764,9 @@ void plans() {
   test('F5, the control (STATED): the same dip of milk, no dredge head — '
       'idempotent at base and tree, 3,550.88 kcal', () async {
     final (_, kcal) = await fishWith('2 tablespoons milk', 'milk');
-    expect(kcal, '3550.88');
+    // RE-PIN (M82 batch, v84, C5a): 0255's batter flour (the replay's
+    // 855.40 → 854.89 a serving): was 3550.88.
+    expect(kcal, '3548.84');
   });
 }
 
@@ -862,13 +877,17 @@ void persons() {
     final before = _row(db, r.id, 0);
     expect(_sig(before), 'auto|${before.fdcId}|907.18|weight|null');
     expect(before.description, startsWith('Eggplant,'));
-    expect(_energy(db, r.id).toStringAsFixed(2), '2735.29');
+    // RE-PIN (M82 batch, v84, C1 + C5a): 0407's coat parts re-solve (the
+    // replay's 455.86 → 452.38 a serving): was 2735.29.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2714.43');
     await _put(db, fdc, r.id, 0, {'confirmed': true});
     expect(
       _sig(_row(db, r.id, 0)),
       'confirmed|${before.fdcId}|907.18|weight|null',
     );
-    expect(_energy(db, r.id).toStringAsFixed(2), '2735.29');
+    // RE-PIN (M82 batch, v84, C1 + C5a): 0407's coat parts re-solve (the
+    // replay's 455.86 → 452.38 a serving): was 2735.29.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2714.43');
     await _settled(db, fdc, r.id);
     // The gate in `derivedFor`: the confirmed eggplant derives with no plan
     // of its own — the GET plans once (routed to the plan: twice).
@@ -880,7 +899,9 @@ void persons() {
       _sig(_row(db, r.id, 0)),
       'overridden|${before.fdcId}|907.18|weight|null',
     );
-    expect(_energy(db, r.id).toStringAsFixed(2), '2735.29');
+    // RE-PIN (M82 batch, v84, C1 + C5a): 0407's coat parts re-solve (the
+    // replay's 455.86 → 452.38 a serving): was 2735.29.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2714.43');
     await _settled(db, fdc, r.id);
   });
 
@@ -1008,7 +1029,9 @@ void persons() {
       '0315-oven-fried-onion-rings.yaml',
       [0],
       8,
-      ['0 confirmed|789890|30.16|discarded|null'],
+      // RE-PIN (M82 batch, v84, C5a): the eaten ¼ cup at 5 oz a cup — was
+      // 30.16.
+      ['0 confirmed|789890|35.44|discarded|null'],
     ),
   ]) {
     test('F7: $file — $confirmed confirmed, then the food |$food skipped '
@@ -1225,7 +1248,10 @@ void persons() {
         '9 confirmed|171329|1.16|density|null',
         '10 confirmed|170932|0.45|portion|null',
       ],
-      '1382.5822',
+      // RE-PIN (M82 batch, v84, C1 + C5a): the crumb coat's bread and flour
+      // (crunchy-oven-fried-fish|0 65.12 g, |5 57.01 g at the replay): was
+      // 1382.5822.
+      '1408.3556',
     ),
     (
       '0149-easier-fried-chicken.yaml',

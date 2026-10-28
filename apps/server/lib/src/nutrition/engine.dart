@@ -1173,7 +1173,7 @@ final RegExp _forDredging = RegExp(r'\bfor (dredging|coating)\b');
 
 /// Whether a line ([raw]) is a [DiscardedMedium.coating] (Q2): its text
 /// says "for dredging" / "for coating", or ¼ cup or more of flour, starch
-/// or crumbs (either unit family, [_mediumMl]: 30.2 g of flour) a step
+/// or crumbs (either unit family, [_mediumMl]: 35.4 g of flour, v84) a step
 /// names in a dredge — "dredge … in the flour", "shake off excess flour",
 /// or set out in a shallow dish for the food to be coated in (Crispy Fried
 /// Chicken, 0148; Chicken Schnitzel, 0116, its flour and its crumbs) — in
@@ -2825,8 +2825,8 @@ double? _freeGrams(IngredientLine line, String normalized) =>
 /// grams ([_freeGrams]) at its item's density ([densityOf]; a frying
 /// [fat] item the table refuses at oil's 0.92). Each threshold's mass
 /// figure is its volume at that density: ¼ cup of oil 54.4 g, of flour
-/// 30.2 g (0.51), of panko 14.8 g (0.25), of bread crumbs 26.6 g (0.45),
-/// of a starch 31.9 g (0.54), of sugar 50.3 g (0.85); the
+/// 35.4 g (0.5991, v84), of panko 14.8 g (0.25), of bread crumbs 26.6 g
+/// (0.45), of a starch 31.9 g (0.54), of sugar 50.3 g (0.85); the
 /// brine salt's 44 mL 53.7 g of table salt (1.22), 26.8 g of kosher
 /// (0.60865, v62); four cups of milk or buttermilk 974 g (1.03). 0 when it has
 /// neither.
@@ -16397,8 +16397,14 @@ Future<(FdcFood, GramResolution?)> gramsFor(
   // A volume the record cannot size is read from its SR sibling
   // ([lineGrams]): its detail is fetched once, like the food's own.
   final sibling = volumeSiblings[detail.fdcId];
-  if (withDetail == null &&
-      sibling != null &&
+  // v84 (M82 C3a): a counted clove's printed volume reads it too.
+  if (sibling != null &&
+      (withDetail == null ||
+          _cloveVolumeOnSibling(
+            line,
+            withDetail,
+            normalizeItem(lineItemOf(line)),
+          )) &&
       _foodFromCache(db, sibling) == null &&
       volumeMlOf(line.amounts) != null) {
     await _cachedFood(db, provider, sibling);
@@ -16418,8 +16424,10 @@ Future<(FdcFood, GramResolution?)> gramsFor(
 
 /// [line]'s grams on [food] ([resolveGrams] on the line's own words) — and,
 /// when that finds none for a volume line on a record in [volumeSiblings],
-/// the same amounts on the sibling's cached portions (no request; the
-/// basis names the sibling). The food stays [food].
+/// or finds a counted clove's piece where the line prints its volume
+/// ([_cloveVolumeOnSibling]), the same amounts on the sibling's cached
+/// portions (no request; the basis names the sibling). The food stays
+/// [food].
 GramResolution? lineGrams(
   SaltDatabase db,
   IngredientLine line,
@@ -16487,20 +16495,68 @@ GramResolution? lineGrams(
     }
   }
   final own = on(food);
+  // v84 (batch M82 C1b, critic C-1): a slice of SR 174924 whose parsed prep
+  // removes the crusts keeps the record's own crust-off share — its 'slice
+  // crust not eaten' 12 g of its 'slice' 29 g, a ratio of two portions of
+  // the row's own record [re-point → prep].
+  if (own != null &&
+      own.source == GramSource.piece &&
+      food?.fdcId == 174924 &&
+      _crustsRemoved.hasMatch(line.prep ?? '')) {
+    return GramResolution(
+      grams: own.grams * 12 / 29,
+      source: own.source,
+      basis:
+          "${own.basis} × 12/29 crusts removed (USDA: 'slice crust not "
+          "eaten' 12 g of 'slice' 29 g)",
+    );
+  }
   final siblingId = food == null ? null : volumeSiblings[food.fdcId];
-  if (own != null || siblingId == null || volumeMlOf(line.amounts) == null) {
+  if (siblingId == null ||
+      volumeMlOf(line.amounts) == null ||
+      (own != null && !_cloveVolumeOnSibling(line, own, normalized))) {
     return own;
   }
   final sibling = _foodFromCache(db, siblingId);
   final grams = sibling == null ? null : on(sibling);
   return grams == null
-      ? null
+      ? own
       : GramResolution(
           grams: grams.grams,
           source: grams.source,
           basis: '${grams.basis} of "${sibling!.description}"',
         );
 }
+
+/// "crusts removed" in a line's parsed prep (v84, M82 C1b).
+final RegExp _crustsRemoved = RegExp(r'\bcrusts? removed\b');
+
+/// v84 (batch M82 C3a, L203): whether [own] — a [volumeSiblings] record's
+/// own reading of [line] — is a counted garlic clove whose printed volume
+/// the sibling weighs instead ("1 small garlic clove, minced … (about ½
+/// teaspoon)" is ½ teaspoon of SR 169230, 1.40 g, never a 3 g clove): a
+/// PIECE, the item naming the clove ([normalized] — "medium cloves garlic"
+/// does; "3 cloves garlic", whose unit is the clove, and "1 head garlic"
+/// keep their count), and no second count in the comma clause
+/// before the paren, so the paren measures the line's only count ("5 …
+/// cloves, 3 peeled and smashed and 2 minced (about 2 teaspoons)" keeps
+/// its five) [re-point → measurement/item].
+bool _cloveVolumeOnSibling(
+  IngredientLine line,
+  GramResolution own,
+  String normalized,
+) =>
+    own.source == GramSource.piece &&
+    _cloveItem.hasMatch(normalized) &&
+    !_countBeforeParen.hasMatch(line.raw);
+
+final RegExp _cloveItem = RegExp(r'\bcloves?\b');
+
+/// A count in the comma clause before a line's first paren (C3a's
+/// second-count guard); linear: the first run stops at the first comma.
+final RegExp _countBeforeParen = RegExp(
+  '^[^(,]*,[^(]*[\\d$vulgarFractionChars]',
+);
 
 /// A fresh herb line on its dried spice record ([freshHerbLine]) sized as
 /// the user ruled on 2026-09-28 (Q2): the dried amount the line offers

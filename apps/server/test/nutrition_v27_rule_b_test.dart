@@ -672,7 +672,7 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test('a dredge written by weight is a dredge for the oil owners too: '
-        "0116 Schnitzel's flour retyped \"3 ounces\" (85 g, 167 mL at 0.51), "
+        "0116 Schnitzel's flour retyped \"3 ounces\" (85 g, 142 mL at 0.5991), "
         'its crumbs 2 tablespoons (no dredge), its frying sentence naming no '
         'oil, a ½ cup olive oil added — '
         'the fried, dredged food holds both oil candidates', () {
@@ -700,7 +700,7 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test("0148's dredge, brine salt and buttermilk soak written by weight: "
-        'flour ¼ cup = 30.2 g (0.51), table salt 44 mL = 53.7 g (1.22), '
+        'flour ¼ cup = 35.4 g (0.5991), table salt 44 mL = 53.7 g (1.22), '
         'kosher 26.8 g (0.60865), buttermilk 4 cups = 974 g (1.03)', () {
       final r = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
       const flour = '4 cups (20 ounces) unbleached all-purpose flour';
@@ -708,8 +708,11 @@ void main() {
         (flour, flour, _coating),
         (flour, '20 ounces unbleached all-purpose flour', _coating),
         (flour, '2 pounds unbleached all-purpose flour', _coating),
-        (flour, '31 grams unbleached all-purpose flour', _coating),
-        (flour, '30 grams unbleached all-purpose flour', null),
+        // RE-PIN (M82 batch, v84, C5a): flour's ¼ cup is 35.4 g at the
+        // corpus's 5 oz a cup, 0.5991 (was 30.2 g at 0.51: 31 grams coating,
+        // 30 none) — the title's figure too.
+        (flour, '36 grams unbleached all-purpose flour', _coating),
+        (flour, '35 grams unbleached all-purpose flour', null),
         ('½ cup table salt', '½ cup table salt', DiscardedMedium.brine),
         ('½ cup table salt', '4 ounces table salt', DiscardedMedium.brine),
         ('½ cup table salt', '1 pound table salt', DiscardedMedium.brine),

@@ -947,6 +947,10 @@ void main() {
         return (n.status, n.caloriesPerServing!.toStringAsFixed(2));
       }
 
+      // RE-PIN (M82 batch, v84): was 404.07, 748.74, 678.50 — the crispy
+      // breasts' and the stew's flour at 5 oz a cup (C5a), the pasta's
+      // garlic cloves at their printed tablespoon (C3a); the replay's 403.85
+      // → 404.66, 748.69 → 748.49, 678.46 → 682.08.
       expect(
         [
           for (final file in const [
@@ -966,13 +970,13 @@ void main() {
         // absolute figures differ by the energy the fixtures' cache reads).
         const [
           ('complete', '525.79'), // 533.20; 533.20 → 525.79 (P10)
-          ('partial', '404.07'), // 489.26; 489.04 → 403.85 (F9)
+          ('partial', '404.88'), // 489.26; 489.04 → 403.85 (F9)
           ('complete', '504.00'), // 420.00; 419.95 → 503.95 (the yield)
           ('complete', '670.38'), // 671.01; 670.73 → 670.11 (bay)
           // RE-PIN (M70 batch, v69, pE Q6): 748.74 (was 748.47) — its
           // chopped basil on SR's chopped cup (replay 748.42 → 748.69).
-          ('complete', '748.74'), // 748.63; 748.58 → 748.42 (bay)
-          ('partial', '678.50'), // 678.81; 678.78 → 678.46 (bay)
+          ('complete', '748.54'), // 748.63; 748.58 → 748.42 (bay)
+          ('partial', '682.12'), // 678.81; 678.78 → 678.46 (bay)
           ('complete', '715.06'), // 715.27; 715.27 → 715.06 (bay)
           // RE-PIN (M71 batch, v71): 404.60 (was 596.80) — the galangal
           // strained (pE R-E3, −12.80) and the jam's oil at its printed 2

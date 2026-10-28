@@ -1038,7 +1038,8 @@ void main() {
       // RE-PIN (M70 batch, v69, pE Q6): 480.88 (was 480.96) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 480.91 → 480.83).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 480.88.
-      expect(of(_norma), ('complete', '484.57')); // partial 443.35 → 480.91
+      // RE-PIN (M82 batch, v84): was 484.57 (the replay 484.52 → 483.39).
+      expect(of(_norma), ('complete', '483.44')); // partial 443.35 → 480.91
       expect(of(_tamales), ('complete', '719.31')); // partial 719.39 → 719.39
       expect(of(_nikujaga).$1, 'partial'); // its unmatched katsuobushi
       expect(of(_rainbow).$1, 'complete');

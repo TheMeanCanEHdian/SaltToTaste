@@ -831,7 +831,10 @@ void _divided() {
       (match['hold'], match['hold_note'], match['gram_source']),
       (null, null, 'discarded'),
     );
-    expect(match['grams'], closeTo(61.35, 0.01));
+    // RE-PIN (M82 batch, v84, C5a): the eaten teaspoon at 5 oz a cup and the
+    // coat's f on the heavier ¾ cup (the v84 replay's row): was 61.35, the
+    // bound unchanged.
+    expect(match['grams'], closeTo(61.79, 0.01));
     expect(
       match['gram_basis'],
       'discarded in cooking — only the part the recipe keeps and the coat on '

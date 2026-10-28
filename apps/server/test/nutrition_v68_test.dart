@@ -275,6 +275,7 @@ final List<_Row> _reach = [
     '0.27',
     _dipBasis,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 76.37 g, 203.14 kcal (the v84 replay's row).
   (
     _eggplant,
     null,
@@ -283,12 +284,13 @@ final List<_Row> _reach = [
     174924,
     'Bread, white, commercially prepared (includes soft bread crumbs)',
     '0.914286',
-    '76.37',
+    '88.21',
     'auto',
     null,
-    '203.14',
+    '234.64',
     _eggplantCoat,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
   (
     _eggplant,
     null,
@@ -297,12 +299,13 @@ final List<_Row> _reach = [
     325036,
     'Cheese, parmesan, grated',
     '0.983333',
-    '19.33',
+    '13.78',
     'auto',
     null,
-    '81.38',
+    '58.01',
     _eggplantCoat,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 41.14 g, 150.57 kcal (the v84 replay's row).
   (
     _eggplant,
     null,
@@ -311,10 +314,10 @@ final List<_Row> _reach = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '41.14',
+    '34.46',
     'auto',
     null,
-    '150.57',
+    '126.12',
     _eggplantCoat,
   ),
   (
@@ -382,6 +385,7 @@ const List<_Row> _negatives = [
     null,
   ),
   // RE-PIN (M80 batch, v80, M80-1: budgeted on the onion at 50.53 — a coat part at f = 1, its eaten ¼ cup on top) (was 30.16 g, 0.00 kcal, held `coating`).
+  // RE-PIN (M82 batch, v84, C5a): was 60.33 g, 220.81 kcal (the v84 replay's row).
   (
     _onionRings,
     null,
@@ -390,10 +394,10 @@ const List<_Row> _negatives = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '60.33',
+    '70.87',
     'auto',
     null,
-    '220.81',
+    '259.38',
     "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-1: an E-w dip at share 1) (was no g, 0.00 kcal, held `coating`).
@@ -518,6 +522,7 @@ const List<_Row> _negatives = [
     '775.78',
     "1/4 cup ≈ 59 mL · grated, at ATK's printed 1 ounce = ½ cup + 6 ounces · approximate (a pressed cheese crust: no USDA record of a cheese crust, and the coat record's breading does not describe one — the line counted whole as printed; the part left in the dish is not deducted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 61.35 g, 224.54 kcal (the v84 replay's row).
   (
     _francese2,
     null,
@@ -526,12 +531,13 @@ const List<_Row> _negatives = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '61.35',
+    '61.79',
     'auto',
     null,
-    '224.54',
+    '226.15',
     "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 120.66 g, 441.62 kcal (the v84 replay's row).
   (
     _chickenMarsala,
     null,
@@ -540,11 +546,11 @@ const List<_Row> _negatives = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '120.66',
+    '141.75',
     'auto',
     null,
-    '441.62',
-    '1 cup ≈ 237 mL',
+    '518.80',
+    '1 cup ≈ 237 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     _tacos,
@@ -891,14 +897,18 @@ void main() {
         'marsala f 0.360850 → 32.66; francese f 0.212644 → 25.66; '
         'saltimbocca and the sole f 0.425288 → 25.66; parmesan-crusted f '
         '0.463949 → 17.49; the dips f_w 0.178329 (francese) and 0.151071', () {
+      // RE-PIN (M82 batch, v84, C5a): each dredge's flour at 5 oz a cup —
+      // the same B over 17.5 % more flour, so f falls by 0.51 / 0.5991 and
+      // the counted grams stay: was 0.463950, 0.360850, 0.360850, 0.212644,
+      // 0.425288, 0.425288, 0.463949.
       for (final (file, coated, flour, f, grams) in const [
-        (_piccata, 1, 3, '0.463950', '27.99'),
-        (_nextLevel, 0, 3, '0.360850', '32.66'),
-        (_marsala, 3, 6, '0.360850', '32.66'),
-        (_francese, 7, 9, '0.212644', '25.66'),
-        (_saltimbocca, 0, 1, '0.425288', '25.66'),
-        (_meuniere, 1, 0, '0.425288', '25.66'),
-        (_parmesanCrusted, 0, 2, '0.463949', '17.49'),
+        (_piccata, 1, 3, '0.394929', '27.99'),
+        (_nextLevel, 0, 3, '0.307167', '32.66'),
+        (_marsala, 3, 6, '0.307167', '32.66'),
+        (_francese, 7, 9, '0.181009', '25.66'),
+        (_saltimbocca, 0, 1, '0.362018', '25.66'),
+        (_meuniere, 1, 0, '0.362018', '25.66'),
+        (_parmesanCrusted, 0, 2, '0.394928', '17.49'),
       ]) {
         final b = 3.18 * rowOf(file, coated).grams! / 100;
         final (dredge, food) = whole(file, flour);
@@ -936,19 +946,24 @@ void main() {
       expect(rowOf(_eggplant, 0).description, 'Eggplant, raw');
       final b = 7.93 * rowOf(_eggplant, 0).grams! / 100;
       expect(b.toStringAsFixed(4), '71.9397');
-      expect(g2(whole(_eggplant, 2).$1), '224.00');
+      // RE-PIN (M82 batch, v84, C1): the 8 slices at ATK's 45.36 g (no
+      // longer the piece table's 28 g): was 224.00.
+      expect(g2(whole(_eggplant, 2).$1), '362.88');
       var carbs = 0.0;
       for (final p in [2, 3, 5]) {
         final (dredge, food) = whole(_eggplant, p);
         carbs += dredge * cho(food);
       }
-      expect(carbs.toStringAsFixed(4), '211.0016');
+      // RE-PIN (M82 batch, v84, C1 + C5a): the bread at 45.36 g a slice and
+      // the flour at 5 oz a cup — was 211.0016, f 0.340944, the parts 76.37,
+      // 19.33, 41.14 (now the v84 replay's rows).
+      expect(carbs.toStringAsFixed(4), '295.9368');
       final f = b / carbs;
-      expect(f.toStringAsFixed(6), '0.340944');
+      expect(f.toStringAsFixed(6), '0.243091');
       for (final (p, grams) in const [
-        (2, '76.37'),
-        (3, '19.33'),
-        (5, '41.14'),
+        (2, '88.21'),
+        (3, '13.78'),
+        (5, '34.46'),
       ]) {
         expect(g2(f * whole(_eggplant, p).$1), grams, reason: '$p');
       }
@@ -1029,10 +1044,12 @@ void main() {
         ),
         'battered',
       );
+      // RE-PIN (M82 batch, v84, C1 + C5a): the batter's parts re-solve on
+      // the heavier bread and flour — was 39.90, 84.92, 140.75.
       for (final (p, grams) in const [
-        (3, '39.90'),
-        (5, '84.92'),
-        (6, '140.75'),
+        (3, '34.41'),
+        (5, '86.04'),
+        (6, '121.40'),
       ]) {
         final row = rowIn(battered, p);
         expect(
@@ -1144,8 +1161,10 @@ void main() {
         "H2's tacos", () {
       expect(_negatives, hasLength(27));
       expectRows(_negatives);
-      expect(g2(rowOf(_francese2, 5).grams!), '61.35');
-      expect(g2(rowOf(_chickenMarsala, 1).grams!), '120.66');
+      // RE-PIN (M82 batch, v84): was 61.35 (the replay 346.62 → 347.83).
+      expect(g2(rowOf(_francese2, 5).grams!), '61.79');
+      // RE-PIN (M82 batch, v84): was 120.66 (the replay 662.07 → 681.29).
+      expect(g2(rowOf(_chickenMarsala, 1).grams!), '141.75');
       // RE-PIN (M80 batch, v80, M80-1): the onion rings' coat is budgeted on
       // the onion (50.53) — every row unheld, `discarded` (was held
       // `coating`; M69 did not reach them, M80 does).
@@ -1185,7 +1204,8 @@ void main() {
         // saltimbocca 511.50, meunière 349.73, parmesan-crusted partial
         // 171.63; the v78 replay 438.34 → 346.62, 511.56 → 407.88, 349.73 →
         // 258.01, 171.67 → 340.01.
-        expect(of(_francese), ('complete', '346.57')); // replay 407.44 → 438.34
+        // RE-PIN (M82 batch, v84): was 346.57 (the replay 346.62 → 347.83).
+        expect(of(_francese), ('complete', '347.78')); // replay 407.44 → 438.34
         expect(of(_saltimbocca), (
           'complete',
           '407.82',
@@ -1198,20 +1218,25 @@ void main() {
         // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
         // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.04.
-        expect(of(_eggplant), ('partial', '455.88')); // replay 360.33 → 453.66
+        // RE-PIN (M82 batch, v84): was 455.88 (the replay 455.86 → 452.38).
+        expect(of(_eggplant), ('partial', '452.40')); // replay 360.33 → 453.66
         // Unmoved (replay v67 = v68).
         // RE-PIN (M80 batch, v80, M80-1): the coat budgeted on the onion —
         // complete (was partial, 217.50; = the v80 replay).
-        expect(of(_onionRings), ('complete', '532.09')); // = replay
+        // RE-PIN (M82 batch, v84): was 532.09 (the replay 532.09 → 541.73).
+        expect(of(_onionRings), ('complete', '541.73')); // = replay
         expect(of(_salmon), ('partial', '542.67')); // = replay
         // RE-PIN (M71 batch, v71, D-E1): 444.28 (was 462.34) — the sugar,
         // salt and pepper whisked into the held cornstarch are held with it
         // (−108.41 / 6); still partial.
         expect(of(_maple), ('partial', '444.28')); // = replay
-        expect(of(_skillet), ('partial', '695.99')); // replay 696.06
-        expect(of(_chickenMarsala), ('complete', '662.00')); // replay 662.07
+        // RE-PIN (M82 batch, v84): was 695.99 (the replay 696.06 → 695.86).
+        expect(of(_skillet), ('partial', '695.79')); // replay 696.06
+        // RE-PIN (M82 batch, v84): was 662.00 (the replay 662.07 → 681.29).
+        expect(of(_chickenMarsala), ('complete', '681.23')); // replay 662.07
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 376.78.
-        expect(of(_francese2), ('complete', '378.55')); // replay 376.82
+        // RE-PIN (M82 batch, v84): was 378.55 (the replay 346.62 → 347.83).
+        expect(of(_francese2), ('complete', '378.82')); // replay 376.82
         expect(of(_tacos), ('complete', '609.06')); // replay 609.07
       },
     );

@@ -361,9 +361,11 @@ void readers() {
       final m = _row(db, r.id, 0);
       final printed = depth == '⅛ to ¼' ? '⅛- to ¼' : depth;
       expect((m.fdcId, _g2(m.grams!)), (173128, '2041.16'), reason: tag);
+      // RE-PIN (M82 batch, v84, C5a): 0224's flour |11 at 5 oz a cup (the
+      // replay 794.35 → 797.57): was 794.35.
       expect(
         _g2(db.nutritionFor(r.id)!.caloriesPerServing!),
-        '794.35',
+        '797.57',
         reason: tag,
       );
       expect(
@@ -823,19 +825,23 @@ void writes() {
         for (final p in [6, 7, 9, 10, 11])
           (p, _g2(_row(db, r.id, p).grams!), _row(db, r.id, p).gramSource),
       ],
+      // RE-PIN (M82 batch, v84, C5a): the batter's ½ cup flour whole at 5 oz
+      // a cup, and the oil's uptake on the heavier batter: was 60.33, 26.09.
       [
-        (6, '60.33', 'density'),
+        (6, '70.87', 'density'),
         (7, '63.88', 'density'),
         (9, '2.27', 'density'),
         (10, '180.00', 'portion'),
-        (11, '26.09', 'discarded'),
+        (11, '26.98', 'discarded'),
       ],
     );
     expect(
       gramBasisFor(db, nutritionLines(r)[11], _row(db, r.id, 11), recipe: r),
       contains("frying oil absorbed: 8.43 % of the raw batter's weight"),
     );
-    expect((put.$1, put.$2, put.$3), ('complete', '815.36', '3261.43'));
+    // RE-PIN (M82 batch, v84, C5a): the flour and its uptake, as above —
+    // was 815.36, 3261.43.
+    expect((put.$1, put.$2, put.$3), ('complete', '827.01', '3308.03'));
     expect(nutritionIsFresh(db, r, db.nutritionFor(r.id)), isTrue);
     expect(recomputeTotals(db, r), isTrue);
     expect(state(db, r.id), put, reason: 'a second recompute');

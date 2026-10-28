@@ -149,25 +149,28 @@ const _negatives = [
   // RE-PIN (M80 batch, v80, M80-2): the two crumb-crust layers at FNDDS
   // 2706442's 12.12 — still parts joined by a crumb, never counted whole
   // (were 21.66 and 5.04 g at 3.18).
+  // RE-PIN (M82 batch, v84, C5a): was 82.55 g, 477.96 kcal (the v84 replay's row).
   (
     '0117-nut-crusted-chicken-breasts-with-lemon-and-thyme.yaml',
     2,
     '1 cup almonds, chopped coarse',
-    '82.55',
+    '75.19',
     'discarded',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
   (
     '0416-lighter-chicken-parmesan.yaml',
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
-    '19.22',
+    '17.94',
     'discarded',
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    '19.33',
+    '13.78',
     'discarded',
   ),
   (
@@ -235,7 +238,9 @@ const _totals = [
   // 171.67 → 340.01 (partial → complete).
   (_parmesan, 'complete', '339.97'),
   // 438.34 → 346.62.
-  (_francese, 'complete', '346.57'),
+  // RE-PIN (M82 batch, v84, C5a): its 1 tablespoon flour |2 at 5 oz a cup,
+  // 7.54 → 8.86 g (the replay 346.62 → 347.83): was 346.57.
+  (_francese, 'complete', '347.78'),
   // 511.56 → 407.88.
   (_saltimbocca, 'complete', '407.82'),
   // 349.73 → 258.01.

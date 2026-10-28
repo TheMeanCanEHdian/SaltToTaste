@@ -115,144 +115,156 @@ const List<_Row> _reach = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 60.33 g, 220.81 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 47.03 g, 172.13 kcal (the v84 replay's row).
   (
     _sandwiches,
     6,
     '½ cup all-purpose flour',
     789890,
     '0.950000',
-    '47.03',
-    '172.13',
+    '51.49',
+    '188.45',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 63.88 g, 243.38 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 49.79 g, 189.70 kcal (the v84 replay's row).
   (
     _sandwiches,
     7,
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '49.79',
-    '189.70',
+    '46.41',
+    '176.82',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 2.27 g, 1.16 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 1.77 g, 0.90 kcal (the v84 replay's row).
   (
     _sandwiches,
     9,
     '½ teaspoon baking powder',
     172804,
     '0.850000',
-    '1.77',
-    '0.90',
+    '1.65',
+    '0.84',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 180.00 g, 77.40 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 140.31 g, 60.33 kcal (the v84 replay's row).
   (
     _sandwiches,
     10,
     '¾ cup beer',
     2710616,
     '0.990000',
-    '140.31',
-    '60.33',
+    '130.78',
+    '56.24',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 120.66 g, 441.62 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 40.36 g, 147.72 kcal (the v84 replay's row).
   (
     _wings,
     8,
     '1 cup all-purpose flour',
     789890,
     '0.950000',
-    '40.36',
-    '147.72',
+    '41.53',
+    '152.00',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
   // v56: 23.95 g, 91.27 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 8.01 g, 30.52 kcal (the v84 replay's row).
   (
     _wings,
     9,
     '3 tablespoons cornstarch',
     169698,
     '1.000000',
-    '8.01',
-    '30.52',
+    '7.02',
+    '26.75',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
   // v56: 59.95 g, 219.42 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
   (
     _fishChips,
     2,
     '1½ cups unbleached all-purpose flour',
     789890,
     '0.950000',
-    '89.12',
-    '326.18',
+    '93.89',
+    '343.64',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 63.88 g, 243.38 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
   (
     _fishChips,
     3,
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '31.45',
-    '119.82',
+    '28.21',
+    '107.48',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 0.90 g, 2.86 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 0.44 g, 1.40 kcal (the v84 replay's row).
   (
     _fishChips,
     4,
     '½ teaspoon cayenne pepper',
     170932,
     '1.000000',
-    '0.44',
-    '1.40',
+    '0.40',
+    '1.27',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 1.16 g, 3.27 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 0.57 g, 1.61 kcal (the v84 replay's row).
   (
     _fishChips,
     5,
     '½ teaspoon paprika',
     171329,
     '0.900000',
-    '0.57',
-    '1.61',
+    '0.51',
+    '1.44',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 4.53 g, 2.31 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 2.23 g, 1.14 kcal (the v84 replay's row).
   (
     _fishChips,
     8,
     '1 teaspoon baking powder',
     172804,
     '0.850000',
-    '2.23',
-    '1.14',
+    '2.00',
+    '1.02',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // v56: 340.19 g, 146.28 kcal
+  // RE-PIN (M82 batch, v84, C5a): was 167.52 g, 72.03 kcal (the v84 replay's row).
   (
     _fishChips,
     10,
     '1½ cups (12 ounces) cold beer',
     2710616,
     '0.565000',
-    '167.52',
-    '72.03',
+    '150.23',
+    '64.60',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -285,36 +297,39 @@ const List<_Row> _standIns = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // v56: the same grams; the flag moved
+  // RE-PIN (M82 batch, v84, C5a): was 39.27 g, 104.46 kcal (the v84 replay's row).
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     0,
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
     174924,
     '0.914286',
-    '39.27',
-    '104.46',
+    '36.69',
+    '97.60',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // v56: the same grams; the flag moved
+  // RE-PIN (M82 batch, v84, C5a): was 16.92 g, 61.93 kcal (the v84 replay's row).
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     1,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '16.92',
-    '61.93',
+    '18.57',
+    '67.97',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // v56: the same grams; the flag moved
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.39 kcal (the v84 replay's row).
   (
     '0288-maryland-crab-cakes.yaml',
     8,
     '¼ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '30.16',
-    '110.39',
+    '33.62',
+    '123.05',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
 ];
@@ -592,9 +607,12 @@ void main() {
             rowOf(file, position).grams!.toStringAsFixed(2);
         expect(g(_tempura, 2), '99.71');
         expect(g(_tempura, 4), '105.05');
-        expect(g(_fishChips, 2), '89.12');
-        expect(g(_sandwiches, 7), '49.79');
-        expect(g(_wings, 8), '40.36');
+        // RE-PIN (M82 batch, v84, C5a): the batter flours at 5 oz a cup
+        // re-solve the coats' f (the v84 replay's rows): was 89.12, 49.79,
+        // 40.36.
+        expect(g(_fishChips, 2), '93.89');
+        expect(g(_sandwiches, 7), '46.41');
+        expect(g(_wings, 8), '41.53');
         expect(
           basisOf(_sandwiches, 7),
           // RE-PIN (M66 batch, v65, Q1 b): the breading's carbohydrate named.
@@ -683,8 +701,10 @@ void main() {
       }
 
       expect(of(_tempura), ('partial', '280.02')); // v56 381.94
-      expect(of(_wings), ('complete', '512.96')); // v56 601.62
-      expect(of(_sandwiches), ('complete', '1028.23')); // v56 1,057.75
+      // RE-PIN (M82 batch, v84, C5a): the coats' flour re-solves (the
+      // replay's 512.96 → 513.09, 1,028.23 → 1,028.15): was 512.96, 1028.23.
+      expect(of(_wings), ('complete', '513.09')); // v56 601.62
+      expect(of(_sandwiches), ('complete', '1028.15')); // v56 1,057.75
       // fish-and-chips (replay 981.40, v56 1,003.49): its oil |1 reads
       // 172336 in a fresh compute, 2710187 in snapshot 23 (above) — the
       // status only.

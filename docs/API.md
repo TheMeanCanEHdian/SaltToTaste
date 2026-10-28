@@ -5154,6 +5154,187 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v84 (batch M82; matcherVersion 79 — 614 rows move: 569 of the
+572 the batch names, 24 consequences of its rules on their own lines
+beyond the brief's enumerated list (accepted, ruling4), 21 routed parents; prep51 design_v2 §2 M82; zero requests; server
+only; replayed on snapshot 29 against the v82 rows, both orders
+byte-identical, every row attributed to one rule by reverting that rule
+alone, calls 0).** Pieces and densities, decided under the 2026-10-07
+standing authorization:
+- **C1 — the white sandwich-bread slice at ATK's prints.** `_pieceWeights`
+  gains `('white sandwich bread', 45.36)` (Old-Fashioned Stuffed Turkey's
+  "1½ pounds (about 15 slices) high-quality white sandwich bread") and
+  `('hearty white sandwich bread', 40.5)` (Apple-Blackberry Betty's "10
+  ounces (about 7 slices)"), both flagged in `_approximatePieces` — the CP9
+  Q6 corpus-print class (v51's thick-cut bacon). SR 174924 publishes
+  'slice' 29 / 25 g, 'slice, large' 30 g, 'slice, thin' 20 g, none the
+  table's old 28 g. The unsourced `('sandwich bread', 28)` is deleted
+  (ruling4): a loaf no print names weighs on its record's own slice —
+  french-toast-casserole|5 "10 slices potato sandwich bread, halved
+  diagonally" on SR 167943 "Bread, potato" 'slice' 32 g, 280.00 → 320.00 g
+  "10 slice · USDA portion" (+106.40 kcal), as individual-summer-berry-
+  puddings|6 reads the same record at v82 (384.00 g "12 slice · USDA
+  portion") — one row beyond the brief, accepted (ruling4: the record's own
+  FDC portion over a kitchen figure, CP9 Q6 / §0.1). 29 piece rows
+  +3,811.80 kcal; 13 coat parts in 6 recipes re-solve with C5a (+51.42: a
+  heavier slice lowers the coat's f).
+  Unchanged: the cup-printed croutons (carrot-ginger-soup §0|2 70.00 g "2
+  cup · USDA portion"), pork-schnitzel|0's cups, the weight rows.
+- **C1b — "crusts removed" (NEW arm in `lineGrams`, a field read
+  [re-point → `prep`]).** A slice of SR 174924 read as a piece whose parsed
+  `prep` matches `\bcrusts? removed\b` keeps the record's own 'slice crust
+  not eaten' 12 g of its 'slice' 29 g: basis "… × 12/29 crusts removed
+  (USDA: 'slice crust not eaten' 12 g of 'slice' 29 g)". 10 rows, with C1
+  −585.14 against v82 (C1b −1,386.82 against C1 alone); creamless-creamy-
+  tomato-soup|6 84.00 → 56.31 g. A cup-printed slice line (pork-schnitzel|0,
+  its own cups) and another record keep the whole slice.
+- **C2 — the poblano at the corpus print.** `('poblano', 45)` (unsourced)
+  → 129.6 g (Skillet Chicken Fajitas' "1 pound (3 to 4) poblano chiles" at
+  the count's midpoint, as v37 Z9 reads a range), flagged "ATK: 1 pound
+  poblano chiles, as bought, ≈ 3 to 4" — gross, on a seeded record. 5 rows
+  +402.56 (the literal the basis prints: 4 × 129.6 = 518.40 g on
+  roasted-poblano-and-black-bean-enchiladas|1; 453.59 / 3.5 gives 518.39).
+- **C3a — a counted garlic clove reads its printed volume (NEW arm in
+  `lineGrams`).** On a `volumeSiblings` record (1104647 → SR 169230) a line
+  whose own reading is a PIECE, whose item names the clove, and whose
+  amounts carry a volume, with no second count in the comma clause before
+  its paren [re-point → `measurement`/`item`], weighs that volume on the
+  sibling: pasta-caprese|2 "1 small garlic clove, … (about ½ teaspoon)" 3.00
+  → 1.40 g, "1/2 teaspoon · USDA portion of "Garlic, raw"". Kept: a clove
+  unit ("3 cloves garlic", 9.00 g), a second count ("5 … cloves, 3 peeled …
+  and 2 minced (about 2 teaspoons)", 15.00 g), onions and every other
+  sibling (C3b closed), a printed weight (the piece gate). 168 rows −180.32.
+  With no 169230 cached the clove keeps its count; `gramsFor`'s sibling
+  fetch gains the same predicate, so a compute fetches 169230 once for such
+  a line (snapshot 29 caches it: 0 requests; a 404 is cached nowhere, so a
+  superseded 169230 is asked once per pass, as base's sibling fetch).
+- **C5a — the corpus's cup of flour on the portion-less records.**
+  `_densities` 'all-purpose flour' / 'flour' 5 × 28.3495 / 236.588 =
+  0.5991 (199 of 203 prints: 5 oz a cup) and 'whole-wheat flour' 0.6590
+  (5½ oz), each `recordFirst` in `_approximateDensities` (the Z5 form;
+  789890 / 790085 publish only a 30 g racc), flagged "ATK: 1 cup
+  all-purpose flour = 5 ounces" / "… whole-wheat flour = 5½ ounces". 103
+  density and coat rows +1,622.09 (wicked-good-boston-cream-pie|4 "¼ cup
+  all-purpose flour" 30.16 → 35.44 g; the exact quotient, 0.599132 — 0.5991
+  rounded gives 35.43). RULE B's medium threshold reads it too: flour's ¼
+  cup is 35.4 g (was 30.2). Weight-printed flour lines keep their weight.
+  The brief's C5a figure, ROW +1,643.61, is pC's C5a-alone model over its
+  116 rows (these 103 and the 13 coat parts shared with C1); the replay with
+  C1 reverted gives +1,660.96 over them, +17.35: pC's model put
+  pork-schnitzel-breaded-pork-cutlets|1 "½ cup unbleached all-purpose
+  flour" at 13.44 g (49.18 kcal) and its bread |0 at 37.16 g (98.85), the
+  replay weighs 18.57 / 36.69 g (67.97 / 97.60: +18.79, −1.25) — the
+  figures of pC's own joint model (SHIP_all), so the REACH decomposition
+  below is unaffected — and 100 more rows differ by cents (−0.11).
+- **C6a — an extra-virgin olive oil at its record's own volume figure.**
+  `_volumeAliases` gains 'milliliter' and the NEW key `('virgin olive oil',
+  0.92)` is `recordFirst` with no flag: 748608 "Oil, olive, extra virgin"
+  weighs by its '100 milliliter' 90.7 g (eggplant-parmesan|9 "2 tablespoons
+  extra-virgin olive oil" 27.21 → 26.82 g, "2 tablespoon · USDA portion ·
+  nutrients of "Oil, olive, salad or cooking""). 'oil' itself stays
+  table-first (ruling4): FNDDS spoon portions are rounded to the gram
+  (2710180's '1 tablespoon' 14 g = 0.947 g/mL, 3 % off an oil's 0.92), so
+  record-first standing goes to the record whose own volume figure is a
+  precise per-100-mL portion (748608 '100 milliliter' 90.7 g), not to every
+  oil record. 241 rows −1,421.16 (240 density rows −1,420.03;
+  pollo-en-pepitoria…|2's "2 teaspoons kept" 9.07 → 8.94). The M77 section
+  (BELOW — older sections follow) describes the v77 basis `1 tablespoon ≈
+  15 mL · nutrients of "Oil, olive, salad or cooking"`; from v84 the 240
+  measured 748608 rows are `portion` and print `… · USDA portion · nutrients
+  of …` (0 of 240 carry "≈ N mL"). NOT RULED HERE (recorded for the owner):
+  a rounded spoon portion as the density for a non-matching unit — 'oil'
+  record-first moves 145 rows on other oil records, ROW +308.28 (2710180
+  92, 2710190 25, 2710186 15, 2710187 7, 172336 2, four more 1 each) — and
+  'oil' matching "oil-cured black olives": roasted-fennel §"Crunchy
+  Oil-Cured Olives"|0 27.21 g at 0.92 for chopped olives against the olive
+  record's own '1 cup' 135 g → 16.88 (2710090; the variant replayed on
+  this tree, nothing shipped).
+- **C6b — the drained oil-packed white tuna (design Q7 (ii) (b)).**
+  `drainedCanGrams` reads `_drainedCanShares` (NEW): SR 175157, which
+  publishes no sized drained portion, at SR 173708's 'can (12.5 oz),
+  drained' 321 g of 354.37 g (0.906), flagged "approximate (drained weight:
+  FDC's oil-packed light tuna can, 321 g of 12.5 oz)":
+  pan-bagnat-provencal-tuna-sandwich|14 368.54 → 333.84 g, −64.55.
+REACH (the replay): ROW +4,023.73, RECIPE ENERGY +3,789.78 over 424
+recipes (the brief's ≈ +3,602.42 over ≈ 418; +187.36 = the consequence
+rows below +184.41, K-8's three unmoved rows +4.26 — the brief's model
+counts them at −4.26 —, the planner's models elsewhere −1.31). The 569 named rows
++3,530.30 against the brief's +3,527.32 for its 572: +2.98 = +4.26 the
+three named rows the replay does not move (the brief's model: −1.24,
+−1.63, −1.38), −1.13 C6a's 240 density rows (−1,420.03 against pC's
+−1,418.90: pC's grams sit a cent off the replay's on 66 rows, −3.54, and
+its model scales v82's 2-dp row energies, +2.41), −0.17 C5a (its 103 rows
+−0.21 — the exact quotient 0.599132 against pC's 0.5991 puts 31 rows a
+cent up, +1.08, the scaled 2-dp energies −1.29 — and the 13 coat rows it
+shares with C1 +0.04, pC's coat model), −0.04 C3a (row-kcal rounding;
+its 168 rows weigh pC's grams exactly), +0.04 C1 alone, C1 + C1b and C2
+(+0.02, +0.01, +0.01; C2's the literal 129.6 the basis prints) and +0.02 the brief's own
+rounding (its row model re-summed: +3,527.34). Not moved though named: the
+three bacon-pan oils (pasta-with-tomato-bacon-and-onion|0 9.93 g,
+pasta-alla-gricia…|1 13.08, salade-lyonnaise|1 11.07): rule B1's split
+reads the pan's oil with no food (`_panOilGrams`, the one figure the bacon
+row reads too), so they stay; K-8's ≈ −5.39 is pollo-en-pepitoria…|2's
+row alone, −1.13 (80.17 → 79.04 kcal; its recipe −1.16) — accepted
+(ruling4: a record-bound pan oil is a new cross-row read that re-splits
+the bacon rows; not this batch, no follow-up). Consequences on the rules'
+own lines beyond the brief's enumerated list, accepted (ruling4) (24 rows,
++183.27): french-toast-casserole|5 (C1, above, +106.40); the five
+other-shape flour rows the brief bounds and their
+batter / dip co-parts (fish-and-chips|2 89.12 → 93.89 g with |3 |4 |5 |8
+|10, crispy-fish-sandwiches…|6 with |7 |9 |10, oven-fried-onion-rings|0
+60.33 → 70.87, chicken-francese-2|5, best-chicken-parmesan|13 with |12);
+the volume "plus" part of three weight-printed flour lines
+(blueberry-boy-bait|0, congyoubing|7, french-apple-cake|3); a 26th coat
+row, maryland-crab-cakes|8 30.16 → 33.62 (the ¼ cup's carbohydrate now
+above the budget: f 0.949); falafel|11's uptake on the heavier mix 85.55 →
+86.69; crispy-pan-fried-pork-chops|3 (a clove in a dip) 0.58 → 0.54 with its
+buttermilk |1; chicken-francese-2's frying oils, which share the food's
+uptake by their full grams — |8 26.13 → 25.94, |9 26.89 → 27.08, |8 + |9
+= 53.02 g at v82 and v84 (the uptake's mass, the brief's "must NOT move",
+pinned; only the split moves). 10 recipes move by those alone (+173.02). Routed parents (21,
++310.16) carry their moved sections and whole-recipe children (K-5's
+guacamole hop among them: cheesy-nachos…|6 −0.29). Statuses, holds,
+buckets and notes unmoved; 27 section lines move by their totals; a
+recompute writes nothing. Two moved rows are stored `overridden` on
+snapshot 29 (acquacotta…|4 |17: a pick of 748608, its grams derived — none
+typed, no decision row): C6a's grams only, the pick kept.
+Order rows (§0.5): the coat budgets M85 and M88 re-derive on these rows
+(chicken-kiev|7 77.68 → 93.87 g, |11 83.69 → 73.34, breaded-chicken-
+cutlets|3 29.01 → 25.43, dakgangjeong…|8 40.36 → 41.53 and |9 8.01 → 7.02).
+Calibration (reported, never fitted): audit 6 R05 +11.4 → +11.7 %, R09
++5.8 → +5.9, R16 −1.0 → +0.2, R24 +0.3 → −0.7, R25 +0.6 → 0.0, R03
+oven-fried-onion-rings +54.6 → +57.4 % (away); audit 4 R10 falafel +5.3 →
++6.6 % (away; the design's +6.1 before the uptake); audit 3 R10 +5.6 →
++6.6 % (away), R16 −0.6 → +1.3; audit 2 R08 salade-lyonnaise −8.8 %
+(unmoved); french-toast-casserole is in no calibration set (audits 2–6).
+Pins: nutrition_v84_test (25 tests — the three "plus" parts above among them; the replay's figures, every converse;
+one mutant per rule and per gate, each killed by a value pin — the plain
+'flour' mark's on a synthesized line, stated: every corpus line that key
+reads prints its weight; SR 167943
+and 175158 recorded from snapshot 29 — the recorded-foods census 548 → 550
+/ 418 → 420; chicken-francese-2's |8 + |9 sum; french-toast-casserole|5
+on 167943's slice, the plain key restored at 28 its mutant); the existing
+suite re-pinned as equalities (RE-PIN M82; nutrition_engine_test's soft
+sandwich bread: 6 slices 168 g → the white loaf 272.16 g, the plain item
+none);
+the contract goldens nutrition_matches_section_own and nutrition_section_own
+re-captured (the legacy-v0 EVOO line 40.81 → 40.23 g).
+Cost: no step reader; C1b one regex test of the parsed prep on a 174924
+piece, C3a one regex of the item and one linear scan of the raw line on a
+sibling-record piece. At the caps (400 × a real clove line under the
+recipe's own steps) the compute and the GET count base's families exactly;
+the TRUE shape (0327|2) measures compute 736 / 693 → 766 / 792 ms, GET 420 /
+421 → 457 / 476 ms (each line weighed on the sibling; one more detail
+fetched, 169230), the QUIET shape (0491|2) 621 / 634 → 618 / 627 ms and 412
+/ 413 → 417 / 422 ms; backstop 10 s.
+Deploy note: matcherVersion 79 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests on a cache that holds 169230). The kcal
+digest (`tool/replay/digest.sh`: Σ calories_per_serving over
+recipe_nutrition, sections included) moves 765,642.77 → 766,591.23,
++948.46 over 451 rows (424 recipes, 27 sections) — a per-serving sum, not
+the recipe energy above (+3,789.78, kcal per serving × servings over the
+recipes).
+
 **Matcher v83 (batch M81; matcherVersion 78 — no corpus row moves; the
 person paths and pins of prep51 design_v2 §2 M81; zero requests; server
 only; replayed on snapshot 29, byte-identical to v82 on both orders, each
@@ -6464,7 +6645,8 @@ nutrients are 171413's — energy 884, fat 93.7 → 100 g per 100 g, saturated
 Foundation record lacks (sodium 2 mg, iron 0.56 mg, vitamin E 14.35 mg,
 vitamin K 60.2 µg — the record, not a rule). The fix sheet's `kcal_per_100g`
 reads 884. The basis names the sibling, `"1 tablespoon ≈ 15 mL · nutrients
-of \"Oil, olive, salad or cooking\""` — and, new in v77, so does a
+of \"Oil, olive, salad or cooking\""` (v84: `· USDA portion`, the record's
+own 100 mL) — and, new in v77, so does a
 poured-off oil's kept part or a frying oil's uptake (the DISCARDED shape,
 counted grams > 0: `"⅓ cup kept with the bacon grease (the steps pour off
 the rest) · nutrients of \"Oil, olive, salad or cooking\""`), which named no

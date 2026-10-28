@@ -194,14 +194,17 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     'counted',
     "2 × 340 g (printed weight) × 0.67 edible · approximate (derived from USDA AH-102 items 585–586 by 583's carcass shares: leg (thigh + drumstick), raw → meat and skin 66.7 %; a leg quarter's back portion is not in this figure)",
   ),
+  // RE-PIN (M82 batch, v84, C6b): SR 175157 publishes no sized drained
+  // portion, so the jars keep SR 173708's drained share (321 g of 12.5 oz,
+  // 0.906): was 368.54, '2 × 184 g (printed weight)' (the v84 replay's row).
   (
     '0467-pan-bagnat-provencal-tuna-sandwich.yaml',
     14,
     '2 (6½-ounce) jars oil-packed tuna, drained',
     175157,
-    '368.54',
+    '333.84',
     'counted',
-    '2 × 184 g (printed weight)',
+    "2 × 184 g (printed weight) × 0.906 drained · approximate (drained weight: FDC's oil-packed light tuna can, 321 g of 12.5 oz)",
   ),
   (
     '0553-pad-thai.yaml',

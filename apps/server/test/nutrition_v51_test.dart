@@ -199,13 +199,14 @@ _rows = [
     '1 teaspoon kept (the steps pour off the rest)',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 9.07 g, 80.17 kcal (the v84 replay's row).
   (
     '0126-pollo-en-pepitoria-spanish-braised-chicken-with-sherry-and-saffron.yaml',
     null,
     2,
     '1 tablespoon extra-virgin olive oil',
     748608,
-    '9.07',
+    '8.94',
     null,
     null,
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
@@ -325,17 +326,18 @@ _rows = [
   // RE-PIN (M64 batch, v63, F9): the window is now any earlier sentence —
   // the crispy-skinned breasts' oil IS cut (2 teaspoons kept, 9.07 g; was
   // 28.00 whole); Marbella's stays uncut (its binder, C1).
+  // RE-PIN (M82 batch, v84, C6a): was 40.81 g, 360.77 kcal (the v84 replay's row).
   (
     '0124-chicken-marbella.yaml',
     null,
     2,
     '3 tablespoons extra-virgin olive oil',
     748608,
-    '40.81',
+    '40.23',
     null,
     null,
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '3 tablespoon ≈ 44 mL · nutrients of "Oil, olive, salad or cooking"',
+    '3 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   (
@@ -388,17 +390,18 @@ _rows = [
     '1 teaspoon ≈ 5 mL',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 54.42 g, 481.03 kcal (the v84 replay's row).
   (
     '0228-roast-rack-of-lamb-with-roasted-red-pepper-relish.yaml',
     null,
     6,
     '¼ cup extra-virgin olive oil',
     748608,
-    '54.42',
+    '53.65',
     null,
     null,
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1/4 cup ≈ 59 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1/4 cup · USDA portion · nutrients of "Oil, olive, salad or cooking"',
     null,
   ),
   // The four cured-pork rows M50 settled: byte-equal to M50's landing

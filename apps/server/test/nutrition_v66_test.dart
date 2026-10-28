@@ -517,14 +517,15 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the part the recipe keeps and the oil the fried food absorbs counted · approximation (frying oil absorbed: 9.89 % of the raw beef's weight — USDA FNDDS 2705842 recipe: 9 g oil per 90.99 g raw beef steak (no record for beef; read as Beef, steak, country fried))",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
   (
     '0570-falafel.yaml',
     11,
     '2 quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '85.55',
-    '769.95',
+    '86.69',
+    '780.21',
     'auto',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix's weight — derived from USDA SR Legacy 172455 \"Falafel, home-prepared\")",
@@ -637,28 +638,30 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.5 % of the raw plantains' weight — derived from USDA SR Legacy 168200 \"Plantains, yellow, fried, Latino restaurant\")",
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 26.13 g, 230.99 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     8,
     '⅓ cup extra-virgin olive oil for frying',
     748608,
     '1.000000',
-    '26.13',
+    '25.94',
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '220.35'.
-    '230.99',
+    '229.31',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
     'discarded in cooking — only the oil the fried food absorbs counted · nutrients of "Oil, olive, salad or cooking" · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 26.89 g, 242.01 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     9,
     '⅓ cup vegetable oil for frying',
     2710180,
     '0.923333',
-    '26.89',
-    '242.01',
+    '27.08',
+    '243.72',
     'auto',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)",
@@ -1013,7 +1016,9 @@ void main() {
           '40.72',
         ),
         ('1194-lumpiang-shanghai-with-seasoned-vinegar.yaml', 17, '99.34'),
-        ('0570-falafel.yaml', 11, '85.55'),
+        // RE-PIN (M82 batch, v84, C5a): the uptake on the mix's heavier
+        // flour |9 (the v84 replay's row): was 85.55.
+        ('0570-falafel.yaml', 11, '86.69'),
         (_doughnuts, 8, '368.54'),
       ]) {
         expect(

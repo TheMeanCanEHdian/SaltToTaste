@@ -345,9 +345,12 @@ void main() {
       expect(rowAt(_crab, 3).status, 'unmatched');
       // RE-PIN (M52 batch, v53): |8 counted by the coat budget (C1, f = 1:
       // the whole ¼ cup) and |9 the crab's frying oil (Q24 b), both unheld.
+      // RE-PIN (M82 batch, v84, C5a): the ¼ cup at 5 oz a cup carries more
+      // carbohydrate than the budget's B — f 0.949, 33.62 g (the v84 replay's
+      // row): was '30.16' (f = 1, the whole ¼ cup at 0.51).
       expect(
         (rowAt(_crab, 8).hold, rowAt(_crab, 8).grams?.toStringAsFixed(2)),
-        (null, '30.16'),
+        (null, '33.62'),
       );
       // RE-PIN (M63 batch, v62, Q11): |9 at the crab cake's own read oil,
       // FNDDS 2706549's 7.69 % (was 30.30 on the breast's 6.68 % stand-in).

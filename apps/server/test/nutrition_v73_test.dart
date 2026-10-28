@@ -2278,6 +2278,7 @@ const List<_Row> _unmoved = [
     '3.19',
     '1 1/2 teaspoon ≈ 7 mL',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 3.00 g, 4.29 kcal (the v84 replay's row).
   (
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
     null,
@@ -2286,11 +2287,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '3.00',
+    '2.80',
     'auto',
     null,
-    '4.29',
-    '1 × 3 g each',
+    '4.00',
+    '1 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
@@ -2404,6 +2405,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 40.81 g, 360.77 kcal (the v84 replay's row).
   (
     '0038-foolproof-vinaigrette.yaml',
     null,
@@ -2412,13 +2414,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '40.81',
+    '40.23',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '344.16'.
-    '360.77',
+    '355.68',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '3 tablespoon ≈ 44 mL · nutrients of "Oil, olive, salad or cooking"',
+    '3 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
@@ -2448,6 +2450,7 @@ const List<_Row> _unmoved = [
     '86.40',
     '3/4 cup · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 3.00 g, 4.29 kcal (the v84 replay's row).
   (
     '0017-creamy-mushroom-soup.yaml',
     null,
@@ -2456,11 +2459,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '3.00',
+    '2.80',
     'auto',
     null,
-    '4.29',
-    '1 × 3 g each',
+    '4.00',
+    '1 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
@@ -2826,6 +2829,7 @@ const List<_Row> _unmoved = [
     '192.06',
     '1 cup ≈ 237 mL',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 22.62 g, 82.80 kcal (the v84 replay's row).
   (
     '0172-braised-turkey.yaml',
     null,
@@ -2834,11 +2838,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '22.62',
+    '26.58',
     'auto',
     null,
-    '82.80',
-    '3 tablespoon ≈ 44 mL',
+    '97.27',
+    '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0172-braised-turkey.yaml',
@@ -2868,6 +2872,7 @@ const List<_Row> _unmoved = [
     '189.85',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 46.82 g, 20.13 kcal (the v84 replay's row).
   (
     '0198-crispy-pan-fried-pork-chops.yaml',
     null,
@@ -2876,12 +2881,13 @@ const List<_Row> _unmoved = [
     2705393,
     'Buttermilk',
     '0.990000',
-    '46.82',
+    '46.85',
     'auto',
     null,
-    '20.13',
+    '20.15',
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 0.58 g, 0.83 kcal (the v84 replay's row).
   (
     '0198-crispy-pan-fried-pork-chops.yaml',
     null,
@@ -2890,10 +2896,10 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '0.58',
+    '0.54',
     'auto',
     null,
-    '0.83',
+    '0.77',
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   (
@@ -3512,6 +3518,7 @@ const List<_Row> _unmoved = [
     '276.69',
     'from 8 ounce',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
     null,
@@ -3520,11 +3527,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '6.00',
+    '5.60',
     'auto',
     null,
-    '8.58',
-    '2 × 3 g each',
+    '8.01',
+    '2 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
@@ -3629,14 +3636,16 @@ const List<(String, String?, String, String, String, String)> _totals = [
     '68.57',
     '2742.91',
   ),
+  // RE-PIN (M82 batch, v84): was 74.29, 1783.03 (the replay 74.33 → 74.32).
   (
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
     null,
     'complete',
     'complete',
-    '74.29',
-    '1783.03',
+    '74.28',
+    '1782.75',
   ),
+  // RE-PIN (M82 batch, v84): was 384.04, 384.04 (the replay 384.04 → 378.94).
   (
     '0038-foolproof-vinaigrette.yaml',
     null,
@@ -3644,16 +3653,18 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'complete',
     // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal (|6, 3 tablespoons) — was 367.43
     // and 367.43 (M73 moved neither).
-    '384.04',
-    '384.04',
+    '378.94',
+    '378.94',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 399.41, 2396.43 (the replay 399.43 →
+  // 399.38: its |2 garlic clove at its printed teaspoon).
   (
     '0017-creamy-mushroom-soup.yaml',
     null,
     'complete',
     'complete',
-    '399.41',
-    '2396.43',
+    '399.36',
+    '2396.15',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
@@ -3663,21 +3674,23 @@ const List<(String, String?, String, String, String, String)> _totals = [
     '303.37',
     '303.37',
   ),
+  // RE-PIN (M82 batch, v84): was 578.50, 5785.01 (the replay 578.50 → 579.95).
   (
     '0172-braised-turkey.yaml',
     null,
     'complete',
     'complete',
-    '578.50',
-    '5785.01',
+    '579.95',
+    '5799.48',
   ),
+  // RE-PIN (M82 batch, v84): was 480.50, 1922.00 (the replay 480.50 → 480.49).
   (
     '0198-crispy-pan-fried-pork-chops.yaml',
     null,
     'partial',
     'partial',
-    '480.50',
-    '1922.00',
+    '480.49',
+    '1921.95',
   ),
   (
     '0603-grilled-stuffed-pork-tenderloin.yaml',
@@ -3711,13 +3724,14 @@ const List<(String, String?, String, String, String, String)> _totals = [
     '283.63',
     '1701.76',
   ),
+  // RE-PIN (M82 batch, v84): was 580.41, 2321.62 (the replay 580.41 → 580.26).
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
     null,
     'complete',
     'complete',
-    '580.41',
-    '2321.62',
+    '580.26',
+    '2321.05',
   ),
 ];
 

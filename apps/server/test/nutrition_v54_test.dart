@@ -2610,48 +2610,60 @@ const List<
 >
 _whole = [
   // P8: 2 + 90 + 45 + 15 + 3 = 155 min → 5009 5 % (468.44 g red wine)
+  // RE-PIN (M82 batch, v84): its garlic |0 (C3a) and flour |7 (C5a) — the energy before and after the
+  // ethanol moves alike (was 4937.85, 4607.28, 189.36, 389.59).
   (
     '0005-best-beef-stew.yaml',
-    4937.85,
-    4607.28,
-    189.36,
-    389.59,
+    4956.58,
+    4626.01,
+    193.33,
+    390.14,
     [(8, 2710688, 468.44, 5)],
   ),
   // P10 restated: 180 + the skimmed liquid reduced 18 = 198 min → 5 %
+  // RE-PIN (M82 batch, v84): its flour |8 (C5a) — the energy before and after the
+  // ethanol moves alike (was 3666.73, 3137.48).
   (
     '0426-beef-braised-in-barolo.yaml',
-    3666.73,
-    3137.48,
+    3671.56,
+    3142.31,
     0,
     0,
     [(10, 2710688, 750.00, 5)],
   ),
   // Q-f: "Off heat, stir in brandy" into the hot soup → 5002 85 %
+  // RE-PIN (M82 batch, v84): its flour |6 (C5a) — the energy before and after the
+  // ethanol moves alike (was 1545.22, 1535.07, 133.07, 30.32).
   (
     '0013-ultimate-cream-of-tomato-soup.yaml',
-    1545.22,
-    1535.07,
-    133.07,
-    30.32,
+    1554.87,
+    1544.72,
+    135.11,
+    30.61,
     [(9, 2710699, 29.28, 85)],
   ),
   // P1: brought to a simmer, ladled → boil-off 85 %
+  // RE-PIN (M82 batch, v84): its garlic |2 (C3a) — the energy before and after the
+  // ethanol moves alike (was 2408.67, 2396.43).
   (
     '0017-creamy-mushroom-soup.yaml',
-    2408.67,
-    2396.43,
+    2408.39,
+    2396.15,
     0,
     0,
     [(8, 175112, 78.07, 85)],
   ),
   // D1 (Q-f extended): "Off the heat, add the lemon juice and vermouth"
-  ('0428-shrimp-scampi.yaml', 1377.47, 1375.16, 0, 0, [(5, 175112, 14.75, 85)]),
+  // RE-PIN (M82 batch, v84): its garlic |3 (C3a) — before and after alike
+  // (was 1377.47, 1375.16).
+  ('0428-shrimp-scampi.yaml', 1376.32, 1374.01, 0, 0, [(5, 175112, 14.75, 85)]),
   // D1 (the shape): Madeira cooked 2–3 min, the stuffing rolled in a rare roast
+  // RE-PIN (M82 batch, v84): its garlic |6 and |15 (C3a) — the energy before and after the
+  // ethanol moves alike (was 2813.50, 2795.14).
   (
     '0216-roast-beef-tenderloin-with-caramelized-onion-and-mushroom-stuffing.yaml',
-    2813.50,
-    2795.14,
+    2812.93,
+    2794.57,
     0,
     0,
     [(7, 175112, 117.11, 85)],
@@ -2662,13 +2674,16 @@ _whole = [
   // RE-PIN (M59 batch, v58, F1): the oil |1's kept ¼ cup is rinsed off —
   // 225.19 → 170.78 g on 172336 (884 kcal) here, −480.99 kcal (was 3881.90
   // / 3875.13); the ethanol 6.77 unchanged
+  // RE-PIN (M82 batch, v84, C5a): the batter flour at 5 oz a cup re-solves
+  // the coat — its beer |10 167.52 → 150.23 g (the v84 replay's row), so
+  // the ethanol removed is 6.08 (was 6.77): was 3400.91, 3394.14, 167.52.
   (
     '0255-fish-and-chips.yaml',
-    3400.91,
-    3394.14,
+    3398.19,
+    3392.11,
     0,
     0,
-    [(10, 2710616, 167.52, 85)],
+    [(10, 2710616, 150.23, 85)],
   ),
   // P21: |6 the batter's crepes (sub-minute → 5002), |8 3 T flamed + 1 T
   // into the hot sauce (75/85 by volume = 77.5), |12 the liqueur (85)

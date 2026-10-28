@@ -1298,8 +1298,14 @@ void main() {
     // (80/20 ground beef — a hit in '80 percent lean ground beef' and six
     // more), both differing in some digit (protein 7.56 / 7.5625, 17.5 /
     // 17.53125): compared 546 -> 548, differ 416 -> 418.
-    expect(compared, 548);
-    expect(differ, 418);
+    // RE-PIN (v84, batch M82): its converse pins recorded from snapshot 29
+    // the details of SR 167943 (potato bread — a hit in 'yukon gold
+    // potatoes' and three more; carbohydrate 47.1 / 47.07) and SR 175158
+    // (white tuna in water — a hit in 'skinless white fish fillets';
+    // protein 23.6 / 23.62), both differing in some digit: compared 548 ->
+    // 550, differ 418 -> 420.
+    expect(compared, 550);
+    expect(differ, 420);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
@@ -1472,14 +1478,23 @@ void main() {
       expect(rowIn(db, pie, pieFlour).$2.fdcId, pick);
 
       final calls = provider.fetched.length + provider.searched.length;
+      final fetched = provider.fetched.length;
       await matchAndCompute(db, provider, pie);
       await matchAndCompute(db, provider, bundt);
       final after = rowIn(db, pie, pieFlour).$2;
       expect(after.fdcId, pick);
       expect(after.confidence, 1);
+      // RE-PIN (M82 batch, v84, C3a): the pie's "2 medium garlic cloves, …
+      // (about 2 teaspoons)" now weighs its printed volume on SR 169230,
+      // fetched by [gramsFor] when no cache holds it; here every detail
+      // 404s, and a 404 is cached nowhere (RULE C memoises it per pass), so
+      // the pie's recompute asks 169230 once — its first compute stopped at
+      // its own record's 404. The superseded pick's 404 is still remembered
+      // (never asked again): was `calls` exactly.
+      expect(provider.fetched.sublist(fetched), [169230]);
       expect(
         provider.fetched.length + provider.searched.length,
-        calls,
+        calls + 1,
         reason: 'every 404 was remembered: ${provider.fetched}',
       );
     });

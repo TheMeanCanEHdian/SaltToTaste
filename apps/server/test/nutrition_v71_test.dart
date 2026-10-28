@@ -818,6 +818,7 @@ const List<_Row> _unmoved = [
     '57.60',
     '1/2 cup · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
   (
     '0031-classic-gazpacho.yaml',
     null,
@@ -826,11 +827,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '6.00',
+    '5.60',
     'auto',
     null,
-    '8.58',
-    '2 × 3 g each',
+    '8.01',
+    '2 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0031-classic-gazpacho.yaml',
@@ -1000,6 +1001,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.40 kcal (the v84 replay's row).
   (
     '0034-lighter-corn-chowder.yaml',
     null,
@@ -1008,11 +1010,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '30.16',
+    '35.44',
     'auto',
     null,
-    '110.40',
-    '1/4 cup ≈ 59 mL',
+    '129.70',
+    '1/4 cup ≈ 59 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0034-lighter-corn-chowder.yaml',
@@ -1168,6 +1170,7 @@ const List<_Row> _unmoved = [
     '41.80',
     '1 × 110 g each',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 9.00 g, 12.87 kcal (the v84 replay's row).
   (
     '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
     null,
@@ -1176,11 +1179,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '9.00',
+    '8.45',
     'auto',
     null,
-    '12.87',
-    '3 × 3 g each',
+    '12.08',
+    '1 tablespoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
@@ -1560,6 +1563,7 @@ const List<_Row> _unmoved = [
     '305.02',
     '3 tablespoon ≈ 44 mL',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 22.62 g, 82.80 kcal (the v84 replay's row).
   (
     '0162-slow-roasted-turkey-with-gravy.yaml',
     null,
@@ -1568,11 +1572,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '22.62',
+    '26.58',
     'auto',
     null,
-    '82.80',
-    '3 tablespoon ≈ 44 mL',
+    '97.27',
+    '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0162-slow-roasted-turkey-with-gravy.yaml',
@@ -1715,6 +1719,7 @@ const List<_Row> _unmoved = [
     '192.06',
     '1 cup ≈ 237 mL',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 22.62 g, 82.80 kcal (the v84 replay's row).
   (
     '0172-braised-turkey.yaml',
     null,
@@ -1723,11 +1728,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '22.62',
+    '26.58',
     'auto',
     null,
-    '82.80',
-    '3 tablespoon ≈ 44 mL',
+    '97.27',
+    '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0172-braised-turkey.yaml',
@@ -2038,6 +2043,7 @@ const List<_Row> _unmoved = [
     '16.82',
     '1 × 58 g each',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 72.55 g, 641.37 kcal (the v84 replay's row).
   (
     '0243-arista-tuscan-style-roast-pork-with-garlic-and-rosemary.yaml',
     null,
@@ -2046,13 +2052,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '72.55',
+    '71.53',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '611.84'.
-    '641.37',
+    '632.31',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1/3 cup ≈ 79 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1/3 cup · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0243-arista-tuscan-style-roast-pork-with-garlic-and-rosemary.yaml',
@@ -2138,6 +2144,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 59.82 g, 159.12 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     null,
@@ -2146,10 +2153,10 @@ const List<_Row> _unmoved = [
     174924,
     'Bread, white, commercially prepared (includes soft bread crumbs)',
     '0.914286',
-    '59.82',
+    '65.12',
     'auto',
     null,
-    '159.12',
+    '173.22',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge's excess not counted)",
   ),
   (
@@ -2208,6 +2215,7 @@ const List<_Row> _unmoved = [
     '7.20',
     '1 tablespoon · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 53.82 g, 196.98 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     null,
@@ -2216,10 +2224,10 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '53.82',
+    '57.01',
     'auto',
     null,
-    '196.98',
+    '208.66',
     'discarded in cooking — only "plus 5 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge\'s excess not counted)',
   ),
   (
@@ -2348,6 +2356,7 @@ const List<_Row> _unmoved = [
     '1509.70',
     'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2356,12 +2365,13 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '89.12',
+    '93.89',
     'auto',
     null,
-    '326.18',
+    '343.64',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2370,12 +2380,13 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '31.45',
+    '28.21',
     'auto',
     null,
-    '119.82',
+    '107.48',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 0.44 g, 1.40 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2384,12 +2395,13 @@ const List<_Row> _unmoved = [
     170932,
     'Spices, pepper, red or cayenne',
     '1.000000',
-    '0.44',
+    '0.40',
     'auto',
     null,
-    '1.40',
+    '1.27',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 0.57 g, 1.61 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2398,10 +2410,10 @@ const List<_Row> _unmoved = [
     171329,
     'Spices, paprika',
     '0.900000',
-    '0.57',
+    '0.51',
     'auto',
     null,
-    '1.61',
+    '1.44',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2432,6 +2444,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 2.23 g, 1.14 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2440,10 +2453,10 @@ const List<_Row> _unmoved = [
     172804,
     'Leavening agents, baking powder, double-acting, straight phosphate',
     '0.850000',
-    '2.23',
+    '2.00',
     'auto',
     null,
-    '1.14',
+    '1.02',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2460,6 +2473,7 @@ const List<_Row> _unmoved = [
     '449.06',
     'from 1 1/2 pound',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 167.52 g, 72.03 kcal (the v84 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2468,10 +2482,10 @@ const List<_Row> _unmoved = [
     2710616,
     'Beer',
     '0.565000',
-    '167.52',
+    '150.23',
     'auto',
     null,
-    '72.03',
+    '64.60',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2768,6 +2782,7 @@ const List<_Row> _unmoved = [
     '20.90',
     '1/2 × 110 g each',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 54.42 g, 481.03 kcal (the v84 replay's row).
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
     null,
@@ -2776,13 +2791,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '54.42',
+    '53.65',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '458.88'.
-    '481.03',
+    '474.23',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1/4 cup ≈ 59 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1/4 cup · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
@@ -2910,6 +2925,7 @@ const List<_Row> _unmoved = [
     '2.76',
     '3/4 cup · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 27.21 g, 240.52 kcal (the v84 replay's row).
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
     null,
@@ -2918,13 +2934,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '27.21',
+    '26.82',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '229.44'.
-    '240.52',
+    '237.12',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '2 tablespoon ≈ 30 mL · nutrients of "Oil, olive, salad or cooking"',
+    '2 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
@@ -3109,6 +3125,7 @@ const List<_Row> _unmoved = [
     '77.88',
     '1/3 cup ≈ 79 mL',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 13.60 g, 120.26 kcal (the v84 replay's row).
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
     null,
@@ -3117,13 +3134,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '13.60',
+    '13.41',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '114.72'.
-    '120.26',
+    '118.56',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1 tablespoon ≈ 15 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
@@ -3307,6 +3324,7 @@ const List<_Row> _unmoved = [
     '0.34',
     '1/8 teaspoon ≈ 1 mL',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
   (
     '0304-chicken-fried-steaks.yaml',
     null,
@@ -3315,12 +3333,13 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '6.00',
+    '5.60',
     'auto',
     null,
-    '8.58',
-    '2 × 3 g each',
+    '8.01',
+    '2 teaspoon · USDA portion of "Garlic, raw"',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 22.62 g, 82.80 kcal (the v84 replay's row).
   (
     '0304-chicken-fried-steaks.yaml',
     null,
@@ -3329,11 +3348,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '22.62',
+    '26.58',
     'auto',
     null,
-    '82.80',
-    '3 tablespoon ≈ 44 mL',
+    '97.27',
+    '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0304-chicken-fried-steaks.yaml',
@@ -3573,6 +3592,7 @@ const List<_Row> _unmoved = [
     '89.30',
     'from the printed weight',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 27.21 g, 240.52 kcal (the v84 replay's row).
   (
     '0398-ultimate-grilled-pizza.yaml',
     null,
@@ -3581,13 +3601,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '27.21',
+    '26.82',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '229.44'.
-    '240.52',
+    '237.12',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '2 tablespoon ≈ 30 mL · nutrients of "Oil, olive, salad or cooking"',
+    '2 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0398-ultimate-grilled-pizza.yaml',
@@ -3870,6 +3890,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C1+C1b): was 28.00 g, 74.48 kcal (the v84 replay's row).
   (
     '0402-italian-wedding-soup.yaml',
     null,
@@ -3878,11 +3899,11 @@ const List<_Row> _unmoved = [
     174924,
     'Bread, white, commercially prepared (includes soft bread crumbs)',
     '0.914286',
-    '28.00',
+    '16.76',
     'auto',
     null,
-    '74.48',
-    '1 slice × 28 g each',
+    '44.58',
+    "1 slice × 40.5 g each · approximate (ATK: 10 ounces hearty white sandwich bread ≈ 7 slices) × 12/29 crusts removed (USDA: 'slice crust not eaten' 12 g of 'slice' 29 g)",
   ),
   (
     '0402-italian-wedding-soup.yaml',
@@ -4038,6 +4059,7 @@ const List<_Row> _unmoved = [
     '119.07',
     'from 12 ounce',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 72.55 g, 641.37 kcal (the v84 replay's row).
   (
     '0423-italian-style-grilled-chicken.yaml',
     null,
@@ -4046,13 +4068,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '72.55',
+    '71.53',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '611.84'.
-    '641.37',
+    '632.31',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1/3 cup ≈ 79 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1/3 cup · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0423-italian-style-grilled-chicken.yaml',
@@ -4335,6 +4357,7 @@ const List<_Row> _unmoved = [
     '406.70',
     '4 tablespoon ≈ 59 mL',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 40.22 g, 147.21 kcal (the v84 replay's row).
   (
     '0457-beef-burgundy.yaml',
     null,
@@ -4343,11 +4366,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '40.22',
+    '47.25',
     'auto',
     null,
-    '147.21',
-    '1/3 cup ≈ 79 mL',
+    '172.93',
+    '1/3 cup ≈ 79 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0457-beef-burgundy.yaml',
@@ -4825,6 +4848,7 @@ const List<_Row> _unmoved = [
     '4.26',
     '2 teaspoon ≈ 10 mL',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 3.00 g, 4.29 kcal (the v84 replay's row).
   (
     '0524-chicken-teriyaki.yaml',
     null,
@@ -4833,11 +4857,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '3.00',
+    '2.80',
     'auto',
     null,
-    '4.29',
-    '1 × 3 g each',
+    '4.00',
+    '1 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0524-chicken-teriyaki.yaml',
@@ -4979,6 +5003,7 @@ const List<_Row> _unmoved = [
     '404.73',
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.61 % of the raw chicken wings' weight — USDA FNDDS 2706065 recipe: 7 g oil per 105.96 g raw chicken wing)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 40.36 g, 147.72 kcal (the v84 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -4987,12 +5012,13 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '40.36',
+    '41.53',
     'auto',
     null,
-    '147.72',
+    '152.00',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 8.01 g, 30.52 kcal (the v84 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -5001,10 +5027,10 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '8.01',
+    '7.02',
     'auto',
     null,
-    '30.52',
+    '26.75',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
   (
@@ -5820,6 +5846,7 @@ const List<_Row> _unmoved = [
     '721.21',
     'from 1 1/2 pound',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 72.55 g, 641.37 kcal (the v84 replay's row).
   (
     '0636-grilled-chicken-souvlaki.yaml',
     null,
@@ -5828,13 +5855,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '72.55',
+    '71.53',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '611.84'.
-    '641.37',
+    '632.31',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1/3 cup ≈ 79 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1/3 cup · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0636-grilled-chicken-souvlaki.yaml',
@@ -6284,6 +6311,7 @@ const List<_Row> _unmoved = [
     '254.92',
     'from 2 pound',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 40.81 g, 360.77 kcal (the v84 replay's row).
   (
     '0685-quick-cooked-tough-greens.yaml',
     null,
@@ -6292,14 +6320,15 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '40.81',
+    '40.23',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '344.16'.
-    '360.77',
+    '355.68',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '3 tablespoon ≈ 44 mL · nutrients of "Oil, olive, salad or cooking"',
+    '3 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 9.00 g, 12.87 kcal (the v84 replay's row).
   (
     '0685-quick-cooked-tough-greens.yaml',
     null,
@@ -6308,11 +6337,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '9.00',
+    '8.40',
     'auto',
     null,
-    '12.87',
-    '3 × 3 g each',
+    '12.01',
+    '3 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0685-quick-cooked-tough-greens.yaml',
@@ -7084,6 +7113,7 @@ const List<_Row> _unmoved = [
     '444.00',
     '6 × 50 g each',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 54.42 g, 481.03 kcal (the v84 replay's row).
   (
     '1099-spanish-migas-with-fried-eggs.yaml',
     null,
@@ -7092,13 +7122,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '54.42',
+    '53.65',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '458.88'.
-    '481.03',
+    '474.23',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1/4 cup ≈ 59 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1/4 cup · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '1099-spanish-migas-with-fried-eggs.yaml',
@@ -8297,17 +8327,19 @@ void main() {
           'complete',
           '455.70',
         ), // 1,211.70 → 455.70 (the batch)
+        // RE-PIN (M82 batch, v84): was 586.18 (the replay 586.18 → 587.62).
         (
           '0162-slow-roasted-turkey-with-gravy.yaml',
           null,
           'complete',
-          '586.18',
+          '587.62',
         ), // 608.72 → 586.18
+        // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
         (
           '0172-braised-turkey.yaml',
           null,
           'complete',
-          '578.50',
+          '579.95',
         ), // 601.81 → 578.50
         (
           '0235-maple-glazed-pork-tenderloin.yaml',
@@ -8327,12 +8359,13 @@ void main() {
           'complete',
           '361.46',
         ), // 477.10 → 361.38
+        // RE-PIN (M82 batch, v84): was 811.14 (the replay 811.11 → 810.26).
         (
           '0398-ultimate-grilled-pizza.yaml',
           null,
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 808.37.
-          '811.14',
+          '810.29',
         ), // 774.92 → 808.35
         (
           '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -8352,12 +8385,13 @@ void main() {
           'complete',
           '300.90',
         ), // 307.69 → 300.81
+        // RE-PIN (M82 batch, v84): was 161.44 (the replay 161.45 → 159.96).
         (
           '0685-quick-cooked-tough-greens.yaml',
           null,
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 157.29.
-          '161.44',
+          '159.95',
         ), // 156.93 → 157.29
         (
           '1171-bulalo-hearty-beef-shank-and-vegetable-soup.yaml',

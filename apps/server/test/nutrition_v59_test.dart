@@ -662,22 +662,29 @@ void main() {
     test('the recipes move kcal per serving only (statuses complete)', () {
       for (final (file, kcal) in [
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 544.34.
-        (_roastWhole, '544.96'), // v58 502.18
+        // RE-PIN (M82 batch, v84): was 544.96 (the replay 544.96 → 547.98).
+        (_roastWhole, '547.98'), // v58 502.18
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 544.34.
-        (_roastWhole2, '544.96'), // v58 502.18
+        // RE-PIN (M82 batch, v84): was 544.96 (the replay 544.96 → 547.98).
+        (_roastWhole2, '547.98'), // v58 502.18
         // RE-PIN (M71 batch, v71, R-E5): 586.18 (was 608.72) — "Strain the
         // vegetables and liquid … Press the solids … Discard the vegetables"
         // strains its onions, celery, carrots and garlic (−225.44 / 10).
-        (_slowRoasted, '586.18'), // v58 583.42
+        // RE-PIN (M82 batch, v84): was 586.18 (the replay 586.18 → 587.62).
+        (_slowRoasted, '587.62'), // v58 583.42
         // RE-PIN (M71 batch, v71, R-E5): 578.50 (was 601.81) — the same
         // strain: onions, celery, carrots, garlic, bay, parsley (−233.14 /
         // 10; the porcini |11 stays, its head 'mushroom' never named).
-        (_braised, '578.50'), // v58 576.52
+        // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
+        (_braised, '579.95'), // v58 576.52
         (_grillroasted, '482.28'), // v58 440.12
-        (_crowd, '566.13'), // v58 540.37
-        (_enCocotte, '618.09'), // v58 572.42
+        // RE-PIN (M82 batch, v84): was 566.13 (the replay 566.13 → 568.27).
+        (_crowd, '568.27'), // v58 540.37
+        // RE-PIN (M82 batch, v84): was 618.09 (the replay 618.09 → 621.31).
+        (_enCocotte, '621.31'), // v58 572.42
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 700.52.
-        (_porchetta, '703.29'), // v58 647.82
+        // RE-PIN (M82 batch, v84): was 703.29 (the replay 703.29 → 702.44).
+        (_porchetta, '702.44'), // v58 647.82
         (_butternut, '351.03'), // v58 375.04
         // RE-PIN (M64 batch, v63, P10): 525.79 (was 533.20; −59.26 / 8).
         (_pearCake, '525.79'), // v58 545.74

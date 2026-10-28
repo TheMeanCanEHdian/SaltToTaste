@@ -242,7 +242,8 @@ const _negatives = [
   ),
   (_struffoli, 12, '8 candied cherries (optional)', 167563, null, null),
   (_pumpkin, 6, '1 cup candied yams, drained', 170071, '150.00', '177.00'),
-  (_roast, 6, '¼ cup extra-virgin olive oil', 748608, '54.42', '481.03'),
+  // RE-PIN (M82 batch, v84, C6a): was 54.42 g, 481.03 kcal (the v84 replay's row).
+  (_roast, 6, '¼ cup extra-virgin olive oil', 748608, '53.65', '474.23'),
   (
     _boneless,
     7,
@@ -310,7 +311,8 @@ const _totals = [
   (_slab, 'complete', '468.84', '8439.13'),
   // 223.27 / 893.07 in the replay: the cotija's hit (2647443).
   (_watermelon, 'complete', '223.18', '892.73'),
-  (_roast, 'complete', '886.76', '3547.05'),
+  // RE-PIN (M82 batch, v84): was 886.76, 3547.05 (the replay 886.76 → 885.06).
+  (_roast, 'complete', '885.06', '3540.26'),
   (_grilled, 'complete', '650.93', '2603.70'),
 ];
 
@@ -675,7 +677,8 @@ void main() {
       'same recipe: all on 174377 with the cooking its steps print',
       () async {
         for (final (file, position, cooking, flag, perServing) in const [
-          (_roast, 0, 'roasted', _roastedFlag, '886.76'),
+          // RE-PIN (M82 batch, v84): was 886.76 (the replay 886.76 → 885.06).
+          (_roast, 0, 'roasted', _roastedFlag, '885.06'),
           (_grilled, 5, 'broiled', _broiledFlag, '650.93'),
         ]) {
           final recipe = recipes[file]!;

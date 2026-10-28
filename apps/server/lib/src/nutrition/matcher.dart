@@ -130,7 +130,8 @@ const Map<String, String> _synonyms = {
 /// when this changes (services/decision_rekey.dart).
 ///
 /// History: docs/MATCHER_HISTORY.md (v1–v78); from v79 on, docs/API.md's "matcher vNN" sections.
-const int matcherVersion = 78;
+/// v79: matcher v84 (batch M82) — pieces and densities.
+const int matcherVersion = 79;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

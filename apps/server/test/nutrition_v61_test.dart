@@ -306,14 +306,15 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 46.82 g, 20.13 kcal (the v84 replay's row).
   (
     _porkChops,
     1,
     '1 cup buttermilk',
     2705393,
     '0.990000',
-    '46.82',
-    '20.13',
+    '46.85',
+    '20.15',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -331,14 +332,15 @@ const List<_Row> _dips = [
     null,
     'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 0.58 g, 0.83 kcal (the v84 replay's row).
   (
     _porkChops,
     3,
     '1 medium garlic clove, minced or pressed through a garlic press (about 1 teaspoon)',
     1104647,
     '0.970000',
-    '0.58',
-    '0.83',
+    '0.54',
+    '0.77',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -482,27 +484,29 @@ const List<_Row> _dips = [
     'discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M66 batch, v65): R4 — dips alone open the budget (W = 1.173026 × 5.73 × 396.89 / 100 = 26.68 g); moved here from _flagged
+  // RE-PIN (M82 batch, v84, C5a): was 23.18 g, 34.31 kcal (the v84 replay's row).
   (
     _bestParmesan,
     12,
     '1 large egg',
     748967,
     '0.920000',
-    '23.18',
-    '34.31',
+    '22.66',
+    '33.54',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M66 batch, v65): R4 — as |12
+  // RE-PIN (M82 batch, v84, C5a): was 3.50 g, 12.81 kcal (the v84 replay's row).
   (
     _bestParmesan,
     13,
     '1 tablespoon all-purpose flour',
     789890,
     '0.950000',
-    '3.50',
-    '12.81',
+    '4.02',
+    '14.71',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
@@ -738,17 +742,18 @@ const List<_Row> _flagged = [
     null,
     '3 tablespoon · USDA portion · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 7.54 g, 27.60 kcal (the v84 replay's row).
   (
     _spicy,
     4,
     '1 tablespoon all-purpose flour',
     789890,
     '0.950000',
-    '7.54',
-    '27.60',
+    '8.86',
+    '32.42',
     'auto',
     null,
-    '1 tablespoon ≈ 15 mL · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces) · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
   (
     _spicy,
@@ -780,26 +785,28 @@ const List<_Row> _flagged = [
 /// the dips from the carbohydrate the parts count and never re-splits them
 /// (§2's one f would have moved 20 of them; F12's katsu|0 stays 63.19).
 const List<_Row> _parts = [
+  // RE-PIN (M82 batch, v84, C1+C5a): was 26.93 g, 71.63 kcal (the v84 replay's row).
   (
     _breaded,
     2,
     '3 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '26.93',
-    '71.63',
+    '32.54',
+    '86.56',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 29.01 g, 106.18 kcal (the v84 replay's row).
   (
     _breaded,
     3,
     '¾ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '29.01',
-    '106.18',
+    '25.43',
+    '93.07',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
@@ -816,106 +823,114 @@ const List<_Row> _parts = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 13.58 g, 49.70 kcal (the v84 replay's row).
   (
     _schnitzel,
     0,
     '½ cup all-purpose flour',
     789890,
     '0.950000',
-    '13.58',
-    '49.70',
+    '15.33',
+    '56.11',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 48.61 g, 192.01 kcal (the v84 replay's row).
   (
     _schnitzel,
     3,
     '2 cups plain dried bread crumbs',
     174928,
     '0.657500',
-    '48.61',
-    '192.01',
+    '46.73',
+    '184.58',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
   // RE-PIN (M66 batch, v65): R3 — the almonds join the parts (f 0.1515)
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12, the nut crust's stand-in flagged) (was 8.96 g, 35.39 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 34.14 g, 134.85 kcal (the v84 replay's row).
   (
     _nutCrusted,
     5,
     '1 cup panko bread crumbs',
     174928,
     '0.563333',
-    '34.14',
-    '134.85',
+    '31.10',
+    '122.84',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
   ),
   // RE-PIN (M66 batch, v65): R3 — as |5
   // RE-PIN (M80 batch, v80, M80-2: as |5) (was 18.28 g, 66.90 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 69.65 g, 254.92 kcal (the v84 replay's row).
   (
     _nutCrusted,
     9,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '69.65',
-    '254.92',
+    '74.54',
+    '272.82',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 14.32 g, 52.41 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 54.59 g, 199.80 kcal (the v84 replay's row).
   (
     _stuffed,
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '54.59',
-    '199.80',
+    '46.76',
+    '171.14',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |10) (was 17.73 g, 47.16 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 67.57 g, 179.74 kcal (the v84 replay's row).
   (
     _stuffed,
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
     '0.914286',
-    '67.57',
-    '179.74',
+    '79.81',
+    '212.29',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 20.38 g, 54.21 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 77.68 g, 206.63 kcal (the v84 replay's row).
   (
     _kiev,
     7,
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '77.68',
-    '206.63',
+    '93.87',
+    '249.69',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |7) (was 21.96 g, 80.37 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 83.69 g, 306.31 kcal (the v84 replay's row).
   (
     _kiev,
     11,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '83.69',
-    '306.31',
+    '73.34',
+    '268.42',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -944,50 +959,54 @@ const List<_Row> _parts = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 74.70 g, 198.70 kcal (the v84 replay's row).
   (
     _crunchy,
     2,
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
     174924,
     '0.914286',
-    '74.70',
-    '198.70',
+    '81.33',
+    '216.34',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 65.37 g, 239.25 kcal (the v84 replay's row).
   (
     _crunchy,
     10,
     '¼ cup plus 6 tablespoons unbleached all-purpose flour',
     789890,
     '0.950000',
-    '65.37',
-    '239.25',
+    '69.04',
+    '252.69',
     'auto',
     null,
     'discarded in cooking — only "plus 6 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 39.27 g, 104.46 kcal (the v84 replay's row).
   (
     _porkSchnitzel,
     0,
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
     174924,
     '0.914286',
-    '39.27',
-    '104.46',
+    '36.69',
+    '97.60',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 16.92 g, 61.93 kcal (the v84 replay's row).
   (
     _porkSchnitzel,
     1,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '16.92',
-    '61.93',
+    '18.57',
+    '67.97',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
@@ -1006,28 +1025,30 @@ const List<_Row> _parts = [
   ),
   // RE-PIN (M66 batch, v65): R3 — the Parmesan joins the parts
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 15.78 g, 62.33 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 60.16 g, 237.63 kcal (the v84 replay's row).
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '60.16',
-    '237.63',
+    '56.15',
+    '221.79',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M66 batch, v65): R3 — as |0
   // RE-PIN (M80 batch, v80, M80-2: as |0) (was 10.73 g, 39.27 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 40.91 g, 149.73 kcal (the v84 replay's row).
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '40.91',
-    '149.73',
+    '44.85',
+    '164.15',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -1046,14 +1067,15 @@ const List<_Row> _parts = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-1: a coat part at f = 1 on the onion at 50.53 (its eaten ¼ cup on top), no longer held) (was 30.16 g, 0.00 kcal, held `coating`).
+  // RE-PIN (M82 batch, v84, C5a): was 60.33 g, 220.81 kcal (the v84 replay's row).
   (
     _onionRings,
     0,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '60.33',
-    '220.81',
+    '70.87',
+    '259.38',
     'auto',
     null,
     "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
@@ -1278,40 +1300,43 @@ const List<_Row> _negatives = [
     '1/8 teaspoon · USDA portion',
   ),
   // RE-PIN (M69 batch, v68): budgeted since v68 (R2, the eggplant at 7.93), no longer held.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 76.37 g, 203.14 kcal (the v84 replay's row).
   (
     _eggplant,
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '76.37',
-    '203.14',
+    '88.21',
+    '234.64',
     'auto',
     null,
     _eggplantCoat,
   ),
   // RE-PIN (M69 batch, v68): budgeted since v68 (R2, the eggplant at 7.93), no longer held.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
   (
     _eggplant,
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     325036,
     '0.983333',
-    '19.33',
-    '81.38',
+    '13.78',
+    '58.01',
     'auto',
     null,
     _eggplantCoat,
   ),
   // RE-PIN (M69 batch, v68): budgeted since v68 (R2, the eggplant at 7.93), no longer held.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 41.14 g, 150.57 kcal (the v84 replay's row).
   (
     _eggplant,
     5,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '41.14',
-    '150.57',
+    '34.46',
+    '126.12',
     'auto',
     null,
     _eggplantCoat,
@@ -1641,13 +1666,15 @@ void main() {
       // The replay's figure first where a fresh compute differs: a chicken,
       // pork or eggplant record reads another energy here (its rows' grams
       // are equal; plan_figures §2's per serving are the replay's).
+      // RE-PIN (M82 batch, v84): was 350.48 (the replay 350.53 → 350.98).
       expect(of(_breaded), (
         'complete',
-        '350.48',
+        '350.93',
         7,
       )); // replay 350.53; v60 372.02
       expect(of(_katsu), ('complete', '411.79', 5)); // 411.86; 429.12
-      expect(of(_schnitzel), ('complete', '423.57', 9)); // 423.64; 460.09
+      // RE-PIN (M82 batch, v84): was 423.57 (the replay 423.64 → 423.39).
+      expect(of(_schnitzel), ('complete', '423.32', 9)); // 423.64; 460.09
       // RE-PIN (M66 batch, v65): nut-crusted, lighter and almond complete —
       // the nut or cheese layer R3 releases was each one's only uncounted
       // line; onion-rings' cayenne joins the held dip (R3').
@@ -1655,24 +1682,32 @@ void main() {
       // 12.12 — nut-crusted 575.50 (was 385.78; the v80 replay 385.84 →
       // 575.56), stuffed 638.65 (was 544.46; 544.51 → 638.71), kiev 667.05
       // (was 540.11; 540.19 → 667.12).
-      expect(of(_nutCrusted), ('complete', '575.50', 13)); // 575.56; 407.15
-      expect(of(_stuffed), ('complete', '638.65', 14)); // 638.71; 572.91
-      expect(of(_kiev), ('complete', '667.05', 14)); // 667.12; 584.97
+      // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
+      expect(of(_nutCrusted), ('complete', '566.32', 13)); // 575.56; 407.15
+      // RE-PIN (M82 batch, v84): was 638.65 (the replay 638.71 → 639.11).
+      expect(of(_stuffed), ('complete', '639.06', 14)); // 638.71; 572.91
+      // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
+      expect(of(_kiev), ('complete', '668.35', 14)); // 667.12; 584.97
       expect(of(_crispyFried), ('complete', '832.44', 13)); // = replay; 858.08
-      expect(of(_porkChops), ('partial', '480.50', 8)); // = replay; 506.39
-      expect(of(_crunchy), ('complete', '468.36', 14)); // 468.90; 480.86
+      // RE-PIN (M82 batch, v84): was 480.50 (the replay 480.50 → 480.49).
+      expect(of(_porkChops), ('partial', '480.49', 8)); // = replay; 506.39
+      // RE-PIN (M82 batch, v84): was 468.36 (the replay 468.90 → 476.47).
+      expect(of(_crunchy), ('complete', '475.93', 14)); // 468.90; 480.86
+      // RE-PIN (M82 batch, v84): was 367.75 (the replay 367.75 → 367.54).
       expect(of(_porkSchnitzel), (
         'complete',
-        '367.75',
+        '367.54',
         10,
       )); // = replay; 390.64
-      expect(of(_steaks), ('complete', '534.48', 18)); // = replay; 555.87
+      // RE-PIN (M82 batch, v84): was 534.48 (the replay 534.48 → 536.79).
+      expect(of(_steaks), ('complete', '536.79', 18)); // = replay; 555.87
       // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its two
       // minced basil tablespoons on SR's chopped 2.65 g (replay 235.29 →
       // 235.26).
       // RE-PIN (M80 batch, v80, M80-2): 298.93 (was 235.22; the v80 replay
       // 235.26 → 298.97).
-      expect(of(_lighter), ('complete', '298.93', 12)); // 298.97; 239.19
+      // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
+      expect(of(_lighter), ('complete', '297.61', 12)); // 298.97; 239.19
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 431.67
       // H: the counted lines fall by the held dips.
       // RE-PIN (M69 batch, v68): the eggplant (R2), parmesan-crusted and
@@ -1681,16 +1716,18 @@ void main() {
       // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
       // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.04.
+      // RE-PIN (M82 batch, v84): was 455.88 (the replay 455.86 → 452.38).
       expect(of(_eggplant), (
         'partial',
-        '455.88',
+        '452.40',
         16,
       )); // replay 453.66; v67 360.33; v60 409.66, 13
       // RE-PIN (M80 batch, v80, M80-1): the coat budgeted on the onion —
       // complete 10/10 (was partial, 217.50, 2; = the v80 replay).
+      // RE-PIN (M82 batch, v84): was 532.09 (the replay 532.09 → 541.73).
       expect(of(_onionRings), (
         'complete',
-        '532.09',
+        '541.73',
         10,
       )); // = replay; 249.84, 7
       // RE-PIN (M78 batch, v78): the crust counted whole (Q6 (c)) and |6's
@@ -1703,9 +1740,10 @@ void main() {
       )); // replay 340.01; v67 153.54; v60 167.60, 6
       // RE-PIN (M78 batch, v78, Q7 (c)): |12 and |13's pan fat, wiped out
       // after each batch (S5) — was 438.29 (the v78 replay 438.34 → 346.62).
+      // RE-PIN (M82 batch, v84): was 346.57 (the replay 346.62 → 347.83).
       expect(of(_francese), (
         'complete',
-        '346.57',
+        '347.78',
         15,
       )); // replay 346.62; v67 407.44; v60 449.08, 14
     });

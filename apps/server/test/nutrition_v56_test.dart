@@ -165,15 +165,16 @@ const List<_Row> _guarded = [
     '6.68',
     '1 × 40 g each',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
   (
     '0083-old-fashioned-pot-roast.yaml',
     6,
     '2 medium garlic cloves, minced or pressed through a garlic press (about 2 teaspoons)',
     1104647,
     '0.970000',
-    '6.00',
-    '8.58',
-    '2 × 3 g each',
+    '5.60',
+    '8.01',
+    '2 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0083-pressure-cooker-pot-roast.yaml',
@@ -385,15 +386,16 @@ const List<_Row> _daube = [
     '17.16',
     '4 × 3 g each',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 40.22 g, 147.21 kcal (the v84 replay's row).
   (
     '0456-daube-provencal.yaml',
     10,
     '⅓ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '40.22',
-    '147.21',
-    '1/3 cup ≈ 79 mL',
+    '47.25',
+    '172.93',
+    '1/3 cup ≈ 79 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0456-daube-provencal.yaml',
@@ -587,15 +589,16 @@ const List<_Row> _sauceStrains = [
     '17.16',
     '4 × 3 g each',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 9.00 g, 12.87 kcal (the v84 replay's row).
   (
     '0223-onion-braised-beef-brisket.yaml',
     5,
     '3 medium garlic cloves, minced or pressed through a garlic press (about 1 tablespoon)',
     1104647,
     '0.970000',
-    '9.00',
-    '12.87',
-    '3 × 3 g each',
+    '8.45',
+    '12.08',
+    '1 tablespoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0223-onion-braised-beef-brisket.yaml',

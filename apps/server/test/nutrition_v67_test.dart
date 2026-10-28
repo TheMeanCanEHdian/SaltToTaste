@@ -682,9 +682,11 @@ void main() {
       expect(of(_newEngland), ('complete', '592.11'));
       // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 588.82 (was 692.11) —
       // its own 0" pair (−619.70 / 6).
-      expect(of(_onion), ('complete', '588.82'));
+      // RE-PIN (M82 batch, v84): was 588.82 (the replay 588.82 → 590.30).
+      expect(of(_onion), ('complete', '590.30'));
       // RE-PIN (M70 batch, v69, Q1 flat (b′)): 794.35 (was 729.93).
-      expect(of(_pomegranate), ('complete', '794.35'));
+      // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
+      expect(of(_pomegranate), ('complete', '797.57'));
     });
 
     test('a second recompute writes nothing', () {

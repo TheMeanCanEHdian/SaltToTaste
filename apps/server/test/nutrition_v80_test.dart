@@ -82,13 +82,14 @@ String _dip({bool dijon = false}) =>
 /// — the v79 replay's value in each comment.
 final _reach = [
   // held `coating` (its eaten 30.16 g stored), 0 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 60.33 g, 220.81 kcal (the v84 replay's row).
   (
     _rings,
     0,
     '½ cup unbleached all-purpose flour',
     789890,
-    '60.33',
-    '220.81',
+    '70.87',
+    '259.38',
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · $_ringFlag',
   ),
   // held `coating`, no grams, 0 kcal (|1–|7).
@@ -133,55 +134,60 @@ final _reach = [
     'discarded in cooking — only the coat on the food counted · $_ringFlag',
   ),
   // 15.78 g, 62.33 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 60.16 g, 237.63 kcal (the v84 replay's row).
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
-    '60.16',
-    '237.63',
+    '56.15',
+    '221.79',
     _crumb(),
   ),
   // 5.04 g, 21.22 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
   (
     _lighter,
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
     325036,
-    '19.22',
-    '80.92',
+    '17.94',
+    '75.53',
     _crumb(),
   ),
   // 10.73 g, 39.27 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 40.91 g, 149.73 kcal (the v84 replay's row).
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
-    '40.91',
-    '149.73',
+    '44.85',
+    '164.15',
     _crumb(),
   ),
   // 23.79 g, 13.08 kcal.
   (_lighter, 6, '3 large egg whites', 747997, '90.69', '49.88', _dip()),
   // 20.38 g, 54.21 kcal.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 77.68 g, 206.63 kcal (the v84 replay's row).
   (
     _kiev,
     7,
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
-    '77.68',
-    '206.63',
+    '93.87',
+    '249.69',
     _crumb(),
   ),
   // 21.96 g, 80.37 kcal.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 83.69 g, 306.31 kcal (the v84 replay's row).
   (
     _kiev,
     11,
     '1 cup unbleached all-purpose flour',
     789890,
-    '83.69',
-    '306.31',
+    '73.34',
+    '268.42',
     _crumb(),
   ),
   // 30.67 g, 45.39 kcal.
@@ -197,55 +203,60 @@ final _reach = [
     _dip(dijon: true),
   ),
   // 14.32 g, 52.41 kcal.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 54.59 g, 199.80 kcal (the v84 replay's row).
   (
     _stuffed,
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
-    '54.59',
-    '199.80',
+    '46.76',
+    '171.14',
     _crumb(),
   ),
   // 23.26 g, 34.42 kcal.
   (_stuffed, 11, '2 large eggs', 748967, '88.67', '131.23', _dip()),
   // 17.73 g, 47.16 kcal.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 67.57 g, 179.74 kcal (the v84 replay's row).
   (
     _stuffed,
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
-    '67.57',
-    '179.74',
+    '79.81',
+    '212.29',
     _crumb(),
   ),
   // 21.66 g, 125.41 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 82.55 g, 477.96 kcal (the v84 replay's row).
   (
     _nut,
     2,
     '1 cup almonds, chopped coarse',
     170567,
-    '82.55',
-    '477.96',
+    '75.19',
+    '435.35',
     _crumb(nut: true),
   ),
   // 8.96 g, 35.39 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 34.14 g, 134.85 kcal (the v84 replay's row).
   (
     _nut,
     5,
     '1 cup panko bread crumbs',
     174928,
-    '34.14',
-    '134.85',
+    '31.10',
+    '122.84',
     _crumb(nut: true),
   ),
   // 18.28 g, 66.90 kcal.
+  // RE-PIN (M82 batch, v84, C5a): was 69.65 g, 254.92 kcal (the v84 replay's row).
   (
     _nut,
     9,
     '1 cup unbleached all-purpose flour',
     789890,
-    '69.65',
-    '254.92',
+    '74.54',
+    '272.82',
     _crumb(nut: true),
   ),
   // 27.60 g, 40.85 kcal.
@@ -269,19 +280,21 @@ final _reach = [
 const _negatives = [
   // Their own coat arms: the eggplant's batter read; the cauliflower is
   // fried (no coated vegetable) or counted.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 76.37 g, 203.14 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
-    '76.37',
+    '88.21',
     'discarded',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    '19.33',
+    '13.78',
     'discarded',
     null,
   ),
@@ -443,19 +456,21 @@ const _negatives = [
     null,
   ),
   // Their arms come first: pork 6.61, fish 7.41, legs 3.10.
+  // RE-PIN (M82 batch, v84, C1+C5a): was 74.70 g, 198.70 kcal (the v84 replay's row).
   (
     '0206-crunchy-baked-pork-chops.yaml',
     2,
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
-    '74.70',
+    '81.33',
     'discarded',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 59.82 g, 159.12 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     0,
     '4 slices high-quality white sandwich bread, torn into quarters',
-    '59.82',
+    '65.12',
     'discarded',
     null,
   ),
@@ -484,11 +499,12 @@ const _negatives = [
     'discarded',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 26.93 g, 71.63 kcal (the v84 replay's row).
   (
     '0114-breaded-chicken-cutlets.yaml',
     2,
     '3 slices high-quality white sandwich bread, torn into quarters',
-    '26.93',
+    '32.54',
     'discarded',
     null,
   ),
@@ -500,19 +516,21 @@ const _negatives = [
     'discarded',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 48.61 g, 192.01 kcal (the v84 replay's row).
   (
     '0116-chicken-schnitzel.yaml',
     3,
     '2 cups plain dried bread crumbs',
-    '48.61',
+    '46.73',
     'discarded',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 39.27 g, 104.46 kcal (the v84 replay's row).
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     0,
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
-    '39.27',
+    '36.69',
     'discarded',
     null,
   ),
@@ -526,11 +544,12 @@ const _negatives = [
     'piece',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
   (
     '0570-falafel.yaml',
     11,
     '2 quarts vegetable oil for frying',
-    '85.55',
+    '86.69',
     'discarded',
     null,
   ),
@@ -540,16 +559,22 @@ const _negatives = [
 /// comment (v79 → v80).
 const _totals = [
   // 217.50 → 532.09 (partial 2/10 → complete).
-  (_rings, 'complete', '532.09'),
+  // RE-PIN (M82 batch, v84, C5a): the flour |0 at 5 oz a cup, 60.33 → 70.87
+  // g (the replay 532.09 → 541.73): was 532.09.
+  (_rings, 'complete', '541.73'),
   // 235.26 → 298.97 (the fresh compute's 298.93: its search-hit energies
   // differ from the library's in other rows, the rows above are equal).
-  (_lighter, 'complete', '298.93'),
+  // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
+  (_lighter, 'complete', '297.61'),
   // 540.19 → 667.12.
-  (_kiev, 'complete', '667.05'),
+  // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
+  (_kiev, 'complete', '668.35'),
   // 544.51 → 638.71.
-  (_stuffed, 'complete', '638.65'),
+  // RE-PIN (M82 batch, v84): was 638.65 (the replay 638.71 → 639.11).
+  (_stuffed, 'complete', '639.06'),
   // 385.84 → 575.56.
-  (_nut, 'complete', '575.50'),
+  // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
+  (_nut, 'complete', '566.32'),
 ];
 
 /// STATED synthesized (M80-1): 0315 whose S3 FRIES the rings — its "Bake,
@@ -736,13 +761,17 @@ void main() {
       final b = 50.53 * onion.grams! / 100;
       expect(b.toStringAsFixed(2), '151.59');
       double cho(int id) => knownFood(db, id)!.nutrientsPer100g['205']! / 100;
-      final eaten = rowOf(_rings, 0).grams! - 30.17;
-      expect(eaten.toStringAsFixed(2), '30.16');
+      // RE-PIN (M82 batch, v84, C5a): the flour's ¼ cups at 5 oz a cup —
+      // the dish's 35.44 g (was 30.17 at 0.51), the eaten one 35.43 (was
+      // 30.16); the parts carry 147.80 g (was 143.72), still below B (f = 1,
+      // margin 2.5 %), every line whole (|0 70.87 g, the v84 replay's).
+      final eaten = rowOf(_rings, 0).grams! - 35.44;
+      expect(eaten.toStringAsFixed(2), '35.43');
       final dredge =
-          30.17 * cho(789890) +
+          35.44 * cho(789890) +
           rowOf(_rings, 6).grams! * cho(2708167) +
           rowOf(_rings, 7).grams! * cho(2709422);
-      expect(dredge.toStringAsFixed(2), '143.72');
+      expect(dredge.toStringAsFixed(2), '147.80');
       expect(dredge < b, isTrue);
       final dips = [for (var i = 1; i <= 5; i++) rowOf(_rings, i).grams!];
       final whole = dips.fold<double>(0, (n, g) => n + g);
@@ -1049,7 +1078,9 @@ void main() {
         expect(row.hold, 'coating', reason: '|$position');
         expect(
           row.grams?.toStringAsFixed(2),
-          position == 0 ? '30.16' : null,
+          // RE-PIN (M82 batch, v84, C5a): the eaten ¼ cup at 5 oz a cup —
+          // was 30.16.
+          position == 0 ? '35.44' : null,
           reason: '|$position',
         );
       }

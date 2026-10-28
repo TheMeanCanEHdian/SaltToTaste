@@ -1411,8 +1411,18 @@ void main() {
       expect(resolve('1', 'loaf', 'country bread')!.grams, 454);
     });
 
-    test('soft sandwich bread keeps its own 28 g/slice table entry', () {
-      expect(resolve('6', 'slice', 'sandwich bread')!.grams, closeTo(168, 0.5));
+    // RE-PIN (v84, batch M82 C1, ruling4): the unsourced 28 g/slice
+    // 'sandwich bread' entry is deleted (6 slices read 168 g at v82). The
+    // white loaf the corpus prints keeps its table entry (6 × 45.36 g); a
+    // loaf no print names reads nothing here (no record in this group — the
+    // compute weighs it on its record's own slice), never the rustic 50 g.
+    test('soft sandwich bread: the white loaf keeps its table entry, never '
+        'the rustic estimate', () {
+      expect(
+        resolve('6', 'slice', 'white sandwich bread')!.grams,
+        closeTo(272.16, 0.5),
+      );
+      expect(resolve('6', 'slice', 'sandwich bread'), isNull);
     });
 
     test('a plain (non-rustic) bread is not over-applied', () {

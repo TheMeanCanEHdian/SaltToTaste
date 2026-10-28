@@ -94,6 +94,7 @@ const List<_Row> _reach = [
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
   (
     _falafel,
     null,
@@ -101,8 +102,8 @@ const List<_Row> _reach = [
     '2 quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '85.55',
-    '769.95',
+    '86.69',
+    '780.21',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix\'s weight — derived from USDA SR Legacy 172455 "Falafel, home-prepared")',
   ),
@@ -622,6 +623,7 @@ const List<_Row> _uptakes = [
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.5 % of the raw plantains\' weight — derived from USDA SR Legacy 168200 "Plantains, yellow, fried, Latino restaurant")',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 26.13 g, 230.99 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     null,
@@ -629,13 +631,14 @@ const List<_Row> _uptakes = [
     '⅓ cup extra-virgin olive oil for frying',
     748608,
     '1.000000',
-    '26.13',
+    '25.94',
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '220.35'.
-    '230.99',
+    '229.31',
     null,
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
     'discarded in cooking — only the oil the fried food absorbs counted · nutrients of "Oil, olive, salad or cooking" · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 26.89 g, 242.01 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     null,
@@ -643,8 +646,8 @@ const List<_Row> _uptakes = [
     '⅓ cup vegetable oil for frying',
     2710180,
     '0.923333',
-    '26.89',
-    '242.01',
+    '27.08',
+    '243.72',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast's weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)",
   ),
@@ -823,7 +826,9 @@ void main() {
       expect(recipes[_lumpia]!.ingredients.first.items, hasLength(6));
       // Falafel: |0–|10 (the TAHINI SAUCE group follows the oil).
       final falafelMix = sumOf(_falafel, [for (var p = 0; p <= 10; p++) p]);
-      expect(g2(falafelMix), '395.35');
+      // RE-PIN (M82 batch, v84, C5a): its ¼ cup flour |9 30.16 → 35.44 g:
+      // was 395.35.
+      expect(g2(falafelMix), '400.62');
       // Doughnuts: |0–|6, never the GLAZE |8–|10 after the oil.
       final doughMix = sumOf(_doughnuts, [for (var p = 0; p <= 6; p++) p]);
       // 1,278.71 at full precision (22½ oz of flour = 637.864 g …); the
@@ -1004,7 +1009,9 @@ void main() {
       // Lumpia: the replay's 655.72 (v59 506.71); its pork |12 reads 1,034.19
       // kcal in a fresh compute against the replay's 1,035.43.
       expect(of(_lumpia), ('complete', '655.51'));
-      expect(of(_falafel), ('complete', '613.83')); // v59 421.35
+      // RE-PIN (M82 batch, v84, C5a): the flour |9 and the oil's uptake |11
+      // on the heavier mix: was 613.83.
+      expect(of(_falafel), ('complete', '621.22')); // v59 421.35
       // RE-PIN (M67 batch, v66): 599.61 → A2 (the cut dough and its oil).
       expect(of(_doughnuts), ('complete', '432.75')); // v59 439.26
       // RE-PIN (M67 batch, v66): 716.48 → B (14.15 %).

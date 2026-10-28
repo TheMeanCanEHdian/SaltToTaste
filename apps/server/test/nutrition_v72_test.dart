@@ -543,6 +543,7 @@ const List<_Row> _unmoved = [
     '276.69',
     'from 8 ounce',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
     null,
@@ -551,11 +552,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '6.00',
+    '5.60',
     'auto',
     null,
-    '8.58',
-    '2 × 3 g each',
+    '8.01',
+    '2 teaspoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
@@ -1019,6 +1020,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 45.25 g, 165.61 kcal (the v84 replay's row).
   (
     '0962-peach-crisp.yaml',
     null,
@@ -1027,11 +1029,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '45.25',
+    '53.16',
     'auto',
     null,
-    '165.61',
-    '6 tablespoon ≈ 89 mL',
+    '194.55',
+    '6 tablespoon ≈ 89 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0962-peach-crisp.yaml',
@@ -2869,6 +2871,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 68.02 g, 601.29 kcal (the v84 replay's row).
   (
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
     null,
@@ -2877,13 +2880,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '68.02',
+    '67.06',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '573.61'.
-    '601.29',
+    '592.79',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '5 tablespoon ≈ 74 mL · nutrients of "Oil, olive, salad or cooking"',
+    '5 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
@@ -3067,6 +3070,7 @@ const List<_Row> _unmoved = [
     '0.72',
     '1/8 teaspoon · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.40 kcal (the v84 replay's row).
   (
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
     null,
@@ -3075,11 +3079,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '30.16',
+    '35.44',
     'auto',
     null,
-    '110.40',
-    '1/4 cup ≈ 59 mL',
+    '129.70',
+    '1/4 cup ≈ 59 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
@@ -3731,6 +3735,7 @@ const List<_Row> _unmoved = [
     '52.26',
     '1 tablespoon ≈ 15 mL',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 9.00 g, 12.87 kcal (the v84 replay's row).
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
@@ -3739,11 +3744,11 @@ const List<_Row> _unmoved = [
     1104647,
     'Garlic, raw',
     '0.970000',
-    '9.00',
+    '8.45',
     'auto',
     null,
-    '12.87',
-    '3 × 3 g each',
+    '12.08',
+    '1 tablespoon · USDA portion of "Garlic, raw"',
   ),
   (
     '0223-onion-braised-beef-brisket.yaml',
@@ -3787,6 +3792,7 @@ const List<_Row> _unmoved = [
     '0.72',
     '1/8 teaspoon · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 15.08 g, 55.20 kcal (the v84 replay's row).
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
@@ -3795,11 +3801,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '15.08',
+    '17.72',
     'auto',
     null,
-    '55.20',
-    '2 tablespoon ≈ 30 mL',
+    '64.85',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0223-onion-braised-beef-brisket.yaml',
@@ -4461,6 +4467,7 @@ const List<_Row> _unmoved = [
     '41.96',
     'from 1/2 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
+  // RE-PIN (M82 batch, v84, C6a): was 13.60 g, 120.26 kcal (the v84 replay's row).
   (
     '0350-beef-short-rib-ragu.yaml',
     null,
@@ -4469,13 +4476,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '13.60',
+    '13.41',
     'auto',
     null,
     // RE-PIN (M77 batch, v77): 748608 at SR 171413's 884 kcal — was '114.72'.
-    '120.26',
+    '118.56',
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
-    '1 tablespoon ≈ 15 mL · nutrients of "Oil, olive, salad or cooking"',
+    '1 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0350-beef-short-rib-ragu.yaml',
@@ -5303,6 +5310,7 @@ const List<_Row> _unmoved = [
     '252.00',
     '2 tablespoon · USDA portion',
   ),
+  // RE-PIN (M82 batch, v84, C1+C1b): was 28.00 g, 74.48 kcal (the v84 replay's row).
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
     null,
@@ -5311,11 +5319,11 @@ const List<_Row> _unmoved = [
     174924,
     'Bread, white, commercially prepared (includes soft bread crumbs)',
     '0.914286',
-    '28.00',
+    '16.76',
     'auto',
     null,
-    '74.48',
-    '1 slice × 28 g each',
+    '44.58',
+    "1 slice × 40.5 g each · approximate (ATK: 10 ounces hearty white sandwich bread ≈ 7 slices) × 12/29 crusts removed (USDA: 'slice crust not eaten' 12 g of 'slice' 29 g)",
   ),
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
@@ -5527,6 +5535,7 @@ const List<_Row> _unmoved = [
     '1.36',
     '1/2 teaspoon ≈ 2 mL',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.40 kcal (the v84 replay's row).
   (
     '0194-pub-style-steak-and-ale-pie.yaml',
     null,
@@ -5535,11 +5544,11 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '30.16',
+    '35.44',
     'auto',
     null,
-    '110.40',
-    '1/4 cup ≈ 59 mL',
+    '129.70',
+    '1/4 cup ≈ 59 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
     '0194-pub-style-steak-and-ale-pie.yaml',
@@ -6192,17 +6201,18 @@ const List<_Totals> _totals = [
     '304.8816',
   ),
   // v71: 534.43 /serving, batch 2137.72, fat 68.2015
+  // RE-PIN (M82 batch, v84): was 580.41, 2321.62, 68.7605, 134.7003 (the replay 580.41 → 580.26).
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
     null,
     'complete',
-    '580.41',
-    '2321.62',
-    '68.7605',
+    '580.26',
+    '2321.05',
+    '68.7589',
     '14.1413',
     '35.3805',
     '13.4463',
-    '134.7003',
+    '134.6738',
     '7165.1080',
     '826.0367',
   ),
@@ -6264,18 +6274,19 @@ const List<_Totals> _totals = [
     '0.0000',
   ),
   // v71: 669.02 /serving, batch 2676.07, fat 145.5555
+  // RE-PIN (M82 batch, v84): was 634.73, 2538.91, 144.6737, 26.4382, 741.0719 (the replay 634.77 → 642.01).
   (
     '0962-peach-crisp.yaml',
     null,
     'complete',
-    '634.73',
-    '2538.91',
-    '144.6737',
+    '641.96',
+    '2567.85',
+    '144.7907',
     '43.2788',
     '61.1988',
     '28.1095',
-    '26.4382',
-    '741.0719',
+    '27.3001',
+    '741.2300',
     '152.4408',
   ),
   // v71: 584.35 /serving, batch 4674.79, fat 215.2484
@@ -6508,6 +6519,7 @@ const List<_Totals> _totals = [
     '0.0000',
   ),
   // v71: 232.28 /serving, batch 929.13, fat 72.0615
+  // RE-PIN (M82 batch, v84): was 232.46, 929.82, 76.0904, 13.0318, 51.3215, 7.2713, 411.1176 (the replay 232.44 → 230.32).
   (
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
     null,
@@ -6515,29 +6527,30 @@ const List<_Totals> _totals = [
     // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413 (884 kcal, fat 100 g — was Atwater 843.3, NLEA fat 93.7), |1's 5 tablespoons — was 225.54,
     // 902.14, 71.8052, 14.1201, 48.7368, 6.2986, 23.0624 (unmoved),
     // 409.7572, 22.1128 (unmoved).
-    '232.46',
-    '929.82',
-    '76.0904',
-    '13.0318',
-    '51.3215',
-    '7.2713',
+    '230.33',
+    '921.33',
+    '75.1293',
+    '12.8992',
+    '50.6199',
+    '7.1704',
     '23.0624',
-    '411.1176',
+    '411.0983',
     '22.1128',
   ),
   // v71: 794.35 /serving, batch 4766.11, fat 489.1821
+  // RE-PIN (M82 batch, v84): was 794.35, 4766.11, 287.0642, 397.5257, 3563.1955 (the replay 794.35 → 797.57).
   (
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
     null,
     'complete',
-    '794.35',
-    '4766.11',
-    '287.0642',
+    '797.57',
+    '4785.41',
+    '287.1422',
     '110.6942',
     '121.9443',
     '21.0922',
-    '397.5257',
-    '3563.1955',
+    '398.1003',
+    '3563.3009',
     '1878.1569',
   ),
   // v71: 740.17 /serving, batch 13323.08, fat 881.7112
@@ -6590,18 +6603,19 @@ const List<_Totals> _totals = [
   // energy and the fat columns (was 692.11, 4152.65, fat 209.0911, sat
   // 76.7103, mono 100.0584, poly 10.7218); protein, sodium, cholesterol
   // gross.
+  // RE-PIN (M82 batch, v84): was 588.82, 3532.95, 126.1489, 430.5776, 1723.5943 (the replay 588.82 → 590.30).
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
     'complete',
-    '588.82',
-    '3532.95',
-    '126.1489',
+    '590.30',
+    '3541.81',
+    '126.1858',
     '47.7967',
     '53.6581',
     '6.9644',
-    '430.5776',
-    '1723.5943',
+    '430.8286',
+    '1723.6470',
     '1367.5799',
   ),
   // v71: 836.27 /serving, batch 5017.64, fat 360.7148
@@ -6650,6 +6664,7 @@ const List<_Totals> _totals = [
     '1149.3358',
   ),
   // v71: 512.88 /serving, batch 2564.41, fat 188.0887
+  // RE-PIN (M82 batch, v84): was 470.01, 2350.05, 164.4988, 67.8284, 86.4772, 7.9560, 2397.9560 (the replay 469.99 → 469.65).
   (
     '0350-beef-short-rib-ragu.yaml',
     null,
@@ -6657,14 +6672,14 @@ const List<_Totals> _totals = [
     // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413 (884 kcal, fat 100 g — was Atwater 843.3, NLEA fat 93.7), |2's 1 tablespoon — was 468.90,
     // 2344.51, 163.6417, 68.0461, 85.9603, 7.7614, 170.7866 (unmoved),
     // 2397.6839, 672.4443 (unmoved).
-    '470.01',
-    '2350.05',
-    '164.4988',
-    '67.8284',
-    '86.4772',
-    '7.9560',
+    '469.67',
+    '2348.35',
+    '164.3065',
+    '67.8019',
+    '86.3369',
+    '7.9358',
     '170.7866',
-    '2397.9560',
+    '2397.9521',
     '672.4443',
   ),
   // v71: 862.66 /serving, batch 5175.97, fat 306.3309
@@ -6697,32 +6712,34 @@ const List<_Totals> _totals = [
     '6619.2062',
     '994.3265',
   ),
+  // RE-PIN (M82 batch, v84): was 958.77, 3835.10, 292.3790, 102.6473, 157.8699, 18.2445, 216.8326, 1025.1040 (the replay 958.80 → 951.33).
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
     null,
     'complete',
-    '958.77',
-    '3835.10',
-    '292.3790',
-    '102.6473',
-    '157.8699',
-    '18.2445',
-    '216.8326',
-    '1025.1040',
+    '951.30',
+    '3805.19',
+    '292.0047',
+    '102.5688',
+    '157.8026',
+    '18.0644',
+    '215.8378',
+    '970.0212',
     '827.8054',
   ),
+  // RE-PIN (M82 batch, v84): was 877.80, 5266.77, 367.9921, 291.0827, 5340.4634 (the replay 877.80 → 881.01).
   (
     '0194-pub-style-steak-and-ale-pie.yaml',
     null,
     'complete',
-    '877.80',
-    '5266.77',
-    '367.9921',
+    '881.01',
+    '5286.07',
+    '368.0701',
     '168.7837',
     '162.6707',
     '16.7589',
-    '291.0827',
-    '5340.4634',
+    '291.6573',
+    '5340.5688',
     '1448.9851',
   ),
   (
@@ -7441,11 +7458,16 @@ void main() {
         // 0223) moved since v71 too (was `_moved.contains(file)` alone).
         expect(
           (got.$4, got.$5, got.$6) != (perServing, energy, fat),
+          // RE-PIN (M82 batch, v84): M82's two more — the catalan stew's
+          // crust-removed slice (C1 + C1b) and the steak-and-ale pie's flour
+          // (C5a); its other movers here are M72's own.
           section == null &&
               (_moved.contains(file) ||
                   const {
                     '0091-home-corned-beef-with-vegetables.yaml',
                     '0223-onion-braised-beef-brisket.yaml',
+                    '0084-catalan-style-beef-stew-with-mushrooms.yaml',
+                    '0194-pub-style-steak-and-ale-pie.yaml',
                   }.contains(file)),
           reason: '$file ${section ?? ''}',
         );
@@ -7594,13 +7616,16 @@ void main() {
         'and 768.29 kcal (740.17 → 697.49); protein, sodium and cholesterol '
         'never', () {
       for (final (file, id, grams, fat, kcal, perServing, cols) in [
+        // RE-PIN (M82 batch, v84, C5a): the deduction unchanged; its flour
+        // |11 at 5 oz a cup moves the serving (the replay 794.35 → 797.57):
+        // was 794.35.
         (
           _pomegranate,
           173128,
           '2041.16',
           '202.12',
           '1838.33',
-          '794.35',
+          '797.57',
           ['76.67', '85.50', '7.94'],
         ),
         (
@@ -7695,12 +7720,18 @@ void main() {
         // RE-PIN (M77 batch, v77): a 748608 row now reads SR 171413's
         // energy — the ragu's |2 tablespoon moves its batch by grams ×
         // (884 − 843.3) / 100 beside the deduction (was `v71 - now - by`).
+        // RE-PIN (M82 batch, v84, C6a): the row's grams moved too — 748608's
+        // own 0.907 g/mL over the kitchen 0.92 the v71 batch read (13.60 →
+        // 13.41 g), so the v71 row is grams × 0.92 / 0.907 at 748608's own
+        // energy (was grams × (884 − 843.3) / 100).
         final evoo = [
           for (final r in db.ingredientMatchesFor(recipes[file]!.id))
             if (r.fdcId == 748608 && (r.grams ?? 0) > 0)
-              r.grams! *
-                  (kcalPer100g(knownFood(db, 171413)!) -
-                      kcalPer100g(knownFood(db, 748608)!)) /
+              (r.grams! * kcalPer100g(knownFood(db, 171413)!) -
+                      r.grams! *
+                          0.92 /
+                          0.907 *
+                          kcalPer100g(knownFood(db, 748608)!)) /
                   100,
         ].fold<double>(0, (a, b) => a + b);
         // The v71 batch is printed to 2 dp: the move equals the deduction

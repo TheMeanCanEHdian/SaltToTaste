@@ -157,91 +157,98 @@ const List<_Row> _reach = [
     null,
     'discarded in cooking — only the part the recipe keeps and the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 23.18 g, 34.31 kcal (the v84 replay's row).
   (
     _bestParmesan,
     12,
     '1 large egg',
     748967,
     '0.920000',
-    '23.18',
-    '34.31',
+    '22.66',
+    '33.54',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 3.50 g, 12.81 kcal (the v84 replay's row).
   (
     _bestParmesan,
     13,
     '1 tablespoon all-purpose flour',
     789890,
     '0.950000',
-    '3.50',
-    '12.81',
+    '4.02',
+    '14.71',
     'auto',
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at FNDDS 2706442's 12.12) (was 15.78 g, 62.33 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 60.16 g, 237.63 kcal (the v84 replay's row).
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '60.16',
-    '237.63',
+    '56.15',
+    '221.79',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |0) (was 5.04 g, 21.22 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
   (
     _lighter,
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
     325036,
     '0.983333',
-    '19.22',
-    '80.92',
+    '17.94',
+    '75.53',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |0) (was 10.73 g, 39.27 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 40.91 g, 149.73 kcal (the v84 replay's row).
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '40.91',
-    '149.73',
+    '44.85',
+    '164.15',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12, the nut crust's stand-in flagged) (was 21.66 g, 125.41 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 82.55 g, 477.96 kcal (the v84 replay's row).
   (
     _nutCrusted,
     2,
     '1 cup almonds, chopped coarse',
     170567,
     '0.900000',
-    '82.55',
-    '477.96',
+    '75.19',
+    '435.35',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |2) (was 8.96 g, 35.39 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 34.14 g, 134.85 kcal (the v84 replay's row).
   (
     _nutCrusted,
     5,
     '1 cup panko bread crumbs',
     174928,
     '0.563333',
-    '34.14',
-    '134.85',
+    '31.10',
+    '122.84',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
@@ -259,14 +266,15 @@ const List<_Row> _reach = [
     '1/8 teaspoon · USDA portion',
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |2) (was 18.28 g, 66.90 kcal).
+  // RE-PIN (M82 batch, v84, C5a): was 69.65 g, 254.92 kcal (the v84 replay's row).
   (
     _nutCrusted,
     9,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '69.65',
-    '254.92',
+    '74.54',
+    '272.82',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
@@ -330,122 +338,132 @@ const List<_Row> _reach = [
 /// (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its
 /// carbohydrate"; 0 kcal, 0 grams).
 const List<_Row> _texts = [
+  // RE-PIN (M82 batch, v84, C5a): was 47.03 g, 172.13 kcal (the v84 replay's row).
   (
     _sandwiches,
     6,
     '½ cup all-purpose flour',
     789890,
     '0.950000',
-    '47.03',
-    '172.13',
+    '51.49',
+    '188.45',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 49.79 g, 189.70 kcal (the v84 replay's row).
   (
     _sandwiches,
     7,
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '49.79',
-    '189.70',
+    '46.41',
+    '176.82',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 1.77 g, 0.90 kcal (the v84 replay's row).
   (
     _sandwiches,
     9,
     '½ teaspoon baking powder',
     172804,
     '0.850000',
-    '1.77',
-    '0.90',
+    '1.65',
+    '0.84',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 140.31 g, 60.33 kcal (the v84 replay's row).
   (
     _sandwiches,
     10,
     '¾ cup beer',
     2710616,
     '0.990000',
-    '140.31',
-    '60.33',
+    '130.78',
+    '56.24',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw haddock — USDA FNDDS 2706258 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw haddock, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
   (
     _fishChips,
     2,
     '1½ cups unbleached all-purpose flour',
     789890,
     '0.950000',
-    '89.12',
-    '326.18',
+    '93.89',
+    '343.64',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
   (
     _fishChips,
     3,
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '31.45',
-    '119.82',
+    '28.21',
+    '107.48',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 0.44 g, 1.40 kcal (the v84 replay's row).
   (
     _fishChips,
     4,
     '½ teaspoon cayenne pepper',
     170932,
     '1.000000',
-    '0.44',
-    '1.40',
+    '0.40',
+    '1.27',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 0.57 g, 1.61 kcal (the v84 replay's row).
   (
     _fishChips,
     5,
     '½ teaspoon paprika',
     171329,
     '0.900000',
-    '0.57',
-    '1.61',
+    '0.51',
+    '1.44',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 2.23 g, 1.14 kcal (the v84 replay's row).
   (
     _fishChips,
     8,
     '1 teaspoon baking powder',
     172804,
     '0.850000',
-    '2.23',
-    '1.14',
+    '2.00',
+    '1.02',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 167.52 g, 72.03 kcal (the v84 replay's row).
   (
     _fishChips,
     10,
     '1½ cups (12 ounces) cold beer',
     2710616,
     '0.565000',
-    '167.52',
-    '72.03',
+    '150.23',
+    '64.60',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -535,25 +553,27 @@ const List<_Row> _negatives = [
     null,
     _c4Breast,
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 26.93 g, 71.63 kcal (the v84 replay's row).
   (
     '0114-breaded-chicken-cutlets.yaml',
     2,
     '3 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '26.93',
+    '32.54',
     null,
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 29.01 g, 106.18 kcal (the v84 replay's row).
   (
     '0114-breaded-chicken-cutlets.yaml',
     3,
     '¾ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '29.01',
+    '25.43',
     null,
     'auto',
     null,
@@ -706,13 +726,14 @@ const List<_Row> _negatives = [
     null,
     _dipBasis,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 61.35 g, 224.54 kcal (the v84 replay's row).
   (
     '1133-chicken-francese.yaml',
     5,
     '¾ cup all-purpose flour, divided',
     789890,
     '0.950000',
-    '61.35',
+    '61.79',
     null,
     'auto',
     null,
@@ -803,27 +824,29 @@ const List<_Row> _negatives = [
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 20.38 g, 54.21 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 77.68 g, 206.63 kcal (the v84 replay's row).
   (
     '0122-chicken-kiev.yaml',
     7,
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '77.68',
-    '206.63',
+    '93.87',
+    '249.69',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |7) (was 21.96 g, 80.37 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 83.69 g, 306.31 kcal (the v84 replay's row).
   (
     '0122-chicken-kiev.yaml',
     11,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '83.69',
-    '306.31',
+    '73.34',
+    '268.42',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -881,13 +904,14 @@ const List<_Row> _negatives = [
     null,
     _c4Breast,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 13.58 g, 49.70 kcal (the v84 replay's row).
   (
     '0116-chicken-schnitzel.yaml',
     0,
     '½ cup all-purpose flour',
     789890,
     '0.950000',
-    '13.58',
+    '15.33',
     null,
     'auto',
     null,
@@ -917,13 +941,14 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 48.61 g, 192.01 kcal (the v84 replay's row).
   (
     '0116-chicken-schnitzel.yaml',
     3,
     '2 cups plain dried bread crumbs',
     174928,
     '0.657500',
-    '48.61',
+    '46.73',
     null,
     'auto',
     null,
@@ -1037,13 +1062,14 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 46.82 g, 20.13 kcal (the v84 replay's row).
   (
     '0198-crispy-pan-fried-pork-chops.yaml',
     1,
     '1 cup buttermilk',
     2705393,
     '0.990000',
-    '46.82',
+    '46.85',
     null,
     'auto',
     null,
@@ -1062,13 +1088,14 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C3a): was 0.58 g, 0.83 kcal (the v84 replay's row).
   (
     '0198-crispy-pan-fried-pork-chops.yaml',
     3,
     '1 medium garlic clove, minced or pressed through a garlic press (about 1 teaspoon)',
     1104647,
     '0.970000',
-    '0.58',
+    '0.54',
     null,
     'auto',
     null,
@@ -1086,25 +1113,27 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 3.94 g carbohydrate per 100 g of the raw shrimp — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried"; the dredge\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 74.70 g, 198.70 kcal (the v84 replay's row).
   (
     '0206-crunchy-baked-pork-chops.yaml',
     2,
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
     174924,
     '0.914286',
-    '74.70',
+    '81.33',
     null,
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 65.37 g, 239.25 kcal (the v84 replay's row).
   (
     '0206-crunchy-baked-pork-chops.yaml',
     10,
     '¼ cup plus 6 tablespoons unbleached all-purpose flour',
     789890,
     '0.950000',
-    '65.37',
+    '69.04',
     null,
     'auto',
     null,
@@ -1135,49 +1164,53 @@ const List<_Row> _negatives = [
     null,
     'discarded in cooking — only the dip on the food counted · approximate (FDC holds no Dijon mustard — counted as prepared yellow mustard) · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 59.82 g, 159.12 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     0,
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '59.82',
+    '65.12',
     null,
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C1+C5a): was 53.82 g, 196.98 kcal (the v84 replay's row).
   (
     '0254-crunchy-oven-fried-fish.yaml',
     5,
     '¼ cup plus 5 tablespoons unbleached all-purpose flour',
     789890,
     '0.950000',
-    '53.82',
+    '57.01',
     null,
     'auto',
     null,
     'discarded in cooking — only "plus 5 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge\'s excess not counted)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 40.36 g, 147.72 kcal (the v84 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     8,
     '1 cup all-purpose flour',
     789890,
     '0.950000',
-    '40.36',
+    '41.53',
     null,
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 8.01 g, 30.52 kcal (the v84 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     9,
     '3 tablespoons cornstarch',
     169698,
     '1.000000',
-    '8.01',
+    '7.02',
     null,
     'auto',
     null,
@@ -1196,39 +1229,42 @@ const List<_Row> _negatives = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
   ),
   // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 76.37 g, 203.14 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '76.37',
+    '88.21',
     null,
     'auto',
     null,
     _eggplantCoat,
   ),
   // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     325036,
     '0.983333',
-    '19.33',
+    '13.78',
     null,
     'auto',
     null,
     _eggplantCoat,
   ),
   // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 41.14 g, 150.57 kcal (the v84 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     5,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '41.14',
+    '34.46',
     null,
     'auto',
     null,
@@ -1297,13 +1333,14 @@ const List<_Row> _negatives = [
     'coating',
     null,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.39 kcal (the v84 replay's row).
   (
     '0288-maryland-crab-cakes.yaml',
     8,
     '¼ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '30.16',
+    '33.62',
     null,
     'auto',
     null,
@@ -1347,14 +1384,15 @@ const List<_Row> _negatives = [
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.10 g carbohydrate per 100 g of the raw chicken legs — USDA FNDDS 2705998 recipe: 10 g breading per 129.02 g raw chicken legs; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-1: a coat part at f = 1 on the onion at 50.53, its eaten ¼ cup on top) (was 30.16 g, 0.00 kcal, held `coating`).
+  // RE-PIN (M82 batch, v84, C5a): was 60.33 g, 220.81 kcal (the v84 replay's row).
   (
     '0315-oven-fried-onion-rings.yaml',
     0,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '60.33',
-    '220.81',
+    '70.87',
+    '259.38',
     'auto',
     null,
     "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
@@ -1502,25 +1540,27 @@ const List<_Row> _negatives = [
     null,
     _dipBasis,
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 39.27 g, 104.46 kcal (the v84 replay's row).
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     0,
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
     174924,
     '0.914286',
-    '39.27',
+    '36.69',
     null,
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 16.92 g, 61.93 kcal (the v84 replay's row).
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     1,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '16.92',
+    '18.57',
     null,
     'auto',
     null,
@@ -1586,17 +1626,18 @@ const List<_Row> _negatives = [
     null,
     '3 tablespoon · USDA portion · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 7.54 g, 27.60 kcal (the v84 replay's row).
   (
     '1185-spicy-fried-chicken-sandwiches.yaml',
     4,
     '1 tablespoon all-purpose flour',
     789890,
     '0.950000',
-    '7.54',
+    '8.86',
     null,
     'auto',
     null,
-    '1 tablespoon ≈ 15 mL · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces) · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
   (
     '1185-spicy-fried-chicken-sandwiches.yaml',
@@ -1623,14 +1664,15 @@ const List<_Row> _negatives = [
     '1/8 teaspoon · USDA portion · approximate (the steps leave an excess of it in the bowl — how much is eaten is not written)',
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 14.32 g, 52.41 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 54.59 g, 199.80 kcal (the v84 replay's row).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '54.59',
-    '199.80',
+    '46.76',
+    '171.14',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -1649,14 +1691,15 @@ const List<_Row> _negatives = [
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |10) (was 17.73 g, 47.16 kcal).
+  // RE-PIN (M82 batch, v84, C1+C5a): was 67.57 g, 179.74 kcal (the v84 replay's row).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
     '0.914286',
-    '67.57',
-    '179.74',
+    '79.81',
+    '212.29',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -1889,7 +1932,8 @@ void main() {
         '53.35',
       );
       expect(g('0148-crispy-fried-chicken.yaml', 12), '105.95');
-      expect(g('0198-crispy-pan-fried-pork-chops.yaml', 1), '46.82');
+      // RE-PIN (M82 batch, v84): was 46.82 (the replay 480.50 → 480.49).
+      expect(g('0198-crispy-pan-fried-pork-chops.yaml', 1), '46.85');
       // RE-PIN (M69 batch, v68): C4 budgets the flour |2 and its dip |4 |5;
       // the cheese crust |3 stays held (Q5).
       // RE-PIN (M78 batch, v78, Q6 (c)): |3 counts its whole line (was
@@ -1967,22 +2011,35 @@ void main() {
       final (egg, _) = whole(_bestParmesan, 12);
       final (flour, _) = whole(_bestParmesan, 13);
       final fb = w * bp / (egg + flour);
-      expect(fb.toStringAsFixed(5), '0.46361');
-      expect((g2(fb * egg), g2(fb * flour)), ('23.18', '3.50'));
+      // RE-PIN (M82 batch, v84): was 0.46361.
+      expect(fb.toStringAsFixed(5), '0.45323');
+      // RE-PIN (M82 batch, v84): was 23.18, 3.50.
+      expect((g2(fb * egg), g2(fb * flour)), ('22.66', '4.02'));
     });
 
-    test("R1's reach (closer 3, D1): the two budgets at f = 1 size no dip — "
-        "maryland-crab-cakes' flour and crispy-salt-and-pepper-shrimp's "
-        'cornstarch count whole (B above Σ) and neither recipe writes a dip, '
-        'so W, off B or off Σ, has nothing to size', () {
+    // RE-PIN (M82 batch, v84, C5a; verify2 D6): retitled — the crab cakes'
+    // ¼ cup at 5 oz a cup carries 27.39 g of carbohydrate, above B's 25.99,
+    // so its budget binds (f 0.949, 33.62 g; v82 counted it whole at f = 1);
+    // the shrimp's cornstarch still counts whole and neither recipe writes a
+    // dip (the test's point, unchanged).
+    test("R1's reach (closer 3, D1): two budgets size no dip — "
+        "maryland-crab-cakes' flour (its budget binds at v84's 5 oz cup: "
+        "f 0.949) and crispy-salt-and-pepper-shrimp's cornstarch (whole, B "
+        'above Σ) — and neither recipe writes a dip, so W, off B or off Σ, '
+        'has nothing to size', () {
       const crab = '0288-maryland-crab-cakes.yaml';
       const shrimp = '0279-crispy-salt-and-pepper-shrimp.yaml';
       // "Lightly dredge the crab cakes in the flour": C1 5.73 on the pound
       // of crab over the whole ¼ cup at 77.3 %.
       final bc = 5.73 * rowOf(crab, 0).grams! / 100;
       final (flour, wheat) = whole(crab, 8);
-      expect((g2(bc), g2(flour * cho(wheat))), ('25.99', '23.32'));
-      expect(g2(rowOf(crab, 8).grams!), g2(flour));
+      // RE-PIN (M82 batch, v84, C5a): the ¼ cup at 5 oz a cup (35.44 g)
+      // carries 27.39 g of carbohydrate — above B's 25.99, so the crab
+      // cakes' budget now binds (f 0.949) and the flour no longer counts
+      // whole: 33.62 g (the v84 replay's row; v82 30.16, whole at 0.51).
+      // Was 23.32 and the whole line.
+      expect((g2(bc), g2(flour * cho(wheat))), ('25.99', '27.39'));
+      expect(g2(rowOf(crab, 8).grams!), '33.62');
       // 3 of the 5 tablespoons are tossed with the shrimp and eaten whole;
       // the "remaining 2 tablespoons" dredge the jalapeños ("Shaking off
       // excess cornstarch") — 3.94 on 1½ pounds of shrimp over those 2.
@@ -2038,10 +2095,13 @@ void main() {
       // RE-PIN (M80 batch, v80, M80-2): the panko is a crumb crust — k 12.12
       // (FNDDS 2706442) on the panko and flour (was 16.29 / 11.07 at 3.18;
       // the real recipe's Parmesan 19.22, was 5.04).
-      expect(g2(rowIn(noCrumb, 0).grams!), '62.07');
-      expect(g2(rowIn(noCrumb, 3).grams!), '42.21');
+      // RE-PIN (M82 batch, v84): was 62.07.
+      expect(g2(rowIn(noCrumb, 0).grams!), '57.81');
+      // RE-PIN (M82 batch, v84): was 42.21.
+      expect(g2(rowIn(noCrumb, 3).grams!), '46.18');
       // The real recipe: the Parmesan joins.
-      expect(g2(rowOf(_lighter, 2).grams!), '19.22');
+      // RE-PIN (M82 batch, v84): was 19.22 (the replay 298.97 → 297.64).
+      expect(g2(rowOf(_lighter, 2).grams!), '17.94');
     });
 
     test('R2 reads only the steps AFTER the dip: a STATED synthesized '
@@ -2230,13 +2290,21 @@ void main() {
         (50.0, 'piece'),
       );
       expect(basisIn(baked, 12), '1 × 50 g each$bowl');
+      // RE-PIN (M82 batch, v84): was 7.54.
       expect(
         (g2(rowIn(baked, 13).grams!), rowIn(baked, 13).gramSource),
-        ('7.54', 'density'),
+        ('8.86', 'density'),
       );
-      expect(basisIn(baked, 13), '1 tablespoon ≈ 15 mL$bowl');
+      // RE-PIN (M82 batch, v84, C5a): the flour's printed cup named — was
+      // '1 tablespoon ≈ 15 mL$bowl'.
+      expect(
+        basisIn(baked, 13),
+        '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup all-purpose flour = '
+        '5 ounces)$bowl',
+      );
       // The real recipe shallow-fries: R4's budgeted dip.
-      expect(g2(rowOf(_bestParmesan, 12).grams!), '23.18');
+      // RE-PIN (M82 batch, v84): was 23.18 (the replay 489.23 → 488.66).
+      expect(g2(rowOf(_bestParmesan, 12).grams!), '22.66');
     });
 
     test('per serving: the five recipes move; nut-crusted, lighter and '
@@ -2258,21 +2326,25 @@ void main() {
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 402.18, 10
       // RE-PIN (M80 batch, v80, M80-2): the crumb crust at 12.12 — 575.50
       // (was 385.78; the v80 replay 385.84 → 575.56).
-      expect(of(_nutCrusted), ('complete', '575.50', 13)); // 575.56; 360.45
+      // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
+      expect(of(_nutCrusted), ('complete', '566.32', 13)); // 575.56; 360.45
       // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its minced
       // basil on SR's chopped 2.65 g (replay 235.29 → 235.26).
       // RE-PIN (M80 batch, v80, M80-2): 298.93 (was 235.22; the v80 replay
       // 235.26 → 298.97).
-      expect(of(_lighter), ('complete', '298.93', 12)); // 298.97; 232.29
+      // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
+      expect(of(_lighter), ('complete', '297.61', 12)); // 298.97; 232.29
       // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
-      expect(of(_bestParmesan), ('complete', '489.25', 21)); // 486.50; 500.12
+      // RE-PIN (M82 batch, v84): was 489.25 (the replay 489.23 → 488.66).
+      expect(of(_bestParmesan), ('complete', '488.68', 21)); // 486.50; 500.12
       // RE-PIN (M80 batch, v80, M80-1): complete 10/10 (was partial, 217.50,
       // 2; = the v80 replay).
+      // RE-PIN (M82 batch, v84): was 532.09 (the replay 532.09 → 541.73).
       expect(of(_onionRings), (
         'complete',
-        '532.09',
+        '541.73',
         10,
       )); // = replay; 217.86, 3
     });
@@ -2341,9 +2413,11 @@ void main() {
       expect(basisIn(almond, 2), _reach.first.$10);
       final parm = await variant(loadCorpusRecipe(_bestParmesan), 'confirm');
       final egg = await confirm(parm, 12);
+      // RE-PIN (M82 batch, v84, C5a): the dip's share off the flour's 5 oz
+      // cup (the v84 replay's row): was 23.18.
       expect(
         (egg.status, egg.grams, egg.gramSource),
-        ('confirmed', 23.18, 'discarded'),
+        ('confirmed', 22.66, 'discarded'),
       );
       expect(basisIn(parm, 12), _dipBasis);
     });

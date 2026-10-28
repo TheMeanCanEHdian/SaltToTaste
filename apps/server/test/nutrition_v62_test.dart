@@ -216,14 +216,15 @@ const List<_Row> _kept = [
     null,
     '2 × 737 g (printed 1½–1¾ lb, the midpoint) × 0.73 edible · approximate (USDA AH-102 item 1364: lamb rib loin (rack), bone in, raw → lean and fat meat, slightly trimmed 73 % (61–88), as measured unfrenched; a frenched rack yields less) · approximate (USDA\'s domestic choice rib at ⅛", unfrenched — the recipe prefers domestic lamb; its broiled pair 174377 → 174378 keeps 65.9 % of the energy and 57.9 % of the fat by the protein tracer — the drippings, deducted; the frenched bones\' trim not deducted)',
   ),
+  // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.39 kcal (the v84 replay's row).
   (
     _maryland,
     8,
     '¼ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '30.16',
-    '110.39',
+    '33.62',
+    '123.05',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
@@ -710,15 +711,20 @@ void main() {
       // absolute figures differ by the energy the fixtures' cache reads.
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 1134.19, 687.14, 654.65 and
       // 390.16 (the replay's v76 → v77: +8.30, +7.38, +5.54, +9.69).
+      // RE-PIN (M82 batch, v84): was 1142.49 (the replay 1141.60 → 1139.05).
       expect(of(_arayes), (
         'complete',
-        '1142.49',
+        '1139.94',
       )); // 1,014.48; 1,013.59 → 1,133.30
-      expect(of(_souvlaki), ('complete', '694.52')); // 567.43; 567.49 → 687.20
-      expect(of(_shakshuka), ('complete', '660.19')); // 534.94; 534.91 → 654.62
-      expect(of(_fattoush), ('complete', '399.85')); // 330.30; 330.26 → 390.11
+      // RE-PIN (M82 batch, v84): was 694.52 (the replay 694.58 → 692.31).
+      expect(of(_souvlaki), ('complete', '692.26')); // 567.43; 567.49 → 687.20
+      // RE-PIN (M82 batch, v84): was 660.19 (the replay 660.16 → 658.46).
+      expect(of(_shakshuka), ('complete', '658.49')); // 534.94; 534.91 → 654.62
+      // RE-PIN (M82 batch, v84): was 399.85 (the replay 399.80 → 396.83).
+      expect(of(_fattoush), ('complete', '396.87')); // 330.30; 330.26 → 390.11
       // Partial on its unmatched Old Bay, as at v61.
-      expect(of(_maryland), ('partial', '334.26')); // 323.96; 323.95 → 334.26
+      // RE-PIN (M82 batch, v84): was 334.26 (the replay 334.26 → 337.42).
+      expect(of(_maryland), ('partial', '337.43')); // 323.96; 323.95 → 334.26
       // The three sirloin recipes move nothing but a basis.
       expect(of(_fennel).$1, 'complete');
     });

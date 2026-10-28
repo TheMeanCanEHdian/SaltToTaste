@@ -2,25 +2,25 @@
   "status": "complete",
   "serving_basis": 4,
   "basis_kind": "per_serving",
-  "calories_per_serving": 286.46,
+  "calories_per_serving": 285.18,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 286.46,
+      "amount": 285.18,
       "unit": "kcal",
       "dv_percent": 14.3
     },
     "fat": {
       "label": "Total Fat",
-      "amount": 11.86,
+      "amount": 11.71,
       "unit": "g",
-      "dv_percent": 15.2
+      "dv_percent": 15.0
     },
     "saturated": {
       "label": "Saturated Fat",
-      "amount": 1.64,
+      "amount": 1.62,
       "unit": "g",
-      "dv_percent": 8.2
+      "dv_percent": 8.1
     },
     "trans": {
       "label": "Trans Fat",
@@ -29,12 +29,12 @@
     },
     "monounsaturated": {
       "label": "Monounsaturated Fat",
-      "amount": 7.76,
+      "amount": 7.65,
       "unit": "g"
     },
     "polyunsaturated": {
       "label": "Polyunsaturated Fat",
-      "amount": 1.62,
+      "amount": 1.6,
       "unit": "g"
     },
     "cholesterol": {
@@ -110,13 +110,13 @@
     },
     "vitamin_e": {
       "label": "Vitamin E",
-      "amount": 3.03,
+      "amount": 3.0,
       "unit": "mg",
-      "dv_percent": 20.2
+      "dv_percent": 20.0
     },
     "vitamin_k": {
       "label": "Vitamin K",
-      "amount": 19.12,
+      "amount": 19.04,
       "unit": "µg",
       "dv_percent": 15.9
     },
@@ -174,7 +174,7 @@
       "dv_percent": 36.1
     }
   },
-  "total_grams": 1361.1,
+  "total_grams": 1360.5,
   "matched_count": 16,
   "total_count": 16,
   "low_confidence": 0,
