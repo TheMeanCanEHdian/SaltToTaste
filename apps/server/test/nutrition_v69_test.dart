@@ -4813,7 +4813,10 @@ void main() {
     // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 168743 → 169440 joined
     // (its shares pinned in nutrition_v74_test; was [173128, 168664,
     // 170827]).
-    expect(braisedKept.keys, [173128, 168664, 168743, 170827]);
+    // RE-PIN (M84 batch, v86, D3b): 167853 → 167854 and 172513 → 172514
+    // joined (their shares pinned in nutrition_v86_test; was [173128,
+    // 168664, 168743, 170827]).
+    expect(braisedKept.keys, [173128, 168664, 168743, 170827, 167853, 172513]);
     const yieldShare = 18.1 / 28.7;
     expect(yieldShare.toStringAsFixed(6), '0.630662');
     expect(braisedKept[173128]!['energy'], 298 * yieldShare / 278);

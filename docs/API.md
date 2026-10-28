@@ -5154,6 +5154,115 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v86 (batch M84; matcherVersion 81 — 1 row's grams and 2 recipes'
+deductions move, exactly the batch's reach; prep51 design_v2 §2 M84; zero
+requests; server only; replayed on snapshot 29 against the v85 rows, both
+orders byte-identical, every moved row and recipe attributed to one rule by
+reverting that rule alone, calls 0).** Record maps, decided under the
+2026-10-07 standing authorization:
+- **D3b — two gated braised same-cut pairs (§0.3 the braised-pair doctrine;
+  two `braisedKept` entries, nothing else).** The shipped M72 arm (read only
+  through `braisedKeptOf`, behind `_defatsLiquid`: the recipe's OWN steps
+  print that the fat is not served) gains 167853 "Pork, fresh, spareribs,
+  separable lean and fat, raw" → SR 167854 "…, cooked, braised" and 172513
+  "Lamb, New Zealand, imported, fore-shank, separable lean and fat, raw" →
+  SR 172514 "…, cooked, braised" — USDA's same-cut pairs by the protein
+  tracer (cooked × P raw ÷ (P cooked × raw)), the raw record's cached
+  DETAIL against the braised record's cached HIT (no detail of either is
+  cached): spareribs E 277 → 397, P 15.47 → 29.1, F 23.4 → 30.3, sat 7.529
+  → 11.1, mono 8.542 → 13.5, poly 3.953 → 2.73 — energy 0.761918, fat
+  0.688373, sat 0.783760, mono 0.840178, poly 0.367141; fore-shank E 183 →
+  256, P 20.09 → 30.4, F 11.38 → 15.0, sat 4.621 → 5.56, mono 3.283 → 4.12,
+  poly 0.518 → 0.697 — 0.924475, 0.871075, 0.795143, 0.829340, 0.889220.
+  Trans stays gross, as M72's: 167854 prints no 605; 172513 → 172514 does
+  (0.524 → 0.642, a kept share 0.8097) — the five columns, the stated gap.
+  The gate is each recipe's own printed skim: chinese-style-barbecued-
+  spareribs S2 "Using wide, shallow spoon, skim fat from surface and
+  discard." (|9, 1,446.96 g, 4,008.07 kcal gross) 991.75 → 832.71 /serving
+  (×6, −954.24; the batch −954.26); braised-lamb-shanks-with-red-wine-and-
+  herbes-de-provence S4 "Skim fat from braising liquid …" (|0, 1,666.95 g,
+  3,050.52 kcal) 613.48 → 575.08 (−230.40). The rows stay GROSS (F8) and
+  carry no new flag (the brief's "nothing else": unlike 170827's clause,
+  the basis does not name the pair — recorded for the owner). Not reached:
+  the four other 167853 rows (rosticciana|0, kansas-city-sticky-ribs|5,
+  memphis-style-barbecued-spareribs|1, oven-barbecued-spareribs|9) print
+  no skim — gross; 172513 holds lamb|0 alone. braised-lamb-shanks|2 (its
+  browning fat) is M94's — the combined recipe is pinned there. The
+  doctrine's limits stand: a pair of another cooking method for the same
+  cut (a roasted pair for a braise — the braised turkey) or a mixed-part
+  FNDDS record is a stand-in, an owner question (Q8), never shipped here.
+- **E2b — never weigh the bones as the marrow (L058; NEW arm in
+  `lineGrams`, [re-point → `item`]).** After `lineGrams`' recipe-gated
+  readers (`hostWeighedGiblets`, `stepAmountGrams`) and before any weighing
+  of the record (the local `on(food)` closure), a line whose item's head
+  is 'bones' (`headNounOf`'s key form, 'bone') on a record whose
+  description says "bone marrow" gets NO grams (`_bonesNotMarrow`: no USDA
+  or corpus figure gives the marrow share of a bone's weight); every
+  matched-record weighing — the compute, the GET, a Confirm, the reach —
+  passes there (`_freeGrams`' record-less weigh is not covered: no record,
+  no marrow). The GET's basis (`gramBasisFor`, a row with no grams) "the
+  line weighs the bones, not the marrow eaten — no figure for the marrow a
+  bone holds". simple-pot-au-feu|2 "1½ pounds marrow bones" on SR 169800
+  "Caribou, bone marrow, raw (Alaska Native)" (no portions) 680.39 g "from
+  1 1/2 pound" → none; held below the gate either way (0.486667, the
+  'alaska native' dock): 0 kcal, bucket `check` both ways. A person's
+  Confirm of |2 counted 680.39 g × 7.86 = 5,347.87 kcal (+891.31 /serving);
+  now 0 — grams a person types still count ("entered by hand"; no one-way
+  door). E2c — counting step 3's "add 2 tablespoons" of minced marrow —
+  stays DEFERRED: no marrow volume figure exists (169800 prints none; the
+  cached 'marrow bones' answer holds only 169800) and reading it is new step
+  grammar for one row. Not reached: tortilla-soup|3 (its head is 'bone' too
+  — "… or 4 bone-in" — on 2646170, no marrow record: 442.25 g); the census
+  — 2 of the corpus's 14,567 lines read the head 'bone', 1 row sits on a
+  marrow record.
+Totals vs the v85 rows: 1 row (pot-au-feu|2: grams, gram source, basis);
+row column +0.00, recipe energy −1,184.64 (2 recipes, per-serving × 6;
+the design's −954.25 / −230.39 price the row kcal unrounded); 0 status /
+hold / fdc changes; buckets, sections, notes and calls identical. No
+calibration recipe of audits 2–6 is reached.
+Pins: nutrition_v86_test (12 tests — the four rows on real corpus lines
+and the three recipes' totals at the replay's figures (chinese 832.71,
+the shanks 575.08, memphis unchanged 1,070.60); a second compute writes
+nothing; the ten shares re-derived by the protein tracer from the recorded
+records, trans gross; the converse (tortilla-soup|3, real; the owner gate
+— verify4 D1, closed by the orchestrator, no fifth round: the REAL
+converse on the marrow record itself, 0133|0's bone-in chicken pieces,
+head 'chicken', on 169800 — a person's pick from the line's own cached
+answer, which holds the record at index 5 — weighed 2267.96 g; mutant:
+the head gate reading "not marrow" for 'bone' — null); a marrow
+record's line whose head is not the bones ("1½ pounds marrow" and "1½
+pounds bone marrow", STATED) weighed 680.39 g, and the singular "1½
+pounds marrow bone" (STATED; head 'bone', no 'bones' word) none; a step's
+printed amount still reads first (|2 written amount-less "marrow bones"
+with S1 "Place beef, 1½ pounds marrow bones, …", STATED: 680.39 g "from
+step 1"); the Confirm through the real PUT adds 0.00 /serving and grams
+typed add 262.00, "entered by hand"; the cap shapes' counts), each with
+its mutant (either key dropped, the skim gate dropped — memphis 1,070.60
+→ 832.03 —, a share written 0.76, the arm dropped or moved above the
+recipe readers, either gate or the basis dropped, the head gate read as a
+substring — "1½ pounds bone marrow" → none — or as the plural word —
+"1½ pounds marrow bone" → 680.39 g —, matcherVersion 80); the existing
+suite re-pinned as equalities (RE-PIN M84): the `braisedKept` key lists of
+nutrition_v69 / v72 / v74, pot-au-feu|2 in nutrition_v39_meat (no grams,
+the guard's basis, `check`), the version literals and the three hashes
+(the version alone).
+Fixtures: the 'st louis style spareribs' answer recorded from snapshot 29
+(it holds 167854); the recorded-foods census unchanged (550 / 420).
+Cost: no new step reader. D3b reads two more `braisedKept` entries behind
+the existing `_defatsLiquid` gate (memoized once per index, no new scan).
+E2b is a per-weighing predicate (the description's substring first, the
+head only on a marrow record), nothing memoized. At the caps (400 repeated
+real lines under 0092's steps, the compute and the GET): TRUE (400 ×
+"1½ pounds marrow bones", every row on 169800, none weighed) 240 / 243 →
+209 / 177 ms — the guard returns before the skin trip and three readers
+only a weighed row reaches (five families fewer); QUIET (400 × tortilla-soup|3's
+line on 2646170) 768 / 748 → 801 / 766 ms, counts equal; counts pinned
+exactly; backstop 10 s.
+Deploy note: matcherVersion 81 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests). The kcal digest (`tool/replay/digest.sh`)
+moves 766,623.06 → 766,425.62, −197.44 over 2 recipes (chinese −159.04,
+the shanks −38.40) — a per-serving sum, not the recipe energy above.
+
 **Matcher v85 (batch M83; matcherVersion 80 — 7 rows move, exactly the 7
 the batch names; prep51 design_v2 §2 M83; zero requests; server only;
 replayed on snapshot 29 against the v84 rows, both orders byte-identical,

@@ -303,8 +303,9 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 80 (v85, batch M83: rows move)', () {
-    expect(matcherVersion, 80);
+  test('matcherVersion 81 (v85 set it to 80, batch M83: rows move)', () {
+    // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
+    expect(matcherVersion, 81);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {

@@ -15803,6 +15803,20 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// 20.2 → 32.2, E 169 → 221, F 9.86 → 9.24, sat 3.7 → 3.64, mono 4.77 →
 /// 3.98, poly 0.398 → 0.341; trans 0.503 → none, gross as M72's), behind
 /// the same gate — on the 168743 rows only onion-braised's steps skim fat.
+/// v86 (batch M84 D3b; prep51 design_v2 §2 M84, §0.3 the braised-pair
+/// doctrine; decided under the 2026-10-07 standing authorization): 167853
+/// "Pork, fresh, spareribs, separable lean and fat, raw" (DETAIL: E 277, P
+/// 15.47, F 23.4, sat 7.529, mono 8.542, poly 3.953) → SR 167854 "…,
+/// cooked, braised" (a HIT in the cached spareribs answers: E 397, P 29.1,
+/// F 30.3, sat 11.1, mono 13.5, poly 2.73) and 172513 "Lamb, New Zealand,
+/// imported, fore-shank, separable lean and fat, raw" (DETAIL: E 183, P
+/// 20.09, F 11.38, sat 4.621, mono 3.283, poly 0.518) → SR 172514 "…,
+/// cooked, braised" (a HIT in 'lamb shanks': E 256, P 30.4, F 15.0, sat
+/// 5.56, mono 4.12, poly 0.697), behind the same gate (on v85's rows only
+/// chinese-style-barbecued-spareribs and braised-lamb-shanks skim). Trans
+/// gross, as M72's: 167854 prints no 605; 172513 → 172514 does (0.524 →
+/// 0.642) — the five columns, the stated gap. No basis flag (the brief's
+/// "nothing else"): the rows read as before, the totals deduct.
 /// ponytail: one pair per record; a braised cut with no same-cut USDA pair
 /// stays gross (§2's gaps: the meatloaf's loaf pair, Boston butt).
 const Map<int, Map<String, double>> braisedKept = {
@@ -15833,6 +15847,20 @@ const Map<int, Map<String, double>> braisedKept = {
     'saturated': 10.6 * 17.22 / (25.3 * 8.141),
     'monounsaturated': 12.3 * 17.22 / (25.3 * 9.532),
     'polyunsaturated': 1.0 * 17.22 / (25.3 * 0.723),
+  },
+  167853: {
+    'energy': 397 * 15.47 / (29.1 * 277),
+    'fat': 30.3 * 15.47 / (29.1 * 23.4),
+    'saturated': 11.1 * 15.47 / (29.1 * 7.529),
+    'monounsaturated': 13.5 * 15.47 / (29.1 * 8.542),
+    'polyunsaturated': 2.73 * 15.47 / (29.1 * 3.953),
+  },
+  172513: {
+    'energy': 256 * 20.09 / (30.4 * 183),
+    'fat': 15.0 * 20.09 / (30.4 * 11.38),
+    'saturated': 5.56 * 20.09 / (30.4 * 4.621),
+    'monounsaturated': 4.12 * 20.09 / (30.4 * 3.283),
+    'polyunsaturated': 0.697 * 20.09 / (30.4 * 0.518),
   },
 };
 
@@ -16580,6 +16608,10 @@ GramResolution? lineGrams(
       return g;
     }
   }
+  // v86 (M84 E2b): bones on a marrow record weigh nothing of its food.
+  if (_bonesNotMarrow(normalized, food?.description)) {
+    return null;
+  }
   // v43 (Y13): the RECORD decides the meat share ([ah102Records]); the
   // recipe's skin trip only names the part a meat-only whole bird keeps
   // its skin on — with no recipe, none.
@@ -16664,6 +16696,31 @@ GramResolution? lineGrams(
 
 /// "crusts removed" in a line's parsed prep (v84, M82 C1b).
 final RegExp _crustsRemoved = RegExp(r'\bcrusts? removed\b');
+
+/// v86 (batch M84 E2b; prep51 design_v2 §2 M84 and §6-1 (K-11), L058;
+/// decided under the 2026-10-07 standing authorization): whether a line
+/// whose item's head is 'bones' ([headNounOf]'s key form 'bone' of the
+/// [normalized] item) sits on a record whose [description] says "bone
+/// marrow" — the line weighs the bones, not the marrow eaten, and no USDA
+/// or corpus figure gives the marrow share of a bone's weight: [lineGrams]
+/// gives it no grams (a step's printed amount for an amount-less line
+/// still reads first), [gramBasisFor] says why ([_bonesNotMarrowBasis]).
+/// simple-pot-au-feu|2 "1½ pounds marrow bones" on SR 169800 "Caribou, bone
+/// marrow, raw (Alaska Native)" (no portions): 680.39 g "from 1 1/2 pound"
+/// at v85 → none (held below the gate either way: 0 kcal; a person's
+/// Confirm counted 5,347.87 kcal, now 0 — typed grams still count). S3's
+/// "add 2 tablespoons" of minced marrow is not read (E2c, deferred: no
+/// marrow volume figure). Per weighing, nothing memoized: the description
+/// test first, the head only on a marrow record [re-point → `item`].
+bool _bonesNotMarrow(String normalized, String? description) =>
+    description != null &&
+    description.contains('bone marrow') &&
+    headNounOf(normalized) == 'bone';
+
+/// [_bonesNotMarrow]'s basis (v86, M84 E2b).
+const String _bonesNotMarrowBasis =
+    'the line weighs the bones, not the marrow eaten — no figure for the '
+    'marrow a bone holds';
 
 /// v84 (batch M82 C3a, L203): whether [own] — a [volumeSiblings] record's
 /// own reading of [line] — is a counted garlic clove whose printed volume
@@ -17726,6 +17783,11 @@ String? gramBasisFor(
   Recipe? recipe,
   ResolverMemo? memo,
 }) {
+  // v86 (M84 E2b): bones on a marrow record say why they have no grams.
+  if (row.grams == null &&
+      _bonesNotMarrow(normalizeItem(lineItemOf(line)), row.description)) {
+    return _bonesNotMarrowBasis;
+  }
   // A sub-recipe row on a food weighs the line's eaten "plus" part
   // ([weighedLine]: 0711's "3 tablespoons reserved oil").
   final weighed = recipe == null || row.fdcId == null

@@ -132,7 +132,8 @@ const Map<String, String> _synonyms = {
 /// History: docs/MATCHER_HISTORY.md (v1–v78); from v79 on, docs/API.md's "matcher vNN" sections.
 /// v79: matcher v84 (batch M82) — pieces and densities.
 /// v80: matcher v85 (batch M83) — step readers.
-const int matcherVersion = 80;
+/// v81: matcher v86 (batch M84) — two braised pairs and the marrow guard.
+const int matcherVersion = 81;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

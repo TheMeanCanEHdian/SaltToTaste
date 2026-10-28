@@ -426,14 +426,18 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     'counted',
     '4 · USDA per-item weight',
   ),
+  // RE-PIN (M84 batch, v86, E2b): the bones on the marrow record weigh
+  // none of its food — no grams (was '680.39'), the guard's basis (was
+  // 'from 1 1/2 pound'); `check` either way (confidence 0.486667).
   (
     '0092-simple-pot-au-feu.yaml',
     2,
     '1½ pounds marrow bones',
     169800,
-    '680.39',
+    null,
     'check',
-    'from 1 1/2 pound',
+    'the line weighs the bones, not the marrow eaten — no figure for the '
+        'marrow a bone holds',
   ),
   (
     '0482-tinga-de-pollo-shredded-chicken-tacos.yaml',

@@ -157,7 +157,16 @@ const _totals = [
 void main() {
   test("braisedKept[168743]: SR 169440's shares by the protein tracer "
       "(cooked × P raw ÷ (P cooked × raw)), the design's five", () {
-    expect(braisedKept.keys.toSet(), {173128, 168664, 168743, 170827});
+    // RE-PIN (M84 batch, v86, D3b): 167853 and 172513 joined (their shares
+    // pinned in nutrition_v86_test; was {173128, 168664, 168743, 170827}).
+    expect(braisedKept.keys.toSet(), {
+      173128,
+      168664,
+      168743,
+      170827,
+      167853,
+      172513,
+    });
     // Snapshot 27's hits in the cached 'beef brisket' answer: P 20.2 → 32.2,
     // E 169 → 221, F 9.86 → 9.24, sat 3.7 → 3.64, mono 4.77 → 3.98, poly
     // 0.398 → 0.341 (169440 publishes no trans: gross, as M72's).
