@@ -879,11 +879,14 @@ const List<_Row> _reach = [
     168436,
     'Mushrooms, shiitake, dried',
     '0.616667',
-    '14.17',
+    // RE-PIN (M83 batch, v85): was '14.17' … '41.96', 'from 1/2 ounce · …' —
+    // B5: strained out by its own word "porcini" (the M73 flag kept, as a
+    // record's stand-in flag is on every discarded row: pho|7's anise).
+    '0.00',
     'auto',
     null,
-    '41.96',
-    'from 1/2 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
+    '0.00',
+    'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   // v72: 326698 Mustard, prepared, yellow, 5.96 g, auto; discarded in cooking — only the dip on the food counted · ap
   (
@@ -3675,13 +3678,15 @@ const List<(String, String?, String, String, String, String)> _totals = [
     '303.37',
   ),
   // RE-PIN (M82 batch, v84): was 578.50, 5785.01 (the replay 578.50 → 579.95).
+  // RE-PIN (M83 batch, v85): was 579.95, 5799.48 — B5: the porcini |11
+  // strained out, −41.96 kcal a batch (the replay 579.95 → 575.75).
   (
     '0172-braised-turkey.yaml',
     null,
     'complete',
     'complete',
-    '579.95',
-    '5799.48',
+    '575.75',
+    '5757.53',
   ),
   // RE-PIN (M82 batch, v84): was 480.50, 1922.00 (the replay 480.50 → 480.49).
   (
@@ -3973,7 +3978,7 @@ void main() {
 
     test('the named rows: the three flavourings (0 g, no food, the rule '
         'row), one Dijon, one whole-grain and one porcini tuple, '
-        'braised-turkey|11 still counted, the lumpia basis, the berries on '
+        'braised-turkey|11 (v85: strained out), the lumpia basis, the berries on '
         'raw raspberries at 0 g', () {
       for (final (file, position) in [
         (_guayTiew, 3),
@@ -4012,14 +4017,18 @@ void main() {
         basisIn('0017-creamy-mushroom-soup.yaml', 7),
         'from 1/2 ounce · $_porciniFlag',
       );
+      // RE-PIN (M83 batch, v85): was (168436, '14.17', 'weight') and 'from
+      // 1/2 ounce · …' — B5: strained out by its own word "porcini".
       final turkey = rowIn('0172-braised-turkey.yaml', 11);
       expect(
         (turkey.fdcId, turkey.grams?.toStringAsFixed(2), turkey.gramSource),
-        (168436, '14.17', 'weight'),
+        (168436, '0.00', 'discarded'),
       );
       expect(
         basisIn('0172-braised-turkey.yaml', 11),
-        'from 1/2 ounce · $_porciniFlag',
+        'discarded in cooking — counted as 0 g · approximate (strained out '
+        'and discarded — what it gives the liquid is not counted) · '
+        '$_porciniFlag',
       );
       expect(
         basisIn(_lumpia, 16),

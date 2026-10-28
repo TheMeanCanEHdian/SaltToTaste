@@ -199,7 +199,10 @@ _rows = [
     1,
     '2 quarts peanut oil',
     2710187,
-    '55.11',
+    // RE-PIN (M83 batch, v85): was '55.11' — B4: the joined bacon fat |2
+    // takes its mass share of the same uptake (1.59 g; 53.53 + 1.59 = 55.12,
+    // each fryer rounded alone).
+    '53.53',
     'discarded',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',

@@ -337,11 +337,14 @@ const List<_Row> _reach = [
     172345,
     'Animal fat, bacon grease',
     '0.900000',
-    '0.00',
+    // RE-PIN (M83 batch, v85): was '0.00' … '0.00', "… counted as 0 g ·
+    // part of the frying medium (…)" — B4: a fat joined to the frying oil
+    // takes its mass share of the same uptake, flagged as the oil is.
+    '1.59',
     'auto',
     null,
-    '0.00',
-    "discarded in cooking — counted as 0 g · part of the frying medium (the fried food's uptake is counted on the frying oil's row)",
+    '14.26',
+    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   // v70: 51.60 g, 462.85 kcal; 1/4 cup · USDA portion
   (
@@ -352,11 +355,14 @@ const List<_Row> _reach = [
     172345,
     'Animal fat, bacon grease',
     '0.900000',
-    '0.00',
+    // RE-PIN (M83 batch, v85): was '0.00' … '0.00', "… counted as 0 g ·
+    // part of the frying medium (…)" — B4: a fat joined to the frying oil
+    // takes its mass share of the same uptake, flagged as the oil is.
+    '2.52',
     'auto',
     null,
-    '0.00',
-    "discarded in cooking — counted as 0 g · part of the frying medium (the fried food's uptake is counted on the frying oil's row)",
+    '22.60',
+    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   // v70: 0.00 g, 0.00 kcal; no amount on the line — counted as 0 g
   (
@@ -911,11 +917,14 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '0.00',
+    // RE-PIN (M83 batch, v85): was '0.00' … '0.00', 'no amount on the line —
+    // counted as 0 g' — B1a: step 2 serves each portion "with about 1
+    // teaspoon olive oil", × the 8 the recipe serves.
+    '35.76',
     'auto',
     null,
-    '0.00',
-    'no amount on the line — counted as 0 g',
+    '316.16',
+    'from step 2: about 1 teaspoon × 8 portions (no amount on the line) · nutrients of "Oil, olive, salad or cooking"',
   ),
   (
     '0034-lighter-corn-chowder.yaml',
@@ -1671,11 +1680,13 @@ const List<_Row> _unmoved = [
     168436,
     'Mushrooms, shiitake, dried',
     '0.616667',
-    '14.17',
+    // RE-PIN (M83 batch, v85): was '14.17' … '41.96', 'from 1/2 ounce · …' — B5:
+    // strained out by its own word "porcini" (the M73 flag kept).
+    '0.00',
     'auto',
     null,
-    '41.96',
-    'from 1/2 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
+    '0.00',
+    'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0172-braised-turkey.yaml',
@@ -3446,10 +3457,12 @@ const List<_Row> _unmoved = [
     2710187,
     'Peanut oil',
     '0.990000',
-    '55.11',
+    // RE-PIN (M83 batch, v85): was '55.11' … '495.99' — B4: the joined bacon
+    // fat |2 takes its mass share of the same uptake (1.59 g).
+    '53.53',
     'auto',
     null,
-    '495.99',
+    '481.77',
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   (
@@ -3488,10 +3501,12 @@ const List<_Row> _unmoved = [
     2710187,
     'Peanut oil',
     '0.990000',
-    '68.04',
+    // RE-PIN (M83 batch, v85): was '68.04' … '612.36' — B4: the joined bacon
+    // fat |2 takes its mass share of the same uptake (2.52 g).
+    '65.52',
     'auto',
     null,
-    '612.36',
+    '589.68',
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   (
@@ -3772,11 +3787,13 @@ const List<_Row> _unmoved = [
     168436,
     'Mushrooms, shiitake, dried',
     '0.616667',
-    '7.09',
+    // RE-PIN (M83 batch, v85): was '7.09' … '20.98', 'from 1/4 ounce · …' — B5:
+    // strained out by its own word "porcini" (the M73 flag kept).
+    '0.00',
     'auto',
     null,
-    '20.98',
-    'from 1/4 ounce · approximate (FDC holds no porcini — counted as dried shiitake)',
+    '0.00',
+    'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) · approximate (FDC holds no porcini — counted as dried shiitake)',
   ),
   (
     '0402-italian-wedding-soup.yaml',
@@ -8143,7 +8160,9 @@ void main() {
         'with "repeat", "remaining" and "each" (tier ii)', () {
       for (final (file, position) in const [
         ('0398-ultimate-grilled-pizza.yaml', 12),
-        ('0031-classic-gazpacho.yaml', 10),
+        // RE-PIN (M83 batch, v85): ('0031-classic-gazpacho.yaml', 10) leaves
+        // the list — B1a reads its "each portion … with about 1 teaspoon"
+        // × the serves (nutrition_v85_test.dart pins it, 35.76 g).
         ('0034-lighter-corn-chowder.yaml', 10),
         ('0284-brazilian-shrimp-and-fish-stew-moqueca.yaml', 8),
         ('0301-grown-up-stovetop-macaroni-and-cheese.yaml', 5),
@@ -8175,8 +8194,8 @@ void main() {
     });
 
     test('R-E5: the strain, the press and the discard, three sentences '
-        'quoted; the porcini (head "mushroom", named "porcini") is not '
-        'reached — a stated gap', () {
+        'quoted; the porcini (head "mushroom", named "porcini") is reached '
+        'by its own word since v85 (M83 B5) — the stated gap closed', () {
       for (final (file, step) in const [
         ('0172-braised-turkey.yaml', 4),
         ('0162-slow-roasted-turkey-with-gravy.yaml', 3),
@@ -8191,7 +8210,9 @@ void main() {
           ),
         );
       }
-      expect(_g2(rowIn('0172-braised-turkey.yaml', 11).grams!), '14.17');
+      // RE-PIN (M83 batch, v85): was '14.17' (the stated gap) — B5 reads the
+      // porcini by its item's own word: strained out, 0 g `discarded`.
+      expect(_g2(rowIn('0172-braised-turkey.yaml', 11).grams!), '0.00');
     });
 
     test('R-E5 reads the chain as printed — a strain naming the vegetables, '
@@ -8335,11 +8356,13 @@ void main() {
           '587.62',
         ), // 608.72 → 586.18
         // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
+        // RE-PIN (M83 batch, v85): was 579.95 — B5: the porcini |11 strained
+        // out by its own word (the replay 579.95 → 575.75).
         (
           '0172-braised-turkey.yaml',
           null,
           'complete',
-          '579.95',
+          '575.75',
         ), // 601.81 → 578.50
         (
           '0235-maple-glazed-pork-tenderloin.yaml',
@@ -8347,17 +8370,23 @@ void main() {
           'partial',
           '444.28',
         ), // 462.34 → 444.28
+        // RE-PIN (M83 batch, v85): was 315.51 — B4: the joined bacon fat |2
+        // takes 1.59 g of the uptake (1.59 + 53.53 = 55.12 g, each fryer
+        // rounded alone; the replay 315.56 → 315.57).
         (
           '0316-classic-french-fries.yaml',
           null,
           'complete',
-          '315.51',
+          '315.52',
         ), // 431.27 → 315.56
+        // RE-PIN (M83 batch, v85): was 361.46 — B4: the joined bacon fat |2
+        // takes 2.52 g of the uptake at 897 kcal/100 g, the peanut oil the
+        // rest at 900 (the replay 361.38 → 361.37).
         (
           '0317-easier-french-fries.yaml',
           null,
           'complete',
-          '361.46',
+          '361.44',
         ), // 477.10 → 361.38
         // RE-PIN (M82 batch, v84): was 811.14 (the replay 811.11 → 810.26).
         (
@@ -8939,8 +8968,10 @@ void main() {
       // fat — no sentence adds "duck fat" — is counted whole: 2 × 12.8 g,
       // the tablespoon of its search's 173572 "Fat, goose" (an
       // approximation). The guard loosened to any fat word of an add
-      // sentence ("bacon grease"), it joins too: 0.00 g discarded.
-      expect(at(2), ('0.00', 'discarded', null));
+      // sentence ("bacon grease"), it joins too: discarded, at its share.
+      // RE-PIN (M83 batch, v85): was ('0.00', 'discarded', null) — B4: the
+      // joined bacon fat takes its mass share of the fries' uptake.
+      expect(at(2), ('1.59', 'discarded', null));
       expect(at(4), ('25.60', 'portion', null));
     });
 
@@ -9000,7 +9031,7 @@ void main() {
       }
     }
 
-    test('R-H1 reads a print for exactly 4 of the 262 amount-less lines the '
+    test('R-H1 reads a print for exactly 5 of the 262 amount-less lines the '
         'engine weighs (a seasoning, water, equipment, flavouring, '
         'continuation, reference or main-recipe-part line is a 0 g rule row '
         'no reader weighs)', () {
@@ -9033,7 +9064,10 @@ void main() {
         }
       }
       expect(weighed, 262);
+      // RE-PIN (M83 batch, v85): 4 → 5 — B1a reads gazpacho|10's "each
+      // portion with about 1 teaspoon olive oil" (× the serves).
       expect(read, [
+        '0031-classic-gazpacho.yaml|10',
         '0398-ultimate-grilled-pizza.yaml|4',
         '0398-ultimate-grilled-pizza.yaml|11',
         '0554-shrimp-pad-thai.yaml|3',

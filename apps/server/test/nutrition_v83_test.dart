@@ -868,7 +868,9 @@ void main() {
         // each matcherVersion bump (the version alone moves it).
         // RE-PIN (M82 batch, v84): the hash at matcherVersion 79 (was
         // 3b204f37…; the base tree with only the bump gives this literal).
-        '8aab695d59ce9e326db958118fc2806852bc656bcfae41bfdf01336ee52eebcd',
+        // RE-PIN (M83 batch, v85): the hash at matcherVersion 80 (was
+        // 8aab695d…; the base tree with only the bump gives this literal).
+        'ec64db327f8b429ae4e5ace37d47aca54e45b6e35c3ef0102382721dee03e544',
       );
     });
   });

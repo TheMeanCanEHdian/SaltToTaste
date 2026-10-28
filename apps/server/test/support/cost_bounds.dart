@@ -174,6 +174,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // R3 (simplification ledger L8-5): whether a sentence coats the food
       // with crumbs (v33, [_crumbLineOfTheCoat]) — once per index.
       'memo:coatsWithCrumbs',
+      // v85 (M83 B5): the lines carrying each item word, the own-word
+      // fallback's "no other line" test — once per index.
+      'memo:itemWords',
     ])
       once: 1,
     // v82 (review Run 067/068 F8): the M52 keys built — the request's plan

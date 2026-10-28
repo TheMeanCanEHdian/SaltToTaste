@@ -5154,6 +5154,142 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v85 (batch M83; matcherVersion 80 — 7 rows move, exactly the 7
+the batch names; prep51 design_v2 §2 M83; zero requests; server only;
+replayed on snapshot 29 against the v84 rows, both orders byte-identical,
+every row attributed to one rule by reverting that rule alone, calls 0).**
+Step readers, decided under the 2026-10-07 standing authorization:
+- **B1a — "each portion … with <amount>" counts × the serves (guard (ii)'s
+  one exception; NEW arm in `_stepAmountsAt`, [re-point → `measurement`]).**
+  R-H1's guard (ii) refuses an amount-less line whose head a multiplying
+  sentence names. A sentence whose ONLY multiplying word is an "each
+  portion|serving|bowl" phrase (`_eachServing`; the rest of the sentence
+  matches no `_multiplies` word), and whose prints of the head follow it as
+  "with (about) <amount>" (`_servedWith`, a 24-character window before the
+  print, never before the phrase), serves that amount per portion: each
+  such print counts × the recipe's serves — `Recipe.serves.min`, the lower
+  printed number (the per-serving divisor before any person basis); a
+  recipe printing no serves refuses as before. A per-serving sentence
+  naming the head without its own print refuses. Basis "from step 2: about
+  1 teaspoon × 8 portions (no amount on the line)". classic-gazpacho|10
+  "Extra-virgin olive oil, for serving" (step 2 "Serve cold, drizzling each
+  portion with about 1 teaspoon olive oil"; SERVES 8 TO 10) 0 → 35.76 g on
+  748608 (8 × 4.93 mL × its 0.907 g/mL `portion`), +316.16 kcal; per serving
+  88.11 → 127.63. Not reached (byte-equal): mulligatawny|16's yogurt ("spoon
+  a dollop … into each bowl" prints nothing), ultimate-grilled-pizza|12
+  ("Repeat with remaining 2 dough rounds … for each round": B1b, the owner's
+  Q5 — not built) and the other R-H1 negatives. The serves are hashed
+  (closer 1): `ingredientsHashOf` gains a `serves` term (`Recipe.serves.min`)
+  only where a step prints the phrase (`_eachServing`, case-blind on the raw
+  steps — 34 corpus recipes and 3 subsections), so every other recipe hashes
+  as before; a servings edit stales the stamp and the recompute counts the
+  new serves — gazpacho written SERVES 4: |10 17.88 g, "× 4 portions", 107.86
+  kcal per label serving under the stored basis 8 (the batch's 4 teaspoons
+  over an eighth of it). The label's divisor (the stored basis first) only
+  divides the batch, so a person's serving basis (a rebase) leaves the oil
+  at the printed count.
+- **B4 — a fat joined to the frying oil takes its share of the uptake.**
+  `_m52Plan`'s fryer filter drops v71's `!_joinedFryingFat` gate (the
+  helper deleted): a fat `_joinsFryingOil` puts in the frying oil (pF R3) is
+  a fryer like the oil — its mass share of the SAME uptake (`uptake *
+  p.full / oil`; the joined row is `discarded` with kept 0, so the plan
+  weighs it at its full grams), flagged as the oil is. `_m50DiscardedBasis`'s
+  pF R3 basis ("… counted as 0 g · part of the frying medium (the fried
+  food's uptake is counted on the frying oil's row)") is retired. No new
+  figure: SR 170698's 6.0 % of the raw potatoes either way.
+  classic-french-fries|2 ¼ cup bacon fat (51.60 g) beside 2 quarts peanut
+  oil (1,741.29 g — "2 quart ≈ 1893 mL" × 0.92; 2710187 prints no quart)
+  → 1.59 g, |1 55.11 → 53.53 g (each fryer rounded alone: 55.12 g in all);
+  easier-french-fries|2 beside 6 cups (its 224 g cup, 1,344 g) → 2.52 g, |1
+  68.04 → 65.52 g. Row column −0.04 (897 vs 900 kcal/100 g, and the
+  classic's +0.01 g rounding), recipe energy +0.00 (per-serving rounding).
+  Not reached: chicken-francese-2|8 |9 (no joined fat; 25.94 + 27.08 g of
+  the 53.02 g uptake), dakgangjeong|0's sesame oil.
+- **B5 — a strained line named by its item's own word (NEW fallback in
+  `_strainedOut`, [re-point → `item`]).** When no step names the line's
+  head (`_ownMentions` empty), `_strainedOut` reads the mentions of the
+  item's own word before the head (`_ownWordOf`: the word-only token before
+  the head as the item writes it, `_formsOf` — "porcini" of "dried porcini
+  mushrooms"), provided no other line's item carries that word (counted
+  once per index, `memo:itemWords`); every later guard — the first mention
+  before the strain, named again after it, lifted out, the sheet, another
+  vessel, "meanwhile", blended — reads those mentions. braised-turkey|11 "½
+  ounce dried porcini mushrooms, rinsed" 14.17 → 0 g `discarded` (−41.96;
+  step 2 "Toss the onions, …, porcini, and 2 tablespoons of the melted
+  butter in a large roasting pan"; step 5's strain, press and "Discard the
+  vegetables"), italian-wedding-soup|3 7.09 → 0 g (−20.98). Basis
+  "discarded in cooking — counted as 0 g · approximate (strained out and
+  discarded — what it gives the liquid is not counted) · approximate (FDC
+  holds no porcini — counted as dried shiitake)" — the M73 stand-in flag
+  stays, as a record's flag does on every discarded row (pho|7's anise).
+  Not reached: guay-tiew-tom-yum|2 (its own word "green" — "scallions"
+  normalizes to "green onions" — is first named in step 3's "scallion
+  greens", after the strain: 60.00 g), caldo-de-siete-mares|0 (head
+  `pepper`, no strained class).
+Totals vs the v84 rows: 7 rows; row column +253.18, recipe energy +253.22
+(5 recipes); 0 status (col 9) / hold / fdc changes; gram sources
+unmeasured → portion (1) and weight → discarded (2); buckets, sections and
+notes identical (a 0 g discarded row is `counted`, as a weighed one).
+Calibration (reported, never fitted): audit 6 R12 braised-turkey 579.95 →
+575.75 /serving against the hand 518.7 (+11.8 → +11.0 %); R06 / R07 (the
+fries) ±0.0; no other calibration recipe.
+Pins: nutrition_v85_test (34 tests — the seven rows and seven negatives on
+real corpus lines, the replay's figures; the uptake sums; a second compute
+writes nothing; the serves hash (a servings edit stales gazpacho, its
+recompute 17.88 g; a recipe without the phrase hashes a serves edit as
+before; a capitalized "Each portion" hashed; the LOWER serves hashed —
+SERVES 6 TO 10 stales gazpacho and reads × 6, 26.82 g, while 8 TO 12
+hashes and reads as before (closer 2)); B1a's and B5's gates one by
+one on STATED rewrites of gazpacho's step 2 ("with chives and 1 teaspoon"
+for `_servedWith`'s end anchor), braised-turkey's porcini line and steps
+and the pho's steps 1–2 (its ground beef named "ground meat": the drained
+guard reads the own word; closer 2: the line without "dried" read by
+"porcini", a bare "mushrooms" not read, and "dried porcini mushrooms or
+shiitake mushrooms" read by the word before the LAST head — "shiitake",
+named by no step — as `_joinsFryingOil`'s lastIndexOf; closer 3: a
+plain print beside the served one counted once — step 1 written "Add 1
+teaspoon olive oil" reads 1 + 1 × 8 teaspoons, 40.23 g — "each bowlful"
+refused, "porcini" twice on one line read, and step 2's porcini written
+"1 cup porcini broth" not read; the owner gate — verify4's four LOW pin
+gaps, closed by the orchestrator, no fifth round: a later multiplying
+sentence after the served one ("Repeat with the remaining olive oil.")
+refused, guard (ii) walking past the served sentence to it; every print
+in the served sentence must follow "with" — "and adding 1 teaspoon olive
+oil" refuses the sentence, "and finishing with 1 teaspoon olive oil"
+counts both × 8, 71.53 g; the phrase printed twice refused (ruled: a
+second phrase is another multiplier — no corpus sentence prints it
+twice); a letter before the phrase ("the peach portion") refused,
+`_eachServing`'s leading word boundary), each with its mutant; the cap
+shapes' counts); the existing suite re-pinned as equalities
+(RE-PIN M83): nutrition_v71_test's R-H1 negatives (gazpacho|10 leaves), its
+corpus census (4 → 5 amount-less lines read), R-E5's porcini "stated gap"
+(closed), the pF R3 rows and the duck-fat case; the fries' uptake rows of
+nutrition_v53 / v60 / v66 / v69 (and v60's flag counts +2); the porcini
+rows of nutrition_v73 and the per-serving pins of v59 / v71 / v73; the
+version literals and the three hashes (the version alone).
+Cost: two readers. B1a's per-serving phrase is read once per multiplying
+sentence per index (`memo:stepAmounts`), each line's prints grouped by
+sentence once, its "with" test a bounded window per print; guard (ii) walks
+the shorter of the head's naming and the multiplying sentences (a
+per-serving sentence no longer ends the walk). B5 reads the own word's
+mentions once per word (`memo:foodNaming`) and the item words once per
+index. At the caps (loop level, every line's three readers): B1a TRUE (400
+distinct amount-less heads under 120 × 10,000 characters of "Serve,
+drizzling each portion with about 1 teaspoon <head>.") 165 / 124 → 219 /
+156 ms (the 400 lines weighed, no base equivalent), QUIET ("Serve the
+remaining soup, …") 104 / 110 → 110 / 108 ms; B5 TRUE (400 own words each
+tossed in before the strain) 37 / 29 → 43 / 33 ms, QUIET (400 copies of
+the porcini line) 28 / 25 → 27 / 27 ms; counts pinned exactly (base's but
+each reader's own memo); backstop 10 s. The `serves` hash term is one
+case-blind scan of the raw steps per hash (no memo, no count): at the caps
+(120 × 10,000 characters) 10.76 / 10.83 → 11.58 / 11.47 ms a hash where no
+step prints the phrase, equal where one does (the scan stops at it).
+Deploy note: matcherVersion 80 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests). The kcal digest (`tool/replay/digest.sh`)
+moves 766,591.23 → 766,623.06, +31.83 over 5 rows (gazpacho +39.52,
+braised-turkey −4.20, italian-wedding-soup −3.49, the fries ±0.01) — a
+per-serving sum, not the recipe energy above.
+
 **Matcher v84 (batch M82; matcherVersion 79 — 614 rows move: 569 of the
 572 the batch names, 24 consequences of its rules on their own lines
 beyond the brief's enumerated list (accepted, ruling4), 21 routed parents; prep51 design_v2 §2 M82; zero requests; server
@@ -5940,7 +6076,8 @@ the library's 19 other strained sprigs do. braised-turkey|11 "½ ounce dried
 porcini mushrooms" (audit L070) is NOT reached: its head is `mushroom` and
 the steps call it "porcini", so `_strainedOut`'s own-mention test finds no
 mention (a gap; reaching it needs a mention by the item's own word, which
-would also reach italian-wedding-soup|3). R-E5 as built: 10 kcal rows and
+would also reach italian-wedding-soup|3 — closed at v85: M83 B5 reads that
+word, both rows 0 g `discarded`). R-E5 as built: 10 kcal rows and
 the 2 basis-only sprig rows, row column −458.58 / recipe energy −458.50 —
 the design's §2 figure, −500.54 on 11 rows, less the porcini's 41.96.
 Not reached: pumpkin-pie and
@@ -6007,7 +6144,9 @@ grease" for "bacon fat") in a step naming the oil, where a line headed
 `oil` is a frying oil → `DiscardedMedium.fryingOil`, 0 g; M52's plan sizes
 no uptake for it (the fried food's uptake stays on the oil's row). Basis
 `discarded in cooking — counted as 0 g · part of the frying medium (the
-fried food's uptake is counted on the frying oil's row)`.
+fried food's uptake is counted on the frying oil's row)`. (v85, M83 B4: the
+plan now gives it its mass share of the same uptake, flagged as the oil is
+— 1.59 g and 2.52 g; this basis is retired.)
 classic-french-fries|2 ("Add the bacon grease (if using).") and
 easier-french-fries|2 ("Combine the potatoes, oil, and bacon fat (if
 using) …") 51.60 → 0 g: −925.70. Not reached: dakgangjeong|0 (sesame oil).
@@ -6035,7 +6174,8 @@ the 11 unmeasured pour-offs outside C4; braised-turkey's kept broth ("use
 any remaining broth for another use", a volume with no weight); the
 sub-noise lines (an "extra sauce" salt, bay leaves, gravlax's scraped dill);
 the 248 amount-less lines no step sizes (the sugar stars, the oiled
-counters) at 0 g; the fried aromatics' uptake; the porcini above.
+counters) at 0 g; the fried aromatics' uptake; the porcini above (closed
+at v85, M83 B5).
 
 **Beyond the brief — a line's position by identity.** `_positionsOf`, the
 line → position map M71's readers key on (the scope, the memo keys), was
@@ -6331,7 +6471,9 @@ gain the flag), and a line naming `porcini` on SR 168436 *Mushrooms,
 shiitake, dried* → `approximate (FDC holds no porcini — counted as dried
 shiitake)` (15 rows, incl. grilled-stuffed-pork-tenderloin's Porcini and
 Artichoke Stuffing and braised-turkey|11, still counted at 14.17 g — M71's
-strain did not reach it: its head is `mushroom`, the steps say porcini). No cached answer
+strain did not reach it: its head is `mushroom`, the steps say porcini; at
+v85 M83 B5 strains it out by that word, 0 g, the flag kept on its
+discarded row). No cached answer
 holds a Dijon or porcini record (the 'dijon mustard' answer is FNDDS
 2710202 honey mustard dressing alone). Not flagged by this arm: the 23
 other lines on 326698 (16 whole-grain — flagged by (2′) —, 6 yellow,

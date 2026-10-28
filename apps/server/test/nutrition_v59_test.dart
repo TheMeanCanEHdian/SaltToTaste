@@ -676,7 +676,9 @@ void main() {
         // strain: onions, celery, carrots, garlic, bay, parsley (−233.14 /
         // 10; the porcini |11 stays, its head 'mushroom' never named).
         // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
-        (_braised, '579.95'), // v58 576.52
+        // RE-PIN (M83 batch, v85): was 579.95 — B5: the porcini |11 strained
+        // out by its own word, 14.17 g → 0 (the replay 579.95 → 575.75).
+        (_braised, '575.75'), // v58 576.52
         (_grillroasted, '482.28'), // v58 440.12
         // RE-PIN (M82 batch, v84): was 566.13 (the replay 566.13 → 568.27).
         (_crowd, '568.27'), // v58 540.37

@@ -519,8 +519,9 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 79 (v84, batch M82: rows move)', () {
-    expect(matcherVersion, 79);
+  test('matcherVersion 80 (v84 set it to 79, batch M82: rows move)', () {
+    // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
+    expect(matcherVersion, 80);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {

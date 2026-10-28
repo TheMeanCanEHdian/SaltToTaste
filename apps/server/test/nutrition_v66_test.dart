@@ -367,8 +367,10 @@ const List<_Row> _negatives = [
     '2 quarts peanut oil',
     2710187,
     '0.990000',
-    '55.11',
-    '495.99',
+    // RE-PIN (M83 batch, v85): was '55.11', '495.99' — B4: the joined bacon
+    // fat |2 takes its mass share of the same uptake (1.59 g).
+    '53.53',
+    '481.77',
     'auto',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes' weight — derived from USDA SR Legacy 170698 \"Fast foods, potato, french fried in vegetable oil\")",
@@ -391,8 +393,10 @@ const List<_Row> _negatives = [
     '6 cups peanut oil',
     2710187,
     '0.990000',
-    '68.04',
-    '612.36',
+    // RE-PIN (M83 batch, v85): was '68.04', '612.36' — B4: the joined bacon
+    // fat |2 takes its mass share of the same uptake (2.52 g).
+    '65.52',
+    '589.68',
     'auto',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes' weight — derived from USDA SR Legacy 170698 \"Fast foods, potato, french fried in vegetable oil\")",

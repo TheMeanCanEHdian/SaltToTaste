@@ -402,8 +402,10 @@ const List<_Row> _uptakes = [
     '2 quarts peanut oil',
     2710187,
     '0.990000',
-    '55.11',
-    '495.99',
+    // RE-PIN (M83 batch, v85): was '55.11', '495.99' — B4: the joined bacon
+    // fat |2 takes its mass share of the same uptake (1.59 g).
+    '53.53',
+    '481.77',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
@@ -426,8 +428,10 @@ const List<_Row> _uptakes = [
     '6 cups peanut oil',
     2710187,
     '0.990000',
-    '68.04',
-    '612.36',
+    // RE-PIN (M83 batch, v85): was '68.04', '612.36' — B4: the joined bacon
+    // fat |2 takes its mass share of the same uptake (2.52 g).
+    '65.52',
+    '589.68',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
@@ -1061,7 +1065,10 @@ void main() {
           );
         }
       }
-      expect(flagged, _reach.length + _uptakes.length);
+      // RE-PIN (M83 batch, v85): was _reach.length + _uptakes.length (41) —
+      // B4: the two french fries' joined bacon fats (0316|2, 0317|2, in no
+      // table here) now carry the fries' uptake flag too.
+      expect(flagged, _reach.length + _uptakes.length + 2);
     });
 
     test('a second recompute writes nothing', () {
@@ -1158,7 +1165,8 @@ void main() {
       }
       // Not vacuous: every flagged oil confirmed and shown with its flag.
       expect(confirmed, greaterThanOrEqualTo(_reach.length + _uptakes.length));
-      expect(oilFlags, _reach.length + _uptakes.length);
+      // RE-PIN (M83 batch, v85): + the two joined bacon fats (B4), as above.
+      expect(oilFlags, _reach.length + _uptakes.length + 2);
       // The guard (STATED synthesized: pakoras' confirmed oil line edited
       // to "3 quarts", not computed — a carried row, the stored row not the
       // confirm's): its own plan, as shipped — the request's stored plan

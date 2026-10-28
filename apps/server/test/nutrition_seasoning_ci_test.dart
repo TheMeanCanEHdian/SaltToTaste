@@ -81,7 +81,8 @@ void main() {
     // RE-PIN (M80 batch, v80): matcherVersion 77 (was 76).
     // RE-PIN (v81, the Run 065/066 fixes): matcherVersion 78 (was 77).
     // RE-PIN (M82 batch, v84): matcherVersion 79 (was 78).
-    expect(matcherVersion, 79); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
+    expect(matcherVersion, 80); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -165,7 +166,13 @@ void main() {
       // density tables and the parsed prep and amounts, already hashed or no
       // input — the version alone: the base tree with only the bump gives
       // this literal).
-      '6c8a6c720d8a1fe17f0cefb58cf1c4bd9a24a185423f8dccb1635d6d78416cd2',
+      // RE-PIN (M83 batch, v85): the hash at matcherVersion 80 (was
+      // 6c8a6c72…; B1a reads the steps, the parsed amounts and the
+      // recipe's serves — its `serves` term only where a step prints "each
+      // portion|serving|bowl" (closer 1), none here — B4 the rows and steps,
+      // B5 the steps and parsed items — the version alone: the base tree
+      // with only the bump gives this literal).
+      '6cfb5da302bea4bd866f3a8203ace6a2c345bc8363a22dcc1fc33a5723fce7bc',
     );
   });
 
