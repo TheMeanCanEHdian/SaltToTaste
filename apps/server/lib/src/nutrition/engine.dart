@@ -6173,6 +6173,11 @@ final RegExp _dipExcess = RegExp(
 final RegExp _eggWord = RegExp(r'\beggs?\b');
 final RegExp _buttermilkWord = RegExp(r'\bbuttermilk\b');
 final RegExp _dipWord = RegExp(r'\b(chocolate|batter|glaze|egg|coating)');
+
+/// Unterminated on purpose (v83 A6, ledger Q16): "mixture" and "stirring"
+/// match, so 0758's "milk mixture" carries D5's continuation — the
+/// whole-word form moves 6 basis-only rows of british-style-currant-scones
+/// the wrong way; [_dipsOf] reads the whole word ([_mixesWord]).
 final RegExp _mixVerb = RegExp(r'\b(?:whisk|combine|stir|beat|mix|sift)');
 final RegExp _mixtureOf = RegExp(r'\b(\w+) mixture\b');
 final RegExp _reducesGlaze = RegExp(r'\bsyrupy\b|\breduced to\b');
@@ -7423,12 +7428,30 @@ Future<(FdcFood, GramResolution?)> _skinOffFood(
 /// is every gate: the line's phrase, the step-printed trim, the target in
 /// the line's answer. Without [db] (no answer to read) no trim or R2 move is
 /// undone.
+/// v83 (F3, ledger Q14): the skin, shell and can moves are undone only on a
+/// row whose [gramSource] is the forward move's own term ([_skinOffFood]
+/// moves a `weight` row only) — oven-fried-chicken|6's piece-weighed legs on
+/// the meat-only 173619 decide 173619, never the skin-on 172378 their own
+/// carried decision would land on. Typed grams (`override`) are no weigh of
+/// their own (v83 closer 1, verify1 D1): the term is then the line's OWN
+/// weigh on the row's [food] ([lineGrams] without the recipe's step readers
+/// — no request; RULE C, closer 4, verify4 D1: with them each typed row
+/// paid the skin scans again, the GET 12.5 s on 400 typed rows under 120
+/// skin-trip steps of 10,000 characters, 4.5 s at base) — 0637|0's moved
+/// bird Confirmed or picked with grams typed still decides 171447. The step
+/// readers change no `weight` term on any corpus line a table gates (147
+/// line × record cases on snapshot 29, 0 differ); an amount-less line whose
+/// steps print its weight ([stepAmountGrams], [hostWeighedGiblets]) reads
+/// "not weighed" here, so its inverse does not fire when typed over — no
+/// corpus line does (stated, not guarded: Q7).
 int? decisionRecordOf(
   Recipe recipe,
   IngredientLine line,
   int? fdcId, {
   SaltDatabase? db,
   String? description,
+  String? gramSource,
+  FdcFood? food,
 }) {
   if (db != null && fdcId != null) {
     final trimmed = _trimBoughtOf(fdcId);
@@ -7440,9 +7463,19 @@ int? decisionRecordOf(
       }
     }
   }
+  // Read only where a table names [fdcId] (late: no weigh on another row).
+  // A typed row's term is the line's own weigh on its food, without the
+  // recipe's step readers (RULE C, v83 closer 4: they cost each typed row
+  // the skin scans again — the GET 12.5 s at the caps, 4.5 s at base).
+  late final weighed =
+      (gramSource == GramSource.override.name && db != null
+          ? lineGrams(db, line, food)?.source.name
+          : gramSource) ==
+      GramSource.weight.name;
   for (final MapEntry(key: skinOn, value: meatOnly)
       in _skinlessRecords.entries) {
     if (meatOnly == fdcId &&
+        weighed &&
         buysRefuse(line.raw) &&
         skinDiscarded(recipe, line)) {
       return skinOn;
@@ -7451,13 +7484,14 @@ int? decisionRecordOf(
   // v49: the record bought for a line the shell move put on the raw one,
   // or the can move on the solids-and-liquids one.
   for (final MapEntry(key: bought, value: raw) in _shellRecords.entries) {
-    if (raw == fdcId && boughtInShell(line.raw)) {
+    if (raw == fdcId && weighed && boughtInShell(line.raw)) {
       return bought;
     }
   }
   for (final MapEntry(key: bought, value: liquid)
       in cannedBeanLiquids.entries) {
     if (liquid == fdcId &&
+        weighed &&
         keepsWholeCan(
           line.raw,
           liquidEaten: canLiquidEatenIn(recipe, line),
@@ -13662,6 +13696,12 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
     // ([parseShare]) and no other term covers — a yield edit stales the
     // section, whose new stamp re-derives its parents.
     if (hostOf(recipe.id) != recipe.id) 'servings': recipe.servings,
+    // v83 (F5c): a MAIN recipe's yield printing an oil, which
+    // [_yieldOilEaten] reads through [_yieldOil] — only where one prints it
+    // (no corpus main recipe does), so every other recipe hashes as before.
+    if (hostOf(recipe.id) == recipe.id &&
+        _yieldOil.hasMatch(recipe.servings?.toLowerCase() ?? ''))
+      'yield_oil': recipe.servings,
     'lines': [
       for (final line in lines)
         {
@@ -20176,6 +20216,19 @@ applyDecisionToOthers(
                 hold: outcome.hold,
               ),
             );
+        // Rule B1's part records resolved where the row's food is, as the
+        // compute and the PUT's own line resolve them (RULE A: the totals
+        // never fetch — v83 F2, ledger Q13: a part no cache held left the
+        // target `underived`, its bacon row out of the label); a failure is
+        // the weigh's (above).
+        try {
+          await _resolveParts(db, provider, row);
+        } on NutritionProviderException catch (error) {
+          _log.info('apply-to-all target ${entry.key}#$at unavailable: $error');
+          unavailable += 1;
+          unweighed = true;
+          continue;
+        }
         if (row.hold != null) {
           // A LINE hold now (a decided food answers every food hold): the
           // recipe changed since the reach (a steps edit made the line a

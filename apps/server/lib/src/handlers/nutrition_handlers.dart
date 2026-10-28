@@ -280,6 +280,8 @@ Future<Map<String, Object?>> matchesBody(
                                 row.fdcId,
                                 db: db,
                                 description: row.description,
+                                gramSource: row.gramSource,
+                                food: onRow?.food,
                               ),
                         memo: reads,
                       )
@@ -880,12 +882,14 @@ Future<AppliedToOthers?> applyMatchOverride(
   // the stamp fresh: 0129's held liquid smoke confirmed in an outage sat
   // in `no_grams` for good.) A pick still needs its food above.
   var stored = row;
+  FdcFood? storedFood;
   // An un-skip that gives typed grams back (`overridden`, [unskippedRow])
   // is a decision again: derived like any (v29, Opus critic 3 — a row
   // typed before its food went is held, never counted unheld).
   if (skipped != false || isDecidedRow(row)) {
     final d = await derivedFor(db, provider, recipe, position, line, row);
     stored = d.row;
+    storedFood = d.food;
     unavailable = unavailable || d.unavailable != null;
   }
   // A food this derivation found has no record (a confirm of a food FDC
@@ -909,6 +913,10 @@ Future<AppliedToOthers?> applyMatchOverride(
   // this line's skin trip puts it on decides the skin-on record bought
   // ([decisionRecordOf]) — the key's other lines move again only where
   // their own recipe discards the skin. This line's row keeps its food.
+  // v83 (F3): only where the line's weigh is the forward move's own term —
+  // the DERIVED row's gram source (a pick clears the edited row's); typed
+  // grams read the line's own weigh on the derived food, without the
+  // recipe's step readers (closer 1; closer 4, RULE C).
   final skinOnId = decidedFood
       ? decisionRecordOf(
           recipe,
@@ -916,6 +924,8 @@ Future<AppliedToOthers?> applyMatchOverride(
           row.fdcId,
           db: db,
           description: row.description,
+          gramSource: stored.gramSource,
+          food: storedFood,
         )
       : row.fdcId;
   final skinOn = skinOnId == null || skinOnId == row.fdcId

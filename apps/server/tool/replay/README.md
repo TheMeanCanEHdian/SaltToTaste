@@ -17,7 +17,7 @@ gitignored; a key-stripped, session-free copy of the live DB — never the live 
   The simplification series' reference = the v82 set (`.claude/diag/2026-10-09/v82_*`, made on
   snapshot 29); every refactor batch must reproduce it byte for byte.
 - `digest.sh <gate-dir> [live-db]` — after a deploy: live buckets == replay buckets and the kcal digest.
-- `person_sweeps/` — sw3–sw8, the only proof of the person paths (Confirm / pick / skip / typed grams
+- `person_sweeps/` — sw3–sw10, the only proof of the person paths (Confirm / pick / skip / typed grams
   through the real PUT); see its README for each sweep's spec and base / tip figures.
 
 Conventions: one heavy run at a time; a gate run writes a full log and the reviewer greps it; the

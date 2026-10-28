@@ -98,7 +98,13 @@ void main() {
       );
       final line = nutritionLines(recipe)[0];
       expect(skinDiscarded(recipe, line), isTrue);
-      expect(decisionRecordOf(recipe, line, 171052), 171447);
+      // RE-PIN (v83 F3): the inverse reads the row's gram source — 0637|0
+      // is weighed `weight` (738.75 g on 171052, the v82 rows); the value is
+      // unchanged.
+      expect(
+        decisionRecordOf(recipe, line, 171052, gramSource: 'weight'),
+        171447,
+      );
     });
 
     test('E1 whole bird: the part a skin-off sentence leaves the skin on '
@@ -148,7 +154,13 @@ void main() {
       final bird = nutritionLines(soup)[1];
       expect(bird.raw, startsWith('1 (4-pound) whole chicken, breast removed'));
       expect(skinDiscarded(soup, bird), isFalse);
-      expect(decisionRecordOf(soup, bird, 171052), 171052);
+      // RE-PIN (v83 closer 1, verify1 D2): read as the row is weighed —
+      // 0002|1 is a `weight` row (v82: 171447, 1,104.00 g) — so the skin
+      // gate decides, never the gram source; the value is unchanged.
+      expect(
+        decisionRecordOf(soup, bird, 171052, gramSource: 'weight'),
+        171052,
+      );
       final provencal = loadCorpusRecipe('0455-chicken-provencal.yaml');
       final thighs = nutritionLines(provencal).firstWhere(
         (l) => l.raw.contains('chicken thighs'),

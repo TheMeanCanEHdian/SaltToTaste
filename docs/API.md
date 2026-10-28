@@ -5142,15 +5142,136 @@ invariant the dual-fleet review found broken on a non-corpus input:
   again on the reverted rows, as the compute plans on the engine's: 1081's
   haddock skipped, the batter back to its whole lines and the oil 26.09 g
   on them (815.36 per serving, not 0.25 g on the salt alone and 757.22).
-  Only a write that reverts a row plans twice. Open: a CONFIRMED plan row (a
-  person's confirm, no grams typed) is re-derived only by the next compute
-  (RULE A's `derivedFor`), not by another row's PUT.
+  Only a write that reverts a row plans twice. Closed by v82 F7 (closers
+  4–5): a CONFIRMED plan row (a person's confirm, no grams typed) follows its
+  food on another row's PUT as the next compute derives it — sw8 0 of 55,893
+  divergent; re-confirmed by v83's GATE-P (sw5–sw8 0 divergent at 4325a3d
+  and at v83).
 - **F10 — a subsection is held to the recipe's editor caps** (60 groups,
   400 lines, 120 steps of 1–10,000 characters, the line and step field
   lengths): nutrition computes each titled subsection as a recipe; only the
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v83 (batch M81; matcherVersion 78 — no corpus row moves; the
+person paths and pins of prep51 design_v2 §2 M81; zero requests; server
+only; replayed on snapshot 29, byte-identical to v82 on both orders, each
+rule alone too).** Decided under the 2026-10-07 standing authorization:
+- **F2 — the apply path resolves the parts (ledger Q13).**
+  `applyDecisionToOthers` resolves each target's Rule B1 part records
+  (`_resolveParts`, after `withParts`, before the line-hold test) where the
+  row's food is, as the compute and the PUT's own line do; a provider
+  failure there takes the weigh failure's arm (`unavailable`: the target
+  stays the engine's row, its totals stamped stale). The apply's totals
+  still never fetch (RULE A: `only:` the decided food). Before, a part
+  record no cache held — 168322 "Pork, cured, bacon, pre-sliced, cooked,
+  pan-fried", which snapshot 29 holds only as a hit of the 'thin-sliced
+  cooked deli ham' answer — was never fetched, so every reached target with
+  B1 parts was stamped `underived`, its bacon row out of the label until the
+  sweep: chili-con-carne|7 "8 ounces bacon …" picked 167869 and then 168277,
+  each apply_to_all, moved 9 labels on snapshot 29 (−4,816.60 kcal a batch,
+  27 recipes reached, 0 requests): 8 recipes underived (−3,768.91;
+  meatloaf-with-brown-sugarketchup-glaze 575.11 → 524.02 per serving,
+  grilled-bacon-wrapped-scallops 350.84 → 221.11) and, through its section
+  "Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions" (|0 on
+  168277, parts 168322 149.69 g + 172345 38.70 g: the section underived at
+  4,417.36 kcal, not 5,465.05), classic-roast-stuffed-turkey 1,258.02 →
+  1,153.25 per serving (−1,047.69; closer 1, verify1 D3). Now each reads
+  fresh at its v82 figure, equal to a full compute, and 168322 is asked
+  once for every target of the apply. Pins (nutrition_v83_test, the
+  fixtures; the deli-ham answer removed — a fresh deployment, STATED):
+  those figures and the requests; an outage on 168322 leaves both targets
+  `unavailable` (never `failed`, never written) and `underived`.
+- **F3 — the skin, shell and can inverses gate on the forward move's term
+  (ledger Q14).** `decisionRecordOf` takes the row's gram source, and its
+  three table loops (`_skinlessRecords`, `_shellRecords`,
+  `cannedBeanLiquids`) map a decision back to the record bought only for a
+  `weight` row — the term `_skinOffFood` moves by. The GET's offer reads
+  the source of the row it shows (an auto row's stored one, a decided
+  row's derived one); the PUT the derived row's (a pick clears the
+  edited row's: a pick of 171052 on grilled-lemon-chicken-with-rosemary|0
+  still decides 171447). Before, oven-fried-chicken|6 "4 whole chicken
+  legs, … skin removed" (173619, meat only, `piece` 1,060.00 g — a piece
+  weight never moves) decided 172378 (meat and skin) on a Confirm, and the
+  decision carried back landed on 172378 at 1,376.00 g: 958.56 kcal per
+  serving, +430.63. Now it decides 173619 and lands on 173619 at 1,060.00
+  g, 527.93. Every `weight` row still round-trips: grilled-lemon-chicken-
+  with-rosemary|0 decides 171447 and lands on 171052 at 738.75 g, 312.17
+  (pinned with each loop's own gate on its real row: 171052, 0294's
+  mussels 174216, 0340's chickpeas 175206). One-way door (person path, Q7 —
+  no users, unguarded): 0150|6's Confirm stores 173619, not 172378. Typed
+  grams (`override`) are no weigh of their own (closer 1, verify1 D1): the
+  term is then the line's own weigh on the row's food (`lineGrams` on the
+  food the caller already holds, without the recipe's step readers — no
+  read, no request; RULE C, closer 4, verify4 D1), so a Confirm, or a
+  pick of 171052, on 0637|0 with grams typed still decides 171447 (before
+  closer 1 it decided 171052, which perfect-roast-chicken|2 — skin eaten —
+  then carried at 738.75 g, 604.23 per serving, not 171447 at 1,035.00 g,
+  1,277.30); 0150|6 Confirmed with grams typed still decides 173619. On
+  every corpus line a table gates, the step readers change no `weight`
+  term (147 line × record cases on snapshot 29, 0 differ); an amount-less
+  line whose steps print its weight (`stepAmountGrams`,
+  `hostWeighedGiblets`) reads "not weighed" there, so its inverse does not
+  fire when typed over — no corpus line does (stated, not guarded: Q7).
+  Pinned with the GET's offer equal to the PUT's write on a typed row, on
+  a `piece` row (closer 5, verify5 D1 — STATED: 0150 stored a second time,
+  0150|6 being its key's one corpus row: the offer names 173619, offered
+  (0, 0) and written (0, 0); before, 172378 offered and written (1, 1),
+  the copy moved to 1,376.00 g; a GET reading every row as `weight`
+  offers (1, 1) and writes (0, 0)), and at the editor caps (the cost note).
+- **F5c — a main recipe's yield oil is an input.** `ingredientsHashOf`
+  hashes a MAIN recipe's `servings` where `_yieldOil` matches it
+  (`yield_oil`): `_yieldOilEaten` reads it for a main recipe as for a
+  section, whose yield was hashed already. No corpus main recipe prints a
+  yield oil (0053's "Fried Shallots and Fried Shallot Oil" is a section),
+  so no stored stamp moves. Pin (STATED synthesized, the recorded
+  exception): that section saved as a main recipe, its "ABOUT 1¾ CUPS
+  FRIED SHALLOT OIL" edited to "ABOUT 1½ …", reads stale; the recompute
+  counts 112.00 g of its oil, not 56.00. The host gate is pinned on the
+  real section: its hash is the one every matcherVersion-78 library stores
+  (the gate dropped would stale it on every deployment).
+- **A5 — `_dipsOf`'s two order sites pinned (the U1 gap; no code
+  change).** STATED synthesized on nutrition_v80_test's fried copy of 0315,
+  real sentences moved between real recipes: with 0198 S2's buttermilk dip
+  before 0315 S1's whisk, the salt, pepper and cayenne read 0315 S2's later
+  dip and the egg and buttermilk 0198's; with 0420 S4's egg dip after 0315
+  S2's, every dip line reads the earlier, 0315's; with 0198 S2's dip before
+  0315 S1's beat of the egg and buttermilk and 0420 S4's egg dip right
+  after it, the egg and buttermilk read 0420's — the earlier of the two
+  bases' dips, though the buttermilk base is read first. Each site's
+  mutant dies.
+- **A6 — comment only:** `_mixVerb`'s unterminated prefix is deliberate
+  (0758's "milk mixture"; `_dipsOf` reads the whole word).
+GATE-P (the person sweeps, apps/server/tool/replay/person_sweeps; base
+4325a3d / v83): sw5 31,141, sw6 36,828, sw7 1,833 and sw8 55,893 combos, 0
+divergent on both; NEW sw9 (the cold-cache apply: every line of the 8 keys
+holding a B1 row — the child sections' lines with the recipes' — its key's
+part records no library row counts evicted from both caches — 168322 for
+the four bacon keys) 54 of 130 divergent at base (every line of a key
+whose rows read 168322: bacon 28 — two of them section lines; 0158's
+stuffing section an underived target of the other 27 — pancetta 18,
+pancetta or bacon 2, thick-cut bacon 6), 0 of 130 (those 54 ask 168322
+once); NEW sw10 (a Confirm, the row removed and the decision carried back,
+on every row whose ungated inverse names another record; each row also
+Confirmed with its own grams typed, which must decide what the bare Confirm
+decides) 155 of 156 round-trip at base, bare and typed; 156 of 156 bare and
+125 of 156 typed before closer 1 (the 31 gated `weight` rows); 156 of 156
+both.
+Cost: no new step reader or regex; F2 adds one request per part record no
+cache holds, per apply (count-pinned: one for two targets); F3 one string
+compare per inverse, and one `lineGrams` of the line — no step reader — on
+a typed row a table names: at the editor caps (STATED synthesized: 0637|0's
+line × 400, typed on 171052, under 120 steps × 10,000 characters of a real
+0637 sentence; the counts pinned exactly, equal to 4325a3d's) the TRUE
+shape's GET (the skin trip fires) measures 4.42 / 4.43 s on 4325a3d and
+4.47 / 4.34 s on v83 (two runs each; the QUIET shape 0.34 / 0.34 s and
+0.37 / 0.36 s; the backstop 10 s) — with the step readers it measured
+12.5 s (closer 4, verify4 D1); F5c one `_yieldOil` test per hash of a main
+recipe.
+Deploy note: no matcherVersion bump; the new hash term reads no stored
+recipe (none prints a main-recipe yield oil) — nothing stales, no sweep;
+the kcal digest does not move.
 
 **Review Run 067/068 fixes (matcher v82; matcherVersion 78 — no corpus row
 moves; the catch-up review of v55–v62, both fleets; zero requests; server

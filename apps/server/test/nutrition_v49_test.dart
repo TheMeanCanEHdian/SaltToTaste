@@ -715,7 +715,18 @@ void main() {
         6,
       );
       expect(mussels.fdcId, 174216);
-      expect(decisionRecordOf(steamed, musselLine, 174216), 2706350);
+      // RE-PIN (v83 F3): the inverse reads the row's gram source (`weight`,
+      // the move's own term); the value is unchanged.
+      expect(mussels.gramSource, 'weight');
+      expect(
+        decisionRecordOf(
+          steamed,
+          musselLine,
+          174216,
+          gramSource: mussels.gramSource,
+        ),
+        2706350,
+      );
       expect(
         shellCounted(
           steamed,
@@ -891,7 +902,13 @@ void main() {
         10,
       );
       expect(ceci.fdcId, 175206);
-      expect(decisionRecordOf(pasta, can, 175206), 2644288);
+      // RE-PIN (v83 F3): the inverse reads the row's gram source (`weight`,
+      // the move's own term); the value is unchanged.
+      expect(ceci.gramSource, 'weight');
+      expect(
+        decisionRecordOf(pasta, can, 175206, gramSource: ceci.gramSource),
+        2644288,
+      );
       final (two, espinacas, cans) = await at(
         '1075-espinacas-con-garbanzos-andalusian-spinach-and-chickpeas.yaml',
         null,

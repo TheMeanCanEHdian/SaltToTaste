@@ -1,5 +1,5 @@
 #!/bin/zsh
-# sw4–sw8: settle a fresh snapshot copy, then sweep it in shards (each shard clones the settled DB).
+# sw4–sw9: settle a fresh snapshot copy, then sweep it in shards (each shard clones the settled DB).
 # usage: run.sh <swN.dart> <tree-root> <snapshot.db> <workdir> <nshards>
 set -u
 SW=$1; T=$2; SNAP=$3; D=$4; N=$5; mkdir -p $D

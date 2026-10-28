@@ -1292,8 +1292,14 @@ void main() {
     // digit) and SR 167694 (turkey-and-pork sausage — a hit in 'bulk pork
     // sausage' and 'hot italian sausage links'; monounsaturated 9.72 /
     // 9.719): compared 544 -> 546, differ 415 -> 416.
-    expect(compared, 546);
-    expect(differ, 416);
+    // RE-PIN (v83, batch M81): its F2 pins recorded from snapshot 29 the
+    // 'beef chuck-eye roast' search and the details of FNDDS 2710835 (masa
+    // harina — a hit in 'corn flour masa harina') and Foundation 2514744
+    // (80/20 ground beef — a hit in '80 percent lean ground beef' and six
+    // more), both differing in some digit (protein 7.56 / 7.5625, 17.5 /
+    // 17.53125): compared 546 -> 548, differ 416 -> 418.
+    expect(compared, 548);
+    expect(differ, 418);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {
