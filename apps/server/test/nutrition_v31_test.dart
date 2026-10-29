@@ -1320,10 +1320,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     '0402-frico.yaml',
     0,
     '1 pound Montasio or aged Asiago cheese, grated fine (about 8 cups)',
-    325036,
+    // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" (was
+    // 325036 "Cheese, parmesan, grated"), the grams unchanged.
+    170848,
     '453.59',
     'counted',
-    'from 1 pound · approximation (counted as Cheese, parmesan, grated)',
+    'from 1 pound · approximation (counted as Cheese, parmesan, hard)',
   ),
   (
     '0414-chicken-marsala.yaml',
@@ -2277,7 +2279,8 @@ const Map<String, int> _q7Flagged = {
   'italian sub rolls': 2707782,
   'jarred whole artichoke hearts in water': 2709766,
   'lyle s golden syrup': 168837,
-  'montasio or aged asiago cheese': 325036,
+  // RE-PIN (M85 batch, v87): follows Parmesan to SR 170848 (was 325036).
+  'montasio or aged asiago cheese': 170848,
   'new mexican pods': 169396,
   'ouzo': 2710699,
   'pastis or pernod': 2710699,

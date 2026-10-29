@@ -135,35 +135,41 @@ final _reach = [
   ),
   // 15.78 g, 62.33 kcal.
   // RE-PIN (M82 batch, v84, C5a): was 60.16 g, 237.63 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 56.15 g, 221.79 kcal — the budget
+  // re-solves on its Parmesan part's SR 170848 (the v87 replay's row).
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
-    '56.15',
-    '221.79',
+    '57.37',
+    '226.61',
     _crumb(),
   ),
   // 5.04 g, 21.22 kcal.
   // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" (was 325036,
+  // 17.94 g, 75.53 kcal; the v87 replay's row).
   (
     _lighter,
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
-    325036,
-    '17.94',
-    '75.53',
+    170848,
+    '18.33',
+    '71.85',
     _crumb(),
   ),
   // 10.73 g, 39.27 kcal.
   // RE-PIN (M82 batch, v84, C5a): was 40.91 g, 149.73 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 44.85 g, 164.15 kcal — as |0 (the v87
+  // replay's row).
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
-    '44.85',
-    '164.15',
+    '45.83',
+    '167.74',
     _crumb(),
   ),
   // 23.79 g, 13.08 kcal.
@@ -281,20 +287,24 @@ const _negatives = [
   // Their own coat arms: the eggplant's batter read; the cauliflower is
   // fried (no coated vegetable) or counted.
   // RE-PIN (M82 batch, v84, C1+C5a): was 76.37 g, 203.14 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 88.21 g — the budget re-solves on its
+  // Parmesan part's SR 170848 (the v87 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
-    '88.21',
+    '89.79',
     'discarded',
     null,
   ),
   // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 13.78 g, on SR 170848 since v87 (the v87
+  // replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    '13.78',
+    '14.03',
     'discarded',
     null,
   ),
@@ -565,7 +575,9 @@ const _totals = [
   // 235.26 → 298.97 (the fresh compute's 298.93: its search-hit energies
   // differ from the library's in other rows, the rows above are equal).
   // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
-  (_lighter, 'complete', '297.61'),
+  // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43: the
+  // coat re-solves on its Parmesan part's 170848).
+  (_lighter, 'complete', '298.40'),
   // 540.19 → 667.12.
   // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
   (_kiev, 'complete', '668.35'),

@@ -1304,7 +1304,13 @@ void main() {
     // (white tuna in water — a hit in 'skinless white fish fillets';
     // protein 23.6 / 23.62), both differing in some digit: compared 548 ->
     // 550, differ 418 -> 420.
-    expect(compared, 550);
+    // RE-PIN (v87, batch M85): its whole-recipe pins recorded from snapshot
+    // 29 the 'curly kale', 'rustic whole-grain bread', 'plain low-fat
+    // yogurt', 'vegetable or olive oil', 'red onions' and 'swiss cheese'
+    // searches and the detail of SR 170886 (low-fat plain yogurt — a hit in
+    // 'plain yogurt' and two more, equal in every digit): compared 550 ->
+    // 551, differ 420 unchanged.
+    expect(compared, 551);
     expect(differ, 420);
   });
 

@@ -185,42 +185,48 @@ const List<_Row> _reach = [
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at FNDDS 2706442's 12.12) (was 15.78 g, 62.33 kcal).
   // RE-PIN (M82 batch, v84, C5a): was 60.16 g, 237.63 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 56.15 g, 221.79 kcal — the budget
+  // re-solves on its Parmesan part's SR 170848 (the v87 replay's row).
   (
     _lighter,
     0,
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '56.15',
-    '221.79',
+    '57.37',
+    '226.61',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |0) (was 5.04 g, 21.22 kcal).
   // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0
+  // (was 325036 at 0.983333, 17.94 g, 75.53 kcal; the v87 replay's row).
   (
     _lighter,
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
-    325036,
-    '0.983333',
-    '17.94',
-    '75.53',
+    170848,
+    '1.000000',
+    '18.33',
+    '71.85',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |0) (was 10.73 g, 39.27 kcal).
   // RE-PIN (M82 batch, v84, C5a): was 40.91 g, 149.73 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 44.85 g, 164.15 kcal — as |0 (the v87
+  // replay's row).
   (
     _lighter,
     3,
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '44.85',
-    '164.15',
+    '45.83',
+    '167.74',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
@@ -1230,13 +1236,15 @@ const List<_Row> _negatives = [
   ),
   // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   // RE-PIN (M82 batch, v84, C1+C5a): was 76.37 g, 203.14 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 88.21 g — the budget re-solves on its
+  // Parmesan part's SR 170848 (the v87 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     2,
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '88.21',
+    '89.79',
     null,
     'auto',
     null,
@@ -1244,13 +1252,15 @@ const List<_Row> _negatives = [
   ),
   // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): SR 170848 at 1.0 (was 325036 at 0.983333,
+  // 13.78 g; the v87 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    325036,
-    '0.983333',
-    '13.78',
+    170848,
+    '1.000000',
+    '14.03',
     null,
     'auto',
     null,
@@ -1258,13 +1268,14 @@ const List<_Row> _negatives = [
   ),
   // RE-PIN (M69 batch, v68): no longer held — the eggplant coat at 7.93 (R2) (was held `coating`).
   // RE-PIN (M82 batch, v84, C1+C5a): was 41.14 g, 150.57 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 34.46 g — as |2 (the v87 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     5,
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '34.46',
+    '35.07',
     null,
     'auto',
     null,
@@ -1502,12 +1513,14 @@ const List<_Row> _negatives = [
   ),
   // RE-PIN (M78 batch, v78, the owner's Q6 (c)): the pressed crust counts
   // its whole line, flagged (was held `coating`, no grams).
+  // RE-PIN (M85 batch, v87): SR 170848 at 1.0 (was 325036 at 0.983333;
+  // the v87 replay's row).
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     3,
     '¼ cup grated Parmesan cheese plus 6 ounces, shredded (about 2 cups; see note)',
-    325036,
-    '0.983333',
+    170848,
+    '1.000000',
     '184.27',
     null,
     'auto',
@@ -2101,7 +2114,9 @@ void main() {
       expect(g2(rowIn(noCrumb, 3).grams!), '46.18');
       // The real recipe: the Parmesan joins.
       // RE-PIN (M82 batch, v84): was 19.22 (the replay 298.97 → 297.64).
-      expect(g2(rowOf(_lighter, 2).grams!), '17.94');
+      // RE-PIN (M85 batch, v87): was 17.94 — the budget re-solves on the
+      // Parmesan's SR 170848 (the v87 replay's row).
+      expect(g2(rowOf(_lighter, 2).grams!), '18.33');
     });
 
     test('R2 reads only the steps AFTER the dip: a STATED synthesized '
@@ -2333,12 +2348,16 @@ void main() {
       // RE-PIN (M80 batch, v80, M80-2): 298.93 (was 235.22; the v80 replay
       // 235.26 → 298.97).
       // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
-      expect(of(_lighter), ('complete', '297.61', 12)); // 298.97; 232.29
+      // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43: the
+      // coat re-solves on its Parmesan part's 170848).
+      expect(of(_lighter), ('complete', '298.40', 12)); // 298.97; 232.29
       // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
       // RE-PIN (M82 batch, v84): was 489.25 (the replay 489.23 → 488.66).
-      expect(of(_bestParmesan), ('complete', '488.68', 21)); // 486.50; 500.12
+      // RE-PIN (M85 batch, v87): was 488.68 (the replay 488.66 → 485.58: its
+      // Parmesan lines on 170848).
+      expect(of(_bestParmesan), ('complete', '485.60', 21)); // 486.50; 500.12
       // RE-PIN (M80 batch, v80, M80-1): complete 10/10 (was partial, 217.50,
       // 2; = the v80 replay).
       // RE-PIN (M82 batch, v84): was 532.09 (the replay 532.09 → 541.73).

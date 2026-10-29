@@ -133,7 +133,8 @@ const Map<String, String> _synonyms = {
 /// v79: matcher v84 (batch M82) — pieces and densities.
 /// v80: matcher v85 (batch M83) — step readers.
 /// v81: matcher v86 (batch M84) — two braised pairs and the marrow guard.
-const int matcherVersion = 81;
+/// v82: matcher v87 (batch M85) — grated Parmesan on SR 170848.
+const int matcherVersion = 82;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -957,11 +958,10 @@ const Map<String, String> _queryRewrites = {
   '90 percent lean ground sirloin': '90 percent lean ground beef',
   'andouille sausage': 'smoked sausage',
   'kielbasa sausage': 'kielbasa',
-  // APPROXIMATIONS the user accepted (like pancetta above): FDC has no Asiago
-  // (its answer is dishes and "Cheese, Monterey") — counted as Parmesan, the
-  // hard grating cheese it is closest to; and no whole allspice — counted as
-  // "Spices, allspice, ground" (the answer's top was "Berries, NFS").
-  'asiago cheese': 'parmesan cheese',
+  // APPROXIMATIONS the user accepted (like pancetta above): no whole
+  // allspice — counted as "Spices, allspice, ground" (the answer's top was
+  // "Berries, NFS"). (Asiago, counted as Parmesan, is a rank-as read of the
+  // 'parmesan cheese' answer since v87 — [_rankAs].)
   'allspice berries': 'ground allspice',
   'whole allspice berries': 'ground allspice',
   // An APPROXIMATION the user accepted (like pancetta above): FDC has no
@@ -1598,7 +1598,11 @@ const Map<String, (String, String)> _rankAs = {
   'lyle s golden syrup': ('light corn syrup', 'syrups corn light'),
   'mexican lager': ('beer', 'beer'),
   'mild-flavored lager': ('beer', 'beer'),
-  'montasio or aged asiago cheese': ('parmesan cheese', 'parmesan cheese'),
+  // v87 (M85): ranked as the hard block, as Parmesan is (below).
+  'montasio or aged asiago cheese': (
+    'parmesan cheese',
+    'cheese parmesan hard',
+  ),
   'new mexican pods': ('ancho pods', 'peppers ancho dried'),
   'ouzo': ('brandy', 'brandy'),
   'pastis or pernod': ('brandy', 'brandy'),
@@ -2117,6 +2121,22 @@ const Map<String, (String, String)> _rankAs = {
   // (index 2, its detail cached). The steps discard it (engine
   // `_wholePieceHeads`): 0 g, counted.
   'parmesan cheese rind': ('parmesan cheese rind', 'cheese parmesan hard'),
+  // v87 (batch M85, prep51 design_v2 §2 M85; zero requests; a record
+  // choice, ALONE): grated Parmesan is the BLOCK grated by hand — the lines
+  // print a block's weight ("1 ounce Parmesan cheese, grated (½ cup)", the
+  // figure grams.dart `_printedHardCheese` weighs every volume by), so the
+  // record is SR 170848 "Cheese, parmesan, hard" (392 kcal, 3.22 g
+  // carbohydrate, 1,175 mg sodium), not Foundation 325036 "Cheese, parmesan,
+  // grated" (421, 12.4 g, 1,750 mg), the RETAIL grated product the answer's
+  // own words led to. 170848 is index 2 of the cached 'parmesan cheese'
+  // answer (its detail cached); unflagged (it is the food). The accepted
+  // Asiago approximation follows it ("as Parmesan"; [approximationRecords]):
+  // its rewrite onto this answer became a rank-as read of it — a rank-as
+  // key is never a rewrite target (M2, the v49 Thai chiles). [re-point →
+  // `item`]
+  'parmesan cheese': ('parmesan cheese', 'cheese parmesan hard'),
+  'parmesan': ('parmesan cheese', 'cheese parmesan hard'),
+  'asiago cheese': ('parmesan cheese', 'cheese parmesan hard'),
   // pF F6 (the owner's Q11: a label weighs a printed count, the composition
   // stays SR's): Hershey's Kisses ARE milk chocolate — the line's own
   // answer holds no milk-chocolate record (PAYDAY 170680 at 0 led); the
@@ -3038,7 +3058,7 @@ bool _asksFresh(String raw) =>
 /// is the approximation, whoever chose it (Run 046).
 const Map<String, int> approximationRecords = {
   'pancetta': 168277,
-  'asiago cheese': 325036,
+  'asiago cheese': 170848,
   'allspice berries': 171315,
   'whole allspice berries': 171315,
   'lime zest': 167749,
@@ -3104,7 +3124,7 @@ const Map<String, int> approximationRecords = {
   'italian sub rolls': 2707782,
   'jarred whole artichoke hearts in water': 2709766,
   'lyle s golden syrup': 168837,
-  'montasio or aged asiago cheese': 325036,
+  'montasio or aged asiago cheese': 170848,
   'new mexican pods': 169396,
   'ouzo': 2710699,
   'pastis or pernod': 2710699,

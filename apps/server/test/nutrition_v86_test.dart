@@ -163,8 +163,9 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 81 (v86, batch M84: rows move)', () {
-    expect(matcherVersion, 81);
+  test('matcherVersion 82 (v86 set it to 81, batch M84: rows move)', () {
+    // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
+    expect(matcherVersion, 82);
   });
 
   group('matcher v86 (batch M84) — whole recipes', skip: skipIfNoCorpus, () {

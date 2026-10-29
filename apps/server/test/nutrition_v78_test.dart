@@ -69,13 +69,15 @@ String _pan(String food, {bool butter = false}) =>
 /// — the v77 replay's value in each comment.
 final _reach = [
   // held `coating`, 0 g.
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" (was 325036,
+  // 775.78 kcal; the v87 replay's row).
   (
     _parmesan,
     3,
     '¼ cup grated Parmesan cheese plus 6 ounces, shredded (about 2 cups; see note)',
-    325036,
+    170848,
     '184.27',
-    '775.78',
+    '722.34',
     _crust,
   ),
   // 18.14 g, 163.25 kcal.
@@ -158,19 +160,23 @@ const _negatives = [
     'discarded',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 17.94 g — the budget re-solves on its own
+  // SR 170848 (the v87 replay's row).
   (
     '0416-lighter-chicken-parmesan.yaml',
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
-    '17.94',
+    '18.33',
     'discarded',
   ),
   // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 13.78 g — as lighter|2 (the v87 replay's
+  // row).
   (
     '0407-eggplant-parmesan.yaml',
     3,
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    '13.78',
+    '14.03',
     'discarded',
   ),
   (
@@ -236,7 +242,9 @@ const _negatives = [
 /// comment (v77 → v78).
 const _totals = [
   // 171.67 → 340.01 (partial → complete).
-  (_parmesan, 'complete', '339.97'),
+  // RE-PIN (M85 batch, v87): was 339.97 (the replay 340.01 → 326.65: |3's
+  // Parmesan on 170848).
+  (_parmesan, 'complete', '326.61'),
   // 438.34 → 346.62.
   // RE-PIN (M82 batch, v84, C5a): its 1 tablespoon flour |2 at 5 oz a cup,
   // 7.54 → 8.86 g (the replay 346.62 → 347.83): was 346.57.

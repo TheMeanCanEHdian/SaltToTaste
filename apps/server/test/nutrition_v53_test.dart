@@ -563,13 +563,15 @@ _rows = [
   // RE-PIN (M69 batch, v68, R2 — Q6 (a)): a coated eggplant sizes the coat
   // on FNDDS 2710050's read 7.93 — f 0.340944, 41.14 g, no hold.
   // RE-PIN (M82 batch, v84, C1+C5a): was 41.14 g, 150.57 kcal (the v84 replay's row).
+  // RE-PIN (M85 batch, v87): was 34.46 g — the budget re-solves on its
+  // Parmesan part's SR 170848 (the v87 replay's row).
   (
     '0407-eggplant-parmesan.yaml',
     null,
     5,
     '1 cup unbleached all-purpose flour',
     789890,
-    '34.46',
+    '35.07',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g batter is water and carries no carbohydrate); the dredge's excess not counted)",

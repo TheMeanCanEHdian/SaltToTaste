@@ -301,11 +301,10 @@ void main() {
         '12 ounces kielbasa sausage, halved lengthwise and sliced ½ inch '
                 'thick':
             173879,
-        // APPROXIMATIONS: Skillet Chicken, Broccoli, and Ziti (0069);
-        // Alcatra (0007); Jerk Chicken (0632).
-        '1 ounce Asiago cheese, grated (about ½ cup), plus extra for '
-                'serving':
-            325036,
+        // APPROXIMATIONS: Alcatra (0007); Jerk Chicken (0632). (RE-PIN M85
+        // batch, v87: Skillet Chicken, Broccoli, and Ziti's (0069) Asiago
+        // line is no rewrite since v87 — a rank-as read of the same answer,
+        // pinned below.)
         '5 allspice berries': 171315,
         '1 tablespoon whole allspice berries': 171315,
       };
@@ -330,6 +329,34 @@ void main() {
           );
         }
       }
+      // RE-PIN (M85 batch, v87): the Asiago approximation (was this map's
+      // rewrite onto 'parmesan cheese', 325036) reads the same cached answer
+      // as a rank-as under the hard block's words — SR 170848, passing the
+      // gate; under its own words its recorded answer is still dishes below
+      // the gate.
+      const asiago =
+          '1 ounce Asiago cheese, grated (about ½ cup), plus extra for serving';
+      final normalized = normalizeItem(lineItemOf(lineOf(asiago)));
+      expect(searchQueryFor(normalized), normalized);
+      expect(rankAsFor(normalized), (
+        query: 'cheese parmesan hard',
+        answer: 'parmesan cheese',
+      ));
+      final top = rankCandidates(
+        'cheese parmesan hard',
+        await provider.search('parmesan cheese'),
+      ).first;
+      expect(top.candidate.fdcId, 170848);
+      expect(belowConfidenceGate(top.confidence), isFalse);
+      expect(
+        belowConfidenceGate(
+          rankCandidates(
+            normalized,
+            await provider.search(normalized),
+          ).first.confidence,
+        ),
+        isTrue,
+      );
     });
 
     test('B12: lime zest searches the peel — Thai Chicken Curry (0550), '

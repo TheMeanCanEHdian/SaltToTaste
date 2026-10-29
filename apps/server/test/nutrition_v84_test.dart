@@ -519,10 +519,11 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 81 (v84 set it to 79, batch M82: rows move)', () {
+  test('matcherVersion 82 (v84 set it to 79, batch M82: rows move)', () {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
-    expect(matcherVersion, 81);
+    // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
+    expect(matcherVersion, 82);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {

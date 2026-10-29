@@ -5154,6 +5154,112 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v87 (batch M85; matcherVersion 82 — 98 rows + 4 re-solves: 111
+rows change record, 98 of them counted, 13 amount-less at 0 g, and the 4
+other parts of two coat budgets; prep51 design_v2 §2 M85, a record choice
+shipped ALONE; zero requests; server only; replayed on snapshot 29 against
+the v86 rows, both orders byte-identical, every moved row and recipe
+attributed to one entry by reverting that entry alone, calls 0).** Grated
+Parmesan on the block it is grated from, decided under the 2026-10-07
+standing authorization:
+- **The record.** Every grated-Parmesan line already weighs as block cheese
+  grated by hand (grams.dart `_printedHardCheese['grated']` = the corpus's
+  "1 ounce Parmesan cheese, grated (½ cup)", the owner's Q6 ruling) and the
+  weight lines print a block's weight, but they counted Foundation 325036
+  "Cheese, parmesan, grated" (421 kcal, 12.4 g carbohydrate, 1,750 mg
+  sodium per 100 g, no portions) — the RETAIL grated product. They now
+  count SR 170848 "Cheese, parmesan, hard" (392 kcal, 3.22 g, 1,175 mg; its
+  detail cached), index 2 of the same cached `parmesan cheese` answer.
+  Unflagged: it is the food. No ruling chose 325036 — this document named
+  it only as the Montasio approximation's target (and as the v78 crust
+  row's record); docs/MATCHER_HISTORY.md never names it.
+- **The rank-as entries ([re-point → `item`]).** `_rankAs` gains
+  `parmesan cheese` and `parmesan` → the cached `parmesan cheese` answer
+  ranked under `cheese parmesan hard` (the shipped `parmesan cheese rind`
+  entry's form): 170848 ranks first at 1.0 (the rows read 0.983333 /
+  0.916667 under their own words). A bare `parmesan` line now reads the
+  `parmesan cheese` answer (its own holds 170848 at index 2 as well; its
+  `candidates_query` is now `parmesan cheese`).
+- **The two approximations follow it ("as Parmesan").**
+  `approximationRecords['asiago cheese']` and `['montasio or aged asiago
+  cheese']` re-point 325036 → 170848; their basis reads "· approximation
+  (counted as Cheese, parmesan, hard)". The map alone moves no line (it
+  names the record relation the flag reads), so each line's read moves
+  with it: Montasio's rank-as words `parmesan cheese` → `cheese parmesan
+  hard` (the same answer), and the Asiago REWRITE onto `parmesan cheese`
+  became a rank-as read of that answer under the hard block's words — a
+  rank-as key is never a rewrite target (nutrition_v21_test's M2: as the
+  Asiago rewrite's target, `parmesan cheese` was a `leftAlternative` food
+  noun), the v49 Thai chiles' form. An admin's typed search "asiago
+  cheese" now asks FDC those words, not `parmesan cheese`; a row's
+  `candidates_query` (the answer it reads) is unchanged.
+- **The coat budgets re-solve (the grams are keyed by the item, so no
+  other row's grams move).** lighter-chicken-parmesan (FNDDS 2706442's
+  crust) and eggplant-parmesan (2710050's batter) count a Parmesan PART
+  whose carbohydrate falls 12.4 → 3.22 %, so f rises (eggplant 0.243091 →
+  0.247443; lighter's parts ×1.0217) and every part moves: lighter |0 panko 56.15 → 57.37 g, |2 the
+  Parmesan 17.94 → 18.33 g, |3 flour 44.85 → 45.83 g; eggplant |2 bread
+  88.21 → 89.79 g, |3 the Parmesan 13.78 → 14.03 g, |5 flour 34.46 →
+  35.07 g (M88, the dredge's own figure, re-derives them on these rows).
+Totals vs the v86 rows: 115 rows — 111 change record (cols 4–6; 93 with
+energy, 3 with energy and their flag, 2 coat parts with energy and
+grams; 13 amount-less "Grated
+Parmesan cheese[, for serving]" rows at 0 g either way) and 4 coat parts
+(grams); row column −1,232.82 (the record moves −1,247.67, the four parts
++14.85), recipe energy −1,216.45 over 93 recipes; per entry, reverted
+alone: `parmesan cheese` 109 rows / 87 recipes −1,035.63 (with both
+re-solves and the two sections), `parmesan` 3 / 3 −28.76, Asiago 2 / 2
+−20.54, Montasio 1 / 1 (frico|0, 1,909.62 → 1,778.08 kcal) −131.52; 0
+status / hold changes, 0 person rows; buckets, notes and calls identical;
+two sections move by their Parmesan rows only (fresh-pasta-without-a-
+machine's Walnut Cream Sauce 1,899.33 → 1,891.11 kcal, grilled-stuffed-
+pork-tenderloin's Porcini and Artichoke Stuffing 380.49 → 372.26). On the
+111 rows sodium falls 75,448 → 50,666 mg (−32.8 %) and carbohydrate 534.60
+→ 138.85 g (−74.0 %). Not reached: the rind rows (already on 170848) and
+"Parmesan or Pecorino Romano cheese" (its item is no key: SR 171249
+Romano). Both records publish 208 — no interplay with the energy order
+(Q2). No stored person decision names 325036 or 170848 (snapshot 29 holds
+none); a stored choice of 325036 would stay.
+Calibration (reported, never fitted; this batch / M82–M85 from v82): a5
+R21 parmesan-crusted-chicken-cutlets +15.0 → +10.4 % / +15.0 → +10.4 %,
+R23 lighter-chicken-parmesan +13.7 → +14.0 % (away: the re-solve adds more
+than the Parmesan part saves) / +14.2 → +14.0 %; a3 R06 best-chicken-
+parmesan +6.2 → +5.6 % / +6.4 → +5.6 %, R17 deep-dish pizza +4.4 → +4.1 %;
+a4 R25 eggplant-parmesan −11.4 → −11.5 % (away) / −10.7 → −11.5 %; a6 R17
+ultimate-grilled-pizza −18.0 → −18.6 % (away until Q5) / −17.9 → −18.6 %.
+Pins: nutrition_v87_test (9 tests — the four rank-as reads and the two
+approximation records; the recorded answer ranking 170848 first at 1.0;
+kale-caesar-salad|6 "1 ounce Parmesan cheese, grated (½ cup)" 28.35 g,
+111.13 kcal, "from 1 ounce" (v86 119.35 on 325036); the bare `parmesan`
+lines (turkey-meatloaf|12, farfalle-with-pesto|6); both Asiago lines and
+the Montasio line on 170848 with their flags; the rind converse
+(hearty-minestrone|14, 0 g) and one amount-less row; the six coat parts
+and eggplant's topping |15; nine recipes' totals; a second compute writes
+nothing; the cap shapes), each with its mutant (either key dropped, either
+approximation left on 325036, the Asiago rank-as dropped (its own answer:
+2705720 "Cheese, Monterey") or its rewrite restored (M2), Montasio's or
+Parmesan's words back to `parmesan cheese`, matcherVersion 81); the
+existing suite re-pinned as equalities (RE-PIN M85): the Asiago /
+Montasio approximation pins (nutrition_c1, v10, v31), the M66–M80 coat
+pins of lighter and eggplant (v53, v61, v65, v68, v78, v80, v81, v82),
+the rows and totals on 170848 (v61, v65, v68, v69, v71, v73, v78), the
+version literals and three hashes (the version alone).
+Fixtures: from snapshot 29 the 'curly kale', 'rustic whole-grain bread',
+'plain low-fat yogurt', 'vegetable or olive oil', 'red onions' and 'swiss
+cheese' answers and SR 170886's detail (the census 550 → 551 / 420).
+Cost: no new reader — the rank-as path is the shipped one (one `_rankAs`
+lookup per line in `lineSearchFor`, before the rewrite and left-
+alternative reads); nothing memoized is touched. At the caps (400
+repeated real lines under 0044's steps, the compute and the GET): TRUE
+(400 × kale-caesar|6's line) 609 / 542 → 634 / 523 ms, QUIET (400 × "3
+tablespoons mayonnaise") 518 / 486 → 476 / 464 ms; counts equal to base,
+pinned exactly; backstop 10 s.
+Deploy note: matcherVersion 82 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests). The kcal digest
+(`tool/replay/digest.sh`) moves 766,425.62 → 766,152.39, −273.23 (the 93
+recipes' per serving −256.78 and the two sections' −16.45) — a per-serving
+sum, not the recipe energy above.
+
 **Matcher v86 (batch M84; matcherVersion 81 — 1 row's grams and 2 recipes'
 deductions move, exactly the batch's reach; prep51 design_v2 §2 M84; zero
 requests; server only; replayed on snapshot 29 against the v85 rows, both
@@ -7673,7 +7779,8 @@ water` → `artichoke` (2709766); `ketchup or chili sauce` (reads
 `light corn syrup`) → `syrups corn light` (168837); `mexican lager`,
 `mild-flavored lager` (read `beer`) → `beer` (2710616, exact); `montasio
 or aged asiago cheese` (reads `parmesan cheese`) → `parmesan cheese`
-(325036); `new mexican pods` (reads `ancho pods`) → `peppers ancho dried`
+(325036; since matcher v87 → `cheese parmesan hard`, SR 170848); `new
+mexican pods` (reads `ancho pods`) → `peppers ancho dried`
 (169396); `ouzo`, `pastis or pernod` (read `brandy`) → `brandy`
 (2710699); `palm sugar` → `sugar brown` (2710260); `preserved lemon`
 (reads `lemon or lime wedges`) → `lemon peel raw` (167749); `radishes
@@ -7693,7 +7800,8 @@ exact). Since matcher v32 `low-fat sour cream` (reads `sour cream`) →
 the sour-cream density, the record's own cup 230 g agreeing). A few
 rewrites are APPROXIMATIONS, flagged in
 the server's rewrite table, for foods FDC has no record of: pancetta counts
-as bacon, Asiago as Parmesan, whole allspice berries as ground allspice, lime
+as bacon, Asiago as Parmesan (since matcher v87 a rank-as read of the
+`parmesan cheese` answer, on SR 170848), whole allspice berries as ground allspice, lime
 zest as lemon zest (`lemon zest`: "Lemon peel, raw", 167749) — FDC has no
 lime peel, and its answer for `lime peel raw` ties lemon and orange peel —
 chen pi (dried tangerine peel) as `orange peel` ("Orange peel, raw", 169103:
@@ -7727,7 +7835,8 @@ paste as fish anchovy (2706232), Anaheim and Cubanelle as banana pepper
 dill pickles (2710078), dried small red beans as kidney beans (173744),
 Italian sub rolls as multigrain rolls (2707782), jarred artichoke hearts
 as artichoke (2709766), Lyle's golden syrup as light corn syrup (168837),
-Montasio or aged Asiago as Parmesan (325036), New Mexican pods as dried
+Montasio or aged Asiago as Parmesan (325036; since matcher v87 SR 170848
+"Cheese, parmesan, hard"), New Mexican pods as dried
 ancho (169396), palm sugar as brown sugar (2710260), preserved lemon as
 lemon peel (167749), Thai salted radish as pickled radishes (2710099) and
 Spanish chorizo as FNDDS "Chorizo" (2706179), since matcher v32 as

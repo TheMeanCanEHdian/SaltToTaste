@@ -3167,18 +3167,20 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
+  // 325036 at 0.983333, 29.84 kcal; the v87 replay's row).
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
     null,
     11,
     '2 tablespoons grated Parmesan cheese',
-    325036,
-    'Cheese, parmesan, grated',
-    '0.983333',
+    170848,
+    'Cheese, parmesan, hard',
+    '1.000000',
     '7.09',
     'auto',
     null,
-    '29.84',
+    '27.78',
     "2 tablespoon ≈ 30 mL · grated, at ATK's printed 1 ounce = ½ cup",
   ),
   (
@@ -3680,18 +3682,20 @@ const List<_Row> _unmoved = [
     '0.00',
     'no amount on the line — counted as 0 g',
   ),
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
+  // 325036 at 0.983333, 358.05 kcal; the v87 replay's row).
   (
     '0398-ultimate-grilled-pizza.yaml',
     null,
     13,
     '3 ounces Parmesan cheese, grated (1½ cups)',
-    325036,
-    'Cheese, parmesan, grated',
-    '0.983333',
+    170848,
+    'Cheese, parmesan, hard',
+    '1.000000',
     '85.05',
     'auto',
     null,
-    '358.05',
+    '333.39',
     'from 3 ounce',
   ),
   (
@@ -3936,18 +3940,20 @@ const List<_Row> _unmoved = [
     '256.36',
     '5 tablespoon ≈ 74 mL',
   ),
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
+  // 325036 at 0.983333, 59.68 kcal; the v87 replay's row).
   (
     '0402-italian-wedding-soup.yaml',
     null,
     14,
     '¼ cup grated Parmesan cheese',
-    325036,
-    'Cheese, parmesan, grated',
-    '0.983333',
+    170848,
+    'Cheese, parmesan, hard',
+    '1.000000',
     '14.18',
     'auto',
     null,
-    '59.68',
+    '55.57',
     "1/4 cup ≈ 59 mL · grated, at ATK's printed 1 ounce = ½ cup",
   ),
   (
@@ -8394,7 +8400,8 @@ void main() {
           null,
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 808.37.
-          '810.29',
+          // RE-PIN (M85 batch, v87): was 810.29 (the replay 810.26 → 804.10).
+          '804.12',
         ), // 774.92 → 808.35
         (
           '0523-nasi-goreng-indonesian-style-fried-rice.yaml',

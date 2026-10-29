@@ -1390,10 +1390,12 @@ void main() {
           168277,
           'Pork, cured, bacon, unprepared',
         ),
+        // RE-PIN (M85 batch, v87): Asiago follows Parmesan to SR 170848
+        // "Cheese, parmesan, hard" (was 325036 "Cheese, parmesan, grated").
         (
           '1½ ounces Asiago cheese, grated (about ¾ cup)',
-          325036,
-          'Cheese, parmesan, grated',
+          170848,
+          'Cheese, parmesan, hard',
         ),
         ('5 allspice berries', 171315, 'Spices, allspice, ground'),
         (
@@ -1437,6 +1439,13 @@ void main() {
           '1 ounce Parmesan cheese, grated (½ cup)',
           325036,
           'Cheese, parmesan, grated',
+        ),
+        // RE-PIN (M85 batch, v87): the line's own record since v87 — the
+        // Asiago approximation's target, never a flag on Parmesan itself.
+        (
+          '1 ounce Parmesan cheese, grated (½ cup)',
+          170848,
+          'Cheese, parmesan, hard',
         ),
         (
           '3 ounces pancetta or bacon (about 3 slices), chopped fine',

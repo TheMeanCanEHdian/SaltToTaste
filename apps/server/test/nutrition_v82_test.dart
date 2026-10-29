@@ -879,7 +879,9 @@ void persons() {
     expect(before.description, startsWith('Eggplant,'));
     // RE-PIN (M82 batch, v84, C1 + C5a): 0407's coat parts re-solve (the
     // replay's 455.86 → 452.38 a serving): was 2735.29.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2714.43');
+    // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
+    // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2709.63');
     await _put(db, fdc, r.id, 0, {'confirmed': true});
     expect(
       _sig(_row(db, r.id, 0)),
@@ -887,7 +889,9 @@ void persons() {
     );
     // RE-PIN (M82 batch, v84, C1 + C5a): 0407's coat parts re-solve (the
     // replay's 455.86 → 452.38 a serving): was 2735.29.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2714.43');
+    // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
+    // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2709.63');
     await _settled(db, fdc, r.id);
     // The gate in `derivedFor`: the confirmed eggplant derives with no plan
     // of its own — the GET plans once (routed to the plan: twice).
@@ -901,7 +905,9 @@ void persons() {
     );
     // RE-PIN (M82 batch, v84, C1 + C5a): 0407's coat parts re-solve (the
     // replay's 455.86 → 452.38 a serving): was 2735.29.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2714.43');
+    // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
+    // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2709.63');
     await _settled(db, fdc, r.id);
   });
 

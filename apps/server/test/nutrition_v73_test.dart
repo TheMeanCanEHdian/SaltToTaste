@@ -3171,18 +3171,20 @@ const List<_Row> _unmoved = [
     '32.32',
     'from 3 ounce',
   ),
+  // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
+  // 325036 at 0.983333, 119.35 kcal; the v87 replay's row).
   (
     '0603-grilled-stuffed-pork-tenderloin.yaml',
     'Porcini and Artichoke Stuffing',
     2,
     '1 ounce Parmesan cheese, grated (½ cup)',
-    325036,
-    'Cheese, parmesan, grated',
-    '0.983333',
+    170848,
+    'Cheese, parmesan, hard',
+    '1.000000',
     '28.35',
     'auto',
     null,
-    '119.35',
+    '111.13',
     'from 1 ounce',
   ),
   (
@@ -3718,8 +3720,10 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'Porcini and Artichoke Stuffing',
     'complete',
     'complete',
-    '380.49',
-    '380.49',
+    // RE-PIN (M85 batch, v87): was 380.49 / 380.49 — |2's Parmesan on SR
+    // 170848 (the v87 replay's section batch kcal 380.49 → 372.26).
+    '372.26',
+    '372.26',
   ),
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',

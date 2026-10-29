@@ -27586,5 +27586,66 @@
     "description": "oz"
    }
   ]
+ },
+ "170886": {
+  "fdc_id": 170886,
+  "description": "Yogurt, plain, low fat",
+  "data_type": "SR Legacy",
+  "nutrients": {
+   "208": 63.0,
+   "203": 5.25,
+   "204": 1.55,
+   "205": 7.04,
+   "291": 0.0,
+   "269": 7.04,
+   "301": 183.0,
+   "303": 0.08,
+   "304": 17.0,
+   "305": 144.0,
+   "306": 234.0,
+   "307": 70.0,
+   "401": 0.8,
+   "404": 0.044,
+   "405": 0.214,
+   "406": 0.114,
+   "415": 0.049,
+   "432": 11.0,
+   "435": 11.0,
+   "418": 0.56,
+   "320": 14.0,
+   "323": 0.03,
+   "328": 0.0,
+   "430": 0.2,
+   "606": 1.0,
+   "645": 0.426,
+   "646": 0.044,
+   "601": 6.0
+  },
+  "portions": [
+   {
+    "gram_weight": 227.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "container (8 oz)"
+   },
+   {
+    "gram_weight": 113.0,
+    "amount": 0.5,
+    "unit": null,
+    "description": "container (4 oz)"
+   },
+   {
+    "gram_weight": 245.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "cup (8 fl oz)"
+   },
+   {
+    "gram_weight": 170.0,
+    "amount": 1.0,
+    "unit": null,
+    "description": "container (6 oz)"
+   }
+  ]
  }
 }

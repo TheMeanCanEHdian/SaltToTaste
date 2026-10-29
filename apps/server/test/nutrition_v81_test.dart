@@ -1950,7 +1950,9 @@ void readers() {
         // RE-PIN (M82 batch, v84, C1 + C5a): the coat parts re-solve on the
         // 45.36 g slice and the 5 oz flour (the v84 replay's rows): was 76.37,
         // 19.33, 41.14.
-        ['88.21', '13.78', '34.46', '84.39'],
+        // RE-PIN (M85 batch, v87): the Parmesan part on SR 170848 — the three
+        // parts re-solve (the v87 replay's rows): was 88.21, 13.78, 34.46.
+        ['89.79', '14.03', '35.07', '84.39'],
       );
     },
   );
