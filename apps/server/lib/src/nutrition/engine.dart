@@ -2650,9 +2650,10 @@ List<String> _layerWords(String head, String normalized) => [
 /// with the panko" is not read: 'nuts' is no layer word), "add the bread
 /// crumbs and ground almonds" (0117), "Spread the bread crumbs … ; when
 /// cool, stir in the Parmesan" (0416). Then the layer is a part of
-/// [_m52Plan]'s budget at the one f; else it stays held — a cheese CRUST
-/// with a flour binder (0419: "Combine the 2 cups shredded Parmesan and
-/// remaining 1 tablespoon flour") is not the record's breading.
+/// [_m52Plan]'s budget (at the one f; since v88, under FNDDS 2706442 —
+/// 0117, 0416 — the crumbs' f_c, by mass); else it stays held — a cheese
+/// CRUST with a flour binder (0419: "Combine the 2 cups shredded Parmesan
+/// and remaining 1 tablespoon flour") is not the record's breading.
 /// ponytail: one sentence must name both — a crumb named only in another
 /// sentence of the mixing step leaves the layer held (no corpus recipe);
 /// widen to the step if one appears. And a layer ground "to … crumbs"
@@ -20721,6 +20722,22 @@ const _Fndds _parmigiana = (
   o: '42',
   r: '680.4',
 );
+
+/// v88 (M88, prep51 Q4 (b)): under [_parmigiana] the two breading inputs
+/// are two budgets ([_m52Plan]), read as the record prints them by
+/// sequenceNumber (live62_raw/2706442.json): 3 flour 31.25 g — the DREDGE,
+/// the parts on a `Flour,` record, by carbohydrate: 31.25 × 77.3 %
+/// (Foundation 789890, the input itself) / 680.4 × 100 = 3.55 g per 100 g
+/// raw; 5 dry crumbs 81 g — the CRUMB layer, every other part, by DRY MASS:
+/// 81 / 680.4 × 100 = 11.905 g per 100 g raw, a `Bread,` part brought to
+/// SR 174928's dry crumbs by its carbohydrate ([_dryCrumbCarb]), a nut or
+/// cheese stand-in by its own mass. B (12.12) still sizes the dip.
+const double _parmigianaDredge = 3.55;
+const double _parmigianaCrumbs = 11.905;
+
+/// SR 174928 "Bread, crumbs, dry, grated, plain"'s carbohydrate per gram
+/// (71.98 %): a fresh bread part's dry-crumb mass under [_parmigiana].
+const double _dryCrumbCarb = 0.7198;
 const _Fndds _legsBaked = (
   id: 2705998,
   description:
@@ -21521,16 +21538,27 @@ String _coatFlag(
   final coat = eggplant
       ? 'batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, '
             '0.1 g baking powder; 3.28 g carbohydrate)'
-      : parmigiana
-      ? 'crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g '
-            "carbohydrate; the record's 18.75 g grated Parmesan follows its "
-            'mozzarella and sauce — a topping, not read)'
       : 'breading';
-  final source = read != null
+  // v88 (M88, Q4 (b)): FNDDS 2706442's two inputs, each its own budget
+  // ([_parmigianaDredge], [_parmigianaCrumbs]).
+  final head = parmigiana
+      ? '31.25 g flour and 81 g dry crumbs per ${read!.r} g raw $name'
+      : '${figure.value} g carbohydrate per 100 g of the raw $name';
+  final source = parmigiana
+      ? 'USDA FNDDS ${read!.id} recipe: flour (Foundation 789890) and dry '
+            'crumbs (SR 174928) as separate inputs, $_parmigianaDredge g flour '
+            'carbohydrate and $_parmigianaCrumbs g dry crumbs per 100 g raw '
+            '(the dredge sized by the flour, the crumbs by their dry mass; a '
+            'fresh bread brought to dry crumbs by carbohydrate)'
+      : read != null
       ? 'USDA FNDDS ${read.id} recipe: ${read.b} g $coat$breading per '
             '${read.r} g raw ${read.food}$matched'
       : 'derived from USDA SR Legacy ${figure.derived!.id} '
             '"${figure.derived!.description}"';
+  final topping = parmigiana
+      ? "; the record's 18.75 g grated Parmesan follows its mozzarella and "
+            'sauce — a topping, not read'
+      : '';
   // v67 (M69 R1, the owner's ruling (b)): C4 names its stand-in and the
   // read it does not use, on every food (the sole too).
   final standIn = shape == _CoatShape.c4
@@ -21544,7 +21572,8 @@ String _coatFlag(
       // v77 (M80-2, closer CC1): a nut crust read on 2706442's crumbs says
       // so — the first-word test below sees 'chicken' on both.
       : parmigiana && figure.standIn
-      ? " (no record for a nut crust; read as FNDDS 2706442's crumb crust)"
+      ? " (no record for a nut crust; read as FNDDS 2706442's crumb crust by "
+            'mass)'
       : read != null && read.food.split(' ').first != name.split(' ').first
       ? _standIn(name, read.description)
       : '';
@@ -21554,8 +21583,7 @@ String _coatFlag(
           const {_CoatShape.c1, _CoatShape.c1d, _CoatShape.c2}.contains(shape)
       ? ' (a batter read on a breading figure)'
       : '';
-  return 'approximation (coat: ${figure.value} g carbohydrate per 100 g of '
-      'the raw $name — $source$standIn$onBreading; the '
+  return 'approximation (coat: $head — $source$standIn$topping$onBreading; the '
       "${batter ? 'batter' : 'dredge'}'s excess not counted)";
 }
 
@@ -21760,7 +21788,10 @@ final RegExp _gratedOrShredded = RegExp(r'\b(?:grated|shredded)\b');
 ///   coating fraction" stands): f is the food's. v56 (M58 W, Q8): the
 ///   lines a batter leaves in the bowl ([_batterInBowl]) are parts too —
 ///   the whole line the dredge, none eaten, never off B — every part at
-///   the one f.
+///   the one f. v88 (M88, Q4 (b)): under FNDDS 2706442 ([_parmigiana])
+///   two budgets instead — the `Flour,` parts share the dredge's by their
+///   carbohydrate, every other part the crumbs' by its dry-crumb mass
+///   ([_parmigianaDredge], [_parmigianaCrumbs]); B still sizes the dip.
 /// - THE DIP (v60, M62 E-w, Q9): the lines of an egg or buttermilk dip
 ///   ([_dipsOf]) of a budgeted coat count f_w = min(1, W / Σ their whole
 ///   grams), W = [_breadingWetPerCarb] × B (v65, M66 R1: never the parts'
@@ -21987,9 +22018,47 @@ Map<int, _M52Row> _m52Plan(
         shape,
         batter: parts.any((p) => batter.contains(p.at)),
       );
+      // v88 (M88, Q4 (b)): under FNDDS 2706442 the dredge and the crumbs
+      // are the record's two inputs, each its own budget — the `Flour,`
+      // parts share f_d by their carbohydrate, every other part f_c by its
+      // dry-crumb mass ([_parmigianaDredge], [_parmigianaCrumbs]); a group
+      // with no part counts nothing (no fallback to the one f).
+      final split = identical(figure.read, _parmigiana);
+      bool flour(int i) => at[i]!.description!.startsWith('Flour,');
+      // A group with no part has no share to read (Σ 0: never read).
+      num share(double budget, double by) =>
+          min(1, budget * coatedFood.grams! / 100 / by);
+      final fd = !split
+          ? 0.0
+          : share(
+              _parmigianaDredge,
+              parts
+                  .where((p) => flour(p.at))
+                  .fold<double>(0, (n, p) => n + p.dredge * p.cho),
+            );
+      final fc = !split
+          ? 0.0
+          : share(
+              _parmigianaCrumbs,
+              parts
+                  .where((p) => !flour(p.at))
+                  .fold<double>(
+                    0,
+                    (n, p) =>
+                        n +
+                        (at[p.at]!.description!.startsWith('Bread,')
+                            ? p.dredge * p.cho / _dryCrumbCarb
+                            : p.dredge),
+                  ),
+            );
       for (final p in parts) {
+        final fp = !split
+            ? f
+            : flour(p.at)
+            ? fd
+            : fc;
         plan[p.at] = (
-          grams: round2(f * p.dredge + p.eaten),
+          grams: round2(fp * p.dredge + p.eaten),
           flag: flag,
           kept: p.eaten,
           coat: true,

@@ -858,11 +858,13 @@ const List<_Row> _parts = [
     '1 cup panko bread crumbs',
     174928,
     '0.563333',
-    '31.10',
-    '122.84',
+    // RE-PIN (M88 batch, v88): was 31.10 g, 122.84 kcal — the crumbs' own share f_c;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '27.65',
+    '109.22',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate) (no record for a nut crust; read as FNDDS 2706442's crumb crust by mass); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M66 batch, v65): R3 — as |5
   // RE-PIN (M80 batch, v80, M80-2: as |5) (was 18.28 g, 66.90 kcal).
@@ -873,11 +875,13 @@ const List<_Row> _parts = [
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '74.54',
-    '272.82',
+    // RE-PIN (M88 batch, v88): was 74.54 g, 272.82 kcal — the dredge's own share f_d;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '36.45',
+    '133.41',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken (no record for a nut crust; read as FNDDS 2706442's crumb crust); the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate) (no record for a nut crust; read as FNDDS 2706442's crumb crust by mass); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 14.32 g, 52.41 kcal).
   // RE-PIN (M82 batch, v84, C1+C5a): was 54.59 g, 199.80 kcal (the v84 replay's row).
@@ -887,11 +891,13 @@ const List<_Row> _parts = [
     '¾ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '46.76',
-    '171.14',
+    // RE-PIN (M88 batch, v88): was 46.76 g, 171.14 kcal — the dredge's own share f_d;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '28.64',
+    '104.82',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |10) (was 17.73 g, 47.16 kcal).
   // RE-PIN (M82 batch, v84, C1+C5a): was 67.57 g, 179.74 kcal (the v84 replay's row).
@@ -901,11 +907,13 @@ const List<_Row> _parts = [
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
     '0.914286',
-    '79.81',
-    '212.29',
+    // RE-PIN (M88 batch, v88): was 79.81 g, 212.29 kcal — the crumbs' own share f_c;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '108.15',
+    '287.68',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: a crumb-crust part at 12.12) (was 20.38 g, 54.21 kcal).
   // RE-PIN (M82 batch, v84, C1+C5a): was 77.68 g, 206.63 kcal (the v84 replay's row).
@@ -915,11 +923,13 @@ const List<_Row> _parts = [
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '93.87',
-    '249.69',
+    // RE-PIN (M88 batch, v88): was 93.87 g, 249.69 kcal — the crumbs' own share f_c;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '147.47',
+    '392.27',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M80 batch, v80, M80-2: as |7) (was 21.96 g, 80.37 kcal).
   // RE-PIN (M82 batch, v84, C1+C5a): was 83.69 g, 306.31 kcal (the v84 replay's row).
@@ -929,11 +939,13 @@ const List<_Row> _parts = [
     '1 cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '73.34',
-    '268.42',
+    // RE-PIN (M88 batch, v88): was 73.34 g, 268.42 kcal — the dredge's own share f_d;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '39.06',
+    '142.96',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   (
     _crispyFried,
@@ -1034,11 +1046,13 @@ const List<_Row> _parts = [
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     '0.880000',
-    '57.37',
-    '226.61',
+    // RE-PIN (M88 batch, v88): was 57.37 g, 226.61 kcal — the crumbs' own share f_c;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '57.55',
+    '227.32',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M66 batch, v65): R3 — as |0
   // RE-PIN (M80 batch, v80, M80-2: as |0) (was 10.73 g, 39.27 kcal).
@@ -1051,11 +1065,13 @@ const List<_Row> _parts = [
     '½ cup unbleached all-purpose flour',
     789890,
     '0.950000',
-    '45.83',
-    '167.74',
+    // RE-PIN (M88 batch, v88): was 45.83 g, 167.74 kcal — the dredge's own share f_d;
+    // the flag names 2706442's two inputs (the v88 replay's row).
+    '29.29',
+    '107.20',
     'auto',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // RE-PIN (M66 batch, v65): R3 — the almonds join the parts (f 0.8692)
   (
@@ -1695,11 +1711,15 @@ void main() {
       // 575.56), stuffed 638.65 (was 544.46; 544.51 → 638.71), kiev 667.05
       // (was 540.11; 540.19 → 667.12).
       // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
-      expect(of(_nutCrusted), ('complete', '566.32', 13)); // 575.56; 407.15
+      // RE-PIN (M88 batch, v88): was 566.32 (the replay 566.38 → 516.05: the
+      // dredge split).
+      expect(of(_nutCrusted), ('complete', '515.98', 13)); // 575.56; 407.15
       // RE-PIN (M82 batch, v84): was 638.65 (the replay 638.71 → 639.11).
-      expect(of(_stuffed), ('complete', '639.06', 14)); // 638.71; 572.91
+      // RE-PIN (M88 batch, v88): was 639.06 (the replay 639.11 → 641.38).
+      expect(of(_stuffed), ('complete', '641.32', 14)); // 638.71; 572.91
       // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
-      expect(of(_kiev), ('complete', '668.35', 14)); // 667.12; 584.97
+      // RE-PIN (M88 batch, v88): was 668.35 (the replay 668.42 → 672.70).
+      expect(of(_kiev), ('complete', '672.63', 14)); // 667.12; 584.97
       expect(of(_crispyFried), ('complete', '832.44', 13)); // = replay; 858.08
       // RE-PIN (M82 batch, v84): was 480.50 (the replay 480.50 → 480.49).
       expect(of(_porkChops), ('partial', '480.49', 8)); // = replay; 506.39
@@ -1723,7 +1743,8 @@ void main() {
       // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
       // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43: the
       // coat re-solves on its Parmesan part's 170848).
-      expect(of(_lighter), ('complete', '298.40', 12)); // 298.97; 239.19
+      // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50).
+      expect(of(_lighter), ('complete', '288.46', 12)); // 298.97; 239.19
       expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 431.67
       // H: the counted lines fall by the held dips.
       // RE-PIN (M69 batch, v68): the eggplant (R2), parmesan-crusted and

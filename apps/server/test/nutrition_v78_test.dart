@@ -156,7 +156,8 @@ const _negatives = [
     '0117-nut-crusted-chicken-breasts-with-lemon-and-thyme.yaml',
     2,
     '1 cup almonds, chopped coarse',
-    '75.19',
+    // RE-PIN (M88 batch, v88): was 75.19 g — a Nuts part of the crumbs by its own mass, f_c (the v88 replay's row).
+    '66.85',
     'discarded',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 19.22 g, 80.92 kcal (the v84 replay's row).
@@ -166,7 +167,8 @@ const _negatives = [
     '0416-lighter-chicken-parmesan.yaml',
     2,
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
-    '18.33',
+    // RE-PIN (M88 batch, v88): was 18.33 g — a Cheese part of the crumbs by its own mass, f_c (the v88 replay's row).
+    '18.39',
     'discarded',
   ),
   // RE-PIN (M82 batch, v84, C1+C5a): was 19.33 g, 81.38 kcal (the v84 replay's row).

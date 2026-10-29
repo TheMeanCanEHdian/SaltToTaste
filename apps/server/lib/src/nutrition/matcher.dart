@@ -134,7 +134,8 @@ const Map<String, String> _synonyms = {
 /// v80: matcher v85 (batch M83) — step readers.
 /// v81: matcher v86 (batch M84) — two braised pairs and the marrow guard.
 /// v82: matcher v87 (batch M85) — grated Parmesan on SR 170848.
-const int matcherVersion = 82;
+/// v83: matcher v88 (batch M88) — the dredge's own figure (2706442 split).
+const int matcherVersion = 83;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

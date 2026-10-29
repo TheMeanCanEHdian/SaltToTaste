@@ -3312,7 +3312,9 @@ largest counted line on a meat, poultry or seafood record (descriptions
 opening Chicken, Turkey, Pork, Beef, Ham, Fish, Crustaceans, Mollusks).
 The recipe's reached coat lines share B by their carbohydrate (dredge
 grams × the record's nutrient 205), so a fresh-bread breading counts more
-grams than a flour dredge for the same carbohydrate; a written part eaten
+grams than a flour dredge for the same carbohydrate (since matcher v88, M88,
+FNDDS 2706442's read splits them: its flour parts share a dredge budget by
+carbohydrate, its other parts a crumb budget by dry-crumb mass); a written part eaten
 outside the dredge counts on top, as before. The row is unheld,
 `gram_source: discarded` (as a held medium's eaten part already is: the
 excess is thrown away, the kept part counted — and the recompute finds the
@@ -3332,7 +3334,7 @@ stands (the `coatingFraction` switch stays null).
 |---|---|---|---|
 | C1 fried | the recipe fries | 5.73 (breast and any other food), thigh 6.10, wing 5.66 | FNDDS 2705975, 2706047, 2706065 |
 | C1d | a second dredge after the egg ("coat with flour again", 0148, 0304) | 8.79 | FNDDS 2705842 |
-| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61; since matcher v68 (M69 R2) a coated eggplant 7.93; since matcher v80 (M80) a coated onion 50.53 (a stand-in) and a chicken whose budgeted parts include a `Bread,` record 12.12 (a nut part beside it a stand-in) | FNDDS 2705980, 2705998, 2706243, 2705871; 2710050; 2710042, 2706442 |
+| C2 baked | a bake after the coat that is also after the last frying sentence — the LAST cook decides (critic F2: 0118's cutlets and 0149's chicken are browned or fried, then baked) | chicken 3.18, legs 3.10, fish 7.41, pork 6.61; since matcher v68 (M69 R2) a coated eggplant 7.93; since matcher v80 (M80) a coated onion 50.53 (a stand-in) and a chicken whose budgeted parts include a `Bread,` record 12.12 (a nut part beside it a stand-in; since matcher v88, M88, its flour parts share 3.55 g carbohydrate and its other parts 11.905 g dry crumbs per 100 g raw, 12.12 sizing the dip only) | FNDDS 2705980, 2705998, 2706243, 2705871; 2710050; 2710042, 2706442 |
 | C3 | fried Mollusks or Crustaceans with no crumb line | 3.94 | SR 171982, derived |
 | C4 sautéed (since matcher v68, M69 R1) | a held coat on a THIN meat (a step pounds it ⅛–½ inch thick, or its line prints the thickness) that is neither fried nor baked after the coat | 3.18 (C2's read, a stand-in — the owner's ruling) | FNDDS 2705980 |
 | C5 | a fried fish a sentence batters; the recipe's counted flour and starch come off B (since matcher v57 also battered shrimp, each on its own record, and a batter's own lines are parts, never off B — below) | 15.38 | FNDDS 2706244 (v57: shrimp 2706364, haddock 2706258) |
@@ -3672,7 +3674,8 @@ grams, none eaten outside it, its carbohydrate its record's (nutrient
 205); every part — flour, starch, leavening, spice, egg, beer, spirit,
 seltzer — counts f × its grams at the coat's ONE f = min(1, B / Σ coat
 carbohydrate) (a batter is one mixture; f is fixed by the read k, no new
-figure). A C5 budget no longer subtracts a batter line's carbohydrate
+figure; since matcher v88, on FNDDS 2706442's read, M88's f_d / f_c — no
+corpus batter reaches it). A C5 budget no longer subtracts a batter line's carbohydrate
 (fish-and-chips' flour, already a coat part, rises as its starch and beer
 join the parts). C5 now also reads `Crustaceans, shrimp` with a batter
 sentence (before the C3 test), and its k is the battered food's own read
@@ -5153,6 +5156,139 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v88 (batch M88; matcherVersion 83 — 10 rows in 4 recipes: the
+coat parts of FNDDS 2706442's crust; prep51 design_v2 §1 Q4 (b) / §2 M88,
+ruled under the 2026-10-07 standing authorization; zero requests; server
+only; replayed on snapshot 29 against the v87 rows, both orders
+byte-identical, every moved row attributed to the split by reverting it
+alone, calls 0).** The dredge's own figure:
+- **The two inputs.** FNDDS 2706442 "Chicken or turkey parmigiana"
+  (live62_raw/2706442.json, inputFoods by `sequenceNumber`) prices the
+  breading as SEPARATE inputs per 1 + 10 raw breast 510.3 + 170.1 = 680.4
+  g: 3 flour 31.25 g (Foundation 789890 — the input itself, 77.3 %
+  carbohydrate) and 5 dry crumbs 81 g (SR 174928, 71.98 %); 4 the egg 100 g
+  is the wash, sized by W. Every corpus vehicle runs the record's order,
+  flour → egg → crumbs (0122 S4, 0118 S4, 0117 S3, 0416 S3). Until v88 one
+  f spread the whole k 12.12 (= 82.46 g carbohydrate / 680.4 × 100) over
+  both, so a big flour line soaked up the crumbs' share.
+- **The two shares (`_m52Plan`'s parts loop, NEW arm keyed on
+  `identical(figure.read, _parmigiana)`; `_parmigianaDredge`,
+  `_parmigianaCrumbs`, `_dryCrumbCarb`).** The budgeted parts on a `Flour,`
+  record are the DREDGE: f_d = min(1, 3.55 × raw ÷ 100 ÷ Σ their dredge ×
+  carbohydrate) (31.25 × 77.3 % / 680.4 × 100 = 3.5503); every other part is
+  the CRUMB layer: f_c = min(1, 11.905 × raw ÷ 100 ÷ Σ w) (81 / 680.4 × 100
+  = 11.9048 g dry crumbs per 100 g raw), w = a `Bread,` part's dredge grams
+  × its carbohydrate ÷ 0.7198 — a fresh bread brought to SR 174928's dry
+  crumbs by the shipped carbohydrate tracer (panko on 174928 itself is its
+  own mass) — and a nut or cheese part (the stand-ins inside the crumbs)
+  its own dredge grams, BY MASS (read instead by the bread's carbohydrate
+  tracer, × 21.55 % ÷ 0.7198, nut-crusted|2's almonds would read
+  132.54 g). B (12.12 × raw / 100) and W (1.173 × B) are
+  unchanged, so the dips are; `_coatFigure`, `partOn` and CC11's
+  after-the-loop k read are unchanged; a group with no part counts
+  nothing — no fallback to one f (record-faithful; every corpus 2706442
+  coat holds a flour part and a crumb part). Not proposed: the egg (input
+  4) as a third group — it is the wash, W.
+- **The flag** names both inputs: `approximation (coat: 31.25 g flour and
+  81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442
+  recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate
+  inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw
+  (the dredge sized by the flour, the crumbs by their dry mass; a fresh
+  bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated
+  Parmesan follows its mozzarella and sauce — a topping, not read; the
+  dredge's excess not counted)`, and beside a nut crust `… by
+  carbohydrate) (no record for a nut crust; read as FNDDS 2706442's crumb
+  crust by mass); the record's …` (every other read's flag unchanged).
+Reach vs the v87 rows: exactly the 10 coat parts (grams, basis and energy
+only; all `auto`, `discarded`, 0 person rows) — by f_d the four flours:
+chicken-kiev|11 73.34 → 39.06 g (268.42 → 142.96 kcal), lighter-chicken-
+parmesan|3 45.83 → 29.29, stuffed-chicken-cutlets-with-ham-and-cheddar|10
+46.76 → 28.64, nut-crusted-chicken-breasts-with-lemon-and-thyme|9 74.54 →
+36.45; by f_c the six crumb parts: kiev|7 bread 93.87 → 147.47 g (four
+45.36 g slices, 181.44 g, at f_c 0.8128), stuffed|13 bread 79.81 → 108.15
+(at its budget, f_c 0.5961), lighter|0 panko 57.37 → 57.55 and |2 the
+Parmesan 18.33 → 18.39, nut-crusted|2 almonds 75.19 → 66.85 (the stand-in)
+and |5 panko 31.10 → 27.65. Each recipe's flour carbohydrate is 3.55 × its
+raw breast / 100 and its crumbs' dry mass 11.905 × raw / 100 (kiev 850.49
+g, lighter 637.86, stuffed 623.69, nut-crusted 793.79). ROW column
+−234.72, recipe energy −234.70 (the design's composed ≈ −231.8 was an
+estimate; the replay is the figure): kiev 668.42 → 672.70 kcal per serving
+(+17.12), lighter 298.43 → 288.50 (−59.58), stuffed 639.11 → 641.38
+(+9.08), nut-crusted 566.38 → 516.05 (−201.32); all four stay complete; 0
+status / hold changes; the dips (kiev|12 116.88 g, |13 4.03; stuffed|11
+88.67; nut-crusted|10 105.19, |11 7.26, |12 0.41; lighter|6 90.69),
+sections, notes, calls and buckets identical. Reverted alone, f_d puts back
+exactly the four flours and f_c exactly the six crumb parts. Not moved:
+every C4 row, easier-fried-chicken|8 (C2's default, no crumb part), the C1
+crusts (almond-crusted, breaded-chicken-cutlets, chicken-katsu,
+chicken-schnitzel, pork-schnitzel — a flour beside a bread part on
+2705975 keeps the one f), eggplant-parmesan|2 |3 |5 (its own arm),
+the onion rings.
+Calibration (reported, never fitted; v87 → v88 per serving against each
+audit's hand count): a6 R05 chicken-kiev +11.7 → +12.4 % (away: its bread
+reads the crumbs' own budget on M82's slice), R09 stuffed +5.9 → +6.2 %
+(away); a5 R11 nut-crusted +3.3 → −5.9 % (away in size: its hand reads the
+almonds at 80 % adherence, judgment), R23 lighter +14.0 → +10.2 %.
+Person path (Q7, no users — unguarded): typed grams on a FLOUR line leave
+it out of the parts (an `override` row is no plan part), so the crumbs keep
+their OWN budget — kiev|11 typed: kiev|7 stays 147.47 g (v87: the whole
+12.12 at one f, f = 1, 181.44 g); typed grams on the crumb line leave no
+`Bread,` part and keep CC11's C2 3.18 (kiev|7 typed: the flour 34.99 g,
+as at v87). GATE-P on base dbb6092 and on v88 (person_sweeps run.sh, 12
+shards, fresh snapshot-29 copies): sw5 31,229, sw6 36,916, sw7 1,839, sw8
+56,043 combos, 0 divergent, 0 refused, 0 errors on both, calls 0 (sw8's
+1,542 combos on the four recipes include the typed 77 g on each flour
+line).
+Pins: nutrition_v88_test (12 tests — the ten parts and the dips at
+the replay's figures with their basis; both budgets by arithmetic on each
+recipe's own rows; 3.55, 11.905 and 8.57 from 2706442's inputs and the
+fixtures' 789890 / 174928 carbohydrate beside v80's 12.12; this flag read
+here character for character; the negatives; the totals; a second compute
+writes nothing; the four typed-grams paths — the flour, the crumb line,
+nut-crusted's almonds, leaving the panko at f_c = 1, its whole 59.15 g
+line, and kiev|10's chicken at 4,000 g, past the 3,086.50 g where 3.55 ×
+raw ÷ 100 meets the flour line's 109.57 g carbohydrate, leaving kiev|11 at
+f_d = 1, its whole 141.75 g line), each mutant killed by a value pin
+(snapshot copy, anchor
+count 1): the split dropped (kiev|11 39.06 → 73.34 g), the split on every
+read (breaded-chicken-cutlets|2 32.54 → 108.15), a Nuts part by the
+bread's carbohydrate tracer, × its carbohydrate ÷ 0.7198 (nut-crusted|2
+66.85 → 132.54), a Cheese part by the same tracer (lighter|0 57.55 →
+74.87), a fresh bread by its own mass (kiev|7 147.47 →
+101.25), W off the counted carbohydrate (kiev|12 116.88 → 116.87), f_c or
+f_d back to the one f (kiev|7 → 93.87, kiev|11 → 73.34), the dredge by
+mass (kiev|11 → 30.19), the flour test off (→ 53.89), a fallback to the
+one f with no flour part (typed kiev|11: kiev|7 → 181.44), the cap dropped
+(typed almonds: the panko 59.15 → 94.50), f_d's cap dropped alone
+(typed chicken: kiev|11 141.75 → 183.70), the nut clause's "by mass"
+dropped, the crumbs at 81 / 680.4 × 100 unrounded (the flag prints
+11.904761904761905), matcherVersion 82; the existing suite re-pinned as
+equalities (RE-PIN M88): the version literals and three hashes (the
+version alone — the base tree with only the bump gives each), the M52 /
+M62 / M66 / M70 / M78 / M80 / M82 / M85 coat pins of the ten parts and the
+four totals (nutrition_v53, v61,
+v65, v69, v78, v80, v84, v87), the flag text, v65's no-crumb lighter
+variant (panko 75.94 g, the crumbs' whole budget) and v26's CRUMB COAT cap
+shape (each panko 0.20 g, the counts unchanged).
+Cost: no new reader — the arm is a pass over the parts the plan already
+holds, only under 2706442; `_m52Key` is UNCHANGED (the split reads each
+part's description and record and the coated food's grams, all keyed
+already). At the v26 cap shapes (0416 padded to 400 lines with its own
+panko line under 120 × 10,000-character steps; 0206 likewise with its
+flour), base dbb6092 → v88, two runs each, compute / GET / recompute in
+ms: CRUMB COAT TRUE (the coat on 2706442 — the split's path) 946, 848 →
+874, 870 / 667, 608 → 636, 608 / 601, 588 → 578, 579; CRUMB COAT quiet
+820, 796 → 834, 798 / 615, 618 → 621, 621 / 540, 549 → 538, 552; SET-OUT
+TRUE (a coat on 2705871 at the one f) 1,061, 913 → 1,062, 901 / 718, 666 →
+723, 674 / 568, 588 → 576, 570; SET-OUT quiet 918, 904 → 940, 897 / 690,
+668 → 684, 663 / 566, 575 → 579, 573 — every step-index count identical to
+base on all 24 paths (v26 pins them exactly), each under the 10 s
+backstop.
+Deploy note: matcherVersion 83 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests). The kcal digest (`tool/replay/
+digest.sh`) moves 766,152.39 → 766,098.68, −53.71 (the four recipes' per
+serving) — a per-serving sum, not the recipe energy above.
 
 **Matcher v87 (batch M85; matcherVersion 82 — 98 rows + 4 re-solves: 111
 rows change record, 98 of them counted, 13 amount-less at 0 g, and the 4
@@ -7327,7 +7463,11 @@ crumbs, panko, sandwich bread); `nutCrust` — one on a `Nuts,` record — makes
 it a stand-in. `_m52Plan` reads k AFTER its parts loop (closer CC11): the two
 tests read the parts the budget shares under the loop's own filters, never
 the line list — a person's typed grams on the crumb line leave the rest at
-C2's 3.18. The budget, f and W are unchanged. The flag: `approximation (coat:
+C2's 3.18. The budget, f and W are unchanged (since matcher v88, M88, the
+parts on this read share two budgets of their own — the flour parts f_d by
+carbohydrate, every other part f_c by dry-crumb mass — not the one f; B and
+W unchanged). The flag at v80 (re-worded by matcher v88, M88 — see that
+section): `approximation (coat:
 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS
 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as
 separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan

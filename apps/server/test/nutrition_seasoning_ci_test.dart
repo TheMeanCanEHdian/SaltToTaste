@@ -84,7 +84,8 @@ void main() {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
-    expect(matcherVersion, 82); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
+    expect(matcherVersion, 83); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -182,7 +183,10 @@ void main() {
       // 7da217a3…; M85 adds no hash term — it re-ranks a cached answer and
       // re-points two approximation records — the version alone: the base
       // tree with only the bump gives this literal).
-      'fad6332c0aa987d1a9729464fcc820743db3a41f55475207cf8e694b1660dee8',
+      // RE-PIN (M88 batch, v88): the hash at matcherVersion 83 (was
+      // fad6332c…; M88 adds no hash term — the version alone: the base tree
+      // with only the bump gives this literal).
+      '9a6072a814ac86a7de8636c473be4ce45b895c133a723548291635eb91747e77',
     );
   });
 

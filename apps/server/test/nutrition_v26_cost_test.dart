@@ -596,7 +596,10 @@ void main() {
               ('memo:setsOut', false) => {('discarded', null, '35.61')},
               ('memo:setsOut', true) => {('discarded', null, '53.33')},
               (_, false) => {('density', null, '88.72')},
-              _ => {('discarded', null, '0.28')},
+              // RE-PIN (M88 batch, v88): the crumb coat reads FNDDS 2706442
+              // — the panko shares the crumbs' own budget by its dry mass,
+              // f_c (was 0.28 at the one f; the counts unchanged).
+              _ => {('discarded', null, '0.20')},
             },
           );
           await timed('GET', () => matchesBody(db, provider, stored()));

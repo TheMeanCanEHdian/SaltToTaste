@@ -5681,7 +5681,9 @@ void main() {
           // RE-PIN (M80 batch, v80, M80-2): the crumb crust at FNDDS
           // 2706442's 12.12 — was 235.22 (the v80 replay 235.26 → 298.97).
           // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43).
-          '298.40',
+          // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50:
+          // the dredge split).
+          '288.46',
         ), // replay complete 235.29 → complete 235.26
         (
           // RE-PIN (M82 batch, v84): was 246.13 (the replay 246.13 → 252.03).

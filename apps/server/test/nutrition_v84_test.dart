@@ -412,6 +412,8 @@ const List<_Row> _tuna = [
 /// rows; pinned at the replay's figure, never a model's).
 const List<_Row> _coats = [
   // v82: 77.68 g, 206.63 kcal (discarded)
+  // RE-PIN (M88 batch, v88): was 93.87 g, 249.69 kcal — the crumbs' own
+  // share f_c (the v88 replay's row).
   (
     '0122-chicken-kiev.yaml',
     null,
@@ -419,11 +421,13 @@ const List<_Row> _coats = [
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     'discarded',
-    '93.87',
-    '249.69',
+    '147.47',
+    '392.27',
     null,
   ),
   // v82: 83.69 g, 306.31 kcal (discarded)
+  // RE-PIN (M88 batch, v88): was 73.34 g, 268.42 kcal — the dredge's own
+  // share f_d (the v88 replay's row).
   (
     '0122-chicken-kiev.yaml',
     null,
@@ -431,8 +435,8 @@ const List<_Row> _coats = [
     '1 cup unbleached all-purpose flour',
     789890,
     'discarded',
-    '73.34',
-    '268.42',
+    '39.06',
+    '142.96',
     null,
   ),
   (
@@ -519,11 +523,12 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 82 (v84 set it to 79, batch M82: rows move)', () {
+  test('matcherVersion 83 (v84 set it to 79, batch M82: rows move)', () {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
-    expect(matcherVersion, 82);
+    // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
+    expect(matcherVersion, 83);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {

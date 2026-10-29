@@ -340,30 +340,36 @@ _rows = [
   // RE-PIN (M80 batch, v80, M80-2): a C2 chicken with a crumb part (|13's
   // bread) reads FNDDS 2706442's crust, 12.12 (was 14.32 g at C2's 3.18).
   // RE-PIN (M82 batch, v84, C1+C5a): was 54.59 g, 199.80 kcal (the v84 replay's row).
+  // RE-PIN (M88 batch, v88): was 46.76 g — the dredge's own share f_d (3.55
+  // g carbohydrate per 100 g raw); the flag names 2706442's two inputs (the
+  // v88 replay's row).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     10,
     '¾ cup unbleached all-purpose flour',
     789890,
-    '46.76',
+    '28.64',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // C2 with |10, split by carbohydrate.
   // RE-PIN (M80 batch, v80, M80-2): at 12.12 (was 17.73 g at 3.18).
   // RE-PIN (M82 batch, v84, C1+C5a): was 67.57 g, 179.74 kcal (the v84 replay's row).
+  // RE-PIN (M88 batch, v88): was 79.81 g — the crumbs' own share f_c (11.905
+  // g dry crumbs per 100 g raw, the bread by its carbohydrate ÷ 0.7198); the
+  // flag as |10 (the v88 replay's row).
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     13,
     '4 slices high-quality white sandwich bread, pulsed in a food processor to coarse crumbs and dried',
     174924,
-    '79.81',
+    '108.15',
     'discarded',
     null,
-    "discarded in cooking — only the coat on the food counted · approximation (coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read) per 680.4 g raw chicken; the dredge's excess not counted)",
+    "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
   ),
   // Q24 b: its eaten tablespoon kept + O1a 6.68 % × 623.69 g
   (
@@ -909,14 +915,25 @@ void main() {
       final stuffed = await computed(
         '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
       );
-      final budget = gramsOf(stuffed, 8) * 12.12 / 100;
-      final f =
-          budget /
-          (wholeOf(stuffed, 10) * cho(stuffed, 10) +
-              wholeOf(stuffed, 13) * cho(stuffed, 13));
-      expect(f, lessThan(1));
-      expect(g2(gramsOf(stuffed, 10)), g2(f * wholeOf(stuffed, 10)));
-      expect(g2(gramsOf(stuffed, 13)), g2(f * wholeOf(stuffed, 13)));
+      // RE-PIN (M88 batch, v88, Q4 (b)): 2706442's two inputs are two
+      // budgets — the flour by its carbohydrate, f_d = 3.55 × raw / 100 ÷
+      // its carbohydrate; the bread by its dry-crumb mass, f_c = 11.905 ×
+      // raw / 100 ÷ (its grams × carbohydrate ÷ 0.7198) (was one f = 12.12 ×
+      // raw / 100 over both by carbohydrate).
+      final fd =
+          gramsOf(stuffed, 8) *
+          3.55 /
+          100 /
+          (wholeOf(stuffed, 10) * cho(stuffed, 10));
+      final fc =
+          gramsOf(stuffed, 8) *
+          11.905 /
+          100 /
+          (wholeOf(stuffed, 13) * cho(stuffed, 13) / 0.7198);
+      expect(fd, lessThan(1));
+      expect(fc, lessThan(1));
+      expect(g2(gramsOf(stuffed, 10)), g2(fd * wholeOf(stuffed, 10)));
+      expect(g2(gramsOf(stuffed, 13)), g2(fc * wholeOf(stuffed, 13)));
       // Francese: the two oils of one fry split the breasts' uptake by
       // their grams.
       final francese = await computed('1133-chicken-francese.yaml');

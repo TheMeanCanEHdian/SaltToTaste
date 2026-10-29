@@ -57,13 +57,19 @@ const _eggplant = '0407-eggplant-parmesan.yaml';
 const _hard = 'Cheese, parmesan, hard';
 const _asHard = 'approximation (counted as Cheese, parmesan, hard)';
 
+// RE-PIN (M88 batch, v88): FNDDS 2706442's flag names its two inputs (was
+// "coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA
+// FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour as
+// separate inputs; 82.46 g carbohydrate; …) per 680.4 g raw chicken; …").
 const _crumbCoat =
     'discarded in cooking — only the coat on the food counted · approximation '
-    '(coat: 12.12 g carbohydrate per 100 g of the raw chicken breast — USDA '
-    'FNDDS 2706442 recipe: 112.25 g crust (81 g dry crumbs and 31.25 g flour '
-    "as separate inputs; 82.46 g carbohydrate; the record's 18.75 g grated "
-    'Parmesan follows its mozzarella and sauce — a topping, not read) per '
-    "680.4 g raw chicken; the dredge's excess not counted)";
+    '(coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — '
+    'USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR '
+    '174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry '
+    'crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their '
+    'dry mass; a fresh bread brought to dry crumbs by carbohydrate); the '
+    "record's 18.75 g grated Parmesan follows its mozzarella and sauce — a "
+    "topping, not read; the dredge's excess not counted)";
 const _batterCoat =
     'discarded in cooking — only the coat on the food counted · approximation '
     '(coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS '
@@ -177,8 +183,10 @@ const List<_Row> _rows = [
     '1½ cups panko (Japanese-style bread crumbs)',
     174928,
     'discarded',
-    '57.37',
-    '226.61',
+    // RE-PIN (M88 batch, v88): was 57.37 g, 226.61 kcal — the crumbs' own
+    // share f_c (the v88 replay's row).
+    '57.55',
+    '227.32',
     _crumbCoat,
   ),
   (
@@ -187,8 +195,10 @@ const List<_Row> _rows = [
     '1 ounce Parmesan cheese, grated (about ½ cup), plus extra for serving',
     170848,
     'discarded',
-    '18.33',
-    '71.85',
+    // RE-PIN (M88 batch, v88): was 18.33 g, 71.85 kcal — a Cheese part of
+    // the crumbs by its own mass, f_c (the v88 replay's row).
+    '18.39',
+    '72.09',
     _crumbCoat,
   ),
   (
@@ -197,8 +207,10 @@ const List<_Row> _rows = [
     '½ cup unbleached all-purpose flour',
     789890,
     'discarded',
-    '45.83',
-    '167.74',
+    // RE-PIN (M88 batch, v88): was 45.83 g, 167.74 kcal — the dredge's own
+    // share f_d (the v88 replay's row).
+    '29.29',
+    '107.20',
     _crumbCoat,
   ),
   // eggplant (v86): |2 88.21 g 234.64, |3 13.78 g 58.01 on 325036, |5 34.46 g
@@ -259,7 +271,9 @@ const Map<String, (String, String, String)> _totals = {
   // Unmoved: its Parmesan rows count 0 g.
   _minestrone: ('complete', '264.97', '1833.60'), // replay 265.05 both
   // The re-solved budgets add grams (v86 1,782.60 and 2,765.00 g).
-  _lighter: ('complete', '298.40', '1785.10'), // replay 298.43; v86 297.64
+  // RE-PIN (M88 batch, v88): was 298.40 / 1,785.10 (replay 298.43) — the
+  // dredge split (the v88 replay 288.50).
+  _lighter: ('complete', '288.46', '1768.80'), // replay 288.50; v86 297.64
   _eggplant: ('partial', '451.60', '2767.50'), // replay 451.58; v86 452.38
 };
 
@@ -269,8 +283,9 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 82 (v87, batch M85: rows move)', () {
-    expect(matcherVersion, 82);
+  test('matcherVersion 83 (v87 set it to 82, batch M85: rows move)', () {
+    // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
+    expect(matcherVersion, 83);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "
