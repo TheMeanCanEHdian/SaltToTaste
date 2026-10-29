@@ -827,12 +827,15 @@ void writes() {
       ],
       // RE-PIN (M82 batch, v84, C5a): the batter's ½ cup flour whole at 5 oz
       // a cup, and the oil's uptake on the heavier batter: was 60.33, 26.09.
+      // RE-PIN (M90 batch, v89, cornstarch): the batter's ½ cup cornstarch
+      // whole at 4 oz a cup, and the oil's uptake on the lighter batter: was
+      // 63.88, 26.98.
       [
         (6, '70.87', 'density'),
-        (7, '63.88', 'density'),
+        (7, '56.70', 'density'),
         (9, '2.27', 'density'),
         (10, '180.00', 'portion'),
-        (11, '26.98', 'discarded'),
+        (11, '26.37', 'discarded'),
       ],
     );
     expect(
@@ -841,7 +844,9 @@ void writes() {
     );
     // RE-PIN (M82 batch, v84, C5a): the flour and its uptake, as above —
     // was 815.36, 3261.43.
-    expect((put.$1, put.$2, put.$3), ('complete', '827.01', '3308.03'));
+    // RE-PIN (M90 batch, v89, cornstarch): the starch and its uptake, as
+    // above — was 827.01, 3308.03.
+    expect((put.$1, put.$2, put.$3), ('complete', '818.80', '3275.18'));
     expect(nutritionIsFresh(db, r, db.nutritionFor(r.id)), isTrue);
     expect(recomputeTotals(db, r), isTrue);
     expect(state(db, r.id), put, reason: 'a second recompute');

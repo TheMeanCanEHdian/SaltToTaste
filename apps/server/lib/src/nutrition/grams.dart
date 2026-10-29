@@ -143,15 +143,26 @@ const List<(String, double)> _densities = [
   // prints) and "(5½ ounces)" whole-wheat (12 of 16), flagged
   // ([_approximateDensities]).
   ('all-purpose flour', 5 * 28.3495 / 236.588),
-  ('bread flour', 0.52),
+  // v89 (batch M90, prep51 Q6 (b), the v49 tapioca form): six keys weigh
+  // the corpus's printed cup AHEAD of the record's own volume figure
+  // ([_approximateDensities] recordFirst false), each flagged with its
+  // print — bread flour "(5½ ounces)" a cup (21 of its 31 prints exactly,
+  // 27 within 0.7 %; was a kitchen 0.52 over SR 168913's 137 g dipped
+  // cup), sugar "1 cup (7 ounces)" (225 of 237 exactly; was 0.85,
+  // Foundation 746784's cup 188 g), packed brown sugar 7 ounces (86 of 88;
+  // was 0.93, SR 168833's 'cup packed' 220 g), confectioners' sugar 4
+  // ounces (34 of 34; was 0.51, SR 169656's 'cup unsifted' 120 g),
+  // cornstarch 4 ounces a cup (4 of 4: three "¼ cup (1 ounce)", one "½ cup
+  // (2 ounces)"; below) and cornmeal "1 cup (5 ounces)" (8 of 9; below).
+  ('bread flour', 5.5 * 28.3495 / 236.588),
   ('cake flour', 0.46),
   ('whole-wheat flour', 5.5 * 28.3495 / 236.588),
   ('flour', 5 * 28.3495 / 236.588),
-  ('granulated sugar', 0.85),
-  ('brown sugar', 0.93),
-  ('confectioners sugar', 0.51),
-  ('powdered sugar', 0.51),
-  ('sugar', 0.85),
+  ('granulated sugar', 7 * 28.3495 / 236.588),
+  ('brown sugar', 7 * 28.3495 / 236.588),
+  ('confectioners sugar', 4 * 28.3495 / 236.588),
+  ('powdered sugar', 4 * 28.3495 / 236.588),
+  ('sugar', 7 * 28.3495 / 236.588),
   ('butter', 0.959),
   ('milk', 1.03),
   ('buttermilk', 1.03),
@@ -195,8 +206,10 @@ const List<(String, double)> _densities = [
   ('instant espresso', 0.43),
   ('brewed coffee', 1.0),
   ('coffee', 1.0),
-  ('cornstarch', 0.54),
-  ('cornmeal', 0.66),
+  // v89 (M90, above): was 0.54 (SR 169698 'cup' 128 g) and 0.66 (SR
+  // 169697 'cup' 122 g is 0.52; the 0.66 was a kitchen figure).
+  ('cornstarch', 4 * 28.3495 / 236.588),
+  ('cornmeal', 5 * 28.3495 / 236.588),
   ('rice', 0.85),
   ('oats', 0.41),
   ('salt', 1.22),
@@ -359,10 +372,14 @@ const List<(String, double)> _densities = [
 /// in its basis ("· approximate (paprika density)") — or a figure ATK
 /// prints, named with its source (v31). `recordFirst` (v37): the key sizes
 /// a line only when its record has no volume figure of its own — a printed
-/// figure for a portion-less record, never over a record's portion:
-/// 'lentil' read "1 cup dried red lentils" at 198 g over 174284's own cup,
-/// 192 g (the replay). A null label (v84: 'virgin olive oil') flags
-/// nothing — the key only yields to the record's own figure.
+/// figure for a portion-less record (Z5's keys keep it: 'lentil' read "1
+/// cup dried red lentils" at 198 g over 174284's own cup, 192 g — the
+/// replay). A key that is not `recordFirst` weighs ahead of the record's
+/// own volume figure: v49's tapioca starch, and since v89 (M90, prep51 Q6
+/// (b)) the six keys whose corpus print is the cookbook's own measure —
+/// brown sugar, cornstarch, sugar, cornmeal, confectioners' sugar, bread
+/// flour. A null label (v84: 'virgin olive oil') flags nothing — the key
+/// only yields to the record's own figure.
 const Map<String, (String? label, bool recordFirst)> _approximateDensities = {
   // The label names the figure used: 'parmesan' 0.42, since v23 no longer
   // grated Parmesan's (0.24) — Run 054 O16.
@@ -398,6 +415,15 @@ const Map<String, (String? label, bool recordFirst)> _approximateDensities = {
   'all-purpose flour': ('ATK: 1 cup all-purpose flour = 5 ounces', true),
   'flour': ('ATK: 1 cup all-purpose flour = 5 ounces', true),
   'whole-wheat flour': ('ATK: 1 cup whole-wheat flour = 5½ ounces', true),
+  // v89 (M90, Q6 (b)): the print over the record's own cup.
+  'brown sugar': ('ATK: 1 cup packed brown sugar = 7 ounces', false),
+  'cornstarch': ('ATK: 1 cup cornstarch = 4 ounces', false),
+  'sugar': ('ATK: 1 cup sugar = 7 ounces', false),
+  'granulated sugar': ('ATK: 1 cup sugar = 7 ounces', false),
+  'cornmeal': ('ATK: 1 cup cornmeal = 5 ounces', false),
+  'confectioners sugar': ("ATK: 1 cup confectioners' sugar = 4 ounces", false),
+  'powdered sugar': ("ATK: 1 cup confectioners' sugar = 4 ounces", false),
+  'bread flour': ('ATK: 1 cup bread flour = 5½ ounces', false),
   // v84 (M82 C6a): no stand-in — an extra-virgin olive oil's record's own
   // volume figure wins over the kitchen 0.92 (748608 "Oil, olive, extra
   // virgin" '100 milliliter' 90.7 g); a record that publishes none keeps

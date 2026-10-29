@@ -263,7 +263,8 @@ const List<_Row> _rows = [
 /// pinned rows are equal), then v86's replay figure.
 const Map<String, (String, String, String)> _totals = {
   _kale: ('complete', '263.21', '629.40'), // = replay; v86 265.26
-  _meatloaf: ('complete', '648.42', '1521.80'), // replay 647.55; v86 649.60
+  // RE-PIN (M90 batch, v89): the replay 647.55 → 641.85: was 648.42, 1521.80.
+  _meatloaf: ('complete', '642.72', '1515.90'), // replay 647.55; v86 649.60
   _farfalle: ('complete', '704.76', '658.70'), // = replay; v86 705.79
   _ziti: ('complete', '595.31', '1752.40'), // replay 595.35; v86 597.41
   _onion: ('complete', '362.29', '3620.50'), // = replay; v86 364.34
@@ -283,9 +284,10 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 83 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 84 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
-    expect(matcherVersion, 83);
+    // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
+    expect(matcherVersion, 84);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "

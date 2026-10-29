@@ -59,7 +59,9 @@ const _almond = '0042-almond-crusted-chicken-with-wilted-spinach-salad.yaml';
 /// cod + 6.0 % × 1,102.23 g potatoes = 170.7776; §2's 170.77 / −504.09 were
 /// 226.78 − 56.01 on rounded figures); D's cauliflower at 16.16 % (30.32 ×
 /// 122.16 / 229.20 — C at full precision; §2's 122.17 summed the rounded
-/// grams).
+/// grams). RE-PIN (M90 batch, v89, cornstarch + cornmeal): the batter's
+/// cornstarch |5 and cornmeal |6 at their prints make C 109.56 g, the oil
+/// |4 14.49 % — 65.74 g (was 73.30).
 const List<_Row> _reach = [
   // v57: 36.06 g, 324.54 kcal
   (
@@ -97,15 +99,16 @@ const List<_Row> _reach = [
     'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   // v57: 137.53 g, 1,237.77 kcal
+  // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g, 659.70 kcal (the v89 replay's row).
   (
     _cauliflower,
     4,
     '1–2 quarts peanut or vegetable oil',
     2710187,
     '0.673333',
-    '73.30',
-    '659.70',
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
+    '65.74',
+    '591.66',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 14.49 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (109.56 g of 229.20 g carbohydrate))",
   ),
 ];
 
@@ -214,26 +217,28 @@ const List<_Row> _kept = [
     'discarded in cooking — only "plus 2 tablespoons vegetable oil" and the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.68 % of the raw chicken breast\'s weight — USDA FNDDS 2705975 recipe: 7 g oil per 104.76 g raw chicken breast)',
   ),
 
+  // RE-PIN (M90 batch, v89, cornstarch): was 95.82 g, 365.07 kcal (the v89 replay's row).
   (
     _cauliflower,
     5,
     '¾ cup cornstarch',
     169698,
     '1.000000',
-    '95.82',
-    '365.07',
-    '3/4 cup ≈ 177 mL',
+    '85.05',
+    '324.03',
+    '3/4 cup ≈ 177 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
 
+  // RE-PIN (M90 batch, v89, cornmeal): was 39.04 g, 141.31 kcal (the v89 replay's row).
   (
     _cauliflower,
     6,
     '¼ cup cornmeal',
     169697,
     '0.870000',
-    '39.04',
-    '141.31',
-    '1/4 cup ≈ 59 mL',
+    '35.44',
+    '128.28',
+    '1/4 cup ≈ 59 mL · approximate (ATK: 1 cup cornmeal = 5 ounces)',
   ),
 
   (
@@ -377,13 +382,15 @@ void main() {
       expect(g(_saltPepper, 7), '64.06');
       expect(g(_orangeBeef, 8), '95.29');
       expect(g(_fishChips, 1), '170.78');
-      expect(g(_cauliflower, 4), '73.30');
+      // RE-PIN (M90 batch, v89, cornstarch + cornmeal): was 73.30.
+      expect(g(_cauliflower, 4), '65.74');
       expect(basisOf(_fishChips, 1), contains('the steps rinse it off'));
       // F12: C_recipe, the group's batter carbohydrate, in the flag.
       expect(
         basisOf(_cauliflower, 4),
         contains(
-          "scaled to the recipe's batter (122.16 g of 229.20 g "
+          // RE-PIN (M90 batch, v89): was 122.16 g.
+          "scaled to the recipe's batter (109.56 g of 229.20 g "
           'carbohydrate))',
         ),
       );
@@ -584,7 +591,10 @@ void main() {
         (n, p) => n + grams(p) * cho(p) / 100,
       );
       final k = 50 * 0.40 / 39.58 * grams(10);
-      expect(c.toStringAsFixed(2), '122.16');
+      // RE-PIN (M90 batch, v89, cornstarch + cornmeal): the batter's two
+      // starches at their prints (|5 95.82 → 85.05 g, |6 39.04 → 35.44, the
+      // v89 replay's rows): was 122.16.
+      expect(c.toStringAsFixed(2), '109.56');
       expect(k.toStringAsFixed(2), '229.20');
       expect(
         grams(4).toStringAsFixed(2),
@@ -640,7 +650,10 @@ void main() {
         // 0.96 = 223.14 g (the plan counts 46.9 % of it on the shrimp);
         // K = 50 × 0.40 / 39.58 × 453.59 = 229.20; u = 30.32 × C / K =
         // 29.52 %, beside the shrimp's 15.38 %.
-        expect(oil().grams?.toStringAsFixed(2), '238.53');
+        // RE-PIN (M90 batch, v89, cornstarch): the tempura's ½ cup cornstarch
+        // at the print, 56.70 g (was 63.89): C = 164.36 + 51.75 + 0.48 =
+        // 216.59 g, u = 28.65 % — was 238.53, 29.52 %, 223.14 g.
+        expect(oil().grams?.toStringAsFixed(2), '234.60');
         final basis = gramBasisFor(db, line, oil(), recipe: stored);
         expect(
           basis,
@@ -652,14 +665,15 @@ void main() {
         expect(
           basis,
           contains(
-            "29.52 % of the raw cauliflower's weight — USDA FNDDS 2710042 "
+            "28.65 % of the raw cauliflower's weight — USDA FNDDS 2710042 "
             'recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the '
-            "recipe's batter (223.14 g of 229.20 g carbohydrate))",
+            "recipe's batter (216.59 g of 229.20 g carbohydrate))",
           ),
         );
         expect(
           db.nutritionFor(stored.id)!.caloriesPerServing?.toStringAsFixed(2),
-          '446.29',
+          // RE-PIN (M90 batch, v89, cornstarch): was 446.29.
+          '442.94',
         );
         final before = rows();
         final kcal = db.nutritionFor(stored.id)!.caloriesPerServing;
@@ -679,7 +693,9 @@ void main() {
         return (n.status, n.caloriesPerServing!.toStringAsFixed(2));
       }
 
-      expect(of(_saltPepper), ('complete', '366.34')); // v57 303.34
+      // RE-PIN (M90 batch, v89, cornstarch): its cornstarch |8 at the print
+      // (the replay 366.34 → 362.07): was 366.34.
+      expect(of(_saltPepper), ('complete', '362.07')); // v57 303.34
       // crispy-orange-beef (replay 599.09, v57 536.09): its beef |0 reads
       // its energy off another answer in a fresh compute (952.54 for the
       // replay's 953.52) — the status only.
@@ -687,7 +703,10 @@ void main() {
       // buffalo-cauliflower-bites (replay 616.15, v57 760.67, −578.07 / 4):
       // its cauliflower |10 reads 125.19 kcal off the fixture's detail in a
       // fresh compute (the replay's 125.16), +0.01 a serving.
-      expect(of(_cauliflower), ('complete', '616.16'));
+      // RE-PIN (M90 batch, v89, cornstarch + cornmeal): the batter's starches
+      // and the oil |4 (the replay 616.15 → 584.34, the same +0.01): was
+      // 616.16.
+      expect(of(_cauliflower), ('complete', '584.35'));
       // fish-and-chips (replay 855.40, v57 981.40): its oil |1 reads another
       // record in a fresh compute than in snapshot 23 — the status only.
       expect(of(_fishChips).$1, 'complete');

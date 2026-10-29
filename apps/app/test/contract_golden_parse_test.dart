@@ -863,7 +863,9 @@ void main() {
       expect(child.yieldUnits, [(unit: 'recipe', perRecipe: 1.0)]);
       expect(
         (child.grams, child.kcal, child.kcalPerServing),
-        (642.9, 3056.69, 382.09),
+        // RE-PIN (M90 batch, v89, sugar): the re-captured golden's dough at
+        // the corpus's printed cup (was 642.9, 3056.69, 382.09).
+        (642.7, 3056.05, 382.01),
       );
       expect((child.kind, child.parentKind), ('dough', 'pie'));
       expect(

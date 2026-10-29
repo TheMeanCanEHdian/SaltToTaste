@@ -2827,10 +2827,11 @@ double? _freeGrams(IngredientLine line, String normalized) =>
 /// [fat] item the table refuses at oil's 0.92). Each threshold's mass
 /// figure is its volume at that density: ¼ cup of oil 54.4 g, of flour
 /// 35.4 g (0.5991, v84), of panko 14.8 g (0.25), of bread crumbs 26.6 g
-/// (0.45), of a starch 31.9 g (0.54), of sugar 50.3 g (0.85); the
-/// brine salt's 44 mL 53.7 g of table salt (1.22), 26.8 g of kosher
-/// (0.60865, v62); four cups of milk or buttermilk 974 g (1.03). 0 when it has
-/// neither.
+/// (0.45), of a starch 31.9 g (0.54), of cornstarch 28.35 g and of sugar
+/// 49.61 g (the corpus's 4 and 7 ounces a cup, 0.4793 and 0.8388 — v89;
+/// were 0.54 and 0.85); the brine salt's 44 mL 53.7 g of table salt
+/// (1.22), 26.8 g of kosher (0.60865, v62); four cups of milk or buttermilk
+/// 974 g (1.03). 0 when it has neither.
 double _mediumMl(IngredientLine line, String normalized, {bool fat = false}) {
   final ml = volumeMlOf(line.amounts);
   if (ml != null || line.amounts.isEmpty) {

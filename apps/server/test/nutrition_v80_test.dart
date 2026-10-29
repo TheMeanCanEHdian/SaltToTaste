@@ -337,27 +337,30 @@ const _negatives = [
     'discarded',
     null,
   ),
+  // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g, 659.70 kcal (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     4,
     '1–2 quarts peanut or vegetable oil',
-    '73.30',
+    '65.74',
     'discarded',
     null,
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 95.82 g, 365.07 kcal (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     5,
     '¾ cup cornstarch',
-    '95.82',
+    '85.05',
     'density',
     null,
   ),
+  // RE-PIN (M90 batch, v89, cornmeal): was 39.04 g, 141.31 kcal (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     6,
     '¼ cup cornmeal',
-    '39.04',
+    '35.44',
     'density',
     null,
   ),

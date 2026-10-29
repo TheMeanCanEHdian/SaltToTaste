@@ -120,13 +120,14 @@ _rows = [
     'discarded in cooking — only "plus 5 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge\'s excess not counted)',
   ),
   // C3 3.94 (SR 171982, derived): f capped at 1 — its 2-tablespoon dredge part whole + the eaten 3 tablespoons
+  // RE-PIN (M90 batch, v89, cornstarch: its coat share re-solves): was 39.92 g (the v89 replay's row).
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
     null,
     8,
     '5 tablespoons cornstarch',
     169698,
-    '39.92',
+    '35.44',
     'discarded',
     null,
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 3.94 g carbohydrate per 100 g of the raw shrimp — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried"; the dredge\'s excess not counted)',
@@ -150,13 +151,14 @@ _rows = [
   // off B — every part at one f 0.4924 (was 59.95, the batter's excess
   // "the dredge's")
   // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 93.89 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
     2,
     '1½ cups unbleached all-purpose flour',
     789890,
-    '93.89',
+    '96.56',
     'discarded',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
@@ -166,13 +168,14 @@ _rows = [
   // RE-PIN (M58 batch, v57, W): a coat part at f (was 63.88 g counted
   // whole, `density`, the D5 flag)
   // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: its coat share re-solves): was 28.21 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
     3,
     '½ cup cornstarch',
     169698,
-    '28.21',
+    '25.75',
     'discarded',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
@@ -325,16 +328,17 @@ _rows = [
   // O5 30.32 % (2710042) × 453.59 g
   // RE-PIN (M59 batch, v58, D): scaled to the batter the CAULIFLOWER group
   // carries, 122.16 of FNDDS's 229.20 g carbohydrate (was 137.53)
+  // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     null,
     4,
     '1–2 quarts peanut or vegetable oil',
     2710187,
-    '73.30',
+    '65.74',
     'discarded',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 14.49 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (109.56 g of 229.20 g carbohydrate))",
   ),
   // C2 chicken 3.18 by the LAST cook (browned, then baked; critic F2).
   // RE-PIN (M80 batch, v80, M80-2): a C2 chicken with a crumb part (|13's

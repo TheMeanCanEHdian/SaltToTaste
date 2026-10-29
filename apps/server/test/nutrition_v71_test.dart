@@ -74,6 +74,7 @@ const List<_Row> _reach = [
     'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) · approximation (counted as Ginger root, raw)',
   ),
   // v70: 294.20 g, 1211.70 kcal; from the recipe Nam Prik Pao (Thai Chili Jam): 294 g, 1,212
+  // RE-PIN (M90 batch, v89, brown sugar: its child moves): was 210.20 g (the v89 replay's row).
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
@@ -82,11 +83,11 @@ const List<_Row> _reach = [
     null,
     '',
     '1.000000',
-    '210.20',
+    '207.50',
     'auto',
     null,
-    '455.70',
-    'from the recipe Nam Prik Pao (Thai Chili Jam): 210 g, 456 kcal',
+    '445.45',
+    'from the recipe Nam Prik Pao (Thai Chili Jam): 208 g, 445 kcal',
   ),
   // v70: 112.00 g, 1008.00 kcal; 1/2 cup · USDA portion
   (
@@ -410,6 +411,7 @@ const List<_Row> _reach = [
     "only 1 teaspoon + 1 teaspoon + 3 tablespoons of it used (from step 3) — the rest counted as 0 g · approximate (the steps use 1 teaspoon + 1 teaspoon + 3 tablespoons of the reserved oil; the rest is not used here — the fried aromatics' oil not counted)",
   ),
   // v70: 0.00 g, 0.00 kcal; no amount on the line — counted as 0 g
+  // RE-PIN (M90 batch, v89, sugar): was 39.21 g (the v89 replay's row).
   (
     '0554-shrimp-pad-thai.yaml',
     null,
@@ -418,10 +420,10 @@ const List<_Row> _reach = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '39.21',
+    '38.71',
     'auto',
     null,
-    '150.94',
+    '149.03',
     'from steps 2, 4, 5: ¼ teaspoon + 3 tablespoons + ⅛ teaspoon (no amount on the line)',
   ),
   // v70: 27.00 g, 38.61 kcal; 9 × 3 g each
@@ -572,6 +574,7 @@ const List<_Row> _unmoved = [
     '113.56',
     '8 cup ≈ 1893 mL',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
@@ -580,11 +583,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
@@ -726,6 +729,7 @@ const List<_Row> _unmoved = [
     '16.20',
     '10 · USDA per-item weight',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50 g (the v89 replay's row).
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     'Nam Prik Pao (Thai Chili Jam)',
@@ -734,11 +738,11 @@ const List<_Row> _unmoved = [
     168833,
     'Sugars, brown',
     '1.000000',
-    '27.50',
+    '24.81',
     'auto',
     null,
-    '104.51',
-    '2 tablespoon ≈ 30 mL',
+    '94.26',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
@@ -2368,6 +2372,7 @@ const List<_Row> _unmoved = [
     'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 93.89 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2376,13 +2381,14 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '93.89',
+    '96.56',
     'auto',
     null,
-    '343.64',
+    '353.41',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: its coat share re-solves): was 28.21 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2391,13 +2397,14 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '28.21',
+    '25.75',
     'auto',
     null,
-    '107.48',
+    '98.11',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 0.44 g, 1.40 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 0.40 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2406,13 +2413,14 @@ const List<_Row> _unmoved = [
     170932,
     'Spices, pepper, red or cayenne',
     '1.000000',
-    '0.40',
+    '0.41',
     'auto',
     null,
-    '1.27',
+    '1.30',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 0.57 g, 1.61 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 0.51 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2421,10 +2429,10 @@ const List<_Row> _unmoved = [
     171329,
     'Spices, paprika',
     '0.900000',
-    '0.51',
+    '0.53',
     'auto',
     null,
-    '1.44',
+    '1.49',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2456,6 +2464,7 @@ const List<_Row> _unmoved = [
     null,
   ),
   // RE-PIN (M82 batch, v84, C5a): was 2.23 g, 1.14 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 2.00 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2464,10 +2473,10 @@ const List<_Row> _unmoved = [
     172804,
     'Leavening agents, baking powder, double-acting, straight phosphate',
     '0.850000',
-    '2.00',
+    '2.06',
     'auto',
     null,
-    '1.02',
+    '1.05',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2485,6 +2494,7 @@ const List<_Row> _unmoved = [
     'from 1 1/2 pound',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 167.52 g, 72.03 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 150.23 g (the v89 replay's row).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2493,10 +2503,10 @@ const List<_Row> _unmoved = [
     2710616,
     'Beer',
     '0.565000',
-    '150.23',
+    '154.50',
     'auto',
     null,
-    '64.60',
+    '66.44',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2681,6 +2691,7 @@ const List<_Row> _unmoved = [
     '576.54',
     'discarded in cooking — only the part the recipe keeps and the oil the fried food absorbs counted · approximation (frying oil absorbed: 5.3 % of the raw shrimp\'s weight — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried")',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch: its coat share re-solves): was 39.92 g (the v89 replay's row).
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
     null,
@@ -2689,10 +2700,10 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '39.92',
+    '35.44',
     'auto',
     null,
-    '152.10',
+    '135.03',
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 3.94 g carbohydrate per 100 g of the raw shrimp — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried"; the dredge\'s excess not counted)',
   ),
   (
@@ -3539,6 +3550,7 @@ const List<_Row> _unmoved = [
     '1688.64',
     'from 16 1/2 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '0398-ultimate-grilled-pizza.yaml',
     null,
@@ -3547,11 +3559,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0398-ultimate-grilled-pizza.yaml',
@@ -4507,6 +4519,7 @@ const List<_Row> _unmoved = [
     '101.67',
     '1 tablespoon ≈ 15 mL',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '0457-beef-burgundy.yaml',
     null,
@@ -4515,11 +4528,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0457-beef-burgundy.yaml',
@@ -4591,6 +4604,7 @@ const List<_Row> _unmoved = [
     '17.16',
     '4 × 3 g each',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50 g (the v89 replay's row).
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
@@ -4599,11 +4613,11 @@ const List<_Row> _unmoved = [
     168833,
     'Sugars, brown',
     '0.683333',
-    '27.50',
+    '24.81',
     'auto',
     null,
-    '104.51',
-    '2 tablespoon ≈ 30 mL',
+    '94.26',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -4886,6 +4900,7 @@ const List<_Row> _unmoved = [
     '4.00',
     '1 teaspoon · USDA portion of "Garlic, raw"',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 1.33 g (the v89 replay's row).
   (
     '0524-chicken-teriyaki.yaml',
     null,
@@ -4894,11 +4909,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '1.33',
+    '1.18',
     'auto',
     null,
-    '5.07',
-    '1/2 teaspoon ≈ 2 mL',
+    '4.50',
+    '1/2 teaspoon ≈ 2 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '0524-chicken-teriyaki.yaml',
@@ -4970,6 +4985,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71 g (the v89 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -4978,11 +4994,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '37.71',
+    '37.21',
     'auto',
     null,
-    '145.17',
-    '3 tablespoon ≈ 44 mL',
+    '143.25',
+    '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
@@ -5027,6 +5043,7 @@ const List<_Row> _unmoved = [
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.61 % of the raw chicken wings' weight — USDA FNDDS 2706065 recipe: 7 g oil per 105.96 g raw chicken wing)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 40.36 g, 147.72 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 41.53 g (the v89 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -5035,13 +5052,14 @@ const List<_Row> _unmoved = [
     789890,
     'Flour, wheat, all-purpose, enriched, bleached',
     '0.950000',
-    '41.53',
+    '42.32',
     'auto',
     null,
-    '152.00',
+    '154.89',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 8.01 g, 30.52 kcal (the v84 replay's row).
+  // RE-PIN (M90 batch, v89, cornstarch: its coat share re-solves): was 7.02 g (the v89 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -5050,10 +5068,10 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '7.02',
+    '6.35',
     'auto',
     null,
-    '26.75',
+    '24.19',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.66 g carbohydrate per 100 g of the raw chicken wings — USDA FNDDS 2706065 recipe: 15 g breading per 105.96 g raw chicken wing (a batter read on a breading figure); the batter's excess not counted)",
   ),
   (
@@ -5098,6 +5116,7 @@ const List<_Row> _unmoved = [
     '25.44',
     '3 tablespoon · USDA portion',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 47.91 g (the v89 replay's row).
   (
     '0536-crispy-orange-beef.yaml',
     null,
@@ -5106,11 +5125,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '47.91',
+    '42.52',
     'auto',
     null,
-    '182.53',
-    '6 tablespoon ≈ 89 mL',
+    '162.02',
+    '6 tablespoon ≈ 89 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '0536-crispy-orange-beef.yaml',
@@ -6702,6 +6721,7 @@ const List<_Row> _unmoved = [
     '364.01',
     'from 2 ounce',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 15.97 g (the v89 replay's row).
   (
     '0905-chocolate-volcano-cakes-with-espresso-ice-cream.yaml',
     null,
@@ -6710,11 +6730,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '15.97',
+    '14.17',
     'auto',
     null,
-    '60.84',
-    '2 tablespoon ≈ 30 mL',
+    '54.01',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '0905-chocolate-volcano-cakes-with-espresso-ice-cream.yaml',
@@ -6758,6 +6778,7 @@ const List<_Row> _unmoved = [
     '0.00',
     'no amount on the line — counted as 0 g',
   ),
+  // RE-PIN (M90 batch, v89, sugar: its child moves): was 302.10 g (the v89 replay's row).
   (
     '0987-pumpkin-pie.yaml',
     null,
@@ -6766,11 +6787,11 @@ const List<_Row> _unmoved = [
     null,
     '',
     '1.000000',
-    '302.10',
+    '301.90',
     'auto',
     null,
-    '1544.71',
-    'from the recipe Basic Single-Crust Pie Dough: 302 g, 1,545 kcal',
+    '1544.07',
+    'from the recipe Basic Single-Crust Pie Dough: 302 g, 1,544 kcal',
   ),
   (
     '0987-pumpkin-pie.yaml',
@@ -7475,6 +7496,7 @@ const List<_Row> _unmoved = [
     '68.24',
     '3 1/2 tablespoon · USDA portion',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 7.98 g (the v89 replay's row).
   (
     '1178-chicken-teriyaki.yaml',
     null,
@@ -7483,11 +7505,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '7.98',
+    '7.09',
     'auto',
     null,
-    '30.42',
-    '1 tablespoon ≈ 15 mL',
+    '27.00',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '1178-chicken-teriyaki.yaml',
@@ -7503,6 +7525,7 @@ const List<_Row> _unmoved = [
     '25.44',
     '3 tablespoon · USDA portion',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '1178-chicken-teriyaki.yaml',
     null,
@@ -7511,11 +7534,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '1178-chicken-teriyaki.yaml',
@@ -7629,6 +7652,7 @@ const List<_Row> _unmoved = [
     '573.01',
     'from 5 1/4 ounce',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 5.32 g (the v89 replay's row).
   (
     '1198-meringue-christmas-trees.yaml',
     null,
@@ -7637,11 +7661,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '5.32',
+    '4.72',
     'auto',
     null,
-    '20.28',
-    '2 teaspoon ≈ 10 mL',
+    '18.00',
+    '2 teaspoon ≈ 10 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '1198-meringue-christmas-trees.yaml',
@@ -8346,13 +8370,16 @@ void main() {
           '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
           null,
           'complete',
-          '404.60',
+          // RE-PIN (M90 batch, v89): the replay 404.62 → 401.90: was 404.60.
+          '401.87',
         ), // 596.82 → 404.62
         (
           '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
           'Nam Prik Pao (Thai Chili Jam)',
           'complete',
-          '455.70',
+          // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 at the
+          // print (27.50 → 24.81 g, the v89 replay's row): was 455.70.
+          '445.45',
         ), // 1,211.70 → 455.70 (the batch)
         // RE-PIN (M82 batch, v84): was 586.18 (the replay 586.18 → 587.62).
         (
@@ -8401,19 +8428,22 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 808.37.
           // RE-PIN (M85 batch, v87): was 810.29 (the replay 810.26 → 804.10).
-          '804.12',
+          // RE-PIN (M90 batch, v89): the replay 804.10 → 803.94: was 804.12.
+          '803.96',
         ), // 774.92 → 808.35
         (
           '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
           null,
           'complete',
-          '803.21',
+          // RE-PIN (M90 batch, v89): the replay 803.21 → 800.65: was 803.21.
+          '800.65',
         ), // 939.71 → 803.21
         (
           '0554-shrimp-pad-thai.yaml',
           null,
           'complete',
-          '621.43',
+          // RE-PIN (M90 batch, v89): the replay 621.43 → 620.95: was 621.43.
+          '620.95',
         ), // 583.70 → 621.43
         (
           '0659-grilled-potatoes-with-garlic-and-rosemary.yaml',
@@ -8546,7 +8576,10 @@ void main() {
           final pizza = await alone('0398-ultimate-grilled-pizza.yaml', 4);
           expect((_g2(pizza.grams!), pizza.gramSource), ('14.00', 'portion'));
           final padThai = await alone('0554-shrimp-pad-thai.yaml', 3);
-          expect(_g2(padThai.grams!), '39.21');
+          // RE-PIN (M90 batch, v89, sugar): the steps' ¼ teaspoon + 3
+          // tablespoons + ⅛ teaspoon at the corpus's printed 7 ounces a cup
+          // (the v89 replay's row, beyond the brief's census): was 39.21.
+          expect(_g2(padThai.grams!), '38.71');
         },
       );
     },
@@ -8644,7 +8677,9 @@ void main() {
         // A pick keeps the coat's hold, as a held dip's does (RULE A: a pick
         // is no `coating` finish).
         ('pick sugar', 7, {'fdc_id': -1}, (null, null, 'coating')),
-        ('skip cornstarch', 6, {'skipped': true}, (25.14, 'density', null)),
+        // RE-PIN (M90 batch, v89, sugar): the uncoated sugar's 2 tablespoons
+        // at the print (was 25.14).
+        ('skip cornstarch', 6, {'skipped': true}, (24.81, 'density', null)),
       ]) {
         final db = freshDb();
         final p = FixtureProvider(pending: {...pendingSearches});

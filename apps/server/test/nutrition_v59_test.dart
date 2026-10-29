@@ -689,7 +689,9 @@ void main() {
         (_porchetta, '702.44'), // v58 647.82
         (_butternut, '351.03'), // v58 375.04
         // RE-PIN (M64 batch, v63, P10): 525.79 (was 533.20; −59.26 / 8).
-        (_pearCake, '525.79'), // v58 545.74
+        // RE-PIN (M90 batch, v89, sugar): its sugar at the print (the replay
+        // 525.79 → 525.51): was 525.79.
+        (_pearCake, '525.51'), // v58 545.74
         (_apples, '363.28'), // v58 388.98
         // meatloaf (replay 575.11, v58 654.01, −473.40 / 6): its saltines
         // |15 land another record with no grams in a fresh compute

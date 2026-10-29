@@ -350,8 +350,9 @@ void main() {
         label: 'nutrition_subrecipe',
         parent: _pie,
       );
-      // The label: the golden's 571.51 kcal, and what it includes.
-      expect(find.text('572'), findsOneWidget);
+      // The label: the golden's 571.43 kcal (RE-PIN M90, v89: was 571.51 —
+      // the dough's sugar at the corpus's printed cup), and what it includes.
+      expect(find.text('571'), findsOneWidget);
       expect(
         find.text(
           'Includes 1 recipe: All-Butter Double-Crust Pie Dough '
@@ -368,11 +369,12 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Recipe'), findsOneWidget);
-      expect(find.text('· 1 recipe · 643 g · 3,057 kcal'), findsOneWidget);
+      // RE-PIN (M90 batch, v89, sugar): the dough 3,056.05 kcal (was 3,057).
+      expect(find.text('· 1 recipe · 643 g · 3,056 kcal'), findsOneWidget);
       expect(
         find.text(
           'amount: from the recipe All-Butter Double-Crust Pie Dough: 643 g, '
-          '3,057 kcal · +382 kcal per serving',
+          '3,056 kcal · +382 kcal per serving',
         ),
         findsOneWidget,
       );
@@ -459,9 +461,11 @@ void main() {
         "Another recipe's section",
         'No section is titled "double-crust pie dough".',
         'current · default',
-        '3,057 kcal · +382 / serving',
-        '3,520 kcal · +440 / serving',
-        '3,649 kcal · +456 / serving',
+        // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print —
+        // was 3,057, 3,520, 3,649.
+        '3,056 kcal · +382 / serving',
+        '3,519 kcal · +440 / serving',
+        '3,648 kcal · +456 / serving',
         'The line says "1 recipe". All-Butter Double-Crust Pie Dough makes '
             'enough for one 9-inch pie, so the share is 1.',
         'Share',

@@ -463,6 +463,7 @@ const List<_Row> _coats = [
     null,
   ),
   // v82: 40.36 g, 147.72 kcal (discarded)
+  // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 41.53 g (the v89 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -470,11 +471,12 @@ const List<_Row> _coats = [
     '1 cup all-purpose flour',
     789890,
     'discarded',
-    '41.53',
-    '152.00',
+    '42.32',
+    '154.89',
     null,
   ),
   // v82: 8.01 g, 30.52 kcal (discarded)
+  // RE-PIN (M90 batch, v89, cornstarch: its coat share re-solves): was 7.02 g (the v89 replay's row).
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
@@ -482,8 +484,8 @@ const List<_Row> _coats = [
     '3 tablespoons cornstarch',
     169698,
     'discarded',
-    '7.02',
-    '26.75',
+    '6.35',
+    '24.19',
     null,
   ),
 ];
@@ -523,12 +525,13 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 83 (v84 set it to 79, batch M82: rows move)', () {
+  test('matcherVersion 84 (v84 set it to 79, batch M82: rows move)', () {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
-    expect(matcherVersion, 83);
+    // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
+    expect(matcherVersion, 84);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {

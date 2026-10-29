@@ -2,13 +2,13 @@
   "status": "complete",
   "serving_basis": 8,
   "basis_kind": "per_serving",
-  "calories_per_serving": 435.07,
+  "calories_per_serving": 434.57,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 435.07,
+      "amount": 434.57,
       "unit": "kcal",
-      "dv_percent": 21.8
+      "dv_percent": 21.7
     },
     "fat": {
       "label": "Total Fat",
@@ -45,15 +45,15 @@
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 185.1,
+      "amount": 185.09,
       "unit": "mg",
       "dv_percent": 8.0
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 61.56,
+      "amount": 61.44,
       "unit": "g",
-      "dv_percent": 22.4
+      "dv_percent": 22.3
     },
     "fiber": {
       "label": "Dietary Fiber",
@@ -80,7 +80,7 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 8.78,
+      "amount": 8.77,
       "unit": "mg",
       "dv_percent": 0.7
     },
@@ -163,18 +163,18 @@
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 7.37,
+      "amount": 7.36,
       "unit": "mg",
       "dv_percent": 1.8
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 28.73,
+      "amount": 28.71,
       "unit": "mg",
       "dv_percent": 2.3
     }
   },
-  "total_grams": 1023.9,
+  "total_grams": 1022.8,
   "matched_count": 14,
   "total_count": 14,
   "low_confidence": 0,

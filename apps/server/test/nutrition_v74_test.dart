@@ -143,10 +143,14 @@ const _totals = [
   (_newEngland, 'complete', '592.11', '4736.91'),
   (_corned, 'complete', '628.01', '5024.10'),
   // RE-PIN (M82 batch, v84): was 588.82, 3532.95 (the replay 588.82 → 590.30).
-  (_onion, 'complete', '590.30', '3541.81'),
+  // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 at the print
+  // (the replay 590.30 → 589.45): was 590.30, 3541.81.
+  (_onion, 'complete', '589.45', '3536.68'),
   // RE-PIN (M82 batch, v84): was 794.35, 4766.11 (the replay 794.35 → 797.57).
   (_pomegranate, 'complete', '797.57', '4785.41'),
-  (_barbecued, 'complete', '697.49', '12554.79'),
+  // RE-PIN (M90 batch, v89, brown sugar + sugar): its rub's sugars at their
+  // prints (the replay 697.49 → 696.88): was 697.49, 12554.79.
+  (_barbecued, 'complete', '696.88', '12543.90'),
   // 586.71 / 2,346.84 in the replay (the flank steak's hit, above).
   // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 586.89 / 2347.57 (the replay
   // 586.71 → 590.86).
@@ -359,7 +363,9 @@ void main() {
       // 8.45 g) and flour |9 (C5a, 15.08 → 17.72 g) — the v84 replay's KCAL
       // CHECK reads rows 4,326.79: was 4317.93.
       expect(gross(_corned).toStringAsFixed(2), '6964.56');
-      expect(gross(_onion).toStringAsFixed(2), '4326.79');
+      // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 13.75 →
+      // 12.40 g (the v89 replay's row): was 4326.79.
+      expect(gross(_onion).toStringAsFixed(2), '4321.67');
       final corned = row(_corned) * (1 - braisedKept[173128]!['energy']!);
       expect(corned.toStringAsFixed(2), '1940.46');
       expect(

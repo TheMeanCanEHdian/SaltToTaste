@@ -969,7 +969,9 @@ void main() {
         // the comment, then the replay's v62 → v63 — the same move (the
         // absolute figures differ by the energy the fixtures' cache reads).
         const [
-          ('complete', '525.79'), // 533.20; 533.20 → 525.79 (P10)
+          // RE-PIN (M90 batch, v89, sugar): its sugar at the print (the
+          // replay 525.79 → 525.51): was 525.79.
+          ('complete', '525.51'), // 533.20; 533.20 → 525.79 (P10)
           ('partial', '404.88'), // 489.26; 489.04 → 403.85 (F9)
           ('complete', '504.00'), // 420.00; 419.95 → 503.95 (the yield)
           ('complete', '670.38'), // 671.01; 670.73 → 670.11 (bay)
@@ -984,7 +986,10 @@ void main() {
           // RE-PIN (M73 batch, v73, pD C3): complete (was partial) — its
           // makrut lime leaves the flavouring rule row (replay partial →
           // complete, 404.62 unchanged).
-          ('complete', '404.60'), // 601.75; 601.77 → 596.82 (H1)
+          // RE-PIN (M90 batch, v89, brown sugar + sugar): the chili jam's
+          // brown sugar and the soup's sugar at their prints (the replay
+          // 404.62 → 401.90): was 404.60.
+          ('complete', '401.87'), // 601.75; 601.77 → 596.82 (H1)
         ],
       );
     });

@@ -694,9 +694,12 @@ void plans() {
       'the recompute 89.12 / 3,632.74)', () async {
     // RE-PIN (M82 batch, v84, C5a): the batter flour at 5 oz a cup
     // re-solves the coat (|2 93.89 g, the replay's row): was 89.12, 3632.74.
+    // RE-PIN (M90 batch, v89, cornstarch): the batter's ½ cup cornstarch at
+    // 4 oz a cup re-solves the coat (|2 96.56 g, the replay's row): was
+    // 93.89, 3630.71.
     expect(
       await fishWith('¼ cup tapioca starch', 'tapioca starch'),
-      ('93.89', '3630.71'),
+      ('96.56', '3632.89'),
     );
   });
 
@@ -753,8 +756,9 @@ void plans() {
         for (final p in [2, 3, 12]) _sig(_row(db, r.id, p)),
       ],
       // RE-PIN (M82 batch, v84, C5a): the flour |2's share — was 89.12.
+      // RE-PIN (M90 batch, v89, cornstarch): the coat re-solves — was 93.89.
       [
-        'confirmed|789890|93.89|discarded|null',
+        'confirmed|789890|96.56|discarded|null',
         'overridden|169717|28.35|density|null',
         'confirmed|748967|100.00|discarded|null',
       ],
@@ -766,7 +770,10 @@ void plans() {
     final (_, kcal) = await fishWith('2 tablespoons milk', 'milk');
     // RE-PIN (M82 batch, v84, C5a): 0255's batter flour (the replay's
     // 855.40 → 854.89 a serving): was 3550.88.
-    expect(kcal, '3548.84');
+    // RE-PIN (M90 batch, v89, cornstarch): the coat re-solves on the
+    // batter's starch at the print (the replay's 854.89 → 855.43 a
+    // serving): was 3548.84.
+    expect(kcal, '3551.03');
   });
 }
 
@@ -1101,7 +1108,9 @@ void persons() {
       '0255-fish-and-chips.yaml',
       3,
       9,
-      '3 overridden|169698|63.88|density|null',
+      // RE-PIN (M90 batch, v89, cornstarch): the pick weighs the ½ cup at the
+      // print — was 63.88.
+      '3 overridden|169698|56.70|density|null',
       '3 overridden|169698|null|null|coating',
       '1506.1605',
     ),

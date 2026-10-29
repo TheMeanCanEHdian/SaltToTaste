@@ -323,7 +323,9 @@ void main() {
         findsOneWidget,
       );
       expect(
-        _inPanel(find.text('1,479 kcal · +123 / serving')),
+        // RE-PIN (M90 batch, v89, brown sugar): the glaze's brown sugar at the
+        // print (1,478.72 → 1,396.71 kcal): was 1,479 · +123.
+        _inPanel(find.text('1,397 kcal · +116 / serving')),
         findsOneWidget,
       );
       expect(_tick(_maple), findsNothing);
@@ -374,7 +376,9 @@ void main() {
         );
         // The ready glaze keeps its calories.
         expect(
-          _inPanel(find.text('1,479 kcal · +123 / serving')),
+          // RE-PIN (M90 batch, v89, brown sugar): the glaze's brown sugar at the
+          // print (1,478.72 → 1,396.71 kcal): was 1,479 · +123.
+          _inPanel(find.text('1,397 kcal · +116 / serving')),
           findsOneWidget,
           reason: state,
         );
@@ -458,8 +462,9 @@ void main() {
       // The basis line is the server's, the section's title in it.
       expect(
         find.text(
+          // RE-PIN (M90 batch, v89, sugar): was 1,545 kcal.
           'amount: from the recipe Basic Single-Crust Pie Dough: 302 g, '
-          '1,545 kcal · +193 kcal per serving',
+          '1,544 kcal · +193 kcal per serving',
         ),
         findsOneWidget,
       );

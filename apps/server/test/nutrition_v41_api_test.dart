@@ -712,7 +712,9 @@ void main() {
       expect(child['why'], 'default');
       expect(child['parent_kind'], 'pie');
       expect(child['kind'], 'dough');
-      expect(child['kcal'], 3056.69);
+      // RE-PIN (M90 batch, v89, sugar): the dough's sugar at the print (was
+      // 3056.69).
+      expect(child['kcal'], 3056.05);
       final candidates = (child['candidates']! as List<Object?>)
           .cast<Map<String, Object?>>();
       expect(

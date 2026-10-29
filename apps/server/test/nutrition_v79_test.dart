@@ -304,13 +304,23 @@ const _totals = [
   // 153.01 / 918.05 in the replay: the fixtures hold Foundation 2258586
   // (the carrots) as a search hit and the library its detail.
   (_carrot, 'complete', '153.02', '918.12'),
-  (_chutney, 'complete', '471.63', '1414.90'),
-  (_gingerbread, 'complete', '731.60', '8779.23'),
+  // RE-PIN (M90 batch, v89, brown sugar): its 1 cup packed brown sugar |6
+  // at the print, 220.03 → 198.45 g (the replay 471.63 → 444.30): was
+  // 471.63, 1414.90.
+  (_chutney, 'complete', '444.30', '1332.89'),
+  // RE-PIN (M90 batch, v89, cornstarch): its 3 tablespoons cornstarch |2 at
+  // the print, 23.95 → 21.26 g (the replay 731.60 → 730.75): was 731.60,
+  // 8779.23.
+  (_gingerbread, 'complete', '730.75', '8768.97'),
   // 8,439.10 in the replay: the berries' hits (Foundation 2346411 / 2346410:
   // +0.25 / −0.21 kcal); per serving the same.
-  (_slab, 'complete', '468.84', '8439.13'),
+  // RE-PIN (M90 batch, v89, sugar): its Slab Pie Dough's sugar at the print
+  // (the replay 468.84 → 468.77): was 468.84, 8439.13.
+  (_slab, 'complete', '468.77', '8437.86'),
   // 223.27 / 893.07 in the replay: the cotija's hit (2647443).
-  (_watermelon, 'complete', '223.18', '892.73'),
+  // RE-PIN (M90 batch, v89, sugar): its sugar at the print (the replay
+  // 223.27 → 223.03): was 223.18, 892.73.
+  (_watermelon, 'complete', '222.94', '891.78'),
   // RE-PIN (M82 batch, v84): was 886.76, 3547.05 (the replay 886.76 → 885.06).
   (_roast, 'complete', '885.06', '3540.26'),
   (_grilled, 'complete', '650.93', '2603.70'),

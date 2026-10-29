@@ -1959,6 +1959,7 @@ const List<_Row> _negatives = [
     '435.42',
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.11 % of the raw chicken thigh's weight — USDA FNDDS 2706047 recipe: 7 g oil per 98.39 g raw chicken thigh)",
   ),
+  // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g, 659.70 kcal (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     null,
@@ -1967,11 +1968,11 @@ const List<_Row> _negatives = [
     2710187,
     'Peanut oil',
     '0.673333',
-    '73.30',
+    '65.74',
     'auto',
     null,
-    '659.70',
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
+    '591.66',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 14.49 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (109.56 g of 229.20 g carbohydrate))",
   ),
   (
     '1081-crispy-fish-sandwiches-with-tartar-sauce.yaml',
@@ -2903,6 +2904,7 @@ const List<_Row> _negatives = [
     null,
     null,
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g, 48.39 kcal (the v89 replay's row).
   (
     '0985-fresh-strawberry-pie.yaml',
     null,
@@ -2911,12 +2913,13 @@ const List<_Row> _negatives = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 124.36 g, 478.79 kcal (the v89 replay's row).
   (
     '0944-raspberry-sorbet.yaml',
     null,
@@ -2925,12 +2928,13 @@ const List<_Row> _negatives = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '124.36',
+    '124.03',
     'auto',
     null,
-    '478.79',
+    '477.51',
     'from 3 1/2 ounce + 2 tablespoons sugar',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 g, 96.78 kcal (the v89 replay's row).
   (
     '0010-vietnamese-beef-pho.yaml',
     null,
@@ -2939,12 +2943,13 @@ const List<_Row> _negatives = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '25.14',
+    '24.81',
     'auto',
     null,
-    '96.78',
-    '2 tablespoon ≈ 30 mL',
+    '95.50',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g, 48.39 kcal (the v89 replay's row).
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
@@ -2953,11 +2958,11 @@ const List<_Row> _negatives = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
 ];
 
@@ -2967,1801 +2972,2042 @@ const List<_Row> _negatives = [
 /// Their 195 recipes are not computed whole here: the pin reads the grams
 /// reader the compute asks ([lineGrams] on the row's record), where a
 /// density key ('fruit pectin', 'sure-jell') would reach (closer 1, D1).
+/// RE-PIN (M90 batch, v89): all 234 move to the corpus's printed cups
+/// (sugar and brown sugar 7 ounces, confectioners' sugar 4 — the five
+/// turbinado rows read sugar's as a word), each re-pinned as an equality
+/// to lineGrams' grams (the v89 replay's row; 0235|7, held `coating` in the
+/// replay, its record's) with its old figure in its comment; still no
+/// pectin key reaches one.
 const List<(String, String?, int, String, int, String)> _sugarDensity = [
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0010-vietnamese-beef-pho.yaml',
     null,
     6,
     '2 tablespoons sugar, plus extra for seasoning',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
     7,
     '1 tablespoon sugar, plus extra for seasoning',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     'Nam Prik Pao (Thai Chili Jam)',
     4,
     '2 tablespoons packed brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 20.63.
   (
     '0013-ultimate-cream-of-tomato-soup.yaml',
     null,
     1,
     '1½ tablespoons dark brown sugar',
     168833,
-    '20.63',
+    '18.60',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0014-creamless-creamy-tomato-soup.yaml',
     null,
     7,
     '1 tablespoon brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 4.58.
   (
     '0019-butternut-squash-soup.yaml',
     null,
     6,
     '1 teaspoon dark brown sugar',
     168833,
-    '4.58',
+    '4.13',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0020-sweet-potato-soup.yaml',
     null,
     5,
     '1 tablespoon packed brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 3.44.
   (
     '0021-super-greens-soup-with-lemon-tarragon-cream.yaml',
     null,
     7,
     '¾ teaspoon light brown sugar',
     168833,
-    '3.44',
+    '3.10',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0046-mango-orange-and-jicama-salad.yaml',
     null,
     0,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0056-austrian-style-potato-salad.yaml',
     null,
     3,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0072-skillet-tamale-pie.yaml',
     null,
     13,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0104-brown-rice-bowls-with-vegetables-and-salmon.yaml',
     null,
     4,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0129-indoor-pulled-chicken.yaml',
     'Lexington Vinegar Barbecue Sauce',
     3,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0129-indoor-pulled-chicken.yaml',
     'South Carolina Mustard Barbecue Sauce',
     2,
     '¼ cup packed brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0131-spice-rubbed-picnic-chicken.yaml',
     null,
     1,
     '3 tablespoons brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0139-peruvian-roast-chicken-with-garlic-and-lime.yaml',
     null,
     6,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0151-buffalo-wings.yaml',
     null,
     3,
     '1 tablespoon packed dark brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0165-crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing.yaml',
     'Golden Cornbread',
     6,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 220.03.
   (
     '0178-cranberry-chutney-with-apples-and-crystallized-ginger.yaml',
     null,
     6,
     '1 cup packed brown sugar',
     168833,
-    '220.03',
+    '198.45',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0203-skillet-barbecued-pork-chops.yaml',
     null,
     4,
     '1 tablespoon brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0203-skillet-barbecued-pork-chops.yaml',
     null,
     14,
     '1 tablespoon brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0207-deviled-pork-chops.yaml',
     null,
     4,
     '2 teaspoons packed brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
     4,
     '1 tablespoon brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0234-pan-seared-oven-roasted-pork-tenderloin.yaml',
     'Garlicky Lime Sauce with Cilantro',
     4,
     '2 teaspoons light brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 — lineGrams on the record (the
+  // replay's row is held `coating`, no grams).
   (
     '0235-maple-glazed-pork-tenderloin.yaml',
     null,
     7,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0244-slow-roasted-bone-in-pork-rib-roast.yaml',
     null,
     1,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 73.34.
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
     null,
     2,
     '⅓ cup packed light brown sugar',
     168833,
-    '73.34',
+    '66.15',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0248-crispy-slow-roasted-pork-belly.yaml',
     null,
     2,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0248-crispy-slow-roasted-pork-belly.yaml',
     null,
     6,
     '¼ cup packed dark brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 440.05.
   (
     '0249-roast-fresh-ham.yaml',
     'Cider and Brown Sugar Glaze',
     1,
     '2 cups packed brown sugar',
     168833,
-    '440.05',
+    '396.89',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 440.05.
   (
     '0249-roast-fresh-ham.yaml',
     'Spicy Pineapple-Ginger Glaze',
     1,
     '2 cups packed brown sugar',
     168833,
-    '440.05',
+    '396.89',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 440.05.
   (
     '0249-roast-fresh-ham.yaml',
     'Coca-Cola Glaze with Lime and Jalapeño',
     2,
     '2 cups packed brown sugar',
     168833,
-    '440.05',
+    '396.89',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 440.05.
   (
     '0249-roast-fresh-ham.yaml',
     'Orange, Cinnamon, and Star Anise Glaze',
     1,
     '2 cups packed brown sugar',
     168833,
-    '440.05',
+    '396.89',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 220.03.
   (
     '0251-glazed-spiral-sliced-ham.yaml',
     'Cherry-Port Glaze',
     2,
     '1 cup packed dark brown sugar',
     168833,
-    '220.03',
+    '198.45',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 4.58.
   (
     '0262-glazed-salmon.yaml',
     null,
     0,
     '1 teaspoon light brown sugar',
     168833,
-    '4.58',
+    '4.13',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0262-glazed-salmon.yaml',
     'Pomegranate-Balsamic Glaze',
     0,
     '3 tablespoons light brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0262-glazed-salmon.yaml',
     'Hoisin-Ginger Glaze',
     3,
     '2 tablespoons packed light brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0262-glazed-salmon.yaml',
     'Orange-Miso Glaze',
     2,
     '1 tablespoon light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0262-glazed-salmon.yaml',
     'Soy-Mustard Glaze',
     0,
     '3 tablespoons light brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0303-cincinnati-chili.yaml',
     null,
     16,
     '2 teaspoons dark brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0305-glazed-all-beef-meatloaf.yaml',
     null,
     21,
     '3 tablespoons light brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0306-meatloaf-with-brown-sugarketchup-glaze.yaml',
     null,
     1,
     '¼ cup brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0307-turkey-meatloaf-with-ketchupbrown-sugar-glaze.yaml',
     null,
     15,
     '¼ cup packed brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0312-juicy-pub-style-burgers.yaml',
     'Pub-Style Burger Sauce',
     2,
     '1 tablespoon dark brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0313-classic-sloppy-joes.yaml',
     null,
     7,
     '2 teaspoons packed brown sugar, plus extra for seasoning',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0398-ultimate-grilled-pizza.yaml',
     null,
     1,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0438-french-onion-and-bacon-tart.yaml',
     null,
     1,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
-  ('0439-pissaladiere.yaml', null, 7, '1 teaspoon brown sugar', 168833, '4.58'),
+  // RE-PIN (M90 batch, v89, brown sugar): was 4.58 g (the v89 replay's row).
+  ('0439-pissaladiere.yaml', null, 7, '1 teaspoon brown sugar', 168833, '4.13'),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0442-mushroom-and-leek-galette-with-gorgonzola.yaml',
     null,
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
-  ('0457-beef-burgundy.yaml', null, 22, '1 tablespoon sugar', 746784, '12.57'),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
+  ('0457-beef-burgundy.yaml', null, 22, '1 tablespoon sugar', 746784, '12.40'),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0458-slow-cooker-beef-burgundy.yaml',
     null,
     17,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0459-modern-beef-burgundy.yaml',
     null,
     6,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
-  ('0475-tamales.yaml', null, 7, '1 tablespoon sugar', 746784, '12.57'),
-  ('0476-beef-empanadas.yaml', null, 17, '1 tablespoon sugar', 746784, '12.57'),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
+  ('0475-tamales.yaml', null, 7, '1 tablespoon sugar', 746784, '12.40'),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
+  ('0476-beef-empanadas.yaml', null, 17, '1 tablespoon sugar', 746784, '12.40'),
+  // RE-PIN (M90 batch, v89, brown sugar): was 4.58.
   (
     '0478-ground-beef-tacos.yaml',
     null,
     13,
     '1 teaspoon brown sugar',
     168833,
-    '4.58',
+    '4.13',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 2.29.
   (
     '0482-tinga-de-pollo-shredded-chicken-tacos.yaml',
     null,
     9,
     '½ teaspoon brown sugar',
     168833,
-    '2.29',
+    '2.07',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 6.88.
   (
     '0484-grilled-chicken-fajitas.yaml',
     null,
     6,
     '1½ teaspoons packed brown sugar',
     168833,
-    '6.88',
+    '6.20',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0512-vegetable-bibimbap-with-nurungji.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0512-vegetable-bibimbap-with-nurungji.yaml',
     null,
     16,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0515-beef-satay.yaml',
     null,
     2,
     '¼ cup packed dark brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0515-beef-satay.yaml',
     'Spicy Peanut Dipping Sauce',
     5,
     '1 tablespoon dark brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0516-negimaki-japanese-grilled-steak-and-scallion-rolls.yaml',
     null,
     2,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0517-thai-style-chicken-soup.yaml',
     null,
     7,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0519-sesame-noodles-with-shredded-chicken.yaml',
     null,
     4,
     '2 tablespoons light brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 20.63.
   (
     '0520-yakisoba-japanese-stir-fried-noodles-with-beef.yaml',
     null,
     5,
     '1½ tablespoons packed brown sugar',
     168833,
-    '20.63',
+    '18.60',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
     3,
     '2 tablespoons dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 110.01.
   (
     '0525-orange-flavored-chicken.yaml',
     null,
     2,
     '½ cup packed dark brown sugar',
     168833,
-    '110.01',
+    '99.22',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0526-dakgangjeong-korean-fried-chicken-wings.yaml',
     null,
     4,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0526-san-bei-ji-three-cup-chicken.yaml',
     null,
     2,
     '1 tablespoon packed brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0528-gongbao-jiding-sichuan-kung-pao-chicken.yaml',
     null,
     6,
     '1 tablespoon packed dark brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0531-stir-fried-beef-and-broccoli-with-oyster-sauce.yaml',
     null,
     3,
     '1 tablespoon light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 11.46.
   (
     '0532-beef-stir-fry-with-bell-peppers-and-black-pepper-sauce.yaml',
     null,
     6,
     '2½ teaspoons packed light brown sugar',
     168833,
-    '11.46',
+    '10.34',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0533-teriyaki-stir-fried-beef-with-green-beans-and-shiitakes.yaml',
     null,
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 34.38.
   (
     '0538-stir-fried-pork-eggplant-and-onion-with-garlic-and-black-pepper.yaml',
     null,
     2,
     '2½ tablespoons light brown sugar',
     168833,
-    '34.38',
+    '31.01',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0540-sichuan-stir-fried-pork-in-garlic-sauce.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0544-stir-fried-shrimp-with-snow-peas-and-red-bell-pepper-in-hot-and-sour-sauce.yaml',
     null,
     5,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0546-stir-fried-portobellos-with-ginger-oyster-sauce.yaml',
     null,
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0547-thai-style-chicken-with-basil.yaml',
     null,
     5,
     '1 tablespoon sugar, plus extra for serving',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0548-thai-green-curry-with-chicken-broccoli-and-mushrooms.yaml',
     null,
     3,
     '2 tablespoons brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0552-stir-fried-thai-style-beef-with-chiles-and-shallots.yaml',
     null,
     3,
     '1 tablespoon light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 4.58.
   (
     '0552-stir-fried-thai-style-beef-with-chiles-and-shallots.yaml',
     null,
     7,
     '1 teaspoon light brown sugar',
     168833,
-    '4.58',
+    '4.13',
   ),
-  ('0553-pad-thai.yaml', null, 3, '3 tablespoons sugar', 746784, '37.71'),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71 g (the v89 replay's row).
+  ('0553-pad-thai.yaml', null, 3, '3 tablespoons sugar', 746784, '37.21'),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0553-thai-style-stir-fried-noodles-with-chicken-and-broccolini.yaml',
     null,
     8,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 87.98.
   (
     '0558-vietnamese-style-caramel-chicken-with-broccoli.yaml',
     null,
     2,
     '7 tablespoons sugar',
     746784,
-    '87.98',
+    '86.82',
   ),
-  ('0559-bun-cha.yaml', null, 7, '3 tablespoons sugar', 746784, '37.71'),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71 g (the v89 replay's row).
+  ('0559-bun-cha.yaml', null, 7, '3 tablespoons sugar', 746784, '37.21'),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0560-banh-xeo-sizzling-vietnamese-crepes.yaml',
     null,
     0,
     '3 tablespoons sugar, divided',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0565-murgh-makhani-indian-butter-chicken.yaml',
     null,
     11,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0583-grilled-steak-tips.yaml',
     'Southwestern Marinade',
     3,
     '1 tablespoon packed dark brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0583-grilled-steak-tips.yaml',
     'Garlic, Ginger, and Soy Marinade',
     3,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0587-grilled-steak-with-new-mexican-chile-rub.yaml',
     null,
     11,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0591-grill-roasted-beef-short-ribs.yaml',
     null,
     1,
     '1 tablespoon packed brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0591-grill-roasted-beef-short-ribs.yaml',
     'Mustard Glaze',
     2,
     '¼ cup packed brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0591-grill-roasted-beef-short-ribs.yaml',
     'Blackberry Glaze',
     3,
     '2 tablespoons packed brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
     null,
     4,
     '2 tablespoons dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
     null,
     5,
     '1 tablespoon granulated sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0598-grill-smoked-pork-chops.yaml',
     null,
     6,
     '1 tablespoon packed light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0598-grilled-pork-chops.yaml',
     'Basic Spice Rub for Pork Chops',
     3,
     '2 teaspoons packed brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0601-grilled-glazed-pork-tenderloin-roast.yaml',
     'Satay Glaze',
     5,
     '¼ cup packed dark brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 18.34.
   (
     '0603-grilled-stuffed-pork-tenderloin.yaml',
     null,
     0,
     '4 teaspoons packed dark brown sugar',
     168833,
-    '18.34',
+    '16.54',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 165.02.
   (
     '0604-grilled-pork-loin-with-apple-cranberry-filling.yaml',
     null,
     2,
     '¾ cup packed light brown sugar',
     168833,
-    '165.02',
+    '148.83',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 110.01.
   (
     '0606-smoked-pork-loin-with-dried-fruit-chutney.yaml',
     null,
     0,
     '½ cup packed light brown sugar',
     168833,
-    '110.01',
+    '99.22',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0606-smoked-pork-loin-with-dried-fruit-chutney.yaml',
     null,
     10,
     '3 tablespoons packed light brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0607-grill-roasted-bone-in-pork-rib-roast.yaml',
     'Orange Salsa with Cuban Flavors',
     6,
     '2 teaspoons packed brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0609-barbecued-pulled-pork.yaml',
     'Dry Rub for Barbecue',
     3,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0609-barbecued-pulled-pork.yaml',
     'Dry Rub for Barbecue',
     6,
     '1 tablespoon granulated sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0609-barbecued-pulled-pork.yaml',
     'Eastern North Carolina Barbecue Sauce',
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0610-smoky-pulled-pork-on-a-gas-grill.yaml',
     null,
     3,
     '2 teaspoons packed light brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0610-smoky-pulled-pork-on-a-gas-grill.yaml',
     null,
     10,
     '2 teaspoons packed light brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 18.34.
   (
     '0612-sweet-and-tangy-grilled-country-style-pork-ribs.yaml',
     null,
     0,
     '4 teaspoons packed brown sugar',
     168833,
-    '18.34',
+    '16.54',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0613-kansas-city-sticky-ribs.yaml',
     null,
     1,
     '2 tablespoons brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0614-memphis-style-barbecued-spareribs.yaml',
     'Spice Rub',
     1,
     '2 tablespoons packed light brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0615-oven-barbecued-spareribs.yaml',
     null,
     3,
     '3 tablespoons packed brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 6.88.
   (
     '0616-barbecued-baby-back-ribs.yaml',
     null,
     6,
     '1½ teaspoons packed dark brown sugar',
     168833,
-    '6.88',
+    '6.20',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0617-grilled-glazed-baby-back-ribs.yaml',
     'Lime Glaze',
     2,
     '¼ cup packed brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0618-texas-style-barbecued-beef-ribs.yaml',
     null,
     9,
     '2 tablespoons packed brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0618-texas-style-barbecued-beef-ribs.yaml',
     null,
     12,
     '3 tablespoons packed brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0620-grilled-lamb-kebabs.yaml',
     'Sweet Curry Marinade with Buttermilk',
     3,
     '1 tablespoon packed brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0621-grilled-beef-satay.yaml',
     null,
     1,
     '3 tablespoons packed dark brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0621-grilled-beef-satay.yaml',
     null,
     12,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0627-grilled-glazed-bone-in-chicken-breasts.yaml',
     'Soy-Ginger Glaze',
     5,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0630-grilled-spice-rubbed-chicken-drumsticks.yaml',
     'Barbecue Spice Rub',
     0,
     '3 tablespoons packed brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0630-grilled-spice-rubbed-chicken-drumsticks.yaml',
     'Jerk-Style Spice Rub',
     3,
     '2 tablespoons packed brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0631-peri-peri-grilled-chicken.yaml',
     null,
     6,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0632-jerk-chicken.yaml',
     null,
     12,
     '1 tablespoon packed brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0633-sweet-and-tangy-barbecued-chicken.yaml',
     null,
     0,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0636-charcoal-grilled-barbecued-chicken-kebabs.yaml',
     null,
     6,
     '1 tablespoon packed light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0641-grill-roasted-cornish-game-hens.yaml',
     null,
     2,
     '2 tablespoons packed brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0641-grill-roasted-cornish-game-hens.yaml',
     'Barbecue Glaze',
     1,
     '2 tablespoons brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 55.01.
   (
     '0642-thai-grilled-cornish-game-hens-with-gai-yang-chili-dipping-sauce.yaml',
     null,
     3,
     '¼ cup packed light brown sugar',
     168833,
-    '55.01',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0646-grill-smoked-salmon.yaml',
     null,
     0,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0666-stir-fried-asparagus-with-shiitake-mushrooms.yaml',
     null,
     3,
     '2 teaspoons packed brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0667-beets-with-lemon-and-almonds.yaml',
     null,
     4,
     '1 tablespoon packed light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
-  ('0671-glazed-carrots.yaml', null, 2, '3 tablespoons sugar', 746784, '37.71'),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71 g (the v89 replay's row).
+  ('0671-glazed-carrots.yaml', null, 2, '3 tablespoons sugar', 746784, '37.21'),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0672-buffalo-cauliflower-bites.yaml',
     null,
     2,
     '1 tablespoon packed dark brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0678-new-england-baked-beans.yaml',
     null,
     5,
     '2 tablespoons packed dark brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 2.29.
   (
     '0695-mashed-potatoes-with-blue-cheese-and-port-caramelized-onions.yaml',
     null,
     2,
     '½ teaspoon light brown sugar',
     168833,
-    '2.29',
+    '2.07',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0707-quick-roasted-acorn-squash-with-brown-sugar.yaml',
     null,
     3,
     '3 tablespoons dark brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0719-spiced-pecans-with-rum-glaze.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 4.58.
   (
     '0719-spiced-pecans-with-rum-glaze.yaml',
     null,
     9,
     '1 teaspoon light or dark brown sugar',
     168833,
-    '4.58',
+    '4.13',
   ),
-  ('0744-easy-pancakes.yaml', null, 1, '3 tablespoons sugar', 746784, '37.71'),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71 g (the v89 replay's row).
+  ('0744-easy-pancakes.yaml', null, 1, '3 tablespoons sugar', 746784, '37.21'),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0745-blueberry-pancakes.yaml',
     null,
     3,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0747-100-percent-whole-wheat-pancakes.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0748-german-apple-pancake.yaml',
     null,
     1,
     '1 tablespoon granulated sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0750-easy-buttermilk-waffles.yaml',
     null,
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0751-french-toast.yaml',
     null,
     3,
     '3 tablespoons light brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
-  ('0751-yeasted-waffles.yaml', null, 3, '1 tablespoon sugar', 746784, '12.57'),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
+  ('0751-yeasted-waffles.yaml', null, 3, '1 tablespoon sugar', 746784, '12.40'),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0752-everyday-french-toast.yaml',
     null,
     2,
     '2 teaspoons packed brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0764-savory-corn-muffins.yaml',
     null,
     8,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '0765-cranberry-pecan-muffins.yaml',
     null,
     1,
     '1 tablespoon packed light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 16.57.
   (
     '0765-cranberry-pecan-muffins.yaml',
     null,
     2,
     '1 tablespoon plus 1 teaspoon granulated sugar',
     746784,
-    '16.57',
+    '16.40',
   ),
+  // RE-PIN (M90 batch, v89, confectioners' sugar): was 7.54.
   (
     '0765-cranberry-pecan-muffins.yaml',
     null,
     15,
     '1 tablespoon confectioners’ sugar',
     169656,
-    '7.54',
+    '7.09',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0766-quick-cinnamon-buns-with-buttermilk-icing.yaml',
     null,
     8,
     '2 tablespoons granulated sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0769-perfect-sticky-buns.yaml',
     null,
     6,
     '3 tablespoons granulated sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0784-ultimate-flaky-buttermilk-biscuits.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0785-zucchini-bread.yaml',
     null,
     13,
     '1 tablespoon granulated sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0786-irish-soda-bread.yaml',
     null,
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0789-fresh-corn-cornbread.yaml',
     null,
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0790-potato-burger-buns.yaml',
     null,
     3,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0791-fluffy-dinner-rolls.yaml',
     null,
     6,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 16.76.
   (
     '0834-sables-french-butter-cookies.yaml',
     null,
     7,
     '4 teaspoons turbinado sugar',
     170674,
-    '16.76',
+    '16.54',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0846-cream-cheese-brownies.yaml',
     null,
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 41.26.
   (
     '0849-key-lime-bars.yaml',
     null,
     1,
     '3 tablespoons brown sugar',
     168833,
-    '41.26',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0851-baklava.yaml',
     null,
     11,
     '2 tablespoons granulated sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 62.84.
   (
     '0872-strawberry-cream-cake.yaml',
     null,
     9,
     '4–6 tablespoons sugar',
     746784,
-    '62.84',
+    '62.01',
   ),
+  // RE-PIN (M90 batch, v89, confectioners' sugar): was 45.25.
   (
     '0899-bittersweet-chocolate-roulade.yaml',
     'Espresso-Mascarpone Cream',
     2,
     '6 tablespoons confectioners’ sugar',
     169656,
-    '45.25',
+    '42.52',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0903-triple-chocolate-mousse-cake.yaml',
     null,
     11,
     '1 tablespoon granulated sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0912-new-york-cheesecake.yaml',
     null,
     2,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0914-light-new-york-cheesecake.yaml',
     null,
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0915-spiced-pumpkin-cheesecake.yaml',
     null,
     2,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0916-lemon-cheesecake.yaml',
     null,
     2,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0922-classic-bread-pudding.yaml',
     null,
     0,
     '2 tablespoons light brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0923-chocolate-hazelnut-slow-cooker-bread-pudding.yaml',
     null,
     9,
     '2 tablespoons light brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
-  ('0925-panna-cotta.yaml', null, 4, '6 tablespoons sugar', 746784, '75.41'),
+  // RE-PIN (M90 batch, v89, sugar): was 75.41 g (the v89 replay's row).
+  ('0925-panna-cotta.yaml', null, 4, '6 tablespoons sugar', 746784, '74.42'),
+  // RE-PIN (M90 batch, v89, sugar): was 41.90.
   (
     '0927-classic-creme-brulee.yaml',
     null,
     5,
     '8–12 teaspoons turbinado or Demerara sugar',
     170674,
-    '41.90',
+    '41.34',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 16.76.
   (
     '0928-sous-vide-creme-brulee.yaml',
     null,
     5,
     '4 teaspoons turbinado or Demerara sugar',
     170674,
-    '16.76',
+    '16.54',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 62.84.
   (
     '0930-chocolate-pots-de-creme.yaml',
     null,
     2,
     '5 tablespoons sugar',
     746784,
-    '62.84',
+    '62.01',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0932-dark-chocolate-mousse.yaml',
     null,
     6,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 62.84.
   (
     '0934-chocolate-semifreddo.yaml',
     null,
     4,
     '5 tablespoons sugar',
     746784,
-    '62.84',
+    '62.01',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0939-make-ahead-chocolate-souffles.yaml',
     null,
     1,
     '2 tablespoons granulated sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, confectioners' sugar): was 15.08.
   (
     '0939-make-ahead-chocolate-souffles.yaml',
     null,
     10,
     '2 tablespoons confectioners’ sugar',
     169656,
-    '15.08',
+    '14.17',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0940-pavlova-with-fruit-and-whipped-cream.yaml',
     null,
     6,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0940-pavlova-with-fruit-and-whipped-cream.yaml',
     'Mango, Kiwi, and Blueberry Topping',
     3,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 75.41.
   (
     '0948-strawberry-shortcakes.yaml',
     null,
     1,
     '6 tablespoons sugar',
     746784,
-    '75.41',
+    '74.42',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 62.84.
   (
     '0948-strawberry-shortcakes.yaml',
     null,
     3,
     '5 tablespoons sugar',
     746784,
-    '62.84',
+    '62.01',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0948-strawberry-shortcakes.yaml',
     null,
     11,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0951-simple-raspberry-gratin.yaml',
     null,
     1,
     '1 tablespoon granulated sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0952-individual-fresh-berry-gratins-with-zabaglione.yaml',
     null,
     4,
     '3 tablespoons granulated sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 9.17.
   (
     '0952-individual-fresh-berry-gratins-with-zabaglione.yaml',
     null,
     6,
     '2 teaspoons light brown sugar',
     168833,
-    '9.17',
+    '8.27',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50.
   (
     '0955-skillet-apple-brown-betty.yaml',
     null,
     2,
     '2 tablespoons packed light brown sugar',
     168833,
-    '27.50',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0956-apple-strudel.yaml',
     null,
     1,
     '3 tablespoons granulated sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, confectioners' sugar): was 7.54.
   (
     '0956-apple-strudel.yaml',
     null,
     10,
     '1 tablespoon confectioners’ sugar, plus extra for serving',
     169656,
-    '7.54',
+    '7.09',
   ),
+  // RE-PIN (M90 batch, v89, confectioners' sugar): was 3.77.
   (
     '0957-easy-apple-strudel.yaml',
     null,
     12,
     '1½ teaspoons confectioners’ sugar',
     169656,
-    '3.77',
+    '3.54',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0958-skillet-apple-pie.yaml',
     null,
     1,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
-  ('0960-crepes-suzette.yaml', null, 5, '3 tablespoons sugar', 746784, '37.71'),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71 g (the v89 replay's row).
+  ('0960-crepes-suzette.yaml', null, 5, '3 tablespoons sugar', 746784, '37.21'),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0963-pear-crisp.yaml',
     null,
     3,
     '2 tablespoons granulated sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0963-pear-crisp.yaml',
     null,
     8,
     '2 tablespoons granulated sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0968-summer-berry-trifle.yaml',
     null,
     24,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0972-basic-double-crust-pie-dough.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0972-basic-double-crust-pie-dough.yaml',
     'Basic Single-Crust Pie Dough',
     1,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0973-all-butter-double-crust-pie-dough.yaml',
     null,
     3,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0974-foolproof-double-crust-pie-dough.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0974-foolproof-double-crust-pie-dough.yaml',
     'Foolproof Single-Crust Pie Dough',
     1,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0975-foolproof-all-butter-dough-for-single-crust-pie.yaml',
     null,
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0976-foolproof-all-butter-dough-for-double-crust-pie.yaml',
     null,
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0977-graham-cracker-crust.yaml',
     null,
     2,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0982-fresh-peach-pie.yaml',
     'Pie Dough for Lattice-Top Pie',
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '0985-fresh-strawberry-pie.yaml',
     null,
     8,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0986-strawberry-rhubarb-pie.yaml',
     null,
     1,
     '2 tablespoons sugar, plus 3 tablespoons for sprinkling',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '0990-lemon-chiffon-pie.yaml',
     null,
     1,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 18.85.
   (
     '0991-coconut-cream-pie.yaml',
     null,
     11,
     '1½ tablespoons sugar',
     746784,
-    '18.85',
+    '18.60',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '0992-chocolate-cream-pie-with-oreo-cookie-crust.yaml',
     null,
     12,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, confectioners' sugar): was 7.54.
   (
     '0993-chocolate-cream-pie-with-all-butter-crust.yaml',
     null,
     10,
     '1 tablespoon confectioners’ sugar',
     169656,
-    '7.54',
+    '7.09',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 62.84.
   (
     '0998-free-form-summer-fruit-tart.yaml',
     null,
     6,
     '3–5 tablespoons plus 1 tablespoon sugar',
     746784,
-    '62.84',
+    '62.01',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 50.28.
   (
     '0999-free-form-summer-fruit-tartlets-for-two.yaml',
     null,
     6,
     '3–5 tablespoons sugar',
     746784,
-    '50.28',
+    '49.61',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 6.28.
   (
     '1000-linzertorte.yaml',
     null,
     14,
     '1½ teaspoons turbinado or Demerara sugar (optional)',
     170674,
-    '6.28',
+    '6.20',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 18.85.
   (
     '1071-watermelon-salad-with-cotija-and-serrano-chiles.yaml',
     null,
     3,
     '1–2 tablespoons sugar (optional)',
     746784,
-    '18.85',
+    '18.60',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1078-bulgogi-korean-marinated-beef.yaml',
     null,
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '1101-pupusas-with-quick-salsa-and-curtido.yaml',
     'Curtido',
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 31.42.
   (
     '1103-upside-down-tomato-tart.yaml',
     null,
     1,
     '2½ tablespoons sugar',
     746784,
-    '31.42',
+    '31.01',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 18.85.
   (
     '1104-crescent-shaped-rugelach-with-raisin-walnut-filling.yaml',
     null,
     1,
     '1½ tablespoons sugar',
     746784,
-    '18.85',
+    '18.60',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     'Pie Dough for Lattice-Top Pie',
     1,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '1147-fresh-bulk-sausage.yaml',
     'Breakfast Seasoning',
     0,
     '1 tablespoon packed light brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 73.34.
   (
     '1148-gravlax.yaml',
     null,
     0,
     '⅓ cup packed light brown sugar',
     168833,
-    '73.34',
+    '66.15',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1150-deluxe-blueberry-pancakes.yaml',
     null,
     3,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 37.71.
   (
     '1160-pouding-chomeur-maple-syrup-cake.yaml',
     null,
     4,
     '3 tablespoons sugar',
     746784,
-    '37.71',
+    '37.21',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1166-fruit-hand-pies.yaml',
     null,
     1,
     '2 tablespoons granulated sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1166-fruit-hand-pies.yaml',
     null,
     7,
     '2 tablespoons demerara or turbinado sugar (optional)',
     170674,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1172-nikujaga-beef-and-potato-stew.yaml',
     null,
     10,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 6.88.
   (
     '1177-caramelized-onion-pear-and-bacon-tart.yaml',
     null,
     3,
     '1½ teaspoons packed brown sugar',
     168833,
-    '6.88',
+    '6.20',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '1178-chicken-teriyaki.yaml',
     null,
     4,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 18.34.
   (
     '1192-gado-gado.yaml',
     null,
     7,
     '4 teaspoons packed dark brown sugar',
     168833,
-    '18.34',
+    '16.54',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57.
   (
     '1202-new-york-cheesecakes.yaml',
     null,
     2,
     '1 tablespoon sugar',
     746784,
-    '12.57',
+    '12.40',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14.
   (
     '1204-triple-berry-slab-pie-with-ginger-lemon-streusel.yaml',
     'Slab Pie Dough',
     2,
     '2 tablespoons sugar',
     746784,
-    '25.14',
+    '24.81',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75.
   (
     '1208-albondigas-en-chipotle.yaml',
     null,
     11,
     '1 tablespoon packed brown sugar',
     168833,
-    '13.75',
+    '12.40',
   ),
 ];
 
@@ -4885,8 +5131,10 @@ void main() {
       expect(densityOf(item), 4 / 4.92892, reason: item);
     }
     expect((4 / 4.92892).toStringAsFixed(6), '0.811537');
-    expect(densityOf('sugar'), 0.85);
-    expect(densityOf('granulated sugar'), 0.85);
+    // RE-PIN (M90 batch, v89): sugar weighs the corpus's printed 7 ounces a
+    // cup (was the kitchen 0.85).
+    expect(densityOf('sugar'), 7 * 28.3495 / 236.588);
+    expect(densityOf('granulated sugar'), 7 * 28.3495 / 236.588);
   });
 
   group('matcher v68 (batch M70)', skip: skipIfNoCorpus, () {
@@ -5366,17 +5614,23 @@ void main() {
     });
 
     test('6 and 7: the Kisses and the five pectin recipes complete', () {
-      expect(totalsOf(_meringue), ('complete', '43.72', '2186.05'));
+      // RE-PIN (M90 batch, v89, cornstarch): its cornstarch |1 at the print
+      // (5.32 → 4.72 g, the v89 replay's row): was 43.72, 2186.05.
+      expect(totalsOf(_meringue), ('complete', '43.68', '2183.77'));
       for (final (file, perServing) in const [
         // The fresh compute (the replay: 512.98, 1,047.88 — search-hit
         // energies in other rows).
         ('0859-marbled-blueberry-bundt-cake.yaml', '512.99'),
         // RE-PIN (M72 batch, v72, R-Y): 567.20 each (was 584.35) — the
         // peaches peeled at AH-102 item 1654's 76 %.
-        ('0982-fresh-peach-pie.yaml', '567.20'),
-        ('1115-fresh-peach-pie-with-all-butter-lattice-top.yaml', '567.20'),
-        ('0944-raspberry-sorbet.yaml', '1047.67'),
-        ('0985-fresh-strawberry-pie.yaml', '476.91'),
+        // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
+        ('0982-fresh-peach-pie.yaml', '566.38'),
+        // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
+        ('1115-fresh-peach-pie-with-all-butter-lattice-top.yaml', '566.38'),
+        // RE-PIN (M90 batch, v89): the replay 1047.88 → 1046.60: was 1047.67.
+        ('0944-raspberry-sorbet.yaml', '1046.39'),
+        // RE-PIN (M90 batch, v89): the replay 476.91 → 475.89: was 476.91.
+        ('0985-fresh-strawberry-pie.yaml', '475.89'),
       ]) {
         final (status, kcal, _) = totalsOf(file);
         expect((status, kcal), ('complete', perServing), reason: file);
@@ -5582,7 +5836,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 584.87.
           // RE-PIN (M85 batch, v87): was 585.65 (the replay 585.65 → 582.57).
-          '582.57',
+          // RE-PIN (M90 batch, v89): the replay 582.57 → 582.46: was 582.57.
+          '582.46',
         ), // replay complete 584.63 → complete 584.87
         (
           // RE-PIN (M82 batch, v84): was 647.55 (the replay 647.55 → 646.85).
@@ -5597,7 +5852,8 @@ void main() {
           '0371-simple-cheese-lasagna.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 557.60.
-          '559.52',
+          // RE-PIN (M90 batch, v89): the replay 559.50 → 559.34: was 559.52.
+          '559.36',
         ), // replay complete 557.61 → complete 557.58
         (
           // RE-PIN (M82 batch, v84): was 632.99 (the replay 632.96 → 631.12).
@@ -5605,7 +5861,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 627.91.
           // RE-PIN (M85 batch, v87): was 631.14 (the replay 631.12 → 627.01).
-          '627.03',
+          // RE-PIN (M90 batch, v89): the replay 627.01 → 626.87: was 627.03.
+          '626.89',
         ), // replay complete 627.78 → complete 627.89
         (
           // RE-PIN (M82 batch, v84): was 832.42 (the replay 832.19 → 831.92).
@@ -5723,18 +5980,21 @@ void main() {
         (
           '0944-raspberry-sorbet.yaml',
           'complete',
-          '1047.67',
+          // RE-PIN (M90 batch, v89): the replay 1047.88 → 1046.60: was 1047.67.
+          '1046.39',
         ), // replay partial 1034.88 → complete 1047.88
         (
           '0982-fresh-peach-pie.yaml',
           'complete',
           // RE-PIN (M72 batch, v72, R-Y): was 584.35.
-          '567.20',
+          // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
+          '566.38',
         ), // replay partial 574.60 → complete 584.35
         (
           '0985-fresh-strawberry-pie.yaml',
           'complete',
-          '476.91',
+          // RE-PIN (M90 batch, v89): the replay 476.91 → 475.89: was 476.91.
+          '475.89',
         ), // replay partial 474.47 → complete 476.91
         (
           // RE-PIN (M82 batch, v84): was 641.38 (the replay 641.18 → 639.19).
@@ -5753,7 +6013,8 @@ void main() {
           '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
           'complete',
           // RE-PIN (M72 batch, v72, R-Y): was 584.35.
-          '567.20',
+          // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
+          '566.38',
         ), // replay partial 574.60 → complete 584.35
         (
           // RE-PIN (M82 batch, v84): was 552.70 (the replay 552.70 → 551.85).
@@ -5766,7 +6027,8 @@ void main() {
         (
           '1198-meringue-christmas-trees.yaml',
           'complete',
-          '43.72',
+          // RE-PIN (M90 batch, v89): the replay 43.72 → 43.68: was 43.72.
+          '43.68',
         ), // replay partial 13.50 → complete 43.72
       ]) {
         final (s, kcal, _) = totalsOf(file);
@@ -5834,8 +6096,9 @@ void main() {
 
   group('every sugar-density row (closer 1, D1)', skip: skipIfNoCorpus, () {
     test(
-      "lineGrams on each row's own record reads v68's density grams on "
-      "every 'sugar'-density line (234: no pectin key reaches one)",
+      "lineGrams on each row's own record reads its density grams on every "
+      "'sugar'-density line (234: no pectin key reaches one; v68's, RE-PIN "
+      'M90 on all 234: the printed cups)',
       () async {
         expect(_sugarDensity, hasLength(234));
         final tempDir = Directory.systemTemp.createTempSync('salt-v69-sugar-');

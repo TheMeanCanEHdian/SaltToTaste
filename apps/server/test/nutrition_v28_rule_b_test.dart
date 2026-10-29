@@ -418,8 +418,10 @@ void main() {
         ('vegetable shortening', 173584),
         ('lard', 171401),
         ('plain dried bread crumbs', 174928),
-        ('cornstarch', 169698),
-        // Any other starch reads cornstarch's (no starch record cached).
+        // RE-PIN (M90 batch, v89): cornstarch itself reads the corpus's
+        // printed 4 ounces a cup now (below; was 169698's 'cup' 128 g, 0.54).
+        // Any other starch reads cornstarch's record (no starch record
+        // cached).
         ('potato starch', 169698),
       ]) {
         final food = (await FixtureProvider().food(id))!;
@@ -436,6 +438,10 @@ void main() {
         densityOf('tapioca starch'),
         closeTo(3 * 28.3495 / (0.75 * 236.588), 1e-9),
       );
+      // RE-PIN (M90 batch, v89, prep51 Q6 (b)): cornstarch reads ATK's own
+      // print too, "¼ cup (1 ounce)" — 4 ounces a cup (was within 0.01 of
+      // 169698's 128 / 236.588 = 0.5410).
+      expect(densityOf('cornstarch'), closeTo(4 * 28.3495 / 236.588, 1e-9));
       // The longest key wins in its table: panko keeps its own figure.
       expect(densityOf('panko bread crumbs'), 0.25);
       expect(densityOf('breadcrumbs'), densityOf('bread crumbs'));
@@ -514,14 +520,20 @@ void main() {
       ),
       (
         "the brine sugar's ¼ cup (0424 Pork Chops with Vinegar Peppers; "
-            '50.3 g at 0.85)',
+            // RE-PIN (M90 batch, v89): 49.61 g at the corpus's printed 7
+            // ounces a cup (was 50.3 g at the kitchen 0.85).
+            '49.61 g at 0.8388)',
         '0424-pork-chops-with-vinegar-and-sweet-peppers.yaml',
         '1 cup sugar',
         [
           ('¼ cup sugar', DiscardedMedium.brineSugar),
           ('3 tablespoons sugar', null),
-          ('51 grams sugar', DiscardedMedium.brineSugar),
-          ('50 grams sugar', null),
+          // RE-PIN (M90 batch, v89): the boundary moved with the figure —
+          // 50 g is 59.61 mL ≥ ¼ cup (59.15) at 0.8388 (was 58.82 mL at
+          // 0.85: the pair was 51 / 50 g); the inputs re-pinned at the moved
+          // boundary (the M64 / M82 precedent), one gram apart as before.
+          ('50 grams sugar', DiscardedMedium.brineSugar),
+          ('49 grams sugar', null),
         ],
       ),
       (

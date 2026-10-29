@@ -5157,6 +5157,195 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v89 (batch M90; matcherVersion 84 — 347 rows on the six keys'
+own lines and 76 consequence rows, 423 in all: a corpus-printed cup over a
+record's own volume figure; prep51 design_v2 §1 Q6 (b) / §2 M90, ruled
+under the 2026-10-07 standing authorization; zero requests; replayed on
+snapshot 29 against the v88 rows, both orders byte-identical, every moved
+row attributed to its key by reverting that key alone, calls 0).** The
+printed densities:
+- **The rule (`_densities`, `_approximateDensities`).** Six keys weigh the
+  corpus's printed cup AHEAD of the record's own volume figure — recordFirst
+  false, v49's tapioca-starch form — each figure oz × 28.3495 ÷ 236.588 and
+  each row flagged with its print (`· approximate (ATK: 1 cup … = N
+  ounces)`); every count is a corpus grep of the "<volume> [packed]
+  (<weight>) <item>" lines: packed **brown sugar** 7 ounces a cup (86 of 88
+  prints; 7.2 and 7.11 the others) 0.8388, was 0.93 (SR 168833's 'cup
+  packed' 220 g); **cornstarch** 4 (4 of 4 — three "¼ cup (1 ounce)", one
+  "½ cup (2 ounces)") 0.4793, was 0.54 (SR 169698's 'cup' 128 g); **sugar**
+  and **granulated sugar** 7 (225 of 237 exactly, superfine's two aside)
+  0.8388, was the kitchen 0.85; **cornmeal** 5 (8 of 9; 0387's 5½) 0.5991,
+  was the kitchen 0.66 (SR 169697's 'cup' 122 g is 0.516); **confectioners'
+  / powdered sugar** 4 (34 of 34) 0.4793, was 0.51 (SR 169656's 'cup
+  unsifted' 120 g); **bread flour** 5½ (21 of 31 exactly, 27 within 0.7 %)
+  0.6590, was the kitchen 0.52 (SR 168913's 'cup unsifted, dipped' 137 g).
+  A record's portion in the line's OWN unit still wins first: Foundation
+  746784 "Sugars, granulated" publishes a 'cup' 188 g and a 'teaspoon' 4 g,
+  so every cup and teaspoon line of sugar stays on the record — the print
+  reaches its tablespoon lines and the volume parts the arm weighs (a cup of
+  sugar does NOT read 7 ounces). The corpus's "confectioners’ sugar"
+  normalizes to 'powdered sugar': no corpus line reaches the 'confectioners
+  sugar' spelling (the table pins it). CLOSED, as the brief says: cake flour
+  (no unprinted row), cocoa (the head-noun rule reads SR 169593's cup); Z5's
+  recordFirst keys keep the record's own figure (red-lentil-kibbeh|9 "¾ cup
+  dried red lentils" 144.00 g on 174284's cup). The `_approximateDensities`
+  doc sentence: was "a printed figure for a portion-less record, never over
+  a record's portion: 'lentil' …"; now "… a printed figure for a
+  portion-less record (Z5's keys keep it: 'lentil' …). A key that is not
+  `recordFirst` weighs ahead of the record's own volume figure: v49's
+  tapioca starch, and since v89 … the six keys whose corpus print is the
+  cookbook's own measure".
+- **RULE B's medium thresholds read the same figures** (engine
+  `_mediumMl` → `densityOf`, the v49 tapioca / v84 flour precedent): ¼ cup
+  of cornstarch is 28.35 g (was 31.9) and of sugar 49.61 g (was 50.3); 0
+  corpus rows change classification (no status, hold or gram source moves);
+  nutrition_v28_rule_b's I3(e) reads cornstarch at its print (it left the
+  record-cup list, as tapioca did at v49) and I3(f)'s brine-sugar boundary
+  pair is 50 / 49 g (was 51 / 50: 50 g is 59.61 mL ≥ ¼ cup at 0.8388).
+Reach vs the v88 rows (fix89 c1/g1, main == rev; all `auto`, 0 person
+rows, 0 status / hold / gram-source changes; buckets, notes and calls
+identical; 49 of 144 sections move, totals only): 423 rows, ROW column
+−3,027.72, recipe energy 3,388,945.72 → 3,387,063.25 = −1,882.47 over 283
+recipes (the design's ≈ −1,725.09 on ≈ 259 carried neither (c) nor (d)):
+- (a) the brief's 347 density rows on the keys' own records, every one
+  moved: brown sugar 110 (ROW −1,867.98), cornstarch 108 (−492.28), sugar
+  112 — every one a tablespoon line on 746784 — (−147.71), cornmeal 8
+  (−234.42), powdered sugar 6 (−20.32), bread flour 3 (+51.96); ROW
+  −2,710.75 (the design's −2,711.93 scaled rounded v88 grams: 1 cent off
+  the engine on 67 rows). E.g. cranberry-chutney-with-apples-and-
+  crystallized-ginger|6 "1 cup packed brown sugar" 220.03 → 198.45 g,
+  gingerbread-layer-cake|2 "3 tablespoons cornstarch" 23.95 → 21.26,
+  kanelbullar|12 "1 tablespoon bread flour" 7.69 → 9.75 (the brief's 9.74
+  was rounded).
+- (b) 28 routed parents (source `recipe`, the child's kcal), ROW −158.76:
+  the 10 whole-recipe dough parents of critique2's K-5, −10.85 (the
+  design's −10.97 was its model) — blueberry, classic-apple, deep-dish-
+  apple and sweet-cherry |0 (All-Butter Double-Crust 642.90 → 642.70 g),
+  chocolate-cream-pie-with-all-butter-crust|0 and peach-tarte-tatin|0
+  (334.60 → 334.40), fresh-plum-ginger-pie|0 (669.10 → 668.80), coconut-
+  cream|9, key-lime|3, summer-berry|7 (Graham Cracker Crust 220.60 →
+  220.10) — and 18 section-routed host rows, −147.91, the routing
+  consequence of the 347's section rows (M82's "routed parents"): crisp-
+  skin-high-roast-butterflied-turkey…|4 (Golden Cornbread, −83.90),
+  bittersweet-chocolate-roulade|10, guay-tiew…|15, memphis-style-
+  barbecued-spareribs|0, barbecued-pulled-pork|1, beef-satay|8, juicy-pub-
+  style-burgers|5, grill-roasted-bone-in-pork-rib-roast|4, grilled-pork-
+  chops|3, fresh-peach-pie|7 and its all-butter twin |7, triple-berry-
+  slab-pie|0, the single-crust doughs of quiche-lorraine|0, pumpkin-pie|0,
+  pecan-pie|0, lemon-meringue-pie|0 and fresh-strawberry-pie|0, pupusas…|7.
+- (c) 20 coat and medium rows re-solved on the keys, ROW −70.68. The
+  design's nine not-modelled `discarded` key rows (critique2 K-9), on this
+  replay: crispy-pan-fried-pork-chops|0 49.83 g, orange-flavored-chicken|13
+  45.47 and karaage…|7 45.47 UNMOVED (their budgets cap them); fish-and-
+  chips|3 28.21 → 25.75, crispy-salt-and-pepper-shrimp|8 39.92 → 35.44,
+  shrimp-tempura|3 29.96 → 27.39, crispy-fish-sandwiches…|7 46.41 → 43.57
+  (the design's 31.45 and 49.79 were v82's, before M82's re-solve),
+  dakgangjeong|9 7.02 → 6.35 with |8's flour 41.53 → 42.32 (§0.5's
+  combined figures), indoor-pulled-pork…|1 25.14 → 24.81 (its "plus"
+  part); with them 13 co-parts on NON-key records re-solving at the same
+  budget, each UP (a lighter starch part leaves the others more):
+  dakgangjeong|8, fish-and-chips|2 |4 |5 |8 |10, shrimp-tempura|2 |4 |5 |6,
+  crispy-fish-sandwiches|6 |9 |10; and buffalo-cauliflower-bites|4, the
+  frying oil scaled to the batter's carbohydrate (122.16 → 109.56 g of
+  229.20): 73.30 → 65.74 g, −68.04. yeasted-doughnuts|1 prints its weight
+  and does not move; the 26 zero-gram `discarded` key rows (brine and cure
+  sugars — the design counted 25) do not move.
+- (d) 28 rows beyond the design's census, ROW −87.53 — its census took only
+  `density` rows on each key's own records; the same figure reaches them
+  through another source or record, and no gate keeps them without an
+  unsourced figure on the key's own food (§0.1), line grammar (§0.8) or a
+  seventh key — ruled ACCEPT (fix89/ruling4.md): 21 "plus" parts
+  weighed at the key's figure on weight / portion rows (brown sugar 2:
+  apple-blackberry-betty|1 172.57 → 165.37 g, its ⅓ cup packed now 66.15 g
+  — its own printed 2⅓ ounces — and apple-crumble|1 126.73 → 124.03; sugar
+  19 on 746784, e.g. cream-cheese-coffee-cake|8 286.43 → 285.27, holiday-
+  eggnog|1 119.14 → 118.81); shrimp-pad-thai|3's step print 39.21 → 38.71
+  g; and two stand-in records a key sizes as a word — SR 170674 "Sugar,
+  turbinado" (five rows, e.g. classic-creme-brulee|5 41.90 → 41.34 g, now
+  flagged with sugar's print; its own 'cup' 202 g and the corpus's one
+  turbinado print, "¾ cup (6 ounces)", are both heavier — these rows move
+  away from both, 1.3 %; RECORDED: a turbinado item for the next design
+  pass) and Foundation 2710835 masa harina (chili-con-carne|13 "5
+  tablespoons masa harina or 3 tablespoons cornstarch" 39.92 → 35.44 g,
+  onto masa harina's own print on 3 of its 4 lines, 4 ounces a cup).
+Attribution (each key reverted alone on a scratch tree, fresh snapshot
+copies; all six reverted reproduces v88 byte for byte): brown sugar 119
+rows / recipe energy −961.13 (82 recipes), cornstarch 128 / −540.94 (97),
+sugar 159 / −190.46 (135), cornmeal 10 / −221.61 (8), powdered sugar 7 /
+−20.30 (6), bread flour 3 / +51.91 (3); 0 unattributed. Three rows answer to
+TWO keys by construction (a child or a batter holds both): barbecued-
+pulled-pork|1 (Dry Rub: brown sugar −7.69, sugar −0.48), crisp-skin-high-
+roast-butterflied-turkey…|4 (Golden Cornbread: sugar −0.96, cornmeal
+−82.95), buffalo-cauliflower-bites|4 (the batter's oil: cornstarch −53.10,
+cornmeal −14.94).
+Calibration (reported, never fitted; v88 → v89 per serving against each
+audit's hand count): audit 6 median |error| 4.44 → 3.59 % (bias +3.95 →
++3.67) — R18 cranberry-chutney +8.48 → +2.19 %, R04 nasi-goreng +0.71 →
++0.39, R22 peach-tarte-tatin +0.59 → +0.52 (a K-5 parent), R15 shrimp-pad-
+thai +0.23 → +0.15 (its step print, (d)), R20 gingerbread +0.03 → −0.08 and
+R17 pizza −18.61 → −18.63 (away, by hundredths); audit 4 median 11.22 →
+11.51 % (worse) — R14 buffalo-cauliflower-bites −11.22 → −15.80 % (AWAY,
+3.1 points beyond the design's −12.7: it priced the cornstarch row alone,
+the replay moves the batter's frying oil |4 too), R07 shrimp-tempura
++45.14 → +45.70 (away, its co-parts), R23 dakgangjeong −15.79 → −15.86,
+R04 onion-braised-beef-brisket −19.75 → −19.87, R15 our-favorite-chili
+−1.00 → −1.22 (away), R13 smoked-pork-loin +15.73 → +14.10, R19 meatloaf
++16.71 → +16.01; audit 3 R05 orange-flavored-chicken +14.07 → +11.76 %
+(the design's +12.1), R13 fish-and-chips +4.29 → +4.35 (away, its co-
+parts); audit 2 median 2.74 → 2.17 % — R06 beef-satay +26.02 → +24.90,
+R09 summer-berry-pie +2.74 → +2.17 and R18 plum +1.25 → +1.01 (K-5
+parents), R24 fluffy-dinner-rolls −0.06 → +1.02 and R01 crisp-skin turkey
+−1.16 → −1.95 (away: bread flour, the cornbread's cornmeal); audit 5
+median 5.41 → 5.20 %.
+Person path: none — typed grams win (an `override` row keeps its typed
+figure; the table sizes engine-derived grams only); no hunk touches
+nutrition_handlers.dart, `derivedFor`, `applyDecisionToOthers` or
+`decisionRecordOf`, so GATE-P was not run.
+Pins: nutrition_v89_test (12 tests — the six figures as oz × 28.3495 ÷
+236.588 for every spelling, the closed and neighbouring keys and RULE B's
+two ¼-cup masses; one stated corpus row per key spelling at its print and
+flag, through `lineGrams` on the row's own fixture record; the converses —
+a weight-printed line per key, a cup-unit sugar line on 746784's own cup,
+the Z5 lentil — at their v88 rows; every (d) row `lineGrams` weighs alone
+as the replay moves it (27 — the 28th, the pad thai's step print, is
+nutrition_v71's); the two-key rows and the nine section-routed hosts no
+earlier pin held (beef-satay|8, fresh-strawberry-pie|0, grill-roasted-bone-
+in-pork-rib-roast|4, juicy-pub-style-burgers|5, memphis-style-barbecued-
+spareribs|0, pupusas…|7, triple-berry-slab-pie…|0, the turkey|4) on a
+whole-recipe compute, barbecued-pulled-pork|1 as its Dry Rub's own total
+(149.90 g, 369.28 kcal; the host reads 0.75) — each two-key row dying under
+BOTH its keys' figure mutants, at the replay's single-key reverts (turkey|4
+1,146.22 / 1,167.53 g, buffalo|4 71.64 / 67.40 g); dakgangjeong's |8 / |9 on the combined figure, two whole-recipe totals and
+a second compute writing nothing; the two cap shapes), each mutant killed by
+a value pin (snapshot copy, anchor count 1, cmp restore): each key's figure
+put back (brown sugar 198.45 → 220.03 g, cornstarch 21.26 → 23.95, sugar
+24.81 → 25.14, granulated sugar 24.81 → 25.14, cornmeal 26.58 → 29.28,
+powdered sugar 7.09 → 7.54, bread flour 9.75 → 7.69; 'confectioners sugar'
+by its table pin alone — no corpus line reaches that spelling), brown sugar
+and bread flour recordFirst (the record's own 220 g packed cup, 168913's
+8.56 g tablespoon), the cornstarch and sugar labels dropped (the flag
+gone), matcherVersion 83. The existing suite re-pinned as equalities (RE-
+PIN M90; 39 files): the version literals and three hashes (the version
+alone — the base tree with only the bump gives each), the v69 sugar-density
+table (all 234 rows), the coat budgets and the dips that ride on them (v50,
+v53, v57, v58, v60, v65, v66, v69, v80, v82, v84), the dough children and
+their parents (v41, v41_api, v46, v47_resolver, v52, v72, v81), the
+totals, the RULE B boundaries (v28), and 13 contract goldens re-captured
+(the legacy-v0 and corpus doughs' sugar, e.g. the all-butter double-crust
+642.9 → 642.7 g) — so the salt_shared and app suites ran.
+Cost: no new reader — a table change; the six figures and their
+`_approximateDensities` entries are read by the volume arm `lineGrams`
+already walks. The cap shapes (400 repeated real lines under the real
+steps): TRUE 400 × gingerbread-layer-cake|2 "3 tablespoons cornstarch",
+QUIET 400 × red-lentil-kibbeh|9 (Z5) — every step-index count identical to
+base d02f207; base → v89, two runs each, compute + GET: TRUE 382, 367 →
+381, 360 ms, QUIET 458, 479 → 449, 453 ms, each under the 10 s backstop.
+Deploy note: matcherVersion 84 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 283 recipes' stored totals move (no
+users). The kcal digest (`tool/replay/digest.sh`) moves 766,098.68 → 764,596.77, −1,501.91
+(Σ total grams 1,891,890.0 → 1,891,121.0 over 1,342 rows) — a per-serving
+sum, not the recipe energy above.
+
 **Matcher v88 (batch M88; matcherVersion 83 — 10 rows in 4 recipes: the
 coat parts of FNDDS 2706442's crust; prep51 design_v2 §1 Q4 (b) / §2 M88,
 ruled under the 2026-10-07 standing authorization; zero requests; server

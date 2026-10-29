@@ -389,6 +389,7 @@ const List<_Row> _unmoved = [
     '648.49',
     'from 6 1/4 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '0975-foolproof-all-butter-dough-for-single-crust-pie.yaml',
     null,
@@ -397,11 +398,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0975-foolproof-all-butter-dough-for-single-crust-pie.yaml',
@@ -810,6 +811,7 @@ const List<_Row> _unmoved = [
     '17.16',
     '4 × 3 g each',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50 g (the v89 replay's row).
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
@@ -818,11 +820,11 @@ const List<_Row> _unmoved = [
     168833,
     'Sugars, brown',
     '0.683333',
-    '27.50',
+    '24.81',
     'auto',
     null,
-    '104.51',
-    '2 tablespoon ≈ 30 mL',
+    '94.26',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -1161,6 +1163,7 @@ const List<_Row> _unmoved = [
     '5.03',
     '1 1/2 tablespoon ≈ 22 mL · juice only (the zest is dropped)',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 136.93 g (the v89 replay's row).
   (
     '0982-fresh-peach-pie.yaml',
     null,
@@ -1169,10 +1172,10 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '136.93',
+    '136.43',
     'auto',
     null,
-    '527.18',
+    '525.26',
     'from 3 1/2 ounce + 3 tablespoons sugar',
   ),
   (
@@ -1245,6 +1248,7 @@ const List<_Row> _unmoved = [
     '0.72',
     'pinch ≈ 1/16 tsp (USDA tsp portion)',
   ),
+  // RE-PIN (M90 batch, v89, sugar: its child moves): was 687.80 g (the v89 replay's row).
   (
     '0982-fresh-peach-pie.yaml',
     null,
@@ -1253,12 +1257,13 @@ const List<_Row> _unmoved = [
     null,
     '',
     '1.000000',
-    '687.80',
+    '687.50',
     'auto',
     null,
-    '3461.98',
-    'from the recipe Pie Dough for Lattice-Top Pie: 688 g, 3,462 kcal',
+    '3460.70',
+    'from the recipe Pie Dough for Lattice-Top Pie: 688 g, 3,461 kcal',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 7.98 g (the v89 replay's row).
   (
     '0982-fresh-peach-pie.yaml',
     null,
@@ -1267,11 +1272,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '7.98',
+    '7.09',
     'auto',
     null,
-    '30.42',
-    '1 tablespoon ≈ 15 mL',
+    '27.00',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '0982-fresh-peach-pie.yaml',
@@ -1287,6 +1292,7 @@ const List<_Row> _unmoved = [
     '1556.39',
     'from 15 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 g (the v89 replay's row).
   (
     '0982-fresh-peach-pie.yaml',
     'Pie Dough for Lattice-Top Pie',
@@ -1295,11 +1301,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '25.14',
+    '24.81',
     'auto',
     null,
-    '96.78',
-    '2 tablespoon ≈ 30 mL',
+    '95.50',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0982-fresh-peach-pie.yaml',
@@ -1357,6 +1363,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 136.93 g (the v89 replay's row).
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     null,
@@ -1365,10 +1372,10 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '136.93',
+    '136.43',
     'auto',
     null,
-    '527.18',
+    '525.26',
     'from 3 1/2 ounce + 3 tablespoons sugar',
   ),
   (
@@ -1441,6 +1448,7 @@ const List<_Row> _unmoved = [
     '0.72',
     'pinch ≈ 1/16 tsp (USDA tsp portion)',
   ),
+  // RE-PIN (M90 batch, v89, sugar: its child moves): was 687.80 g (the v89 replay's row).
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     null,
@@ -1449,12 +1457,13 @@ const List<_Row> _unmoved = [
     null,
     '',
     '1.000000',
-    '687.80',
+    '687.50',
     'auto',
     null,
-    '3461.98',
-    'from the recipe Pie Dough for Lattice-Top Pie: 688 g, 3,462 kcal',
+    '3460.70',
+    'from the recipe Pie Dough for Lattice-Top Pie: 688 g, 3,461 kcal',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 7.98 g (the v89 replay's row).
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     null,
@@ -1463,11 +1472,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '7.98',
+    '7.09',
     'auto',
     null,
-    '30.42',
-    '1 tablespoon ≈ 15 mL',
+    '27.00',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
@@ -1483,6 +1492,7 @@ const List<_Row> _unmoved = [
     '1556.39',
     'from 15 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 g (the v89 replay's row).
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     'Pie Dough for Lattice-Top Pie',
@@ -1491,11 +1501,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '25.14',
+    '24.81',
     'auto',
     null,
-    '96.78',
-    '2 tablespoon ≈ 30 mL',
+    '95.50',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
@@ -1553,6 +1563,7 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M90 batch, v89, sugar: its child moves): was 334.60 g (the v89 replay's row).
   (
     '1006-peach-tarte-tatin.yaml',
     null,
@@ -1561,11 +1572,11 @@ const List<_Row> _unmoved = [
     null,
     '',
     '1.000000',
-    '334.60',
+    '334.40',
     'auto',
     null,
-    '1713.63',
-    'from the recipe Foolproof All-Butter Dough for Single-Crust Pie: 335 g, 1,714 kcal',
+    '1712.99',
+    'from the recipe Foolproof All-Butter Dough for Single-Crust Pie: 334 g, 1,713 kcal',
   ),
   (
     '1006-peach-tarte-tatin.yaml',
@@ -1581,6 +1592,7 @@ const List<_Row> _unmoved = [
     '305.02',
     '3 tablespoon ≈ 44 mL',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 124.36 g (the v89 replay's row).
   (
     '1006-peach-tarte-tatin.yaml',
     null,
@@ -1589,10 +1601,10 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '124.36',
+    '124.03',
     'auto',
     null,
-    '478.79',
+    '477.51',
     'from 3 1/2 ounce + 2 tablespoons sugar',
   ),
   (
@@ -2085,6 +2097,7 @@ const List<_Row> _unmoved = [
     '90.58',
     'from 5 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 62.84 g (the v89 replay's row).
   (
     '0998-free-form-summer-fruit-tart.yaml',
     null,
@@ -2093,11 +2106,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '62.84',
+    '62.01',
     'auto',
     null,
-    '241.95',
-    '3–5 tablespoon ≈ 59 mL + 1 tablespoon sugar',
+    '238.76',
+    '3–5 tablespoon ≈ 59 mL · approximate (ATK: 1 cup sugar = 7 ounces) + 1 tablespoon sugar',
   ),
   (
     '0999-free-form-summer-fruit-tartlets-for-two.yaml',
@@ -2183,6 +2196,7 @@ const List<_Row> _unmoved = [
     '30.48',
     'from 2 1/2 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 50.28 g (the v89 replay's row).
   (
     '0999-free-form-summer-fruit-tartlets-for-two.yaml',
     null,
@@ -2191,11 +2205,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '50.28',
+    '49.61',
     'auto',
     null,
-    '193.56',
-    '3–5 tablespoon ≈ 59 mL',
+    '191.01',
+    '3–5 tablespoon ≈ 59 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
@@ -2225,6 +2239,7 @@ const List<_Row> _unmoved = [
     '0.00',
     '1/3 cup ≈ 79 mL · kosher salt at half table salt\'s weight by volume (the corpus\'s own "1 tablespoon kosher salt or 1½ teaspoons table salt"; USDA SR 173468 \'1 tsp\' 6.0 g)',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 73.34 g (the v89 replay's row).
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
     null,
@@ -2233,11 +2248,11 @@ const List<_Row> _unmoved = [
     168833,
     'Sugars, brown',
     '0.683333',
-    '73.34',
+    '66.15',
     'auto',
     null,
-    '278.70',
-    '1/3 cup ≈ 79 mL',
+    '251.37',
+    '1/3 cup ≈ 79 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
@@ -2352,6 +2367,7 @@ const List<_Row> _unmoved = [
     '1296.99',
     'from 12 1/2 ounce',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 g (the v89 replay's row).
   (
     '1166-fruit-hand-pies.yaml',
     null,
@@ -2360,11 +2376,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '1.000000',
-    '25.14',
+    '24.81',
     'auto',
     null,
-    '96.78',
-    '2 tablespoon ≈ 30 mL',
+    '95.50',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '1166-fruit-hand-pies.yaml',
@@ -2436,6 +2452,7 @@ const List<_Row> _unmoved = [
     '0.00',
     'a sub-recipe — counted as 0 g',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 g (the v89 replay's row).
   (
     '1166-fruit-hand-pies.yaml',
     null,
@@ -2444,11 +2461,11 @@ const List<_Row> _unmoved = [
     170674,
     'Sugar, turbinado',
     '0.683333',
-    '25.14',
+    '24.81',
     'auto',
     null,
-    '100.30',
-    '2 tablespoon ≈ 30 mL',
+    '98.98',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '1166-fruit-hand-pies.yaml',
@@ -2506,6 +2523,7 @@ const List<_Row> _unmoved = [
     '6.70',
     '2 tablespoon ≈ 30 mL',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 10.65 g (the v89 replay's row).
   (
     '1166-fruit-hand-pies.yaml',
     'Cherry Hand Pie Filling',
@@ -2514,11 +2532,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '10.65',
+    '9.45',
     'auto',
     null,
-    '40.56',
-    '4 teaspoon ≈ 20 mL',
+    '36.00',
+    '4 teaspoon ≈ 20 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '1166-fruit-hand-pies.yaml',
@@ -2590,6 +2608,7 @@ const List<_Row> _unmoved = [
     '6.70',
     '2 tablespoon ≈ 30 mL · juice only (the zest is dropped)',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 10.65 g (the v89 replay's row).
   (
     '1166-fruit-hand-pies.yaml',
     'Peach Hand Pie Filling',
@@ -2598,11 +2617,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '10.65',
+    '9.45',
     'auto',
     null,
-    '40.56',
-    '4 teaspoon ≈ 20 mL',
+    '36.00',
+    '4 teaspoon ≈ 20 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '1166-fruit-hand-pies.yaml',
@@ -2660,6 +2679,7 @@ const List<_Row> _unmoved = [
     '7.62',
     '2 tablespoon ≈ 30 mL',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 10.65 g (the v89 replay's row).
   (
     '1166-fruit-hand-pies.yaml',
     'Pineapple Hand Pie Filling',
@@ -2668,11 +2688,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '10.65',
+    '9.45',
     'auto',
     null,
-    '40.56',
-    '4 teaspoon ≈ 20 mL',
+    '36.00',
+    '4 teaspoon ≈ 20 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '1166-fruit-hand-pies.yaml',
@@ -3225,6 +3245,7 @@ const List<_Row> _unmoved = [
     '0.00',
     '2 tablespoon ≈ 30 mL',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 27.50 g (the v89 replay's row).
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
     null,
@@ -3233,12 +3254,13 @@ const List<_Row> _unmoved = [
     168833,
     'Sugars, brown',
     '0.683333',
-    '27.50',
+    '24.81',
     'auto',
     null,
-    '104.51',
-    '2 tablespoon ≈ 30 mL',
+    '94.26',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 12.57 g (the v89 replay's row).
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
     null,
@@ -3247,11 +3269,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '1.000000',
-    '12.57',
+    '12.40',
     'auto',
     null,
-    '48.39',
-    '1 tablespoon ≈ 15 mL',
+    '47.75',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
@@ -3721,6 +3743,7 @@ const List<_Row> _unmoved = [
     '430.91',
     'from 2 1/2 pound',
   ),
+  // RE-PIN (M90 batch, v89, brown sugar): was 13.75 g (the v89 replay's row).
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
@@ -3729,11 +3752,11 @@ const List<_Row> _unmoved = [
     168833,
     'Sugars, brown',
     '1.000000',
-    '13.75',
+    '12.40',
     'auto',
     null,
-    '52.26',
-    '1 tablespoon ≈ 15 mL',
+    '47.13',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
   // RE-PIN (M82 batch, v84, C3a): was 9.00 g, 12.87 kcal (the v84 replay's row).
   (
@@ -4073,6 +4096,7 @@ const List<_Row> _unmoved = [
     '11.55',
     '2 teaspoon · USDA portion',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 5.32 g (the v89 replay's row).
   (
     '0007-tuscan-style-beef-stew.yaml',
     null,
@@ -4081,11 +4105,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '5.32',
+    '4.72',
     'auto',
     null,
-    '20.28',
-    '2 teaspoon ≈ 10 mL',
+    '18.00',
+    '2 teaspoon ≈ 10 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '0087-braised-beef-short-ribs.yaml',
@@ -5100,6 +5124,7 @@ const List<_Row> _unmoved = [
     '5.72',
     '1 teaspoon · USDA portion',
   ),
+  // RE-PIN (M90 batch, v89, cornstarch): was 2.66 g (the v89 replay's row).
   (
     '0535-chinese-braised-beef.yaml',
     null,
@@ -5108,11 +5133,11 @@ const List<_Row> _unmoved = [
     169698,
     'Cornstarch',
     '1.000000',
-    '2.66',
+    '2.36',
     'auto',
     null,
-    '10.14',
-    '1 teaspoon ≈ 5 mL',
+    '9.00',
+    '1 teaspoon ≈ 5 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
@@ -6153,6 +6178,7 @@ const List<_Row> _unmoved = [
     '96.00',
     '1/4 cup · USDA portion · approximation (counted as Wine, dessert, sweet)',
   ),
+  // RE-PIN (M90 batch, v89, sugar): was 25.14 g (the v89 replay's row).
   (
     '1172-nikujaga-beef-and-potato-stew.yaml',
     null,
@@ -6161,11 +6187,11 @@ const List<_Row> _unmoved = [
     746784,
     'Sugars, granulated',
     '0.950000',
-    '25.14',
+    '24.81',
     'auto',
     null,
-    '96.78',
-    '2 tablespoon ≈ 30 mL',
+    '95.50',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
   (
     '1172-nikujaga-beef-and-potato-stew.yaml',
@@ -6185,19 +6211,60 @@ const List<_Row> _unmoved = [
 
 // GENERATED by fix72/gen72.py: (file, section, status, per serving, batch energy, fat, saturated, mono, poly,
 // protein, sodium, cholesterol) — this tree; the v71 figures in the comment where M72 moves them
+/// M90 (v89): each of the six keys' record → (the figure a v71 row read,
+/// the corpus's printed cup since v89).
+const Map<int, (double, double)> _m90Figures = {
+  168833: (0.93, 7 * 28.3495 / 236.588),
+  169698: (0.54, 4 * 28.3495 / 236.588),
+  746784: (0.85, 7 * 28.3495 / 236.588),
+  169697: (0.66, 5 * 28.3495 / 236.588),
+  169656: (0.51, 4 * 28.3495 / 236.588),
+  168913: (0.52, 5.5 * 28.3495 / 236.588),
+};
+
+/// The `_totals` entries M90 (v89) moves since v71: every one whose rows
+/// read one of the six keys at the corpus's printed cup (the fresh compute
+/// here; the v89 replay's rows).
+const Set<(String, String?)> _m90Moved = {
+  ('0975-foolproof-all-butter-dough-for-single-crust-pie.yaml', null),
+  ('0523-nasi-goreng-indonesian-style-fried-rice.yaml', null),
+  ('0982-fresh-peach-pie.yaml', null),
+  ('0982-fresh-peach-pie.yaml', 'Pie Dough for Lattice-Top Pie'),
+  ('1115-fresh-peach-pie-with-all-butter-lattice-top.yaml', null),
+  (
+    '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
+    'Pie Dough for Lattice-Top Pie',
+  ),
+  ('1006-peach-tarte-tatin.yaml', null),
+  ('0998-free-form-summer-fruit-tart.yaml', null),
+  ('0999-free-form-summer-fruit-tartlets-for-two.yaml', null),
+  ('0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml', null),
+  ('1166-fruit-hand-pies.yaml', null),
+  ('1166-fruit-hand-pies.yaml', 'Cherry Hand Pie Filling'),
+  ('1166-fruit-hand-pies.yaml', 'Peach Hand Pie Filling'),
+  ('1166-fruit-hand-pies.yaml', 'Pineapple Hand Pie Filling'),
+  ('0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml', null),
+  ('0223-onion-braised-beef-brisket.yaml', null),
+  ('0007-tuscan-style-beef-stew.yaml', null),
+  ('0535-chinese-braised-beef.yaml', null),
+  ('1172-nikujaga-beef-and-potato-stew.yaml', null),
+};
+
 const List<_Totals> _totals = [
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 1713.63 /serving, batch
+  // 1713.63, fat 117.6809, protein 20.5184, sodium 1184.5820.
   (
     '0975-foolproof-all-butter-dough-for-single-crust-pie.yaml',
     null,
     'complete',
-    '1713.63',
-    '1713.63',
-    '117.6809',
+    '1712.99',
+    '1712.99',
+    '117.6804',
     '71.5961',
     '33.2250',
     '4.2683',
     '20.5184',
-    '1184.5820',
+    '1184.5803',
     '304.8816',
   ),
   // v71: 534.43 /serving, batch 2137.72, fat 68.2015
@@ -6230,18 +6297,20 @@ const List<_Totals> _totals = [
     '3940.7926',
     '0.0000',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 803.21 /serving, batch
+  // 3212.84, fat 105.9561, protein 133.6436, sodium 4993.7805.
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
     'complete',
-    '803.21',
-    '3212.84',
+    '800.65',
+    '3202.59',
     '105.9561',
     '17.4871',
     '41.2971',
     '34.9194',
-    '133.6436',
-    '4993.7805',
+    '133.6404',
+    '4993.0252',
     '1369.7123',
   ),
   (
@@ -6290,76 +6359,86 @@ const List<_Totals> _totals = [
     '152.4408',
   ),
   // v71: 584.35 /serving, batch 4674.79, fat 215.2484
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 567.20 /serving, batch
+  // 4537.62, fat 214.3666, protein 57.1481, sodium 2834.6677.
   (
     '0982-fresh-peach-pie.yaml',
     null,
     'complete',
-    '567.20',
-    '4537.62',
-    '214.3666',
+    '566.38',
+    '4531.01',
+    '214.3635',
     '94.0349',
-    '70.1383',
-    '29.4710',
-    '57.1481',
-    '2834.6677',
+    '70.1381',
+    '29.4708',
+    '57.1457',
+    '2834.5786',
     '304.8816',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 3461.98 /serving, batch
+  // 3461.98, fat 210.9655, protein 47.5568, sodium 2358.5668.
   (
     '0982-fresh-peach-pie.yaml',
     'Pie Dough for Lattice-Top Pie',
     'complete',
-    '3461.98',
-    '3461.98',
-    '210.9655',
+    '3460.70',
+    '3460.70',
+    '210.9645',
     '93.9782',
     '70.1277',
     '29.4433',
     '47.5568',
-    '2358.5668',
+    '2358.5635',
     '304.8816',
   ),
   // v71: 584.35 /serving, batch 4674.79, fat 215.2484
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 567.20 /serving, batch
+  // 4537.62, fat 214.3666, protein 57.1481, sodium 2834.6677.
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     null,
     'complete',
-    '567.20',
-    '4537.62',
-    '214.3666',
+    '566.38',
+    '4531.01',
+    '214.3635',
     '94.0349',
-    '70.1383',
-    '29.4710',
-    '57.1481',
-    '2834.6677',
+    '70.1381',
+    '29.4708',
+    '57.1457',
+    '2834.5786',
     '304.8816',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 3461.98 /serving, batch
+  // 3461.98, fat 210.9655, protein 47.5568, sodium 2358.5668.
   (
     '1115-fresh-peach-pie-with-all-butter-lattice-top.yaml',
     'Pie Dough for Lattice-Top Pie',
     'complete',
-    '3461.98',
-    '3461.98',
-    '210.9655',
+    '3460.70',
+    '3460.70',
+    '210.9645',
     '93.9782',
     '70.1277',
     '29.4433',
     '47.5568',
-    '2358.5668',
+    '2358.5635',
     '304.8816',
   ),
   // v71: 363.24 /serving, batch 2905.95, fat 155.0338
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 351.81 /serving, batch
+  // 2814.50, fat 154.4459, protein 27.1541, sodium 1862.9319.
   (
     '1006-peach-tarte-tatin.yaml',
     null,
     'complete',
-    '351.81',
-    '2814.50',
-    '154.4459',
+    '351.57',
+    '2812.59',
+    '154.4443',
     '93.0750',
     '43.1925',
     '5.5488',
     '27.1541',
-    '1862.9319',
+    '1862.9270',
     '396.3461',
   ),
   (
@@ -6390,102 +6469,116 @@ const List<_Totals> _totals = [
     '649.4926',
     '553.7488',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 386.33 /serving, batch
+  // 2317.97, fat 120.0247, protein 29.5052, sodium 1244.7604.
   (
     '0998-free-form-summer-fruit-tart.yaml',
     null,
     'complete',
-    '386.33',
-    '2317.97',
-    '120.0247',
+    '385.80',
+    '2314.78',
+    '120.0221',
     '71.5961',
     '33.2250',
     '4.2683',
     '29.5052',
-    '1244.7604',
+    '1244.7521',
     '304.8816',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 608.38 /serving, batch
+  // 1216.76, fat 60.2031, protein 15.2395, sodium 623.2775.
   (
     '0999-free-form-summer-fruit-tartlets-for-two.yaml',
     null,
     'complete',
-    '608.38',
-    '1216.76',
-    '60.2031',
+    '607.10',
+    '1214.20',
+    '60.2010',
     '35.8080',
     '16.6458',
     '2.3326',
     '15.2395',
-    '623.2775',
+    '623.2708',
     '152.4408',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 679.89 /serving, batch
+  // 5439.09, fat 299.0251, protein 422.8548, sodium 20327.9439.
   (
     '0246-slow-roasted-pork-shoulder-with-peach-sauce.yaml',
     null,
     'complete',
-    '679.89',
-    '5439.09',
+    '676.47',
+    '5411.75',
     '299.0251',
     '104.7243',
     '125.8706',
     '38.8146',
-    '422.8548',
-    '20327.9439',
+    '422.8462',
+    '20325.9297',
     '1491.9835',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 450.19 /serving, batch
+  // 3601.56, fat 240.3418, protein 47.2369, sodium 2434.4181.
   (
     '1166-fruit-hand-pies.yaml',
     null,
     'partial',
-    '450.19',
-    '3601.56',
-    '240.3418',
+    '449.87',
+    '3598.96',
+    '240.3408',
     '144.7923',
     '68.2650',
     '9.4467',
     '47.2369',
-    '2434.4181',
+    '2434.4048',
     '815.2633',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 504.73 /serving, batch
+  // 504.73, fat 0.8291, protein 3.0830, sodium 293.3000.
   (
     '1166-fruit-hand-pies.yaml',
     'Cherry Hand Pie Filling',
     'complete',
-    '504.73',
-    '504.73',
-    '0.8291',
-    '0.1209',
-    '0.1368',
-    '0.1565',
-    '3.0830',
-    '293.3000',
+    '500.17',
+    '500.17',
+    '0.8285',
+    '0.1208',
+    '0.1366',
+    '0.1562',
+    '3.0798',
+    '293.1923',
     '0.0000',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 432.35 /serving, batch
+  // 432.35, fat 1.0555, protein 2.7141, sodium 330.1071.
   (
     '1166-fruit-hand-pies.yaml',
     'Peach Hand Pie Filling',
     'complete',
-    '432.35',
-    '432.35',
-    '1.0555',
-    '0.0670',
-    '0.1935',
-    '0.2529',
-    '2.7141',
-    '330.1071',
+    '427.79',
+    '427.79',
+    '1.0549',
+    '0.0669',
+    '0.1933',
+    '0.2526',
+    '2.7110',
+    '329.9994',
     '0.0000',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 474.84 /serving, batch
+  // 474.84, fat 0.8446, protein 1.4886, sodium 293.6227.
   (
     '1166-fruit-hand-pies.yaml',
     'Pineapple Hand Pie Filling',
     'complete',
-    '474.84',
-    '474.84',
-    '0.8446',
+    '470.29',
+    '470.29',
+    '0.8440',
+    '0.0055',
     '0.0056',
-    '0.0057',
-    '0.0101',
-    '1.4886',
-    '293.6227',
+    '0.0098',
+    '1.4855',
+    '293.5150',
     '0.0000',
   ),
   // v71: 290.37 /serving, batch 1742.24, fat 117.4971
@@ -6554,18 +6647,20 @@ const List<_Totals> _totals = [
     '1878.1569',
   ),
   // v71: 740.17 /serving, batch 13323.08, fat 881.7112
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 697.49 /serving, batch
+  // 12554.79, fat 807.9058, protein 852.3707, sodium 26336.0231.
   (
     '0595-barbecued-whole-beef-brisket-with-spicy-chili-rub.yaml',
     null,
     'complete',
-    '697.49',
-    '12554.79',
-    '807.9058',
+    '696.88',
+    '12543.90',
+    '807.9053',
     '307.2916',
     '356.3263',
     '32.7201',
-    '852.3707',
-    '26336.0231',
+    '852.3675',
+    '26335.2662',
     '3084.4256',
   ),
   (
@@ -6604,33 +6699,37 @@ const List<_Totals> _totals = [
   // 76.7103, mono 100.0584, poly 10.7218); protein, sodium, cholesterol
   // gross.
   // RE-PIN (M82 batch, v84): was 588.82, 3532.95, 126.1489, 430.5776, 1723.5943 (the replay 588.82 → 590.30).
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 590.30 /serving, batch
+  // 3541.81, fat 126.1858, protein 430.8286, sodium 1723.6470.
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
     'complete',
-    '590.30',
-    '3541.81',
+    '589.45',
+    '3536.68',
     '126.1858',
     '47.7967',
     '53.6581',
     '6.9644',
-    '430.8286',
-    '1723.6470',
+    '430.8269',
+    '1723.2694',
     '1367.5799',
   ),
   // v71: 836.27 /serving, batch 5017.64, fat 360.7148
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 762.97 /serving, batch
+  // 4577.84, fat 311.8979, protein 330.1003, sodium 1783.6813.
   (
     '0007-tuscan-style-beef-stew.yaml',
     null,
     'complete',
-    '762.97',
-    '4577.84',
-    '311.8979',
-    '133.1290',
-    '158.1785',
-    '18.0877',
-    '330.1003',
-    '1783.6813',
+    '762.59',
+    '4575.56',
+    '311.8976',
+    '133.1289',
+    '158.1784',
+    '18.0875',
+    '330.0988',
+    '1783.6274',
     '1330.1836',
   ),
   // v71: 720.08 /serving, batch 4320.46, fat 330.9343
@@ -6698,18 +6797,20 @@ const List<_Totals> _totals = [
     '1079.5490',
   ),
   // v71: 612.94 /serving, batch 3677.64, fat 261.4987
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 557.97 /serving, batch
+  // 3347.79, fat 224.8282, protein 254.3327, sodium 6619.2062.
   (
     '0535-chinese-braised-beef.yaml',
     null,
     'complete',
-    '557.97',
-    '3347.79',
-    '224.8282',
-    '98.7117',
-    '114.4443',
+    '557.78',
+    '3346.65',
+    '224.8281',
+    '98.7116',
+    '114.4442',
     '10.2975',
-    '254.3327',
-    '6619.2062',
+    '254.3319',
+    '6619.1792',
     '994.3265',
   ),
   // RE-PIN (M82 batch, v84): was 958.77, 3835.10, 292.3790, 102.6473, 157.8699, 18.2445, 216.8326, 1025.1040 (the replay 958.80 → 951.33).
@@ -6798,18 +6899,20 @@ const List<_Totals> _totals = [
     '3587.6856',
     '662.2443',
   ),
+  // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 502.17 /serving, batch
+  // 2008.66, fat 102.8287, protein 99.7431, sodium 5390.4401.
   (
     '1172-nikujaga-beef-and-potato-stew.yaml',
     null,
     'partial',
-    '502.17',
-    '2008.66',
-    '102.8287',
+    '501.85',
+    '2007.39',
+    '102.8276',
     '38.8793',
     '49.2610',
     '8.9183',
     '99.7431',
-    '5390.4401',
+    '5390.4368',
     '331.1222',
   ),
 ];
@@ -7463,14 +7566,18 @@ void main() {
           // RE-PIN (M82 batch, v84): M82's two more — the catalan stew's
           // crust-removed slice (C1 + C1b) and the steak-and-ale pie's flour
           // (C5a); its other movers here are M72's own.
-          section == null &&
-              (_moved.contains(file) ||
-                  const {
-                    '0091-home-corned-beef-with-vegetables.yaml',
-                    '0223-onion-braised-beef-brisket.yaml',
-                    '0084-catalan-style-beef-stew-with-mushrooms.yaml',
-                    '0194-pub-style-steak-and-ale-pie.yaml',
-                  }.contains(file)),
+          // RE-PIN (M90 batch, v89): M90's movers — the 19 entries whose
+          // rows read one of the six keys (sections too: the lattice-top
+          // doughs and the hand-pie fillings) — `_m90Moved`.
+          (section == null &&
+                  (_moved.contains(file) ||
+                      const {
+                        '0091-home-corned-beef-with-vegetables.yaml',
+                        '0223-onion-braised-beef-brisket.yaml',
+                        '0084-catalan-style-beef-stew-with-mushrooms.yaml',
+                        '0194-pub-style-steak-and-ale-pie.yaml',
+                      }.contains(file))) ||
+              _m90Moved.contains((file, section)),
           reason: '$file ${section ?? ''}',
         );
       }
@@ -7630,13 +7737,16 @@ void main() {
           '797.57',
           ['76.67', '85.50', '7.94'],
         ),
+        // RE-PIN (M90 batch, v89, brown sugar + sugar): the deduction
+        // unchanged; its rub's sugars at their prints move the serving (the
+        // replay 697.49 → 696.88): was 697.49.
         (
           _barbecued,
           168664,
           '4535.92',
           '73.81',
           '768.29',
-          '697.49',
+          '696.88',
           ['36.18', '33.85', '2.44'],
         ),
       ]) {
@@ -7736,9 +7846,25 @@ void main() {
                           kcalPer100g(knownFood(db, 748608)!)) /
                   100,
         ].fold<double>(0, (a, b) => a + b);
+        // RE-PIN (M90 batch, v89): a density row on one of the six keys'
+        // records moved since v71 too — its v71 grams are its grams × the old
+        // figure ÷ the print (tuscan's cornstarch |15, chinese's sugar |12),
+        // at its own energy (was `v71 + evoo - now - by`).
+        final m90 = [
+          for (final r in db.ingredientMatchesFor(recipes[file]!.id))
+            if (r.gramSource == 'density' && _m90Figures.containsKey(r.fdcId))
+              r.grams! *
+                  (_m90Figures[r.fdcId]!.$1 / _m90Figures[r.fdcId]!.$2 - 1) *
+                  kcalPer100g(knownFood(db, r.fdcId!)!) /
+                  100,
+        ].fold<double>(0, (a, b) => a + b);
         // The v71 batch is printed to 2 dp: the move equals the deduction
         // within its rounding.
-        expect((v71 + evoo - now - by).abs(), lessThan(0.006), reason: file);
+        expect(
+          (v71 + evoo - m90 - now - by).abs(),
+          lessThan(0.006),
+          reason: file,
+        );
       }
     });
 

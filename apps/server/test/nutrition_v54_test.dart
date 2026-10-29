@@ -2634,12 +2634,15 @@ _whole = [
   // Q-f: "Off heat, stir in brandy" into the hot soup → 5002 85 %
   // RE-PIN (M82 batch, v84): its flour |6 (C5a) — the energy before and after the
   // ethanol moves alike (was 1545.22, 1535.07, 133.07, 30.32).
+  // RE-PIN (M90 batch, v89, brown sugar): its dark brown sugar |1 at the
+  // print (20.63 → 18.60 g, the v89 replay's row) — before and after alike
+  // (was 1554.87, 1544.72, 135.11, 30.61).
   (
     '0013-ultimate-cream-of-tomato-soup.yaml',
-    1554.87,
-    1544.72,
-    135.11,
-    30.61,
+    1547.18,
+    1537.03,
+    133.12,
+    30.60,
     [(9, 2710699, 29.28, 85)],
   ),
   // P1: brought to a simmer, ladled → boil-off 85 %
@@ -2677,21 +2680,27 @@ _whole = [
   // RE-PIN (M82 batch, v84, C5a): the batter flour at 5 oz a cup re-solves
   // the coat — its beer |10 167.52 → 150.23 g (the v84 replay's row), so
   // the ethanol removed is 6.08 (was 6.77): was 3400.91, 3394.14, 167.52.
+  // RE-PIN (M90 batch, v89, cornstarch): the batter starch at 4 oz a cup
+  // re-solves the coat — its beer |10 150.23 → 154.50 g (the v89 replay's
+  // row), so the ethanol removed is 6.25 (was 6.08): was 3398.19, 3392.11,
+  // 150.23.
   (
     '0255-fish-and-chips.yaml',
-    3398.19,
-    3392.11,
+    3400.54,
+    3394.29,
     0,
     0,
-    [(10, 2710616, 150.23, 85)],
+    [(10, 2710616, 154.50, 85)],
   ),
   // P21: |6 the batter's crepes (sub-minute → 5002), |8 3 T flamed + 1 T
   // into the hot sauce (75/85 by volume = 77.5), |12 the liqueur (85)
+  // RE-PIN (M90 batch, v89, sugar): its sugar spoon rows at the print —
+  // before and after alike (was 3095.29, 3049.95, 312.00, 57.24).
   (
     '0960-crepes-suzette.yaml',
-    3095.29,
-    3049.95,
-    312.00,
+    3093.37,
+    3048.03,
+    311.51,
     57.24,
     [
       (6, 2710699, 28.00, 85),
@@ -2700,11 +2709,14 @@ _whole = [
     ],
   ),
   // the amended row: the dough's pie bakes 25 + 30 = 55 → 5005 35 %
+  // RE-PIN (M90 batch, v89, sugar): its sugar |1 at the print (25.14 →
+  // 24.81 g, the v89 replay's row) — before and after alike (was 5052.09,
+  // 4968.00, 646.53, 51.02).
   (
     '0986-strawberry-rhubarb-pie.yaml',
-    5052.09,
-    4968.00,
-    646.53,
+    5050.82,
+    4966.73,
+    646.20,
     51.02,
     [(5, 2710704, 56.00, 35)],
   ),

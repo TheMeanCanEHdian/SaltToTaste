@@ -2,11 +2,11 @@
   "status": "complete",
   "serving_basis": 8,
   "basis_kind": "per_serving",
-  "calories_per_serving": 445.56,
+  "calories_per_serving": 445.08,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 445.56,
+      "amount": 445.08,
       "unit": "kcal",
       "dv_percent": 22.3
     },
@@ -51,9 +51,9 @@
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 33.42,
+      "amount": 33.3,
       "unit": "g",
-      "dv_percent": 12.2
+      "dv_percent": 12.1
     },
     "fiber": {
       "label": "Dietary Fiber",
@@ -92,7 +92,7 @@
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 265.95,
+      "amount": 265.94,
       "unit": "mg",
       "dv_percent": 5.7
     },
@@ -174,7 +174,7 @@
       "dv_percent": 8.4
     }
   },
-  "total_grams": 1791.3,
+  "total_grams": 1790.3,
   "matched_count": 7,
   "total_count": 7,
   "low_confidence": 0,

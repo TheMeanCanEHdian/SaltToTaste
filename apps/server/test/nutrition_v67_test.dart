@@ -671,7 +671,8 @@ void main() {
       // A fresh compute here; the replay's v66 → v67 in the comment.
       // RE-PIN (M72 batch, v72, pE R-E1): 697.49 (was 740.17) — its rendered
       // fat deducted at the braised pair's 93.3 % (−768.29 / 18).
-      expect(of(_barbecued), ('complete', '697.49')); // 498.26 → 740.17
+      // RE-PIN (M90 batch, v89): the replay 697.49 → 696.88: was 697.49.
+      expect(of(_barbecued), ('complete', '696.88')); // 498.26 → 740.17
       // Unmoved (v66 = v67): the corned rows' bases only.
       // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 628.01 (was 577.01) —
       // 173128 at its braised pair (+408.02 / 8).
@@ -683,7 +684,8 @@ void main() {
       // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 588.82 (was 692.11) —
       // its own 0" pair (−619.70 / 6).
       // RE-PIN (M82 batch, v84): was 588.82 (the replay 588.82 → 590.30).
-      expect(of(_onion), ('complete', '590.30'));
+      // RE-PIN (M90 batch, v89): the replay 590.30 → 589.45: was 590.30.
+      expect(of(_onion), ('complete', '589.45'));
       // RE-PIN (M70 batch, v69, Q1 flat (b′)): 794.35 (was 729.93).
       // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
       expect(of(_pomegranate), ('complete', '797.57'));

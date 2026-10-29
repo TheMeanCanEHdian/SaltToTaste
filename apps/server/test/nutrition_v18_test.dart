@@ -394,7 +394,9 @@ void main() {
           172336,
           27.21,
         ),
-        ('½ cup packed brown sugar, plus flaky sea salt', 168833, 110.01),
+        // RE-PIN (M90 batch, v89, brown sugar): ½ cup at the corpus's printed 7
+        // ounces a cup, 3½ ounces (was 110.01 at 0.93).
+        ('½ cup packed brown sugar, plus flaky sea salt', 168833, 99.22),
         (
           '2 tablespoons unsalted butter, softened, and coarse sea salt',
           173430,

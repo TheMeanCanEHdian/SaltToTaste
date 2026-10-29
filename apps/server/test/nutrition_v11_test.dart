@@ -454,7 +454,10 @@ void main() {
               'cup almonds followed by sugar-zest mixture.',
         ],
       );
-      for (final (r, grams) in [(naan, 46.53), (cake, 273.20)]) {
+      // RE-PIN (M90 batch, v89, sugar): the cake's plus part, 2 tablespoons
+      // sugar, at the corpus's printed 7 ounces a cup (was 273.20 at 0.85;
+      // the v89 replay's best-almond-cake|6 272.86).
+      for (final (r, grams) in [(naan, 46.53), (cake, 272.86)]) {
         expect(mediumOf(r, 0), isNull, reason: r.id);
         await matchAndCompute(db, provider, r);
         final row = rowOf(db, r.id);

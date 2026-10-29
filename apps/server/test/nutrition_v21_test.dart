@@ -1966,6 +1966,7 @@ _moved = [
     'no_grams',
     true,
   ),
+  // RE-PIN (M90 batch, v89, cornmeal): was 234.22 g, 847.88 kcal (the v89 replay's row).
   (
     '0718-no-fuss-creamy-parmesan-polenta.yaml',
     3,
@@ -1973,7 +1974,7 @@ _moved = [
     null,
     'coarse-ground cornmeal',
     169697,
-    '234.22',
+    '212.62',
     'M1',
     'counted',
     true,

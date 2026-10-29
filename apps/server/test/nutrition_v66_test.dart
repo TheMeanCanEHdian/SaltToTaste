@@ -534,17 +534,18 @@ const List<_Row> _negatives = [
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix's weight — derived from USDA SR Legacy 172455 \"Falafel, home-prepared\")",
   ),
+  // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g, 659.70 kcal (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     4,
     '1–2 quarts peanut or vegetable oil',
     2710187,
     '0.673333',
-    '73.30',
-    '659.70',
+    '65.74',
+    '591.66',
     'auto',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 14.49 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (109.56 g of 229.20 g carbohydrate))",
   ),
   (
     '0690-patatas-bravas.yaml',

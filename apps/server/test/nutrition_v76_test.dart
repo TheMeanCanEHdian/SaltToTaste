@@ -98,7 +98,9 @@ const _sectionRows = [
 
 /// (file, status, per serving, stored batch energy) after the compute.
 const _totals = [
-  (_tart, 'complete', '381.96', '3055.71'),
+  // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |3 at the print
+  // (6.88 → 6.20 g; the replay 381.96 → 381.64): was 381.96, 3055.71.
+  (_tart, 'complete', '381.64', '3053.15'),
   // RE-PIN (M82 batch, v84, C5a): its 2 tablespoons flour |16 15.08 → 17.72
   // g (the replay 469.49 → 471.10): was 469.49, 2816.96.
   (_pastitsio, 'complete', '471.10', '2826.61'),

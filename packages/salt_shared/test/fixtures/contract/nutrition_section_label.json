@@ -2,11 +2,11 @@
   "status": "complete",
   "serving_basis": 1,
   "basis_kind": "per_batch",
-  "calories_per_serving": 1544.71,
+  "calories_per_serving": 1544.07,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 1544.71,
+      "amount": 1544.07,
       "unit": "kcal",
       "dv_percent": 77.2
     },
@@ -51,9 +51,9 @@
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 149.52,
+      "amount": 149.36,
       "unit": "g",
-      "dv_percent": 54.4
+      "dv_percent": 54.3
     },
     "fiber": {
       "label": "Dietary Fiber",
@@ -86,7 +86,7 @@
     },
     "iron": {
       "label": "Iron",
-      "amount": 10.02,
+      "amount": 10.01,
       "unit": "mg",
       "dv_percent": 55.6
     },
@@ -174,7 +174,7 @@
       "dv_percent": 16.7
     }
   },
-  "total_grams": 302.1,
+  "total_grams": 301.9,
   "matched_count": 6,
   "total_count": 6,
   "low_confidence": 0,

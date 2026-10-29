@@ -555,6 +555,7 @@ const List<_Row> _uptakes = [
     null,
     "discarded in cooking — only the part the recipe keeps and the oil the fried food absorbs counted · approximation (frying oil absorbed: 9.89 % of the raw beef's weight — USDA FNDDS 2705842 recipe: 9 g oil per 90.99 g raw beef steak (no record for beef; read as Beef, steak, country fried))",
   ),
+  // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g (the v89 replay's row).
   (
     '0672-buffalo-cauliflower-bites.yaml',
     null,
@@ -562,10 +563,10 @@ const List<_Row> _uptakes = [
     '1–2 quarts peanut or vegetable oil',
     2710187,
     '0.673333',
-    '73.30',
-    '659.70',
+    '65.74',
+    '591.66',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 16.16 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (122.16 g of 229.20 g carbohydrate))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed — derived: 14.49 % of the raw cauliflower's weight — USDA FNDDS 2710042 recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the recipe's batter (109.56 g of 229.20 g carbohydrate))",
   ),
   (
     '0690-patatas-bravas.yaml',

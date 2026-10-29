@@ -85,7 +85,8 @@ void main() {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
-    expect(matcherVersion, 83); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
+    expect(matcherVersion, 84); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -186,7 +187,10 @@ void main() {
       // RE-PIN (M88 batch, v88): the hash at matcherVersion 83 (was
       // fad6332c…; M88 adds no hash term — the version alone: the base tree
       // with only the bump gives this literal).
-      '9a6072a814ac86a7de8636c473be4ce45b895c133a723548291635eb91747e77',
+      // RE-PIN (M90 batch, v89): the hash at matcherVersion 84 (was
+      // 9a6072a8…; M90 adds no hash term — a density-table change — the
+      // version alone: the base tree with only the bump gives this literal).
+      'edf4ea1cd5f69973eecf9417ca5a41e462efd9b62f8efccb3baba9a786d76fe7',
     );
   });
 

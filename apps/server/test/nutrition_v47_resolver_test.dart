@@ -175,7 +175,9 @@ void main() {
           // its BASE, the sibling Basic Single-Crust Pie Dough, 302.1 g (was
           // the no_ingredients rule row, 0 g); the fold still lists the prose
           // section.
-          expect(row.grams, 302.1);
+          // RE-PIN (M90 batch, v89, sugar): the dough's sugar at the print (was
+          // 302.1).
+          expect(row.grams, 301.9);
           expect(row.childRecipeId, base);
           expect(row.description, isNull);
           expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [key]);
@@ -204,7 +206,9 @@ void main() {
           expect(row.childStamp, section.computedAt);
           expect(row.hold, isNull);
           expect(row.status, 'auto');
-          expect(section.totalGrams, 302.1);
+          // RE-PIN (M90 batch, v89, sugar): the dough's sugar at the print (was
+          // 302.1).
+          expect(section.totalGrams, 301.9);
           expect(row.grams, section.totalGrams! * 1.0);
           expect(db.nutritionFor(lemonId)!.status, 'complete');
           expect(fresh(_lemon), isTrue);
@@ -225,7 +229,9 @@ void main() {
           row = rowAt(_lemon, 0);
           // RE-PIN (M51 batch, v52, rule PV): back to its base (was back to
           // the no_ingredients rule row: 0 g, no child, no stamp).
-          expect(row.grams, 302.1);
+          // RE-PIN (M90 batch, v89, sugar): the dough's sugar at the print (was
+          // 302.1).
+          expect(row.grams, 301.9);
           expect(row.childRecipeId, base);
           expect(row.childStamp, db.nutritionFor(base)!.computedAt);
           expect(row.description, isNull);
@@ -389,7 +395,9 @@ void main() {
         // version alone — the base tree with only the bump gives it).
         expect(
           ingredientsHashOf(stored(_chraime), ResolverMemo(db)),
-          '86002b0f4fef402e3c5156c8a4780cd747a3c031ecbfe581d8d5896353c56f57',
+          // RE-PIN (M90 batch, v89): matcherVersion 84 (was 86002b0f…; the
+          // version alone — the base tree with only the bump gives it).
+          '86e6a60eaf04c33541d777a5d0a901582ff9e3d16c04d6714776cd192695f8ef',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

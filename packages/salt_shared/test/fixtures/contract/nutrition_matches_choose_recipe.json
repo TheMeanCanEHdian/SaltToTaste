@@ -169,7 +169,7 @@
         "description": "Sugars, granulated",
         "data_type": "Foundation",
         "confidence": 0.95,
-        "grams": 111.79203,
+        "grams": 111.62619818925727,
         "gram_source": "weight",
         "gram_basis": "from 3 1/2 ounce + 1 tablespoon sugar",
         "status": "auto",

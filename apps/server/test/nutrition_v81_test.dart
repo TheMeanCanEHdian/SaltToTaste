@@ -916,7 +916,8 @@ void critics() {
         _row(db, deep.id, 0).childShare,
         _row(db, deep.id, 0).grams,
       ),
-      (stored(db, doughs[0]).id, 1.0, 642.9),
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 642.9.
+      (stored(db, doughs[0]).id, 1.0, 642.7),
     );
     final sheet = referenceChildJson(
       db,
@@ -926,7 +927,9 @@ void critics() {
       _row(db, deep.id, 0),
       ResolverMemo(db),
     )!;
-    expect(sheet['kcal_per_serving'], 382.09);
+    // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was
+    // 382.09; 3056.69, 382.09; 3519.96, 440.0; 3649.32, 456.17.
+    expect(sheet['kcal_per_serving'], 382.01);
     expect(
       [
         for (final c
@@ -934,9 +937,9 @@ void critics() {
           (c['group'], c['title'], c['kcal'], c['kcal_per_serving']),
       ],
       [
-        ('note_named', 'All-Butter Double-Crust Pie Dough', 3056.69, 382.09),
-        ('note_named', 'Basic Double-Crust Pie Dough', 3519.96, 440.0),
-        ('note_named', 'Foolproof Double-Crust Pie Dough', 3649.32, 456.17),
+        ('note_named', 'All-Butter Double-Crust Pie Dough', 3056.05, 382.01),
+        ('note_named', 'Basic Double-Crust Pie Dough', 3518.69, 439.84),
+        ('note_named', 'Foolproof Double-Crust Pie Dough', 3648.05, 456.01),
       ],
     );
     final source = stored(db, blueberry);
@@ -964,14 +967,15 @@ void critics() {
     final row = _row(db, deep.id, 0);
     expect(
       (row.status, row.childRecipeId, row.childShare, row.grams),
-      ('overridden', basic.id, 1.0, 658.2),
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 658.2.
+      ('overridden', basic.id, 1.0, 657.9),
     );
   });
 
   test("F15: a decided child row re-reads the route's share when its line's "
       "amount moves — 0978's real \"1 recipe double-crust pie dough\" picked "
-      '0972 (1.0, 658.2 g), then written "$amountless" through the real '
-      'updateRecipe (STATED synthesized edit): still 1.0 and 658.2 g after the '
+      '0972 (1.0, 657.9 g), then written "$amountless" through the real '
+      'updateRecipe (STATED synthesized edit): still 1.0 and 657.9 g after the '
       'stale sweep, never a 0 g person row showing share 1.0', () async {
     final (:db, :config) = _store();
     final fdc = await piesLibrary(db);
@@ -990,7 +994,8 @@ void critics() {
 
     expect(
       sig(),
-      '1 recipe double-crust pie dough|overridden|${basic.id}|1.0|658.2',
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 658.2.
+      '1 recipe double-crust pie dough|overridden|${basic.id}|1.0|657.9',
     );
     updateRecipe(db, config, deep.id, {
       'ingredients': [
@@ -998,7 +1003,8 @@ void critics() {
       ],
     });
     expect((await _sweep(db, fdc, BulkScope.stale))['failed'], 0);
-    expect(sig(), '$amountless|overridden|${basic.id}|1.0|658.2');
+    // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 658.2.
+    expect(sig(), '$amountless|overridden|${basic.id}|1.0|657.9');
     expect(nutritionIsFresh(db, stored(db, deepDish)), isTrue);
   });
 
@@ -1204,7 +1210,8 @@ void critics() {
       final lemonId = stored(lemonFile).id;
       expect(
         (_row(db, lemonId, 0).childRecipeId, _row(db, lemonId, 0).grams),
-        (single, 302.1),
+        // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 302.1.
+        (single, 301.9),
       );
       final String moved;
       final double grams;
@@ -1212,7 +1219,8 @@ void critics() {
         updateRecipe(db, config, dough.id, {
           'title': 'Basic Single-Crust and Double-Crust Pie Dough',
         });
-        (moved, grams) = (dough.id, 658.2);
+        // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 658.2.
+        (moved, grams) = (dough.id, 657.9);
       } else {
         const title = 'Single-Crust Pie Dough for Custard Tarts';
         updateRecipe(db, config, dough.id, {
@@ -1224,7 +1232,8 @@ void critics() {
                 .toMap(),
           ],
         });
-        (moved, grams) = (sectionKeyOf(dough.id, title), 302.1);
+        // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 302.1.
+        (moved, grams) = (sectionKeyOf(dough.id, title), 301.9);
       }
       expect(
         resolveReference(
@@ -1392,7 +1401,7 @@ void critics() {
     'Dough for Double-Crust Pie" with its own lines (the real updateRecipe) '
     "moves PV's answer for the SECOND prose section alone — lemon reads "
     'stale at once and ONE sweep re-routes |1 to the new section (1.0, '
-    '669.1 g)',
+    '668.8 g)',
     () async {
       final (:db, :config) = _store();
       final fdc = _fdc();
@@ -1439,8 +1448,10 @@ void critics() {
         return (m.childRecipeId, m.childShare, m.grams);
       }
 
-      expect(routed(0), (single, 1.0, 302.1));
-      expect(routed(p), (butter.id, 1.0, 669.1));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 302.1.
+      expect(routed(0), (single, 1.0, 301.9));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 669.1.
+      expect(routed(p), (butter.id, 1.0, 668.8));
       final before = ingredientsHashOf(stored(lemon.id), ResolverMemo(db));
       final host = stored(butter.id);
       updateRecipe(db, config, butter.id, {
@@ -1473,8 +1484,10 @@ void critics() {
         unorderedEquals([added, lemon.id]),
       );
       expect((await _sweep(db, fdc, BulkScope.stale))['failed'], 0);
-      expect(routed(p), (added, 1.0, 669.1));
-      expect(routed(0), (single, 1.0, 302.1));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 669.1.
+      expect(routed(p), (added, 1.0, 668.8));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 302.1.
+      expect(routed(0), (single, 1.0, 301.9));
       expect(nutritionIsFresh(db, stored(lemon.id)), isTrue);
       expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
     },
@@ -1489,7 +1502,7 @@ void critics() {
     'real 0972; 0972 then given a sibling "Hand Mixed Double-Crust Pie '
     'Dough" with the host\'s own lines (the real updateRecipe) moves PV\'s '
     'answer for the SECOND prose section alone — lemon reads stale at once '
-    'and ONE sweep re-routes |1 to the new section (1.0, 658.2 g)',
+    'and ONE sweep re-routes |1 to the new section (1.0, 657.9 g)',
     () async {
       final (:db, :config) = _store();
       final fdc = _fdc();
@@ -1538,8 +1551,10 @@ void critics() {
         return (m.childRecipeId, m.childShare, m.grams);
       }
 
-      expect(routed(0), (single, 1.0, 302.1));
-      expect(routed(p), (dough.id, 1.0, 658.2));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 302.1.
+      expect(routed(0), (single, 1.0, 301.9));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 658.2.
+      expect(routed(p), (dough.id, 1.0, 657.9));
       final before = ingredientsHashOf(stored(lemon.id), ResolverMemo(db));
       final host = stored(dough.id);
       updateRecipe(db, config, dough.id, {
@@ -1574,8 +1589,10 @@ void critics() {
         unorderedEquals([added, lemon.id]),
       );
       expect((await _sweep(db, fdc, BulkScope.stale))['failed'], 0);
-      expect(routed(p), (added, 1.0, 658.2));
-      expect(routed(0), (single, 1.0, 302.1));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 658.2.
+      expect(routed(p), (added, 1.0, 657.9));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 302.1.
+      expect(routed(0), (single, 1.0, 301.9));
       expect(nutritionIsFresh(db, stored(lemon.id)), isTrue);
       expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
     },
@@ -1588,7 +1605,7 @@ void critics() {
     'Dough ("MAKES ENOUGH FOR ONE 9-INCH PIE": unmeasured, 0 g); that '
     'section\'s yield then written "MAKES ABOUT 4 CUPS" (the real '
     'updateRecipe) — the line reads ½: lemon reads stale at once and ONE '
-    'sweep routes |0 at 0.5 (151.05 g)',
+    'sweep routes |0 at 0.5 (150.95 g)',
     () async {
       final (:db, :config) = _store();
       final fdc = _fdc();
@@ -1645,7 +1662,8 @@ void critics() {
         unorderedEquals([single, lemon.id]),
       );
       expect((await _sweep(db, fdc, BulkScope.stale))['failed'], 0);
-      expect(row0(), (single, 0.5, 151.05, 'recipe'));
+      // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was 151.05.
+      expect(row0(), (single, 0.5, 150.95, 'recipe'));
       expect(nutritionIsFresh(db, stored(lemon.id)), isTrue);
       expect(bulkScopeIds(db, BulkScope.stale), isEmpty);
     },

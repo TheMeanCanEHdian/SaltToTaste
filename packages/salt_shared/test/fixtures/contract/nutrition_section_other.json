@@ -2,11 +2,11 @@
   "status": "complete",
   "serving_basis": 8,
   "basis_kind": "per_serving",
-  "calories_per_serving": 488.29,
+  "calories_per_serving": 488.21,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 488.29,
+      "amount": 488.21,
       "unit": "kcal",
       "dv_percent": 24.4
     },
@@ -51,7 +51,7 @@
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 56.41,
+      "amount": 56.39,
       "unit": "g",
       "dv_percent": 20.5
     },
@@ -174,7 +174,7 @@
       "dv_percent": 11.7
     }
   },
-  "total_grams": 1788.6,
+  "total_grams": 1788.4,
   "matched_count": 13,
   "total_count": 13,
   "low_confidence": 0,

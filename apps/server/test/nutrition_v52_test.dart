@@ -521,8 +521,11 @@ void main() {
           '1 recipe Foolproof Whole-Wheat Dough for Double-Crust Pie (this page)',
           allButter,
           'Foolproof All-Butter Dough for Double-Crust Pie',
-          669.1,
-          586.77,
+          // RE-PIN (M90 batch, v89, sugar): the dough's sugar at the print
+          // (the replay 669.10 → 668.80 g, 586.77 → 585.33): was 669.1,
+          // 586.77.
+          668.8,
+          585.33,
           9,
         ),
         (
@@ -530,8 +533,10 @@ void main() {
           '1 recipe Single-Crust Pie Dough for Custard Pies (this page), fitted into a 9-inch pie plate and chilled',
           single,
           'Basic Single-Crust Pie Dough',
-          302.1,
-          435.07,
+          // RE-PIN (M90 batch, v89, sugar): the replay 302.10 → 301.90 g,
+          // 435.07 → 434.57: was 302.1, 435.07.
+          301.9,
+          434.57,
           14,
         ),
       ]) {
@@ -556,7 +561,9 @@ void main() {
       expect(rowAt(_lemon, 0).childRecipeId, isNot(stored(_dough).id));
       expect(
         batchTotalsOf(db.nutritionFor(stored(_dough).id)!)['energy'],
-        closeTo(3519.96, 0.005),
+        // RE-PIN (M90 batch, v89, sugar): the host's sugar at the print (the replay
+        // 3,519.96 → 3,518.69): was 3519.96.
+        closeTo(3518.69, 0.005),
       );
       expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [
         keyOf(_dough, 'Single-Crust Pie Dough for Custard Pies'),
@@ -862,7 +869,9 @@ void main() {
 
     // The batch a gain routes: Basic Single-Crust's 302.1 g (the PV pin's);
     // panna-cotta's six lines 244.00 + 6.42 + 716.86 + 0 + 75.41 + 0.40 (the
-    // v51 replay's rows) = 1,043.1 g.
+    // v51 replay's rows) = 1,043.1 g. RE-PIN (M90 batch, v89, sugar): 301.9
+    // g, and the panna cotta's sugar |4 75.41 → 74.42 g (the v89 replay's
+    // row) = 1,042.1 g.
     for (final (what, raw, first, then, folded, gains, grams) in [
       (
         'the prose section GAINS lines',
@@ -871,7 +880,8 @@ void main() {
         doughGained,
         () => keyOf(_dough, custard),
         true,
-        302.1,
+        // RE-PIN (M90 batch, v89, sugar): was 302.1.
+        301.9,
       ),
       (
         'the section LOSES its lines',
@@ -889,7 +899,8 @@ void main() {
         () => loadCorpusRecipe(flanFile).copyWith(ingredients: basicLines()),
         () => loadCorpusRecipe(flanFile).id,
         true,
-        302.1,
+        // RE-PIN (M90 batch, v89, sugar): was 302.1.
+        301.9,
       ),
       (
         'panna-cotta (nested: its |6 coulis line) loses its reference line',
@@ -898,7 +909,8 @@ void main() {
         pannaUnnested,
         () => loadCorpusRecipe(_panna).id,
         true,
-        1043.1,
+        // RE-PIN (M90 batch, v89, sugar): was 1043.1.
+        1042.1,
       ),
     ]) {
       test(

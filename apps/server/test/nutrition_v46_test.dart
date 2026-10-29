@@ -749,7 +749,9 @@ void main() {
       final cream = await computeSection(_roulade, 'Espresso-Mascarpone Cream');
       for (final (key, lines, grams) in [
         (blend, 5, 1197.8),
-        (cream, 4, 636.7),
+        // RE-PIN (M90 batch, v89, confectioners' sugar): the cream's 6 tablespoons
+        // at the print (the replay 636.70 → 634.00 g): was 636.7.
+        (cream, 4, 634.0),
       ]) {
         final n = db.nutritionFor(key)!;
         expect(
@@ -775,13 +777,14 @@ void main() {
           '228.15',
           'from the recipe $_blend: 228 g, 827 kcal',
         ),
+        // RE-PIN (M90 batch, v89, confectioners' sugar: its child moves): was 636.70 g, 2207.04 kcal (the v89 replay's row).
         (
           _roulade,
           10,
           cream,
           '1.000000',
-          '636.70',
-          'from the recipe Espresso-Mascarpone Cream: 637 g, 2,207 kcal',
+          '634.00',
+          'from the recipe Espresso-Mascarpone Cream: 634 g, 2,196 kcal',
         ),
       ]) {
         final recipe = stored(file);

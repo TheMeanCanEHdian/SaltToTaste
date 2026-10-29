@@ -317,8 +317,9 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 83 (v88, batch M88: rows move)', () {
-    expect(matcherVersion, 83);
+  test('matcherVersion 84 (v88 set it to 83, batch M88: rows move)', () {
+    // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
+    expect(matcherVersion, 84);
   });
 
   test("pin (7) — the figures: FNDDS 2706442's two inputs by sequenceNumber "

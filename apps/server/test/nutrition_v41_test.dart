@@ -621,14 +621,20 @@ void main() {
 
     test('R1: each routed line counts its child × 1 [7.1]', () {
       for (final (file, position, child, grams, kcal, perServing, status) in [
-        (_blueberry, 0, _allButter, 642.9, 3056.69, 571.51, 'complete'),
+        // RE-PIN (M90 batch, v89; K-5, the whole-recipe dough children): the
+        // doughs' sugar at the corpus's printed 7 ounces a cup, the graham
+        // crust's too (the replay 642.90 → 642.70 g, 3,056.69 → 3,056.05;
+        // 220.60 → 220.10 g, 1,135.14 → 1,133.23; each parent by the replay's
+        // delta): was 642.9, 3056.69, 571.51; 642.9, 3056.69, 597.13; 220.6,
+        // 1135.14, 273.62; 220.6, 1135.14, 450.14; 220.6, 1135.14, 598.27.
+        (_blueberry, 0, _allButter, 642.7, 3056.05, 571.43, 'complete'),
         // v43 (Y8): its two apple lines × 0.78 (AH-102 item 17).
-        (_deepDish, 0, _allButter, 642.9, 3056.69, 597.13, 'complete'),
-        (_summerBerry, 7, _graham, 220.6, 1135.14, 273.62, 'complete'),
+        (_deepDish, 0, _allButter, 642.7, 3056.05, 596.97, 'complete'),
+        (_summerBerry, 7, _graham, 220.1, 1133.23, 272.10, 'complete'),
         // RE-PIN (M47 batch, v49 Q6): its 4 tsp lime zest plus ½ cup juice
         // counts, two parts (was 445.87, partial).
-        (_keyLime, 3, _graham, 220.6, 1135.14, 450.14, 'complete'),
-        (_coconut, 9, _graham, 220.6, 1135.14, 598.27, 'complete'),
+        (_keyLime, 3, _graham, 220.1, 1133.23, 449.90, 'complete'),
+        (_coconut, 9, _graham, 220.1, 1133.23, 597.91, 'complete'),
         // v44: its |5 now routes to its own One-Minute Salsa (+23.00).
         // RE-PIN (M82 batch, v84, C3a; critic K-5's whole-recipe hop): the
         // guacamole's garlic clove at its printed ¼ teaspoon, and the salsa's
@@ -638,7 +644,9 @@ void main() {
         // its juice (Q6; was 399.33), the fruit tart's kiwis 150 g (Q12; was
         // 547.59, partial).
         (_lemonTart, 0, _tartDough, 401.8, 1870.07, 403.79, 'partial'),
-        (_fruitTart, 7, _tartDough, 401.8, 1870.07, 559.79, 'complete'),
+        // RE-PIN (M90 batch, v89, cornstarch): its pastry cream's cornstarch
+        // |4 at the print (the replay 559.80 → 558.51): was 559.79.
+        (_fruitTart, 7, _tartDough, 401.8, 1870.07, 558.51, 'complete'),
       ]) {
         final parent = r(file);
         final row = rowAt(parent, position);
@@ -667,7 +675,8 @@ void main() {
       final row = rowAt(blueberry, 0);
       expect(
         gramBasisFor(db, line, row, recipe: stored(blueberry)),
-        'from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,057 kcal',
+        // RE-PIN (M90 batch, v89, sugar): was 3,057 kcal.
+        'from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,056 kcal',
       );
       expect(
         compositeFlagOf(db, stored(blueberry), line, row, ResolverMemo(db)),
@@ -692,18 +701,21 @@ void main() {
       // parent_kind (A4, F12): the title's last word when pie, tart or
       // quiche, else recipe — never "crust" (verify3 D3).
       for (final (slug, position, child, grams, flagged, parentKind) in [
-        ('classic-apple-pie', 0, _allButter, 642.9, true, 'pie'),
-        ('sweet-cherry-pie', 0, _allButter, 642.9, true, 'pie'),
+        // RE-PIN (M90 batch, v89, sugar): the dough 642.70 g (was 642.9).
+        ('classic-apple-pie', 0, _allButter, 642.7, true, 'pie'),
+        ('sweet-cherry-pie', 0, _allButter, 642.7, true, 'pie'),
+        // RE-PIN (M90 batch, v89, sugar): the single-crust dough 334.40 g
+        // (was 334.6).
         (
           'chocolate-cream-pie-with-all-butter-crust',
           0,
           _single,
-          334.6,
+          334.4,
           false,
           'recipe',
         ),
         // D2: its note names ONE dough — routed, unflagged.
-        ('peach-tarte-tatin', 0, _single, 334.6, false, 'recipe'),
+        ('peach-tarte-tatin', 0, _single, 334.4, false, 'recipe'),
         ('nutella-tart', 0, _tartDough, 401.8, false, 'tart'),
       ]) {
         final parent = db.recipeByIdOrSlug(slug)!.recipe;
@@ -746,7 +758,9 @@ void main() {
       expect(label(tart).status, 'partial');
       expect(label(tart).matchedCount, 5);
       // v43 (Y8): its two peeled, cored apple pounds × 0.78 (AH-102 item 17).
-      expect(label(tart).caloriesPerServing, closeTo(143.11, 0.005));
+      // RE-PIN (M90 batch, v89, sugar): its sugar's plus part at the print (the
+      // replay 143.11 → 143.00): was 143.11.
+      expect(label(tart).caloriesPerServing, closeTo(143.0, 0.005));
       expect(fresh(tart), isTrue);
 
       final tips = r(_steakTips);
@@ -1100,7 +1114,8 @@ void main() {
         final row = rowAt(blueberry, 0);
         expect(row.status, 'confirmed');
         expect(row.childRecipeId, allButter.id);
-        expect(row.grams, closeTo(642.9, 0.05));
+        // RE-PIN (M90 batch, v89, sugar): was 642.9.
+        expect(row.grams, closeTo(642.7, 0.05));
         expect(row.gramSource, 'recipe');
         expect(bucketOf(row), MatchBucket.counted);
         // D6: a person's decision clears the default flag.
@@ -1117,7 +1132,8 @@ void main() {
         await matchesBody(db, provider, stored(blueberry)),
         0,
       );
-      expect(match['grams'], closeTo(642.9, 0.05));
+      // RE-PIN (M90 batch, v89, sugar): was 642.9.
+      expect(match['grams'], closeTo(642.7, 0.05));
       expect(match['gram_source'], 'recipe');
       expect(match['status'], 'confirmed');
       await compute(blueberry); // the next compute keeps it
@@ -1132,7 +1148,9 @@ void main() {
       expect(picked.status, 'overridden');
       expect(picked.childRecipeId, basic.id);
       expect(picked.grams, closeTo(label(basic).totalGrams!, 1e-9));
-      expect(childKcal(picked), closeTo(3519.96, 0.05));
+      // RE-PIN (M90 batch, v89, sugar): Basic Double-Crust's sugar at the
+      // print (the replay 3,519.96 → 3,518.69): was 3519.96.
+      expect(childKcal(picked), closeTo(3518.69, 0.05));
       expect(label(deepDish).status, 'complete');
       expect(fresh(deepDish), isTrue);
       parity();
@@ -1271,7 +1289,8 @@ void main() {
       final again = rowAt(summer, 7);
       expect(again.status, 'confirmed');
       expect(again.hold, isNull);
-      expect(again.grams, closeTo(220.6, 0.05));
+      // RE-PIN (M90 batch, v89, sugar): the crust's sugar at the print (was 220.6).
+      expect(again.grams, closeTo(220.1, 0.05));
       expect(again.childStamp, label(crust).computedAt);
       for (final (i, parent) in parents.indexed.skip(1)) {
         final row = rowAt(parent, at[files[i]]!);
@@ -1300,7 +1319,8 @@ void main() {
         expect(row.status, 'overridden');
         expect(row.gramSource, 'recipe');
         expect(row.childShare, 0.5);
-        expect(row.grams, closeTo(321.45, 1e-9));
+        // RE-PIN (M90 batch, v89, sugar): half of 642.70 (was 321.45).
+        expect(row.grams, closeTo(321.35, 1e-9));
         expect(batchKcal(blueberry), closeTo(whole - dough / 2, 0.01));
       }
 

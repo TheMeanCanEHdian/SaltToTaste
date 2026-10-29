@@ -1030,7 +1030,8 @@ void main() {
       // A fresh compute here; the replay's v63 → v64 in the comment (the
       // absolute figures can differ by the energies the fixtures' search
       // hits round, as M63's note says).
-      expect(of(_cobbler), ('complete', '297.32')); // partial 250.28 → 297.32
+      // RE-PIN (M90 batch, v89): the replay 297.32 → 296.37: was 297.32.
+      expect(of(_cobbler), ('complete', '296.37')); // partial 250.28 → 297.32
       // RE-PIN (M72 batch, v72, R-Y): 283.63 (was 290.37) — its 1½ pounds
       // of sprouts trimmed at AH-102 item 423's 90 % (replay 290.36 →
       // 283.61).
@@ -1040,7 +1041,8 @@ void main() {
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 480.88.
       // RE-PIN (M82 batch, v84): was 484.57 (the replay 484.52 → 483.39).
       expect(of(_norma), ('complete', '483.44')); // partial 443.35 → 480.91
-      expect(of(_tamales), ('complete', '719.31')); // partial 719.39 → 719.39
+      // RE-PIN (M90 batch, v89): the replay 719.39 → 719.28: was 719.31.
+      expect(of(_tamales), ('complete', '719.20')); // partial 719.39 → 719.39
       expect(of(_nikujaga).$1, 'partial'); // its unmatched katsuobushi
       expect(of(_rainbow).$1, 'complete');
     });
