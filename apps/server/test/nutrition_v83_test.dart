@@ -892,7 +892,9 @@ void main() {
         // 3d506465…; the version alone — the arm kept at 85 gives 3d506465).
         // RE-PIN (M89 batch, v92): the hash at matcherVersion 87 (was
         // 7d5dc015…; the version alone — the arm with 86 put back gives 7d5dc015).
-        '23ff46095399c60dc76d8de30d43aa68b436704e0d4144753f31e1b3c9c7bcd6',
+        // RE-PIN (M91 batch, v93): the hash at matcherVersion 88 (was
+        // 23ff4609…; the version alone — the keys with 87 put back give 23ff4609).
+        '62e9afcd527c5224f95517a40329006ea6e7fff395fa914056054cf3c9ee30e2',
       );
     });
   });

@@ -1310,8 +1310,15 @@ void main() {
     // searches and the detail of SR 170886 (low-fat plain yogurt — a hit in
     // 'plain yogurt' and two more, equal in every digit): compared 550 ->
     // 551, differ 420 unchanged.
-    expect(compared, 551);
-    expect(differ, 420);
+    // RE-PIN (v93, batch M91): its whole-recipe pins recorded from snapshot
+    // 30 the 'soft tofu', 'fermented black beans', 'sichuan chili powder',
+    // 'asian broad bean chili paste' and 'asian broad-bean chili paste'
+    // searches and the detail of FNDDS 2707359 (black beans — a hit in
+    // 'black beans' and 'fermented black beans'; carbohydrate 22.04 /
+    // 22.0), differing in some digit: compared 551 -> 552, differ 420 ->
+    // 421.
+    expect(compared, 552);
+    expect(differ, 421);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -139,7 +139,8 @@ const Map<String, String> _synonyms = {
 /// v85: matcher v90 (batch M86) — Foundation energy: 958 before 957.
 /// v86: matcher v91 (batch M87) — the own-section rice route (two-word tail).
 /// v87: matcher v92 (batch M89) — the grilled pizza's repeat multiplier.
-const int matcherVersion = 87;
+/// v88: matcher v93 (batch M91) — doubanjiang on the miso record.
+const int matcherVersion = 88;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2191,6 +2192,17 @@ const Map<String, (String, String)> _rankAs = {
     'lamb rib separable lean and fat choice raw',
     'lamb rib separable lean and fat choice raw',
   ),
+  // v93 (batch M91, prep51 design_v2 §1 Q7 (i) option (a), ruled by the
+  // owner 2026-10-29; pE E2a): FDC holds no doubanjiang — the lines' own
+  // answers (both spellings) hold chili stews and FNDDS 2710309 "Bean paste,
+  // sweetened", no miso, and land SR 172110 "Chili with beans, microwavable
+  // bowls" below the gate. A stand-in by class (a fermented bean paste;
+  // mapo tofu's prep notes: "also known as doubanjiang or toban djan") on
+  // the shipped doenjang form (S3): the cached 'white miso' answer (SR
+  // 172442 "Miso" at index 1, its detail cached) ranked under 'miso';
+  // flagged ([approximationRecords]). [re-point → `item`]
+  'asian broad bean chili paste': ('white miso', 'miso'),
+  'asian broad-bean chili paste': ('white miso', 'miso'),
 };
 
 /// v49 (M47 Q23 (a)): items FDC holds no record of in the three datasets it
@@ -3205,6 +3217,9 @@ const Map<String, int> approximationRecords = {
   'kasseri cheese': 170850,
   // v76 (M79, Q9 (a); [_rankAs]): crystallized ginger on candied fruit.
   'crystallized ginger': 167781,
+  // v93 (M91, Q7 (i) (a); [_rankAs]): doubanjiang on miso.
+  'asian broad bean chili paste': 172442,
+  'asian broad-bean chili paste': 172442,
 };
 
 /// Whether the food [fdcId] ([description]) on the line [raw], whose

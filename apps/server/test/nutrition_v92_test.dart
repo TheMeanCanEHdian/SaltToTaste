@@ -119,8 +119,9 @@ Future<(String, String?)?> _weigh(Recipe r, int position) async {
 }
 
 void main() {
-  test('matcherVersion 87 (v92, batch M89: one row moves)', () {
-    expect(matcherVersion, 87);
+  test('matcherVersion 88 (v92 set it to 87, batch M89: one row moves)', () {
+    // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
+    expect(matcherVersion, 88);
   });
 
   group('clause (1): the counted repeat on real sentences', skip: skipIfNoCorpus, () {

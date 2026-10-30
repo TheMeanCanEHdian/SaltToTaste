@@ -5158,6 +5158,87 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v93 (batch M91; matcherVersion 88 — doubanjiang as miso: the
+Asian broad-bean chili paste on SR 172442 "Miso", flagged; 2 rows; prep51
+design_v2 §1 Q7 (i) option (a) / §2 M91, ruled by the owner 2026-10-29;
+zero requests; replayed on snapshot 30 against the v92 rows, both orders
+byte-identical, the four keys reverted alone reproducing v92 byte for
+byte, calls 0).** Q7 (ii), the drained white tuna (pan-bagnat|14 at SR
+173708's drained share, 333.84 g), already shipped in v84 (batch M82, C6b)
+and is not part of this batch.
+- **The rule (`_rankAs` + `approximationRecords`, matcher.dart — two table
+  entries each).** FDC holds no doubanjiang: the lines' own cached answers
+  ('asian broad bean chili paste', 'asian broad-bean chili paste' — the
+  same 25 records) hold chili stews, FNDDS 2710309 "Bean paste, sweetened"
+  and fruit / nut pastes, no miso, and landed SR 172110 "Chili with beans,
+  microwavable bowls" at 0.09, below the gate (0 kcal). Both spellings now
+  read the shipped doenjang form ('white miso', 'miso'): the cached 'white
+  miso' answer (SR 172442 "Miso" at index 1, its detail cached — 198 kcal
+  (208), portions tbsp 17 g, cup 275 g; FNDDS 2707439, index 0, has no
+  cached detail) ranked under the words 'miso', where 172442 ranks first
+  at 1.0 — a rank-as read, never a query rewrite (the v87 lesson).
+  `approximationRecords` flags the record for both keys, so the basis
+  reads "· approximation (counted as Miso)" through `isApproximation`. A
+  stand-in by class (a fermented bean paste; mapo tofu's prep notes: "also
+  known as doubanjiang or toban djan"); ATK's printed swap, 2 teaspoons of
+  chili-garlic paste or sriracha for the 2 tablespoons (option (b)), is a
+  different amount and was not built. [re-point → `item`]
+- **Reach (fix93 gate1, the v92 rows; `auto`, 0 person rows).** Two rows,
+  the corpus's only lines printing the paste (a third, in
+  braised-eggplant's variation, is not computed):
+  sichuan-stir-fried-pork-in-garlic-sauce|15 "2 tablespoons Asian
+  broad-bean chili paste" 30.50 g on 172110 → 34.00 g on 172442, 67.32
+  kcal, basis "2 tablespoon · USDA portion · approximation (counted as
+  Miso)"; mapo-tofu-sichuan-braised-tofu-with-beef|6 "⅓ cup Asian broad
+  bean chili paste" 81.33 g → 91.67 g, 181.50 kcal, "1/3 cup · USDA
+  portion · approximation (counted as Miso)". ROW +248.82 (the design's
+  +248.83 priced the mapo row at the rounded 91.67 g; ⅓ × 275 = 91.6667 g
+  × 1.98 = 181.50); recipe energy 3,379,364.97 → 3,379,613.77 = +248.80
+  over 2 recipes (servings 4: sichuan 400.29 → 417.12, mapo tofu 528.74 →
+  574.11 — the cents are per-serving rounding). Mapo tofu turns complete
+  (15 of 15 counted; total grams 1,885.3 → 1,977.0); sichuan stays partial
+  (its baking soda has no grams; 954.2 → 988.2). Buckets: check 120 → 118,
+  counted 13,428 → 13,430, complete 1,054 → 1,055, partial 144 → 143.
+  Sections, holds, notes and calls identical; staleAfter 0, sectionsStale
+  0; a recompute writes nothing.
+Attribution: the four keys reverted alone (matcherVersion 88 kept) give
+v92's rows, recipes, sections, calls, notes and buckets byte for byte; the
+space spelling's two keys alone move exactly mapo-tofu|6, the hyphen's
+exactly sichuan|15; 0 unattributed.
+Calibration (reported, never fitted): neither recipe is in an audit 2–6
+calibration set (unchanged); audit 6's line sample L010 (sichuan|15, food
+WRONG) now reads the stand-in.
+Person path: no hunk touches nutrition_handlers.dart, `derivedFor`,
+`applyDecisionToOthers` or `decisionRecordOf`, so GATE-P was not run.
+Pins: nutrition_v93_test (7 tests — matcherVersion 88; on the real lines
+both spellings read `rankAsFor` = the doenjang entry and flag 172442,
+never 172110; the converse sauteed-tilapia|3 "2 tablespoons white miso" is
+no key and stays on its own answer, 172442 at 0.575 unflagged, 34.00 g;
+each line alone on the fixtures (the v37 S3 form): 34.00 g / 91.67 g at
+1.0 with their flagged bases; the two whole recipes on the fixtures equal
+the replay — both rows, 417.12 and 574.11 a serving, total grams 988.2 and
+1,977.0 —; a second compute writes nothing). The fixtures gain the
+snapshot's 'soft tofu', 'fermented black beans' and 'sichuan chili powder'
+answers, the two lines' own answers (read only when a key is dropped) and
+FNDDS 2707359's detail (tool/record_fdc_fixtures.dart --from-db). Each
+mutant killed by a value pin (snapshot copy, anchor count 1, cmp
+restore): the hyphen spelling's rank-as key dropped (sichuan|15 back on
+172110 at 0.09, held, the recipe at v92's 400.29 and 954.2 g), the space
+spelling's (mapo-tofu|6 on 172110), either approximation key dropped (the
+basis unflagged), the rank words 'white miso' for 'miso' (172442 at
+0.575, not 1.0), the flag on 172110 for 172442 (unflagged),
+matcherVersion 87. The existing suite re-pinned as equalities (RE-PIN
+M91): ten version literals (v84–v92, seasoning_ci) and three hashes
+(seasoning_ci, v47_resolver, v83 F5c — the version alone: with 87 put
+back they read their old literals); the sweep audit's fixture census
+(2707359's detail differs from its hits in some digit: compared 551 → 552,
+differ 420 → 421); no numeric bound widened, nothing deleted.
+Cost: no new reader — two entries in two shipped tables read by the
+shipped rank-as path; no cap shape.
+Deploy note: matcherVersion 88 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 2 recipes' stored totals move (no
+users).
+
 **Matcher v92 (batch M89; matcherVersion 87 — the repeat multiplier: a
 counted "repeat with remaining <N> <piece>" repeats its step's prints; 1
 row; prep51 design_v2 §1 Q5 option (c) / §2 M89, ruled by the owner

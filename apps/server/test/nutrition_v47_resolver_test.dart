@@ -403,7 +403,9 @@ void main() {
           // version alone — the arm kept at 85 gives cebd99a5).
           // RE-PIN (M89 batch, v92): matcherVersion 87 (was 23da6720…; the
           // version alone — the arm with 86 put back gives 23da6720).
-          '8af34e557951c23d88bfc677418960395230ccfcfa6a102ab37c1ab97d4d1bcb',
+          // RE-PIN (M91 batch, v93): matcherVersion 88 (was 8af34e55…; the
+          // version alone — the keys with 87 put back give 8af34e55).
+          '2961df6ae411ec716599489e3a1c2d20d8e27a72d4136b2c5ece41ef98ef0578',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(
