@@ -3570,19 +3570,23 @@ const List<_Row> _unmoved = [
     '8.01',
     '2 teaspoon · USDA portion of "Garlic, raw"',
   ),
+  // RE-PIN (M87 batch, v91, Q1 (b′)): the line names its own "Basic White
+  // Rice" (the two words both end in, at its printed yield) — a `recipe` row
+  // at 1.0: was 2708408 'Rice, white, cooked, no added fat' 0.990000,
+  // 790.00 g, 1019.10 kcal, '5 cup · USDA portion'.
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
     null,
     9,
     '5 cups cold cooked white rice, large clumps broken up with fingers',
-    2708408,
-    'Rice, white, cooked, no added fat',
-    '0.990000',
-    '790.00',
+    null,
+    '',
+    '1.000000',
+    '402.20',
     'auto',
     null,
-    '1019.10',
-    '5 cup · USDA portion',
+    '1486.68',
+    'from the recipe Basic White Rice: 402 g, 1,487 kcal',
   ),
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
@@ -3797,13 +3801,15 @@ const List<(String, String?, String, String, String, String)> _totals = [
     '1620.95',
   ),
   // RE-PIN (M82 batch, v84): was 580.41, 2321.62 (the replay 580.41 → 580.26).
+  // RE-PIN (M87 batch, v91, Q1 (b′)): |9 routed to its own Basic White Rice
+  // (+467.58; the replay 580.26 → 697.16): was 580.26, 2321.05.
   (
     '0521-fried-rice-with-shrimp-pork-and-shiitakes.yaml',
     null,
     'complete',
     'complete',
-    '580.26',
-    '2321.05',
+    '697.16',
+    '2788.63',
   ),
 ];
 

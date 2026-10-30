@@ -3126,14 +3126,14 @@ void review71() {
               Subsection(
                 title: switch (kind) {
                   'quiet' => 'Section $i Sauce',
-                  'rtail1' =>
+                  'rtail1' || 'rtail2' =>
                     i == 0 ? 'Classic Pizza Dough' : 'Section $i Sauce',
                   _ => 'Classic $i Pizza Dough',
                 },
                 kind: 'component',
                 servings: switch (kind) {
                   'dtail' => 'MAKES ${i + 2} POUNDS',
-                  'rtail' || 'rtail1' => 'MAKES 1 POUND',
+                  'rtail' || 'rtail1' || 'rtail2' => 'MAKES 1 POUND',
                   _ => 'MAKES 2 POUNDS',
                 },
                 ingredients: [
@@ -3146,11 +3146,14 @@ void review71() {
               items: [
                 for (var i = 0; i < capLines; i++)
                   ln(
-                    pad(
-                      kind == 'ref'
-                          ? '1 pound pizza dough (recipe follows), $i '
-                          : '1 pound pizza dough, $i ',
-                    ),
+                    pad(switch (kind) {
+                      'ref' => '1 pound pizza dough (recipe follows), $i ',
+                      // v91 (M87): the two-word arm's TRUE path — "cold
+                      // pizza dough" is no tail of the title; its last two
+                      // words are.
+                      'rtail2' => '1 pound cold pizza dough, $i ',
+                      _ => '1 pound pizza dough, $i ',
+                    }),
                   ),
               ],
             ),
@@ -3303,8 +3306,15 @@ void review71() {
       // verify4 D2: the TRUE path, the shape rule 1 exists for — every line
       // a reference by the yield-named tail: rtail1 routes each to its one
       // section (as the tart's line), rtail's 60 qualifying sections hold
-      // each (the resolver's own list, ambiguous).
-      for (final (kind, routes) in [('rtail', false), ('rtail1', true)]) {
+      // each (the resolver's own list, ambiguous). v91 (batch M87): rtail2,
+      // rtail1 with every line "1 pound cold pizza dough, i" — the two-word
+      // arm's TRUE path (the base routes none: its first test refuses each
+      // pair before any read); the same reads, once per line (fix91).
+      for (final (kind, routes) in [
+        ('rtail', false),
+        ('rtail1', true),
+        ('rtail2', true),
+      ]) {
         test('ROUTING CAP SHAPE ($kind): every line names its own section at '
             'its yield (${routes ? 'routed to its one section' : 'held: 60 '
                       'own sections qualify'}); compute, GET and recompute '

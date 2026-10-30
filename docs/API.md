@@ -1090,7 +1090,8 @@ child sections only.
 - **Which sections are children** (S2 (a), referenced only): a section a
   main reference line resolves to, one a "(recipes follow)" line lists (rule
   PO, below), or one an unmarked line names (A9; since matcher v76 also by
-  the yield-named tail — M76 below) — 140 on snapshot 19 (936 lines); 144
+  the yield-named tail — M76 below; since v91 by a two-word shared tail —
+  M87) — 140 on snapshot 19 (936 lines); 144
   on snapshot 27 at matcher v76 (caramelized-onion-pear-and-bacon-tart's
   "Classic Pizza Dough" the 144th). A prose section (no ingredient lines) is never one. The bulk
   order is [child sections, recipes that read none, parents]; a section
@@ -5157,6 +5158,105 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v91 (batch M87; matcherVersion 86 — the own-section rice route:
+an unmarked line names its recipe's own section by a TWO-word shared tail
+at the section's printed yield; 1 row; prep51 design_v2 §1 Q1 option (b′) /
+§2 M87, ruled by the owner 2026-10-29; zero requests; replayed on snapshot
+30 against the v90 rows, both orders byte-identical, the rule reverted
+alone reproducing v90 byte for byte, calls 0).** The two-word tail:
+- **The rule (`_yieldTailOf`, engine.dart — M76's yield-named tail).** The
+  closure's first test (the reference item is the TAIL of the section's
+  title) gains one arm: or the title's last two words are the last two of
+  an item of three or more words (the title may be those two words alone);
+  whole words, never one shared word. A shorter item keeps M76's test alone
+  (its two shared words are the whole item; equality stays A9's form). The
+  mark, the yield guard (the line's share of the section's printed yield is
+  exactly 1.0), the memo keys and every reader are unchanged —
+  `namesOwnSection` (so `isReferenceIn`, the stale hash, the bulk parent
+  test and `routedSectionKeysOf` follow) and the resolver's `_ownTitles`.
+  [re-point → `item`]: it reads the parsed item through `referenceItemOf`,
+  never the raw line. The prep-note pointer (option (c)) is not built.
+- **Reach (fix91 gate, the v90 rows; all `auto`, 0 person rows).** One row:
+  fried-rice-with-shrimp-pork-and-shiitakes|9 "5 cups cold cooked white
+  rice, large clumps broken up with fingers" (FNDDS 2708408, 790.00 g, 5 cup
+  · USDA portion, 1,019.10 kcal) → a `recipe` row on its own "Basic White
+  Rice" (MAKES ABOUT 5 CUPS; already stamped through red-beans-and-rice|14)
+  at share 1.000000: 402.20 g, 1,486.68 kcal, basis "from the recipe Basic
+  White Rice: 402 g, 1,487 kcal" — ROW +467.58 (the design's +423.61 at
+  957; the section's Foundation 2512381 rice reads 958 since v90, K-4's
+  +43.97). Recipe energy 3,378,186.01 → 3,378,653.61 = +467.60 over 1
+  recipe (2 cents: per-serving rounding on both sides — 2,321.05 ÷ 4 =
+  580.2625 → 580.26, 2,788.63 ÷ 4 = 697.1575 → 697.16; the batch delta
+  is +467.58); per serving 580.26 → 697.16 (servings 4), total grams
+  1,791.20 → 1,403.40 (the section's raw rice, not cooked mass). The
+  section gains fried-rice
+  as its second parent (red-beans-and-rice, fried-rice); its grams, batch
+  energy and status are unchanged. Buckets: routed-section rows 65 → 66,
+  `recipe` rows 117 → 118; statuses, holds, notes and calls identical; 0
+  sections stale. The other shared-tail pairs stay off by the yield (0521|10
+  "1 cup bean sprouts" against "Fried Rice with Peas and Bean Sprouts",
+  SERVES 4 TO 6) or by the floor (every one-word pair, e.g.
+  fresh-strawberry-mousse|5 heavy cream / "Lemon Whipped Cream" at ½,
+  juicy-grilled-turkey-burgers|4 soy sauce / its three burger sauces): no
+  corpus one-word pair reads the full yield.
+- **R14's hash gains the reference terms** (prep notes, sections, groups —
+  `ingredientsHashOf`); it re-stamps once, as its row moves anyway.
+- **A pick of the whole fried-rice host** (red-beans-and-rice|14 with
+  `child` the host, no section — no corpus row, no stored decision) is now
+  held `nested_recipe` at 0 g: the host itself reads a sub-recipe (the
+  shipped depth-1 rule, `_childRowOf`), as every host routing a line to a
+  section already is; a pick of the section is unchanged (402.2 g).
+Attribution: the arm reverted alone (matcherVersion 86 kept) gives v90's
+rows, recipes, sections, calls, notes and buckets byte for byte; 0
+unattributed.
+Calibration (reported, never fitted; v90 → v91 per serving): audit 6 R14
+fried-rice 580.26 → 697.16 against the hand 675.36: −14.08 → +3.23 % (the
+design's +3.2 % with M86's 958; calibrator 2 priced the section's rice at
+957, so the hand is itself low by K-4's 11 kcal a serving); audit 6 median
+|error| 5.32 → 4.35 %; no other audit recipe is reached (audits 2–5
+unchanged: median 6.77 %).
+Person path: the routed row is gated by `subRecipeRowFor` (a food pick
+re-gated to the 0 g reference row; `child` / `section` / `share`, skip or
+typed grams re-point it); no hunk touches nutrition_handlers.dart,
+`derivedFor`, `applyDecisionToOthers` or `decisionRecordOf`, so GATE-P was
+not run.
+Pins: nutrition_v91_test (11 tests — matcherVersion 86; fried-rice|9 on
+the corpus line (the item, the yield's share 1.0, M76's tail refusing,
+the arm naming it); the converses fried-rice|10, mousse|5 and
+turkey-burgers|4; five STATED synthesized cases (0621's real "3
+tablespoons fish sauce" against its "Peanut Sauce" printed MAKES 3
+TABLESPOONS: refused — the floor; 0521's section retitled "Basic Offwhite
+Rice": refused — whole words; retitled "Basic White Rice Pilaf": refused —
+the pair is the title's TAIL; retitled "White Rice": named; fried-rice|9's
+line and section read with the three-word item "cooked white rice":
+named — the item floor's admitting edge); the corpus
+scan — of the 49 line × section pairs sharing two or more trailing words
+that M76's tail does not reach, exactly fried-rice|9 names its section;
+the whole-recipe compute: the routed row 402.20 g at 1.000000, the child's
+1,486.68 kcal, the basis, 697.16 a serving, the section's two parents, the
+converse rows on their foods, a second compute writing nothing), each
+mutant killed by a value pin (snapshot copy, anchor count 1, cmp restore):
+the arm dropped, the floor at one word, the item floor at two words (v76's
+has-lines pin), the item floor at four words, whole words dropped, the
+pair anywhere in the title (`contains` for `endsWith`), the
+title-is-the-pair clause dropped, matcherVersion 85. The existing suite re-pinned as equalities (RE-PIN
+M87): the eight version literals, three hashes (seasoning_ci, v47_resolver,
+v83 F5c — the version alone: at 85 with the arm kept they read their old
+literals), v41's whole-library resolver map (+ fried-rice|9), v72's reach
+row, totals and pA R2 (the record's portion now read off the fixtures), v73's
+row and totals, v81 F15's host pick (`nested_recipe`, 0 g; the host's total
+grams 1,403.4); no numeric bound widened, nothing deleted.
+Cost: no new reader — the pair is computed once per line outside the
+closure, and every read past the first test is the shipped memo's. The
+yield cap shapes' counts are base's exactly; the new TRUE-path shape
+(rtail2: 400 lines "1 pound cold pizza dough" × 60 subsections, one
+"Classic Pizza Dough" at MAKES 1 POUND) routes every line and reads each
+line's mark and share once and its yield once per step (400 / 400 / 400,
+indexes 1), pinned EXACTLY; clocks within noise of rtail1.
+Deploy note: matcherVersion 86 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 1 recipe's stored totals move (no
+users).
+
 **Matcher v90 (batch M86; matcherVersion 85 — 958 before 957: a Foundation
 record's energy is its Atwater SPECIFIC figure; 1,299 rows on 107 records
 and 30 routed parents; prep51 design_v2 §1 Q2 option (b) / §2 M86, ruled by
@@ -7324,7 +7424,10 @@ follow(s)" / "this page" mark) WITH an amount whose reference item
 (`referenceItemOf`) is the TAIL of one of the recipe's own section titles
 (title = "<words> <item>", normalised: the item is the title's LAST whole
 words — "Classic Sourdough" does not end in the item "dough", and "Classic
-Pizza Dough for Grilling" holds "pizza dough" but does not end in it) AND
+Pizza Dough for Grilling" holds "pizza dough" but does not end in it; since
+matcher v91 (M87, above) also when the title's last two words are the last
+two of an item of three or more — "Basic White Rice" ← "cold cooked white
+rice") AND
 whose amount is that section's
 printed yield exactly (`parseShare(line.raw, line.amounts,
 section.servings) == 1.0`) [re-point → `item`]. Read where A9 is read:

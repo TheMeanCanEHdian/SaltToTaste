@@ -177,6 +177,11 @@ const Map<String, String> _resolved = {
   'grilled-shrimp-skewers|4': 'held generic',
   'grilled-corn-with-flavored-butter|0': 'held generic',
   'buffalo-cauliflower-bites|11': 'routed section Ranch Dressing',
+  // RE-PIN (M87 batch, v91, Q1 (b′)): fried-rice|9 "5 cups cold cooked
+  // white rice" names its own section by the two words both end in, at its
+  // printed yield (was absent: no reference).
+  'fried-rice-with-shrimp-pork-and-shiitakes|9':
+      'routed section Basic White Rice',
   'red-beans-and-rice|14':
       'routed section Basic White Rice of fried-rice-with-shrimp-pork-and-shiitakes',
   'fluffy-omelets|4': 'held generic',

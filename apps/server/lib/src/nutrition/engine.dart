@@ -7871,7 +7871,9 @@ bool namesOwnSection(Recipe recipe, IngredientLine line) {
 /// and [routedSectionKeysOf] follow) and from the resolver's own-section
 /// list (`_ownTitles`); a marked line keeps v47's forms
 /// (barbecued-pulled-pork's "2 cups barbecue sauce (recipes follow)" stays
-/// rule PO's).
+/// rule PO's). v91 (batch M87): or the title's last two words are the last
+/// two of an item of three or more ("Basic White Rice" ← "cold cooked white
+/// rice"; never one shared word).
 /// [re-point → `item`]
 @visibleForTesting
 bool yieldNamesOwnSection(IngredientLine line, String item, Subsection sub) =>
@@ -7901,10 +7903,22 @@ bool Function(Subsection sub, String title) _yieldTailOf(
     return (_, _) => false;
   }
   final tail = ' $item';
+  // v91 (batch M87, prep51 design_v2 §1 Q1 (b′), ruled by the owner
+  // 2026-10-29): or the title's last TWO words are the last two of an item
+  // of three or more — fried-rice-with-shrimp-pork-and-shiitakes' "5 cups
+  // cold cooked white rice" names its own "Basic White Rice" (MAKES ABOUT 5
+  // CUPS); a ONE-word shared tail is refused ("fish sauce" never names a
+  // "Peanut Sauce"). A shorter item keeps M76's test alone (its two shared
+  // words are the whole item). [re-point → `item`]
+  final words = item.split(' ');
+  final pair = words.length < 3
+      ? null
+      : '${words[words.length - 2]} ${words.last}';
   var marked = unmarked ? false : null;
   bool Function(String? servings)? atYield;
   return (sub, title) {
-    if (!title.endsWith(tail)) {
+    if (!title.endsWith(tail) &&
+        (pair == null || (title != pair && !title.endsWith(' $pair')))) {
       return false;
     }
     // Key: raw — the mark reads the line's text alone.

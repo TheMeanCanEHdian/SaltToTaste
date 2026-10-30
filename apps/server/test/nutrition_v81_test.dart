@@ -892,13 +892,28 @@ void critics() {
         'raw': line.raw,
         'child': rice.slug,
       });
+      // RE-PIN (M87 batch, v91, Q1 (b′)) — STATED FOR THE RULING (fix91
+      // D1): 0521|9 now names its own Basic White Rice, so the host is itself
+      // made from a recipe and a pick of the whole host is held
+      // `nested_recipe` at 0 g, its share kept (`_childRowOf`, the shipped
+      // depth-1 rule) — was ('overridden', rice.id, 1.0, the host's total
+      // grams), hold null.
       expect(
-        (row().status, row().childRecipeId, row().childShare, row().grams),
-        ('overridden', rice.id, 1.0, db.nutritionFor(rice.id)!.totalGrams),
+        (
+          row().status,
+          row().childRecipeId,
+          row().childShare,
+          row().grams,
+          row().hold,
+        ),
+        ('overridden', rice.id, 1.0, 0.0, nestedRecipeHold),
       );
       // RE-PIN (M82 batch, v84, C3a): 0521's garlic |8 at its printed 2
       // teaspoons (6.00 → 5.60 g): was 1791.6.
-      expect(row().grams, 1791.2);
+      // RE-PIN (M87 batch, v91): the host's total grams, no longer the row's
+      // (|9's 790.00 g cooked rice → the section's 402.20 g raw): was
+      // `row().grams` 1791.2.
+      expect(db.nutritionFor(rice.id)!.totalGrams, 1403.4);
     },
   );
 
