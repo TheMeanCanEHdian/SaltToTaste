@@ -5158,6 +5158,125 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v92 (batch M89; matcherVersion 87 — the repeat multiplier: a
+counted "repeat with remaining <N> <piece>" repeats its step's prints; 1
+row; prep51 design_v2 §1 Q5 option (c) / §2 M89, ruled by the owner
+2026-10-29; zero requests; replayed on snapshot 30 against the v91 rows,
+both orders byte-identical, the rule reverted alone reproducing v91 byte
+for byte, calls 0).** The grilled pizza's oil:
+- **Clause (1), the counted repeat (`_repeatsOf`, engine.dart — a NEW step
+  reader).** A step sentence "repeat with (the) remaining <N> <noun>" (N a
+  digit run or one–four) counts N further repeats of its step's work when
+  <noun> is a PIECE: a unit of the shipped vocabulary (`isMeasureUnit`,
+  grams.dart: `_volumeUnitMl` and the weight units, singular or plural)
+  refuses — "Repeat with the remaining 1 tablespoon oil" is the remainder
+  of a print, not a count (21 corpus recipes print a unit there: 10
+  "tablespoon", 4 "tablespoons", 4 "teaspoons", 1 "teaspoon", 1 "cup", 1
+  "cups"). The guard reads the noun word and, for the vocabulary's one
+  two-word unit, the two words together: "remaining 2 fluid ounces"
+  refuses (no corpus repeat prints it). The sentence's other words must
+  multiply nothing (R-H1's
+  `_multiplies`, once the phrase and a "for each <its noun>" — "for each
+  round" for "2 dough rounds" — are blanked), else it refuses as guard (ii)
+  always has ("Add the remaining 2 tablespoons oil to the skillet and
+  repeat with the remaining 4 cutlets"). The corpus prints 22 counted
+  repeats in 20 recipes, none in a section.
+- **Clauses (2) and (3), in `_stepAmountsAt`.** Guard (ii) no longer
+  refuses a counted repeat naming the head; the first counted repeat at or
+  after a print in its step repeats it: (2) a repeat printing no amount of
+  the head counts the step's earlier prints × (1 + N) ("Drizzle top of 1
+  crust with 1 tablespoon oil … repeat with remaining 2 crusts" — 1
+  tablespoon × 3); (3) a repeat printing its own amount ("Repeat with
+  remaining 2 dough rounds, adding 1 tablespoon oil to baking sheet for
+  each round") counts that print × (1 + N) and LEAVES the step's earlier
+  prints (the ¼ cup the sheet is primed with — option (c): the top-up is
+  the take), named in the basis "(the ¼ cup base left; …)". A print after
+  the repeat counts once; a served print (v85's "each portion") keeps its
+  serves; every other multiplying sentence still refuses. Steps only — the
+  line's amount-less test is the shipped `line.amounts.isEmpty`
+  [re-point → `measurement`].
+- **Reach (fix92 gate1, the v91 rows; `auto`, 0 person rows).** One row:
+  ultimate-grilled-pizza|12 "Extra-virgin olive oil" (748608) 0.00 g
+  `unmeasured` → 80.47 g `portion`, 711.35 kcal (SR 171413's 884), basis
+  "from steps 8, 9: 1 tablespoon × 3 + 1 tablespoon × 3 (the ¼ cup base
+  left; no amount on the line) · nutrients of "Oil, olive, salad or
+  cooking"" — the basis numbers the step LIST (0398 prints two steps "6",
+  charcoal and gas, so its printed 7 and 8 are list steps 8 and 9). ROW
+  +711.35 (the design's +711.30 multiplied 80.47 g by 240.52 ÷ 27.21, a
+  rounded row's figure; 884 × 80.4698 ÷ 100 = 711.35); recipe energy
+  3,378,653.61 → 3,379,364.97 = +711.36 over 1 recipe (per serving 800.64
+  → 978.48, servings 4: the cent is per-serving rounding); total grams
+  1,251.7 → 1,332.1 (the totals' 0.1 g rounding). Statuses, holds, notes,
+  sections, buckets and calls identical; staleAfter 0, sectionsStale 0.
+  pizza|4 (14.00 g) and |11 (2.00 g) and pB's five guard-(ii) rows
+  (indoor-pulled-chicken|8, indoor-pulled-pork|2, bread-and-butter-pickles|11,
+  torta-caprese|8, rainbow-cake|8: 0 g) are unchanged.
+Attribution: the arm reverted alone (engine.dart and grams.dart at
+a43ba1e, matcherVersion 87 kept) gives v91's rows, recipes, sections,
+calls, notes and buckets byte for byte; 0 unattributed.
+Calibration (reported, never fitted; v91 → v92 per serving): audit 6 R17
+ultimate-grilled-pizza 800.64 → 978.48 against the hand 988.01: −18.96 →
+−0.96 % (the design's −17.9 → +0.1 % was priced on v82's 811.11; M82–M87
+moved the recipe's other rows since); audit 6 median |error| 4.35 → 3.23 %
+(mean bias +3.55 → +4.27 %; beyond 15 %: 4 → 3); R17 is in no audit 2–5
+set (unchanged).
+Person path: none reads a step print's count; no hunk touches
+nutrition_handlers.dart, `derivedFor`, `applyDecisionToOthers` or
+`decisionRecordOf`, so GATE-P was not run.
+Pins: nutrition_v92_test (18 tests — matcherVersion 87; clause (1) on real
+sentences: the pizza's two repeats count 2; the noun guard refuses
+braised-beef-short-ribs' "Repeat with the remaining 1 tablespoon oil and
+the remaining meat." (its "the remaining meat" refuses too),
+philly-cheesesteaks' "… 1 tablespoon oil and sliced meat.",
+parmesan-crusted-chicken-cutlets' "… 2 teaspoons oil and chicken." and
+smoky-pulled-pork's "… 2 cups unsoaked chips."; chicken-saltimbocca's and
+best-crab-cakes' repeats refuse by their other "remaining"; the corpus
+census (the 22 counted repeats exactly; the 21 unit-noun recipes read
+none); clauses (2) and (3) on pizza|12 weighed alone (80.47 g and the
+basis; the public reading names the two kept prints; |4 and |11 as at
+v91); STATED synthesized cases, no corpus sentence reaching them: a number
+word, a weight unit, the two-word unit "fluid ounces" (with or without a
+following noun), "for each" another noun and the noun itself, a print
+after the repeat (93.88 g), a non-repeat multiplying sentence before a
+repeat (refused), a repeat naming the head in a step printing none of it
+(40.23 g), gazpacho's served print before a repeat (35.76 g); the whole
+recipes on the fixtures (pizza|12's row, 711.35 kcal, 978.43 a serving —
+the replay's 978.48 less the fixtures' standing 0.05 —, total grams
+1,332.1, the five guard-(ii) rows at 0 g, a second compute writing
+nothing); each mutant killed by a value pin (snapshot copy, anchor count
+1, cmp restore): × (1 + N) read × 1 (26.82 g), the base kept (134.12 g),
+clause (2) dropped (53.65 g), the guard-(ii) exception dropped (0 g) or
+taken for any later repeat, every print under the step's first repeat
+(120.70 g), a multiplying sentence's step left unscanned, the repeat
+counted before the serves (13.41 g), the unit refusal or its two-word
+test dropped, the
+residue test dropped, the "for each" blank, its plural or exact-noun test
+dropped or widened to every noun, the number words dropped, the plural
+strip or the weight units dropped from `isMeasureUnit`, the left basis or
+the public reading's filter dropped, the `repeats` count dropped,
+matcherVersion 86 (the "repeat with" pre-filter dropped is equivalent —
+cost only). The existing suite re-pinned as equalities (RE-PIN M89): nine
+version literals (v84–v91, seasoning_ci), three hashes (seasoning_ci,
+v47_resolver, v83 F5c — the version alone: with 86 put back they read
+their old literals), v71's pizza|12 row, its per serving (800.59 →
+978.43), R-H1's negatives (pizza|12 leaves the list) and the corpus count
+of read lines (5 → 6), v85's B1a negatives row; no numeric bound
+widened, nothing deleted.
+Cost (RULE C): `_repeatsOf` reads each sentence of a step holding a print
+or a named multiplying sentence once per index, inside `memo:stepAmounts`
+(a step printing no "repeat with" is never split); a line looks each print
+up in its step's repeats by binary search. Cap shapes (0398, 400 lines of
+distinct heads under 120 steps of 10,000 characters of the pizza's step 9
+pair): QUIET (the repeat on "tablespoons" — the unit guard refuses all
+9,325) — counts equal base's exactly, clock 88.5 / 88.5 → 90 / 90 ms
+(+1.7 %); TRUE (on "crusts" — 9,705 counted repeats, every print × 3) —
+counts base's plus `repeats` 9,705, pinned EXACTLY; clock 84 / 86 → 102.5
+/ 103 ms (the reader's own work, no base equivalent); each under the
+backstop.
+Deploy note: matcherVersion 87 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 1 recipe's stored totals move (no
+users).
+
 **Matcher v91 (batch M87; matcherVersion 86 — the own-section rice route:
 an unmarked line names its recipe's own section by a TWO-word shared tail
 at the section's printed yield; 1 row; prep51 design_v2 §1 Q1 option (b′) /

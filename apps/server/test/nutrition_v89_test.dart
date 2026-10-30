@@ -636,10 +636,11 @@ const List<_Host> _hosts = [
 ];
 
 void main() {
-  test('matcherVersion 86 (v89 set it to 84, batch M90: rows move)', () {
+  test('matcherVersion 87 (v89 set it to 84, batch M90: rows move)', () {
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
-    expect(matcherVersion, 86);
+    // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
+    expect(matcherVersion, 87);
   });
 
   test("the six keys' figures are the corpus's printed cups, oz × 28.3495 ÷ "

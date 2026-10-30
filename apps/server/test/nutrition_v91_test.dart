@@ -67,8 +67,9 @@ int _sharedTail(String a, String b) {
 }
 
 void main() {
-  test('matcherVersion 86 (v91, batch M87: one row moves)', () {
-    expect(matcherVersion, 86);
+  test('matcherVersion 87 (v91 set it to 86, batch M87: one row moves)', () {
+    // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
+    expect(matcherVersion, 87);
   });
 
   group(

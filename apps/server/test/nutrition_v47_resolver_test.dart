@@ -401,7 +401,9 @@ void main() {
           // version alone — the base tree with only the bump gives it).
           // RE-PIN (M87 batch, v91): matcherVersion 86 (was cebd99a5…; the
           // version alone — the arm kept at 85 gives cebd99a5).
-          '23da6720fdde8c244bb4f51e2b1e4f0eeb6ef3ac719d1193dbda4d4ffc4c41f5',
+          // RE-PIN (M89 batch, v92): matcherVersion 87 (was 23da6720…; the
+          // version alone — the arm with 86 put back gives 23da6720).
+          '8af34e557951c23d88bfc677418960395230ccfcfa6a102ab37c1ab97d4d1bcb',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

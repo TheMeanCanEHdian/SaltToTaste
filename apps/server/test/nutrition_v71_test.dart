@@ -3704,6 +3704,10 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M89 batch, v92): the repeat arm reads pizza|12's steps 8–9 —
+  // 1 tablespoon × 3 + 1 tablespoon × 3, the ¼ cup base left (was 0.00 g,
+  // 0.00 kcal, "no amount on the line — counted as 0 g"; the v92 replay's
+  // row; nutrition_v92_test.dart pins it clause by clause).
   (
     '0398-ultimate-grilled-pizza.yaml',
     null,
@@ -3712,11 +3716,13 @@ const List<_Row> _unmoved = [
     748608,
     'Oil, olive, extra virgin',
     '1.000000',
-    '0.00',
+    '80.47',
     'auto',
     null,
-    '0.00',
-    'no amount on the line — counted as 0 g',
+    '711.35',
+    'from steps 8, 9: 1 tablespoon × 3 + 1 tablespoon × 3 (the ¼ cup base '
+        'left; no amount on the line) · nutrients of "Oil, olive, salad or '
+        'cooking"',
   ),
   // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
   // 325036 at 0.983333, 358.05 kcal; the v87 replay's row).
@@ -8251,9 +8257,12 @@ void main() {
 
     test("R-H1 negatives: the guards keep another line's print off — "
         "pizza|12's PIZZA steps print ¼ cup and 1 tablespoon, but name oil "
-        'with "repeat", "remaining" and "each" (tier ii)', () {
+        'with "repeat", "remaining" and "each" (tier ii; since v92 the '
+        'counted repeat reads them — nutrition_v92_test.dart)', () {
       for (final (file, position) in const [
-        ('0398-ultimate-grilled-pizza.yaml', 12),
+        // RE-PIN (M89 batch, v92): ('0398-ultimate-grilled-pizza.yaml', 12)
+        // leaves the list — the repeat arm reads its steps 8–9, 1 tablespoon
+        // × 3 + 1 tablespoon × 3 (nutrition_v92_test.dart pins it, 80.47 g).
         // RE-PIN (M83 batch, v85): ('0031-classic-gazpacho.yaml', 10) leaves
         // the list — B1a reads its "each portion … with about 1 teaspoon"
         // × the serves (nutrition_v85_test.dart pins it, 35.76 g).
@@ -8497,7 +8506,9 @@ void main() {
           // RE-PIN (M85 batch, v87): was 810.29 (the replay 810.26 → 804.10).
           // RE-PIN (M90 batch, v89): the replay 804.10 → 803.94: was 804.12.
           // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes): was 803.96.
-          '800.59',
+          // RE-PIN (M89 batch, v92): pizza|12 reads 80.47 g, 711.35 kcal ÷ 4
+          // (the replay 800.64 → 978.48): was 800.59.
+          '978.43',
         ), // 774.92 → 808.35
         (
           '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -9146,7 +9157,7 @@ void main() {
       }
     }
 
-    test('R-H1 reads a print for exactly 5 of the 262 amount-less lines the '
+    test('R-H1 reads a print for exactly 6 of the 262 amount-less lines the '
         'engine weighs (a seasoning, water, equipment, flavouring, '
         'continuation, reference or main-recipe-part line is a 0 g rule row '
         'no reader weighs)', () {
@@ -9181,10 +9192,13 @@ void main() {
       expect(weighed, 262);
       // RE-PIN (M83 batch, v85): 4 → 5 — B1a reads gazpacho|10's "each
       // portion with about 1 teaspoon olive oil" (× the serves).
+      // RE-PIN (M89 batch, v92): 5 → 6 — the repeat arm reads pizza|12's
+      // "repeat with remaining 2 dough rounds / 2 crusts" (× 3).
       expect(read, [
         '0031-classic-gazpacho.yaml|10',
         '0398-ultimate-grilled-pizza.yaml|4',
         '0398-ultimate-grilled-pizza.yaml|11',
+        '0398-ultimate-grilled-pizza.yaml|12',
         '0554-shrimp-pad-thai.yaml|3',
         '0685-quick-cooked-tough-greens.yaml|4',
       ]);

@@ -138,7 +138,8 @@ const Map<String, String> _synonyms = {
 /// v84: matcher v89 (batch M90) — printed densities over a record's own cup.
 /// v85: matcher v90 (batch M86) — Foundation energy: 958 before 957.
 /// v86: matcher v91 (batch M87) — the own-section rice route (two-word tail).
-const int matcherVersion = 86;
+/// v87: matcher v92 (batch M89) — the grilled pizza's repeat multiplier.
+const int matcherVersion = 87;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

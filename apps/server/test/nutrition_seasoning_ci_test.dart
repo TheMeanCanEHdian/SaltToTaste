@@ -88,7 +88,8 @@ void main() {
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
-    expect(matcherVersion, 86); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
+    expect(matcherVersion, 87); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -198,7 +199,10 @@ void main() {
       // RE-PIN (M87 batch, v91): the hash at matcherVersion 86 (was
       // 7a7cb500…; this recipe names no own section by a shared tail — the
       // version alone: the arm kept at 85 gives 7a7cb500).
-      'fb9acf3a1373ab26c416e74916b01b3e8eb0a72e6bb3a0815a479e01c644e2bd',
+      // RE-PIN (M89 batch, v92): the hash at matcherVersion 87 (was
+      // fb9acf3a…; M89 adds no hash term — the steps it reads are hashed —
+      // the version alone: the arm with 86 put back gives fb9acf3a).
+      '03553dd75728d16f59413d097211de1c344444adf4ca977f4b89063807b833b2',
     );
   });
 

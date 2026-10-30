@@ -104,6 +104,17 @@ const Map<String, double> _volumeUnitMl = {
   'l': 1000,
 };
 
+/// v92 (batch M89; prep51 design_v2 §1 Q5 (c)): whether [word] is a unit
+/// of the shipped vocabulary — [_volumeUnitMl] or [_weightUnitGrams],
+/// singular or plural ("tablespoons", "ounces") — the repeat reader's noun
+/// guard.
+bool isMeasureUnit(String word) {
+  final one = word.endsWith('s') ? word.substring(0, word.length - 1) : word;
+  return [_volumeUnitMl, _weightUnitGrams].any(
+    (units) => units.containsKey(word) || units.containsKey(one),
+  );
+}
+
 /// Kosher salt's g/ml ([_densities]). v62 (batch M64 R-D, prep49 design_v2
 /// §2 M64): half of table salt's weight by volume — the corpus prints the
 /// conversion ("1 tablespoon kosher salt or 1½ teaspoons table salt",

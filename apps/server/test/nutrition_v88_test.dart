@@ -321,11 +321,12 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 86 (v88 set it to 83, batch M88: rows move)', () {
+  test('matcherVersion 87 (v88 set it to 83, batch M88: rows move)', () {
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
-    expect(matcherVersion, 86);
+    // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
+    expect(matcherVersion, 87);
   });
 
   test("pin (7) — the figures: FNDDS 2706442's two inputs by sequenceNumber "

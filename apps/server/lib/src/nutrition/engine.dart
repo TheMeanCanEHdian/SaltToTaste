@@ -13099,6 +13099,17 @@ final Expando<bool> _amountlessWeighed = Expando();
 /// counts the new serves — the batch's portions; the label's divisor (the
 /// stored basis first) only divides the batch, so a rebase leaves the oil.
 /// [re-point → `measurement`] the trigger moves onto the structured field.
+/// v92 (batch M89; prep51 design_v2 §1 Q5 option (c), ruled by the owner
+/// 2026-10-29): guard (ii)'s second exception — a counted repeat
+/// ([_repeatsOf]: "repeat with (the) remaining <N> <piece>") does not
+/// refuse, and repeats the work of its step: (2) printing no amount of the
+/// head, it counts the step's earlier prints × (1 + N) ("Drizzle top of 1
+/// crust with 1 tablespoon oil … repeat with remaining 2 crusts"); (3)
+/// printing its own ("Repeat with remaining 2 dough rounds, adding 1
+/// tablespoon oil to baking sheet for each round"), that print counts
+/// × (1 + N) and the step's earlier prints are left ("the ¼ cup base
+/// left") — ultimate-grilled-pizza|12, 6 tablespoons. A served print
+/// (B1a's) keeps its own count. [re-point → `measurement`].
 /// The reading is [stepAmountsOf]'s; this weighs it.
 /// RULE C: every print and the two guards' sentences are read once per
 /// index ([_stepPrintsOf], `memo:stepAmounts`, linear in the steps —
@@ -13136,7 +13147,17 @@ GramResolution? _weighPrints(
   final weighed = <String, GramResolution?>{};
   var grams = 0.0;
   GramSource? source;
-  for (final p in prints) {
+  // v92 (M89 clause (3)): a print a repeat leaves (times 0) is named, never
+  // weighed.
+  final kept = [
+    for (final p in prints)
+      if (p.times > 0) p,
+  ];
+  final left = [
+    for (final p in prints)
+      if (p.times == 0) p.amount,
+  ];
+  for (final p in kept) {
     final g = weighed.putIfAbsent(
       p.amount,
       () => resolveGrams(
@@ -13152,14 +13173,15 @@ GramResolution? _weighPrints(
     grams += g.grams * p.times;
     source ??= g.source;
   }
-  final steps = {for (final p in prints) p.step + 1}.toList();
+  final steps = {for (final p in kept) p.step + 1}.toList();
   final read = GramResolution(
     grams: grams,
     source: source!,
     basis:
         'from step${steps.length > 1 ? 's' : ''} ${steps.join(', ')}: '
-        '${_namedPrints(prints.map((p) => p.shown), prints.length)}'
-        ' (no amount on the line)',
+        '${_namedPrints(kept.map((p) => p.shown), kept.length)}'
+        ' (${left.isEmpty ? '' : 'the ${_namedPrints(left, left.length)} '
+                  'base left; '}no amount on the line)',
   );
   _amountlessWeighed[read] = true;
   return read;
@@ -13181,12 +13203,15 @@ List<({int step, String amount})> stepAmountsOf(
   Recipe recipe,
   IngredientLine line,
 ) => [
-  for (final p in _stepReadsOf(recipe, line)) (step: p.step, amount: p.amount),
+  for (final p in _stepReadsOf(recipe, line))
+    if (p.times > 0) (step: p.step, amount: p.amount),
 ];
 
 /// A print [stepAmountGrams] weighs: its step (0-based), the amount as
 /// printed, how many times it counts (v85, M83 B1a: the serves of an "each
-/// portion … with <amount>" sentence, else 1) and how its basis names it.
+/// portion … with <amount>" sentence; v92, M89: 1 + N under a counted
+/// repeat, 0 for a print the repeat leaves; else 1) and how its basis names
+/// it.
 typedef _StepRead = ({int step, String amount, int times, String shown});
 
 /// [stepAmountsOf]'s reads with their counts, once per position.
@@ -13294,6 +13319,10 @@ List<_StepRead> _stepAmountsAt(
           ];
     for (final p in named) {
       if (scope.steps == null || scope.steps!.contains(p.$1)) {
+        // v92 (M89): a counted repeat refuses nothing — read below.
+        if (_repeatAt(prints.repeats, p) case (final j, _) when j == p.$2) {
+          continue;
+        }
         final each = prints.perServing[p];
         if (bySentence == null) {
           bySentence = {};
@@ -13321,6 +13350,25 @@ List<_StepRead> _stepAmountsAt(
       }
     }
   }
+  // v92 (M89 Q5 (c)): the first counted repeat at or after a print in its
+  // step ([_repeatsOf]) repeats it — its own print × (1 + N) (clause 3),
+  // an earlier print × (1 + N) when the repeat prints none of the head
+  // (clause 2), else left (times 0: the per-repeat print replaces it). A
+  // served print keeps its serves (below).
+  final repeated = <_Print, int>{};
+  if (prints.repeats.isNotEmpty) {
+    final printed = {for (final h in hits) (h.step, h.sentence)};
+    for (final h in hits) {
+      if (_repeatAt(prints.repeats, (h.step, h.sentence)) case (
+        final j,
+        final n,
+      )) {
+        repeated[h] = j == h.sentence || !printed.contains((h.step, j))
+            ? 1 + n
+            : 0;
+      }
+    }
+  }
   if (lists.length > 1) {
     hits.sort(
       (a, b) => a.step != b.step
@@ -13335,10 +13383,25 @@ List<_StepRead> _stepAmountsAt(
       (
         step: p.step,
         amount: p.amount,
-        times: served.containsKey(p) ? serves : 1,
-        shown: served[p] ?? p.amount,
+        times: served.containsKey(p) ? serves : repeated[p] ?? 1,
+        shown:
+            served[p] ??
+            ((repeated[p] ?? 1) > 1
+                ? '${p.amount} × ${repeated[p]}'
+                : p.amount),
       ),
   ];
+}
+
+/// v92 (M89): the first counted repeat of [repeats] (by step, in sentence
+/// order) at or after sentence [at] in its step — (sentence, N), or null.
+(int, int)? _repeatAt(Map<int, List<(int, int)>> repeats, (int, int) at) {
+  final list = repeats[at.$1];
+  if (list == null) {
+    return null;
+  }
+  final k = _firstAfter(list, at.$2, (r) => r.$1);
+  return k < list.length ? list[k] : null;
 }
 
 /// R-H1's index of [recipe]'s steps, once per index (`memo:stepAmounts`):
@@ -13350,13 +13413,17 @@ List<_StepRead> _stepAmountsAt(
 /// ([_multiplies]) — the guards' sentences, each read once with its prints;
 /// v85 (M83 B1a) of those, the ones whose only multiplying word is an
 /// "each portion|serving|bowl" phrase ([_eachServing]): its noun and where
-/// it ends (`perServing`).
+/// it ends (`perServing`); v92 (M89) in each step holding a print or a
+/// named multiplying sentence, the counted repeats ([_repeatsOf]) —
+/// (sentence, N) in sentence order (counted when any: `repeats`; a step
+/// printing no "repeat with" is never split).
 /// The per-print bookkeeping is the reader's own work (no base equivalent):
 /// a step full of prints costs what reading them costs.
 ({
   Map<String, Map<int, List<_Print>>> byForm,
   Set<(int, int)> multiplies,
   Map<(int, int), ({String noun, int end})> perServing,
+  Map<int, List<(int, int)>> repeats,
 })
 _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
   final lines = nutritionLines(recipe);
@@ -13384,6 +13451,9 @@ _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
   // Each distinct amount as printed, one string ("1 tablespoon").
   final amounts = <String, Map<String, String>>{};
   var count = 0;
+  // v92 (M89): the steps a repeat may repeat — each holding a print or a
+  // named multiplying sentence.
+  final repeatable = <int>{};
   for (final (i, marks) in marked.indexed) {
     for (var j = 0; j < marks.length; j++) {
       if (marks[j] == 0) {
@@ -13392,6 +13462,7 @@ _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
       final text = index.sentence((i, j));
       if (_multiplies.hasMatch(text)) {
         multiplies.add((i, j));
+        repeatable.add(i);
         if (_eachServing.firstMatch(text) case final m?
             when !_multiplies.hasMatch(
               text.replaceRange(m.start, m.end, ' '),
@@ -13415,6 +13486,7 @@ _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
           continue;
         }
         count++;
+        repeatable.add(i);
         final print = (
           step: i,
           sentence: j,
@@ -13430,7 +13502,25 @@ _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
     }
   }
   _count('stepPrints', count);
-  return (byForm: byForm, multiplies: multiplies, perServing: perServing);
+  final repeats = <int, List<(int, int)>>{};
+  for (final i in repeatable) {
+    if (index.lower[i].contains('repeat with')) {
+      for (final (j, text) in index.sentences[i].indexed) {
+        if (_repeatsOf(text) case final n?) {
+          (repeats[i] ??= []).add((j, n));
+        }
+      }
+    }
+  }
+  if (repeats.isNotEmpty) {
+    _count('repeats', repeats.values.fold(0, (n, l) => n + l.length));
+  }
+  return (
+    byForm: byForm,
+    multiplies: multiplies,
+    perServing: perServing,
+    repeats: repeats,
+  );
 });
 
 /// A print [stepAmountsOf] indexes: its step and sentence, the amount as
@@ -13472,6 +13562,53 @@ final RegExp _eachServing = RegExp(
 /// v85 (M83 B1a): what stands between that phrase and its print — the
 /// print serves it "with (about) <amount>" (group 1: "about ").
 final RegExp _servedWith = RegExp(r'\bwith\s+(about\s+)?$');
+
+/// v92 (batch M89; prep51 design_v2 §1 Q5 (c), v2 K-6 clause (1)): the
+/// counted repeat a lower-cased step [sentence] prints — "repeat with (the)
+/// remaining <N> <noun>" — its N; null when none. N is a digit run or a
+/// number word ([_numberWords]); <noun> a PIECE (rounds, crusts, chops …),
+/// never a measure: a unit of the shipped vocabulary ([isMeasureUnit])
+/// refuses — braised-beef-short-ribs' "Repeat with the remaining 1
+/// tablespoon oil and the remaining meat" is the remainder of a print, not
+/// a count (21 corpus recipes print a unit there). The sentence's other
+/// words multiply nothing ([_multiplies], once the phrase and a "for each
+/// <its noun>" are blanked: "… adding 1 tablespoon oil to baking sheet for
+/// each round"), else it refuses as guard (ii) does. The guard reads the
+/// noun word and, for the vocabulary's one two-word unit ("2 fluid
+/// ounces"), the two words together. Anchored on a literal, every run
+/// bounded: linear per sentence.
+int? _repeatsOf(String sentence) {
+  final m = _repeatWith.firstMatch(sentence);
+  if (m == null ||
+      isMeasureUnit(m[2]!) ||
+      (m[3] != null && isMeasureUnit('${m[2]} ${m[3]}'))) {
+    return null;
+  }
+  final nouns = {m[2]!, ?m[3]};
+  final rest = sentence
+      .replaceRange(m.start, m.end, ' ')
+      .replaceAllMapped(
+        _forEach,
+        (e) => nouns.contains(e[1]) || nouns.contains('${e[1]}s') ? ' ' : e[0]!,
+      );
+  if (_multiplies.hasMatch(rest)) {
+    return null;
+  }
+  return int.tryParse(m[1]!) ?? _numberWords[m[1]!]!.toInt();
+}
+
+/// [_repeatsOf] on a step sentence as the index holds it (lower-cased).
+@visibleForTesting
+int? repeatsOfForTest(String sentence) => _repeatsOf(sentence.toLowerCase());
+
+/// v92 (M89): "repeat with (the) remaining <N> <noun>( <word>)".
+final RegExp _repeatWith = RegExp(
+  r'\brepeat with (?:the )?remaining (\d+|one|two|three|four) '
+  "([a-z’'-]+)(?: ([a-z’'-]+))?",
+);
+
+/// v92 (M89): a counted repeat's per-repeat phrase, "for each <noun>".
+final RegExp _forEach = RegExp(r"\bfor each ([a-z’'-]+)");
 
 /// R-H1 (iii): a hedged print.
 final RegExp _hedges = RegExp(r'\bto taste\b|\bup to\b|\bif using\b');

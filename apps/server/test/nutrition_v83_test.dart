@@ -890,7 +890,9 @@ void main() {
         // f33ea134…; the base tree with only the bump gives this literal).
         // RE-PIN (M87 batch, v91): the hash at matcherVersion 86 (was
         // 3d506465…; the version alone — the arm kept at 85 gives 3d506465).
-        '7d5dc015fa45e463835ab9b52c55d35dc6387941a84a39c1c02e34dc10f49e70',
+        // RE-PIN (M89 batch, v92): the hash at matcherVersion 87 (was
+        // 7d5dc015…; the version alone — the arm with 86 put back gives 7d5dc015).
+        '23ff46095399c60dc76d8de30d43aa68b436704e0d4144753f31e1b3c9c7bcd6',
       );
     });
   });

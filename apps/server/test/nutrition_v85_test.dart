@@ -202,15 +202,22 @@ const List<_Row> _negatives = [
     '0.00',
     'no amount on the line — counted as 0 g',
   ),
+  // RE-PIN (M89 batch, v92): B1a still reads none of pizza|12's prints
+  // ("each round" is no serving noun); the repeat arm reads them — 1
+  // tablespoon × 3 + 1 tablespoon × 3, the ¼ cup base left (was
+  // 'unmeasured', 0.00 g, 0.00 kcal, "no amount on the line — counted as 0
+  // g"; the v92 replay's row).
   (
     '0398-ultimate-grilled-pizza.yaml',
     12,
     'Extra-virgin olive oil',
     748608,
-    'unmeasured',
-    '0.00',
-    '0.00',
-    'no amount on the line — counted as 0 g',
+    'portion',
+    '80.47',
+    '711.35',
+    'from steps 8, 9: 1 tablespoon × 3 + 1 tablespoon × 3 (the ¼ cup base '
+        'left; no amount on the line) · nutrients of "Oil, olive, salad or '
+        'cooking"',
   ),
   (
     '1133-chicken-francese.yaml',
@@ -303,14 +310,15 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 86 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 87 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
-    expect(matcherVersion, 86);
+    // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
+    expect(matcherVersion, 87);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
