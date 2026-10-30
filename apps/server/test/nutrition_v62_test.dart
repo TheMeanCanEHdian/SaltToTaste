@@ -401,7 +401,8 @@ const List<_Row> _pepitaRelish = [
     2515380,
     '0.920000',
     '29.50',
-    '163.61',
+    // RE-PIN (M86 batch, v90, 958: 1999634 tomato, 2515380 seeds): was 163.61.
+    '151.88',
     null,
     '1/4 cup · USDA portion of "Seeds, pumpkin and squash seed kernels, roasted, with salt added"',
   ),
@@ -714,17 +715,26 @@ void main() {
       // RE-PIN (M82 batch, v84): was 1142.49 (the replay 1141.60 → 1139.05).
       expect(of(_arayes), (
         'complete',
-        '1139.94',
+        // RE-PIN (M86 batch, v90, 958: 2259794 yogurt, 2727570 lamb): was
+        // 1139.94.
+        '1151.79',
       )); // 1,014.48; 1,013.59 → 1,133.30
       // RE-PIN (M82 batch, v84): was 694.52 (the replay 694.58 → 692.31).
-      expect(of(_souvlaki), ('complete', '692.26')); // 567.43; 567.49 → 687.20
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast, 2259794 yogurt,
+      // 2346406 cucumber, 2258588 green bell pepper): was 692.26.
+      expect(of(_souvlaki), ('complete', '701.14')); // 567.43; 567.49 → 687.20
       // RE-PIN (M82 batch, v84): was 660.19 (the replay 660.16 → 658.46).
-      expect(of(_shakshuka), ('complete', '658.49')); // 534.94; 534.91 → 654.62
+      // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes, 2258590 peppers, 2685580
+      // tomato): was 658.49.
+      expect(of(_shakshuka), ('complete', '647.96')); // 534.94; 534.91 → 654.62
       // RE-PIN (M82 batch, v84): was 399.85 (the replay 399.80 → 396.83).
-      expect(of(_fattoush), ('complete', '396.87')); // 330.30; 330.26 → 390.11
+      // RE-PIN (M86 batch, v90, 958: 1999634 tomato, 2346406 cucumber): was
+      // 396.87.
+      expect(of(_fattoush), ('complete', '391.99')); // 330.30; 330.26 → 390.11
       // Partial on its unmatched Old Bay, as at v61.
       // RE-PIN (M82 batch, v84): was 334.26 (the replay 334.26 → 337.42).
-      expect(of(_maryland), ('partial', '337.43')); // 323.96; 323.95 → 334.26
+      // RE-PIN (M86 batch, v90, 958: 2684446 crustaceans): was 337.43.
+      expect(of(_maryland), ('partial', '343.10')); // 323.96; 323.95 → 334.26
       // The three sirloin recipes move nothing but a basis.
       expect(of(_fennel).$1, 'complete');
     });

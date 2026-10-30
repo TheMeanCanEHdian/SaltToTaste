@@ -676,19 +676,25 @@ void main() {
       // Unmoved (v66 = v67): the corned rows' bases only.
       // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 628.01 (was 577.01) —
       // 173128 at its braised pair (+408.02 / 8).
-      expect(of(_homeCorned), ('complete', '628.01'));
+      // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+      // cabbage): was 628.01.
+      expect(of(_homeCorned), ('complete', '620.79'));
       // 592.10 in the replay: a fresh compute counts some of its lines on
       // search hits whose energies FDC rounds (M65's note); M68 moves no
       // kcal in this recipe.
-      expect(of(_newEngland), ('complete', '592.11'));
+      // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes,
+      // 2346407 cabbage): was 592.11.
+      expect(of(_newEngland), ('complete', '584.17'));
       // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 588.82 (was 692.11) —
       // its own 0" pair (−619.70 / 6).
       // RE-PIN (M82 batch, v84): was 588.82 (the replay 588.82 → 590.30).
       // RE-PIN (M90 batch, v89): the replay 590.30 → 589.45: was 590.30.
-      expect(of(_onion), ('complete', '589.45'));
+      // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 589.45.
+      expect(of(_onion), ('complete', '589.02'));
       // RE-PIN (M70 batch, v69, Q1 flat (b′)): 794.35 (was 729.93).
       // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
-      expect(of(_pomegranate), ('complete', '797.57'));
+      // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
+      expect(of(_pomegranate), ('complete', '797.14'));
     });
 
     test('a second recompute writes nothing', () {

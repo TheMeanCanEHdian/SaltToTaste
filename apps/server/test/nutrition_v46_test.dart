@@ -784,7 +784,9 @@ void main() {
           cream,
           '1.000000',
           '634.00',
-          'from the recipe Espresso-Mascarpone Cream: 634 g, 2,196 kcal',
+          // RE-PIN (M86 batch, v90, 958: the cream's 2346386 heavy cream and
+          // mascarpone, the replay 2,196.45 → 2,152.90): was 2,196 kcal.
+          'from the recipe Espresso-Mascarpone Cream: 634 g, 2,153 kcal',
         ),
       ]) {
         final recipe = stored(file);

@@ -1010,13 +1010,18 @@ void main() {
         return (n.status, n.caloriesPerServing!.toStringAsFixed(2));
       }
 
-      expect(of(_pakoras), ('partial', '226.76')); // v59 136.77 (ajwain)
+      // RE-PIN (M86 batch, v90, 958: 2346401 potatoes, 1999632 spinach): was
+      // 226.76.
+      expect(of(_pakoras), ('partial', '225.00')); // v59 136.77 (ajwain)
       // Lumpia: the replay's 655.72 (v59 506.71); its pork |12 reads 1,034.19
       // kcal in a fresh compute against the replay's 1,035.43.
-      expect(of(_lumpia), ('complete', '655.51'));
+      // RE-PIN (M86 batch, v90, 958: 2514745 ground pork, 2258586 carrots,
+      // 2346405 celery): was 655.51.
+      expect(of(_lumpia), ('complete', '658.97'));
       // RE-PIN (M82 batch, v84, C5a): the flour |9 and the oil's uptake |11
       // on the heavier mix: was 613.83.
-      expect(of(_falafel), ('complete', '621.22')); // v59 421.35
+      // RE-PIN (M86 batch, v90, 958: 2259794 yogurt): was 621.22.
+      expect(of(_falafel), ('complete', '621.39')); // v59 421.35
       // RE-PIN (M67 batch, v66): 599.61 → A2 (the cut dough and its oil).
       expect(of(_doughnuts), ('complete', '432.75')); // v59 439.26
       // RE-PIN (M67 batch, v66): 716.48 → B (14.15 %).

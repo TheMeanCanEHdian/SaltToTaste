@@ -1875,7 +1875,8 @@ const _totals = [
   // detail (83.42) — 907.18 g × 0.02 = 0.18 kcal below the replay here.
   // RE-PIN (M82 batch, v84, C3a + C6a): its garlic |1 and EVOO |3 (the
   // replay 330.99 → 327.92): was 330.96, 1985.76, 139.4232.
-  (_mashed, null, 'complete', '327.89', '1967.34', '137.4971'),
+  // RE-PIN (M86 batch, v90, 958: 2346401 potatoes): was 327.89, 1967.34.
+  (_mashed, null, 'complete', '324.26', '1945.56', '137.4971'),
   // The replay 478.07 / 2868.40 / 116.1660 → 478.95 / 2873.72 / 116.9901:
   // the Pecorino Romano 171249 is a search hit here (fat 26.9), its detail
   // in the library (26.94) — 0.0227 g of fat below the replay, both trees.
@@ -1883,13 +1884,16 @@ const _totals = [
   // v76 1102.13 / 1102.13 / 108.3599.
   // RE-PIN (M82 batch, v84, C6a): its EVOO |7 at 0.907 (the v84 replay's
   // section row 54.42 → 53.65 g): was 1124.27, 1124.27, 111.7880.
-  (_tapenade, _olives, 'complete', '1117.48', '1117.48', '111.0191'),
+  // RE-PIN (M86 batch, v90, 958: |5 2346392 pine nuts): was 1117.48, 1117.48.
+  (_tapenade, _olives, 'complete', '1097.52', '1097.52', '111.0191'),
   // The replay 233.77 / 935.06 / 26.3914 → 235.00 / 939.98 / 27.1532 (|2
   // reads the section × 2/9): the red potatoes 2346402 are a search hit
   // here, a detail in the library — 0.38 kcal above the replay, both trees.
   // RE-PIN (M82 batch, v84, C6a): the section × 2/9 and the main EVOO
   // (the replay 235.00 → 234.62): was 235.09, 940.37, 27.1578.
-  (_tapenade, null, 'partial', '234.71', '938.86', '26.9869'),
+  // RE-PIN (M86 batch, v90, 958: 2346402 potatoes, 2346392 nuts): was 234.71,
+  // 938.86.
+  (_tapenade, null, 'partial', '228.62', '914.47', '26.9869'),
 ];
 
 /// [row]'s energy as the totals read it: on its nutrient sibling's record
@@ -2139,12 +2143,16 @@ void main() {
             .toStringAsFixed(2),
         // RE-PIN (M82 batch, v84, C6a): the section's EVOO at 0.907: was
         // 249.84.
-        '248.33',
+        // RE-PIN (M86 batch, v90, 958: the section's 2346392 pine nuts): was
+        // 248.33.
+        '243.89',
       );
       expect(
         gramBasisFor(db, nutritionLines(tapenade)[2], parent, recipe: tapenade),
         // RE-PIN (M82 batch, v84): was '… 92 g, 250 kcal'.
-        'from the recipe $_olives: 92 g, 248 kcal',
+        // RE-PIN (M86 batch, v90, 958: the section's 2346392 pine nuts): was
+        // 248 kcal.
+        'from the recipe $_olives: 92 g, 244 kcal',
       );
     });
 

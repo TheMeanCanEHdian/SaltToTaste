@@ -310,16 +310,21 @@ const _negatives = [
 /// snapshots differ from the library's; the pinned rows are equal); the
 /// v88 replay's per serving in the comment, then v87's replay.
 const Map<String, (String, String, String)> _totals = {
-  _kiev: ('complete', '672.63', '1331.00'), // replay 672.70; v87 668.42
-  _lighter: ('complete', '288.46', '1768.80'), // replay 288.50; v87 298.43
-  _stuffed: ('complete', '641.32', '1274.70'), // replay 641.38; v87 639.11
-  _nut: ('complete', '515.98', '1129.30'), // replay 516.05; v87 566.38
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 672.63.
+  _kiev: ('complete', '685.38', '1331.00'), // replay 672.70; v87 668.42
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 288.46.
+  _lighter: ('complete', '294.42', '1768.80'), // replay 288.50; v87 298.43
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 641.32.
+  _stuffed: ('complete', '650.68', '1274.70'), // replay 641.38; v87 639.11
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 515.98.
+  _nut: ('complete', '527.89', '1129.30'), // replay 516.05; v87 566.38
 };
 
 void main() {
-  test('matcherVersion 84 (v88 set it to 83, batch M88: rows move)', () {
+  test('matcherVersion 85 (v88 set it to 83, batch M88: rows move)', () {
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
-    expect(matcherVersion, 84);
+    // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
+    expect(matcherVersion, 85);
   });
 
   test("pin (7) — the figures: FNDDS 2706442's two inputs by sequenceNumber "

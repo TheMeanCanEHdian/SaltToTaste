@@ -40,8 +40,9 @@ const List<NutrientDef> nutrientDefs = [
     key: 'energy',
     label: 'Calories',
     // 208 = Energy kcal (SR Legacy); 957/958 are the Atwater variants some
-    // Foundation foods publish instead.
-    fdcNumbers: ['208', '957', '958'],
+    // Foundation foods publish instead — 958 (Specific) read before 957
+    // (General) since matcher v90 (batch M86; docs/API.md).
+    fdcNumbers: ['208', '958', '957'],
     unit: 'kcal',
     dailyValue: 2000,
   ),

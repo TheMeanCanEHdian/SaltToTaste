@@ -38,7 +38,8 @@ void main() {
           await d.editAndCompute(db, fixture, r);
           final before = db.nutritionFor(r.id)!;
           expect((before.status, before.matchedCount), ('complete', 13));
-          expect(before.caloriesPerServing, closeTo(464.8, 0.05));
+          // RE-PIN (M86 batch, v90, 2346387 sour cream at its 958): was 464.8.
+          expect(before.caloriesPerServing, closeTo(464.1, 0.05));
           final rows = db.ingredientMatchesFor(r.id);
           final row0 = rows.firstWhere((x) => x.position == 0);
           expect((row0.status, row0.fdcId), ('auto', 173430));
@@ -149,7 +150,8 @@ void main() {
           final r = loadCorpusRecipe('0857-rich-chocolate-bundt-cake.yaml');
           await d.editAndCompute(db, fixture, r);
           final before = db.nutritionFor(r.id)!;
-          expect(before.caloriesPerServing, closeTo(464.8, 0.05));
+          // RE-PIN (M86 batch, v90, 2346387 sour cream at its 958): was 464.8.
+          expect(before.caloriesPerServing, closeTo(464.1, 0.05));
           final grams = d.rowOf(db, r, 0).grams!;
           v28.dropFood(path, 173430);
           final fault = v28.FoodFault(

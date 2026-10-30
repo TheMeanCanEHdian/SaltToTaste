@@ -2386,13 +2386,16 @@ void main() {
       // The replay's figure in the comment where a fresh compute differs (a
       // chicken record reads another energy here; the rows' grams are
       // equal); then v64's.
-      expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 402.18, 10
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 1999632 spinach): was
+      // 520.26.
+      expect(of(_almond), ('complete', '527.52', 11)); // 520.31; 402.18, 10
       // RE-PIN (M80 batch, v80, M80-2): the crumb crust at 12.12 — 575.50
       // (was 385.78; the v80 replay 385.84 → 575.56).
       // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
       // RE-PIN (M88 batch, v88): was 566.32 (the replay 566.38 → 516.05: the
       // dredge split).
-      expect(of(_nutCrusted), ('complete', '515.98', 13)); // 575.56; 360.45
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 515.98.
+      expect(of(_nutCrusted), ('complete', '527.89', 13)); // 575.56; 360.45
       // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its minced
       // basil on SR's chopped 2.65 g (replay 235.29 → 235.26).
       // RE-PIN (M80 batch, v80, M80-2): 298.93 (was 235.22; the v80 replay
@@ -2401,14 +2404,18 @@ void main() {
       // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43: the
       // coat re-solves on its Parmesan part's 170848).
       // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50).
-      expect(of(_lighter), ('complete', '288.46', 12)); // 298.97; 232.29
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
+      // 288.46.
+      expect(of(_lighter), ('complete', '294.42', 12)); // 298.97; 232.29
       // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
       // RE-PIN (M82 batch, v84): was 489.25 (the replay 489.23 → 488.66).
       // RE-PIN (M85 batch, v87): was 488.68 (the replay 488.66 → 485.58: its
       // Parmesan lines on 170848).
-      expect(of(_bestParmesan), ('complete', '485.60', 21)); // 486.50; 500.12
+      // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes, 2646170 chicken): was
+      // 485.60.
+      expect(of(_bestParmesan), ('complete', '480.44', 21)); // 486.50; 500.12
       // RE-PIN (M80 batch, v80, M80-1): complete 10/10 (was partial, 217.50,
       // 2; = the v80 replay).
       // RE-PIN (M82 batch, v84): was 532.09 (the replay 532.09 → 541.73).

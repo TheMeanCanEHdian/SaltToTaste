@@ -352,7 +352,10 @@ void main() {
       );
       // The label: the golden's 571.43 kcal (RE-PIN M90, v89: was 571.51 —
       // the dough's sugar at the corpus's printed cup), and what it includes.
-      expect(find.text('571'), findsOneWidget);
+      // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream, the
+      // pie's 2346411 blueberries and 1750342 Granny Smith): the golden's
+      // 562.97 — was 571 (571.43).
+      expect(find.text('563'), findsOneWidget);
       expect(
         find.text(
           'Includes 1 recipe: All-Butter Double-Crust Pie Dough '
@@ -370,11 +373,13 @@ void main() {
       );
       expect(find.text('Recipe'), findsOneWidget);
       // RE-PIN (M90 batch, v89, sugar): the dough 3,056.05 kcal (was 3,057).
-      expect(find.text('· 1 recipe · 643 g · 3,056 kcal'), findsOneWidget);
+      // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): the
+      // dough 3,054.47 kcal (was 3,056).
+      expect(find.text('· 1 recipe · 643 g · 3,054 kcal'), findsOneWidget);
       expect(
         find.text(
           'amount: from the recipe All-Butter Double-Crust Pie Dough: 643 g, '
-          '3,056 kcal · +382 kcal per serving',
+          '3,054 kcal · +382 kcal per serving',
         ),
         findsOneWidget,
       );
@@ -463,7 +468,9 @@ void main() {
         'current · default',
         // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print —
         // was 3,057, 3,520, 3,649.
-        '3,056 kcal · +382 / serving',
+        // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
+        // 3,056 kcal.
+        '3,054 kcal · +382 / serving',
         '3,519 kcal · +440 / serving',
         '3,648 kcal · +456 / serving',
         'The line says "1 recipe". All-Butter Double-Crust Pie Dough makes '

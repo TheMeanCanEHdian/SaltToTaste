@@ -270,7 +270,8 @@ const _negatives = [
   ),
   // 2,146.46 in the replay: the fixtures hold Foundation 2727570 as a search
   // hit and the library its detail (the kofte and kousa the same).
-  (_arayes, 17, '2 pounds ground lamb', 2727570, '907.18', '2150.03'),
+  // RE-PIN (M86 batch, v90, 958: 2259794 yogurt, 2727570 lamb): was 2150.03.
+  (_arayes, 17, '2 pounds ground lamb', 2727570, '907.18', '2195.39'),
   (
     _kebabs,
     1,
@@ -279,7 +280,9 @@ const _negatives = [
     '1020.58',
     '2051.37',
   ),
-  (_kofte, 15, '1½ pounds ground lamb', 2727570, '680.39', '1612.52'),
+  // RE-PIN (M86 batch, v90, 958: 2259793 yogurt, 2346392 nuts, 2727570 lamb):
+  // was 1612.52.
+  (_kofte, 15, '1½ pounds ground lamb', 2727570, '680.39', '1646.54'),
   (
     _stew,
     0,
@@ -288,7 +291,9 @@ const _negatives = [
     '1341.81',
     '3689.99',
   ),
-  (_kousa, 1, '8 ounces ground lamb', 2727570, '226.80', '537.51'),
+  // RE-PIN (M86 batch, v90, 958: 2512381 rice, 2727570 lamb, 1999634 tomato,
+  // 2685580 tomato +2 more): was 537.51.
+  (_kousa, 1, '8 ounces ground lamb', 2727570, '226.80', '548.85'),
   (
     _shanks,
     0,
@@ -303,11 +308,13 @@ const _negatives = [
 const _totals = [
   // 153.01 / 918.05 in the replay: the fixtures hold Foundation 2258586
   // (the carrots) as a search hit and the library its detail.
-  (_carrot, 'complete', '153.02', '918.12'),
+  // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 153.02, 918.12.
+  (_carrot, 'complete', '149.30', '895.80'),
   // RE-PIN (M90 batch, v89, brown sugar): its 1 cup packed brown sugar |6
   // at the print, 220.03 → 198.45 g (the replay 471.63 → 444.30): was
   // 471.63, 1414.90.
-  (_chutney, 'complete', '444.30', '1332.89'),
+  // RE-PIN (M86 batch, v90, 958: 1750342 apples): was 444.30, 1332.89.
+  (_chutney, 'complete', '437.12', '1311.37'),
   // RE-PIN (M90 batch, v89, cornstarch): its 3 tablespoons cornstarch |2 at
   // the print, 23.95 → 21.26 g (the replay 731.60 → 730.75): was 731.60,
   // 8779.23.
@@ -316,13 +323,18 @@ const _totals = [
   // +0.25 / −0.21 kcal); per serving the same.
   // RE-PIN (M90 batch, v89, sugar): its Slab Pie Dough's sugar at the print
   // (the replay 468.84 → 468.77): was 468.84, 8439.13.
-  (_slab, 'complete', '468.77', '8437.86'),
+  // RE-PIN (M86 batch, v90, 958: 2346411 blueberries, 2346410 raspberries): was
+  // 468.77, 8437.86.
+  (_slab, 'complete', '464.86', '8367.55'),
   // 223.27 / 893.07 in the replay: the cotija's hit (2647443).
   // RE-PIN (M90 batch, v89, sugar): its sugar at the print (the replay
   // 223.27 → 223.03): was 223.18, 892.73.
-  (_watermelon, 'complete', '222.94', '891.78'),
+  // RE-PIN (M86 batch, v90, 958: 2647443 cheese): was 222.94, 891.78.
+  (_watermelon, 'complete', '223.16', '892.63'),
   // RE-PIN (M82 batch, v84): was 886.76, 3547.05 (the replay 886.76 → 885.06).
-  (_roast, 'complete', '885.06', '3540.26'),
+  // RE-PIN (M86 batch, v90, 958: the relish's 2258590 red bell pepper): was
+  // 885.06, 3540.26.
+  (_roast, 'complete', '884.02', '3536.09'),
   (_grilled, 'complete', '650.93', '2603.70'),
 ];
 
@@ -688,7 +700,9 @@ void main() {
       () async {
         for (final (file, position, cooking, flag, perServing) in const [
           // RE-PIN (M82 batch, v84): was 886.76 (the replay 886.76 → 885.06).
-          (_roast, 0, 'roasted', _roastedFlag, '885.06'),
+          // RE-PIN (M86 batch, v90, 958: the relish's 2258590 red bell
+          // pepper): was 885.06.
+          (_roast, 0, 'roasted', _roastedFlag, '884.02'),
           (_grilled, 5, 'broiled', _broiledFlag, '650.93'),
         ]) {
           final recipe = recipes[file]!;

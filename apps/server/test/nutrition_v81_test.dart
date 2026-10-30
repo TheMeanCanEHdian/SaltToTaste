@@ -866,7 +866,8 @@ void critics() {
         row(),
         ResolverMemo(db),
       )!;
-      expect(sheet['kcal_per_serving'], 240.45);
+      // RE-PIN (M86 batch, v90, 958: the section's 2512381 rice): was 240.45.
+      expect(sheet['kcal_per_serving'], 247.78);
       final candidate = (sheet['candidates']! as List).single as Map;
       expect(
         (
@@ -875,7 +876,8 @@ void critics() {
           candidate['kcal_per_serving'],
           candidate['pickable'],
         ),
-        ('Basic White Rice', 1442.71, 240.45, true),
+        // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1442.71, 240.45.
+        ('Basic White Rice', 1486.68, 247.78, true),
       );
       await applyMatchOverride(db, fdc, stored(db, beansFile), 14, {
         'raw': line.raw,
@@ -929,7 +931,9 @@ void critics() {
     )!;
     // RE-PIN (M90 batch, v89, sugar): the doughs' sugar at the print — was
     // 382.09; 3056.69, 382.09; 3519.96, 440.0; 3649.32, 456.17.
-    expect(sheet['kcal_per_serving'], 382.01);
+    // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
+    // 382.01.
+    expect(sheet['kcal_per_serving'], 381.81);
     expect(
       [
         for (final c
@@ -937,7 +941,9 @@ void critics() {
           (c['group'], c['title'], c['kcal'], c['kcal_per_serving']),
       ],
       [
-        ('note_named', 'All-Butter Double-Crust Pie Dough', 3056.05, 382.01),
+        // RE-PIN (M86 batch, v90, 958: 2346387 sour cream): was 3056.05,
+        // 382.01.
+        ('note_named', 'All-Butter Double-Crust Pie Dough', 3054.47, 381.81),
         ('note_named', 'Basic Double-Crust Pie Dough', 3518.69, 439.84),
         ('note_named', 'Foolproof Double-Crust Pie Dough', 3648.05, 456.01),
       ],

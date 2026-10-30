@@ -2,13 +2,13 @@
   "status": "partial",
   "serving_basis": 6,
   "basis_kind": "per_serving",
-  "calories_per_serving": 143.0,
+  "calories_per_serving": 139.52,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 143.0,
+      "amount": 139.52,
       "unit": "kcal",
-      "dv_percent": 7.2
+      "dv_percent": 7.0
     },
     "fat": {
       "label": "Total Fat",

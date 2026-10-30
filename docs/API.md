@@ -5157,6 +5157,137 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v90 (batch M86; matcherVersion 85 — 958 before 957: a Foundation
+record's energy is its Atwater SPECIFIC figure; 1,299 rows on 107 records
+and 30 routed parents; prep51 design_v2 §1 Q2 option (b) / §2 M86, ruled by
+the owner 2026-10-29; ALONE — a one-way door; zero requests; replayed on
+snapshot 30 against the v89 rows, both orders byte-identical, the list order
+reverted alone reproducing v89 byte for byte, calls 0).** The energy order:
+- **The rule (`nutrients.dart` energy `fdcNumbers`).** `['208', '957',
+  '958']` → `['208', '958', '957']`. Every energy reader walks the one list
+  — `kcalPer100g`, `recomputeTotals`' `add` (and its `hasEnergy`), the
+  braised-share arm of `braisedKeptOf` (its 'energy' reads `kcalPer100g`),
+  `ethanolKcalPer100g`, and the replay's `kcalOf` (tool/replay/rp43.dart
+  reads `nutrientDefs.first.fdcNumbers`, no order of its own); the two
+  presence checks (`_macroComplete`, `publishesNothing`) are order-free.
+  RULE B's thresholds and every gram reader are unchanged: grams, basis,
+  gram source, status, hold and record never move.
+- **Census by data type (snapshot 30; the cache's 1,139 details and the
+  cached search hits, 8,431 records).** Only Foundation records publish 957
+  / 958, and never beside 208: Foundation 186 publish both (121 detail-
+  cached), 24 publish 957 only (9 detail-cached: fennel, parsnips,
+  jalapeño, poblano, serrano, radicchio, sea scallops, turnips, watermelon
+  rind — they fall back to 957, unchanged), 82 publish 208, 60 none; every
+  SR Legacy (4,567) and FNDDS (3,511) record publishes 208 alone (one FNDDS
+  hit none). A per-dataType switch (option (c)) is therefore byte-identical
+  to the reorder — not built.
+Reach vs the v89 rows (fix90 gate1, main == rev; all `auto`, 0 person rows,
+0 status / hold / gram-source / record changes; buckets, notes and calls
+identical; 37 of 144 sections move, totals only):
+- **1,299 rows on 107 Foundation records publishing 958**, each moving in
+  its energy alone, and every counted row on such a record moves (0 left):
+  1,298 single-record rows, every new figure the old × 958 / 957 within
+  rounding, and one parts row, the drained-can split
+  espinacas-con-garbanzos-andalusian-spinach-and-chickpeas|1 "2 (15-ounce)
+  cans chickpeas (1 can drained, 1 can undrained)" — only its drained part
+  on 2644288 moves, 240.26 g × (132.972 − 137.22) / 100 = −10.21 (703.90 →
+  693.69 kcal; the undrained can's 425.24 g on SR 175206, 208 at 88,
+  unchanged), so its figure is not the old × 958 / 957. ROW −9,044.14 (the
+  design's −9,044.8 on the v82 rows). Down 79 records / 1,053 rows
+  −17,870.15 (plants, nuts, cream), up 28 / 246 +8,826.01 (meats, rice). The
+  ten largest record moves: 2346386 heavy cream 146 rows −2,322.55 (343.31
+  → 335.89 kcal per 100 g), 2646170 chicken breast boneless skinless 49
+  +1,950.43, 2346395 pecans 28 −1,852.39, 2646171 thigh boneless skinless 31
+  +1,153.27, 2685581 crushed tomatoes 21 −951.42, 2646175 flank 18 +732.07,
+  2346394 walnuts 13 −729.20, 2685578 whole canned tomatoes 33 −640.36,
+  2727572 NY strip 9 +608.24, 2727573 tenderloin 8 +598.62. Search-hit-only
+  records move too (no detail cached; their hit's figures): 1999633 mature
+  spinach, 2646168 boneless pork loin (6 rows +415.03), … E.g. roasted-
+  brussels-sprouts|0 "2¼ pounds Brussels sprouts, trimmed and halved" 918.52
+  g on 2685575 546.38 → 448.04 kcal (59.485 → 48.7787).
+- **30 routed parents** (source `recipe`; the child's kcal × share, and the
+  basis quotes it — "from the recipe Basic White Rice: 402 g, 1,487 kcal":
+  only its kcal changes), ROW −228.50: e.g. red-beans-and-rice|14 → Basic
+  White Rice (2512381, 369.637 for 358.705) +43.97 and nasi-goreng|10 Faux
+  Leftover Rice +43.97, cheesy-nachos|6 Chunky Guacamole −77.78, beef-
+  satay|8 −54.50, bittersweet-chocolate-roulade|10 −43.55, tamales|10
+  +29.69, the four double-crust pies |0 −1.58 each. The brief's census named
+  only the rows on 958 records; the parents are the routing consequence (the
+  M82 / M90 "routed parents" precedent).
+- **Recipe energy** 3,387,063.25 → 3,378,186.01 = −8,877.24 over 758 recipes
+  (the design's −8,877.6 / 758 on v82). The rows M90 also moved: 746784
+  granulated sugar publishes 208 (385) — none of M90's sugar rows moves
+  here; 8 rows move in both batches (chili-con-carne|13 masa harina on
+  2710835 150.14 → 133.27 → 129.71 kcal, and 7 routed parents).
+Attribution: the list order reverted alone (matcherVersion 85 kept) gives
+v89's rows, recipes, sections, calls, notes and buckets byte for byte; 0
+unattributed.
+Calibration (reported, never fitted; v89 → v90 per serving): CIRCULAR — the
+audits' hands read the engine's own records at 957 (audit 6 §4.2 item 10),
+so agreement measures 957, not truth; calibrator 2's own 958 re-hands
+(audit 6 calibration_2.md) agree with the move: R23 137.67, the replay's
+figure exactly, and R16 peach-crisp 626.61 (the replay 627.67). Audit 6 median |error| 3.59 → 5.32 % (bias +3.67 →
++2.86 %; 12 of 25 move away): R23 roasted-brussels-sprouts 0.00 → −10.64,
+R21 carrot-ginger-soup −18.06 → −20.06, R05 chicken-kiev +12.38 → +14.57,
+R09 +6.24 → +7.83, R24 briam −0.67 → −2.89, R16 peach-crisp +0.17 →
+−2.07, R07 −3.59 → −5.32, R04 +0.39 → +1.77, R25 0.00 → −1.04 (away); R06
+easier-french-fries +18.47 → +16.71 and R18 cranberry-chutney +2.19 →
++0.54 (closer). The 100 (audits 2–5) median 6.25 → 6.77 % (beyond 15 %: 17
+→ 15; 31 closer, 35 away): a5 R08 brussels-sprout-salad +7.55 → +2.44 and
+R10 crispy-skinned breasts −11.36 → −8.36 (closer); a3 R09 breaded-
+chicken-cutlets +9.42 → +12.42, a4 R21 garlic-studded pork +6.25 → +9.15,
+a3 R10 herb-crusted pork +6.58 → +9.32, a5 R21 parmesan-crusted +10.45 →
++12.67, a5 R23 lighter-chicken-parmesan +10.23 → +12.57 (away — the
+up-moving Foundation meats); audit 4 median 11.51 → 12.61 %, audit 3 6.58 →
+6.93 %, audit 2 2.17 → 2.17 %, audit 5 5.20 → 5.20 %.
+Person path: none — a kcal read; typed grams untouched; no hunk touches
+nutrition_handlers.dart, `derivedFor`, `applyDecisionToOthers` or
+`decisionRecordOf`, so GATE-P was not run.
+Pins: nutrition_v90_test (5 tests — matcherVersion 85; the energy def's
+order and `kcalPer100g` on 2685575's recorded hit (48.8, its 957 59.5),
+2346386 (335.8933), the 957-only 2747662 (27.9906, its fallback), the
+208 records 746784 (385) and 170848 (392); five stated corpus rows on a
+whole-recipe compute — roasted-brussels-sprouts|0 on 2685575 (448.24 on
+the fixtures' hit; the replay's detail gives 448.04), ultimate-cream-of-
+tomato-soup|8 "½ cup heavy cream" 119.48 g, 401.32 kcal (was 410.18), and
+unmoved: vietnamese-beef-pho|6 on 746784 24.81 g 95.50, skillet-chicken-
+fajitas|10 on 2747662 453.59 g, italian-style-turkey-meatballs|3 on
+170848 28.35 g 111.13; a6 R23's total 137.71 on the fixtures (the replay
+154.06 → 137.67) and R03 oven-fried-onion-rings 541.73, unmoved; a second
+compute writing nothing), each mutant killed by a value pin (snapshot copy,
+anchor count 1, cmp restore): the list order restored, matcherVersion 84.
+The existing suite re-pinned as equalities (RE-PIN M86). The census ran
+first — the three suites on the changed tree before any pin: server 98
+failing tests in 43 files, salt_shared 0, app 3 in 2 files. With the list
+reverted alone (matcherVersion 85 kept) 9 of the 98 still fail — the six
+version literals and three hashes (seasoning_ci, v47_resolver, v83 F5c:
+the version alone); the other 89 pass at v89's literals, so every energy
+move they carry is the reorder's. Re-pinned (in rounds — a test stops at
+its first failing assertion): 42 server test files, 397 energy sites
+(per-serving and batch totals, row kcal, section batches, routed-child kcal
+and the "N kcal" their bases quote, v54's ethanol before / after pairs
+moved alike), v72's moved-since-v71 iff gains `_m86Moved` (22 entries) and
+its R-E3 deduction identity an `m86` term (each 958 row's grams × (958 −
+957) / 100; `lessThan(0.006)` unchanged), nutrition_v63's "957 30.8"
+sentence re-worded; no numeric bound widened, nothing deleted; 12 contract
+goldens re-captured (values only: energy amounts, kcal per 100 g, calories
+per serving, % DV, the routed basis's kcal), so the salt_shared and app
+suites ran (the app's 2 files, 4 sites: Blueberry Pie's label 563 and its
+dough 3,054 kcal). The records the re-pins name: 72 — 55 of foods.json's 68
+details publishing 958 (the design's 66 + 2514744 ground beef 80/20 and
+2710835 masa harina, recorded since) and 17 of searches.json's 99 958 hits
+with no detail recorded (2685575 Brussels sprouts among them); none
+outside.
+Cost: no new reader — a constant list reorder that every energy reader
+already walks; no cap shape (nothing per line or per step changes).
+One-way door: every Foundation row (1,299 counted today, every future one)
+and the stored totals of 758 recipes; no users (owner 2026-10-09) — ships
+unguarded, alone. Deploy note: matcherVersion 85 stales every stamp — run
+the owner's stale sweep after the deploy (0 requests); 758 recipes' stored
+totals move. The kcal digest (`tool/replay/digest.sh`) moves 764,596.77 →
+762,643.69, −1,953.08 (Σ total grams 1,891,121.0 unchanged over 1,342
+rows) — a per-serving sum, not the recipe energy above.
+
 **Matcher v89 (batch M90; matcherVersion 84 — 347 rows on the six keys'
 own lines and 76 consequence rows, 423 in all: a corpus-printed cup over a
 record's own volume figure; prep51 design_v2 §1 Q6 (b) / §2 M90, ruled

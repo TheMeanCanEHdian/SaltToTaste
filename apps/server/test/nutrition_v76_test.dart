@@ -103,7 +103,8 @@ const _totals = [
   (_tart, 'complete', '381.64', '3053.15'),
   // RE-PIN (M82 batch, v84, C5a): its 2 tablespoons flour |16 15.08 → 17.72
   // g (the replay 469.49 → 471.10): was 469.49, 2816.96.
-  (_pastitsio, 'complete', '471.10', '2826.61'),
+  // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 471.10, 2826.61.
+  (_pastitsio, 'complete', '468.82', '2812.95'),
 ];
 
 /// The v74 rows on 170850 (3; generated from v74_rows.tsv): (slug|position, raw, normalized item).

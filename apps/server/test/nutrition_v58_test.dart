@@ -673,7 +673,8 @@ void main() {
         expect(
           db.nutritionFor(stored.id)!.caloriesPerServing?.toStringAsFixed(2),
           // RE-PIN (M90 batch, v89, cornstarch): was 446.29.
-          '442.94',
+          // RE-PIN (M86 batch, v90, 958: 2685573 cauliflower): was 442.94.
+          '440.28',
         );
         final before = rows();
         final kcal = db.nutritionFor(stored.id)!.caloriesPerServing;
@@ -695,7 +696,8 @@ void main() {
 
       // RE-PIN (M90 batch, v89, cornstarch): its cornstarch |8 at the print
       // (the replay 366.34 → 362.07): was 366.34.
-      expect(of(_saltPepper), ('complete', '362.07')); // v57 303.34
+      // RE-PIN (M86 batch, v90, 958: 2346388 lettuce): was 362.07.
+      expect(of(_saltPepper), ('complete', '361.36')); // v57 303.34
       // crispy-orange-beef (replay 599.09, v57 536.09): its beef |0 reads
       // its energy off another answer in a fresh compute (952.54 for the
       // replay's 953.52) — the status only.
@@ -706,7 +708,8 @@ void main() {
       // RE-PIN (M90 batch, v89, cornstarch + cornmeal): the batter's starches
       // and the oil |4 (the replay 616.15 → 584.34, the same +0.01): was
       // 616.16.
-      expect(of(_cauliflower), ('complete', '584.35'));
+      // RE-PIN (M86 batch, v90, 958: 2685573 cauliflower): was 584.35.
+      expect(of(_cauliflower), ('complete', '579.02'));
       // fish-and-chips (replay 855.40, v57 981.40): its oil |1 reads another
       // record in a fresh compute than in snapshot 23 — the status only.
       expect(of(_fishChips).$1, 'complete');

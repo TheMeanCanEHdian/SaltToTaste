@@ -174,7 +174,8 @@ const List<_Row> _p7a = [
     2685570,
     '0.970000',
     '1047.80',
-    '504.33',
+    // RE-PIN (M86 batch, v90, 958: 2685570 squash): was 504.33.
+    '437.10',
     'from the printed weight (2½–3 lb, the midpoint) × 0.84 edible · approximate (USDA AH-102 item 2459: butternut squash, raw whole → flesh 84 % (75–88); the steps peel it)',
   ),
   // RE-PIN (M64 batch, v63, P10): the pear half step 2 sets aside is
@@ -197,7 +198,9 @@ const List<_Row> _p7a = [
     1750342,
     '0.970000',
     '928.73',
-    '546.76',
+    // RE-PIN (M86 batch, v90, 958: 1750342 apples, 2346395 nuts, 2346396 oats):
+    // was 546.76.
+    '491.84',
     '7 × 170 g (printed weight) × 0.78 edible · approximate (USDA AH-102 item 17: apples, all cultivars, raw whole → flesh, pared and cored 78 % (60–87); the steps peel it)',
   ),
 ];
@@ -260,7 +263,8 @@ const List<_Row> _kept = [
     2346401,
     '0.950000',
     '907.18',
-    '756.77',
+    // RE-PIN (M86 batch, v90, 958: 2346401 potatoes): was 756.77.
+    '734.39',
     'from 2 pound',
   ),
   (
@@ -270,7 +274,8 @@ const List<_Row> _kept = [
     2346401,
     '0.950000',
     '907.18',
-    '756.77',
+    // RE-PIN (M86 batch, v90, 958: 2346401 potatoes): was 756.77.
+    '734.39',
     'from 2 pound',
   ),
   (
@@ -683,16 +688,22 @@ void main() {
         // RE-PIN (M82 batch, v84): was 566.13 (the replay 566.13 → 568.27).
         (_crowd, '568.27'), // v58 540.37
         // RE-PIN (M82 batch, v84): was 618.09 (the replay 618.09 → 621.31).
-        (_enCocotte, '621.31'), // v58 572.42
+        // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
+        // 621.31.
+        (_enCocotte, '620.88'), // v58 572.42
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 700.52.
         // RE-PIN (M82 batch, v84): was 703.29 (the replay 703.29 → 702.44).
         (_porchetta, '702.44'), // v58 647.82
-        (_butternut, '351.03'), // v58 375.04
+        // RE-PIN (M86 batch, v90, 958: 2685570 squash): was 351.03.
+        (_butternut, '334.22'), // v58 375.04
         // RE-PIN (M64 batch, v63, P10): 525.79 (was 533.20; −59.26 / 8).
         // RE-PIN (M90 batch, v89, sugar): its sugar at the print (the replay
         // 525.79 → 525.51): was 525.79.
-        (_pearCake, '525.51'), // v58 545.74
-        (_apples, '363.28'), // v58 388.98
+        // RE-PIN (M86 batch, v90, 958: 2346394 nuts): was 525.51.
+        (_pearCake, '517.23'), // v58 545.74
+        // RE-PIN (M86 batch, v90, 958: 1750342 apples, 2346395 nuts, 2346396
+        // oats): was 363.28.
+        (_apples, '350.98'), // v58 388.98
         // meatloaf (replay 575.11, v58 654.01, −473.40 / 6): its saltines
         // |15 land another record with no grams in a fresh compute
         // (174928; 2708167 in snapshot 23) — not pinned here.

@@ -2612,10 +2612,13 @@ _whole = [
   // P8: 2 + 90 + 45 + 15 + 3 = 155 min → 5009 5 % (468.44 g red wine)
   // RE-PIN (M82 batch, v84): its garlic |0 (C3a) and flour |7 (C5a) — the energy before and after the
   // ethanol moves alike (was 4937.85, 4607.28, 189.36, 389.59).
+  // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste, 2258586 carrots, 2346403
+  // gold potatoes) — the energy before and after the ethanol moves alike, after
+  // = this compute: was 4956.58, 4626.01.
   (
     '0005-best-beef-stew.yaml',
-    4956.58,
-    4626.01,
+    4938.05,
+    4607.48,
     193.33,
     390.14,
     [(8, 2710688, 468.44, 5)],
@@ -2623,10 +2626,12 @@ _whole = [
   // P10 restated: 180 + the skimmed liquid reduced 18 = 198 min → 5 %
   // RE-PIN (M82 batch, v84): its flour |8 (C5a) — the energy before and after the
   // ethanol moves alike (was 3666.73, 3137.48).
+  // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste) — the energy before and
+  // after the ethanol moves alike, after = this compute: was 3671.56, 3142.31.
   (
     '0426-beef-braised-in-barolo.yaml',
-    3671.56,
-    3142.31,
+    3668.99,
+    3139.74,
     0,
     0,
     [(10, 2710688, 750.00, 5)],
@@ -2637,10 +2642,13 @@ _whole = [
   // RE-PIN (M90 batch, v89, brown sugar): its dark brown sugar |1 at the
   // print (20.63 → 18.60 g, the v89 replay's row) — before and after alike
   // (was 1554.87, 1544.72, 135.11, 30.61).
+  // RE-PIN (M86 batch, v90, 958: 2685578 whole tomatoes, 2685580 tomato paste,
+  // 2346386 heavy cream) — the energy before and after the ethanol moves alike,
+  // after = this compute: was 1547.18, 1537.03.
   (
     '0013-ultimate-cream-of-tomato-soup.yaml',
-    1547.18,
-    1537.03,
+    1481.78,
+    1471.63,
     133.12,
     30.60,
     [(9, 2710699, 29.28, 85)],
@@ -2648,10 +2656,13 @@ _whole = [
   // P1: brought to a simmer, ladled → boil-off 85 %
   // RE-PIN (M82 batch, v84): its garlic |2 (C3a) — the energy before and after the
   // ethanol moves alike (was 2408.67, 2396.43).
+  // RE-PIN (M86 batch, v90, 958: 1999629 / 1999628 mushrooms, 2346386 heavy
+  // cream) — the energy before and after the ethanol moves alike, after = this
+  // compute: was 2408.39, 2396.15.
   (
     '0017-creamy-mushroom-soup.yaml',
-    2408.39,
-    2396.15,
+    2316.05,
+    2303.81,
     0,
     0,
     [(8, 175112, 78.07, 85)],
@@ -2663,10 +2674,13 @@ _whole = [
   // D1 (the shape): Madeira cooked 2–3 min, the stuffing rolled in a rare roast
   // RE-PIN (M82 batch, v84): its garlic |6 and |15 (C3a) — the energy before and after the
   // ethanol moves alike (was 2813.50, 2795.14).
+  // RE-PIN (M86 batch, v90, 958: 2727573 tenderloin, 1999632 spinach) — the
+  // energy before and after the ethanol moves alike, after = this compute: was
+  // 2812.93, 2794.57.
   (
     '0216-roast-beef-tenderloin-with-caramelized-onion-and-mushroom-stuffing.yaml',
-    2812.93,
-    2794.57,
+    2880.08,
+    2861.72,
     0,
     0,
     [(7, 175112, 117.11, 85)],
@@ -2684,10 +2698,13 @@ _whole = [
   // re-solves the coat — its beer |10 150.23 → 154.50 g (the v89 replay's
   // row), so the ethanol removed is 6.25 (was 6.08): was 3398.19, 3392.11,
   // 150.23.
+  // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod) — the energy
+  // before and after the ethanol moves alike, after = this compute: was
+  // 3400.54, 3394.29.
   (
     '0255-fish-and-chips.yaml',
-    3400.54,
-    3394.29,
+    3404.70,
+    3398.45,
     0,
     0,
     [(10, 2710616, 154.50, 85)],
@@ -2712,10 +2729,12 @@ _whole = [
   // RE-PIN (M90 batch, v89, sugar): its sugar |1 at the print (25.14 →
   // 24.81 g, the v89 replay's row) — before and after alike (was 5052.09,
   // 4968.00, 646.53, 51.02).
+  // RE-PIN (M86 batch, v90, 958: 2346409 strawberries) — the energy before and
+  // after the ethanol moves alike, after = this compute: was 5050.82, 4966.73.
   (
     '0986-strawberry-rhubarb-pie.yaml',
-    5050.82,
-    4966.73,
+    5035.04,
+    4950.95,
     646.20,
     51.02,
     [(5, 2710704, 56.00, 35)],

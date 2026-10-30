@@ -572,7 +572,9 @@ const List<_Row> _negatives = [
     '212.62',
     'auto',
     null,
-    '66.76', // replay 66.82: the fresh compute reads the search hit's energy
+    // RE-PIN (M86 batch, v90, 958: 2346407 cabbage, 2685573 cauliflower): was
+    // 66.76.
+    '59.32', // replay 66.82: the fresh compute reads the search hit's energy
     'from 7 1/2 ounce',
   ),
   (
@@ -726,7 +728,9 @@ const List<_Row> _negatives = [
     '417.30',
     'auto',
     null,
-    '115.18', // replay 115.14 (as |0)
+    // RE-PIN (M86 batch, v90, 958: 2346407 cabbage, 2685573 cauliflower): was
+    // 115.18.
+    '95.56', // replay 115.14 (as |0)
     'from 1 pound × 0.92 edible · approximate (USDA AH-102 item 499: cauliflower, raw whole head → fully trimmed, head or flowerbud 92 % (83–100))',
   ),
   (
@@ -1207,36 +1211,44 @@ void main() {
         // chicken, pork or vegetable line counted on a search hit reads
         // FDC's rounded energy here (the v61 note): the fresh figures sit
         // within 0.07 of the replay's, each recipe moving by its M69 rows.
-        expect(of(_piccata), ('complete', '425.39')); // replay 399.84 → 425.45
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 425.39.
+        expect(of(_piccata), ('complete', '435.60')); // replay 399.84 → 425.45
         expect(of(_nextLevel), (
           'complete',
-          '472.45',
+          // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 472.45.
+          '484.36',
         )); // replay 442.64 → 472.52
-        expect(of(_marsala), ('complete', '734.28')); // replay 704.46 → 734.35
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
+        // 734.28.
+        expect(of(_marsala), ('complete', '745.55')); // replay 704.46 → 734.35
         // RE-PIN (M78 batch, v78, Q7 (c)): the four C4 recipes' pan fat
         // (and parmesan-crusted's crust, Q6 (c)) — francese was 438.29,
         // saltimbocca 511.50, meunière 349.73, parmesan-crusted partial
         // 171.63; the v78 replay 438.34 → 346.62, 511.56 → 407.88, 349.73 →
         // 258.01, 171.67 → 340.01.
         // RE-PIN (M82 batch, v84): was 346.57 (the replay 346.62 → 347.83).
-        expect(of(_francese), ('complete', '347.78')); // replay 407.44 → 438.34
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
+        expect(of(_francese), ('complete', '357.13')); // replay 407.44 → 438.34
         expect(of(_saltimbocca), (
           'complete',
-          '407.82',
+          // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 407.82.
+          '417.18',
         )); // replay 488.08 → 511.56
         expect(of(_meuniere), ('complete', '258.01')); // replay 326.25 → 349.73
         // RE-PIN (M85 batch, v87): was 339.97 (the replay 340.01 → 326.65:
         // the crust's Parmesan on 170848).
         expect(of(_parmesanCrusted), (
           'complete',
-          '326.61',
+          // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
+          '332.99',
         )); // replay 153.54 → 171.67
         // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
         // basil |12 on SR's chopped cup (replay 453.66 → 454.01).
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.04.
         // RE-PIN (M82 batch, v84): was 455.88 (the replay 455.86 → 452.38).
         // RE-PIN (M85 batch, v87): was 452.40 (the replay 452.38 → 451.58).
-        expect(of(_eggplant), ('partial', '451.60')); // replay 360.33 → 453.66
+        // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 451.60.
+        expect(of(_eggplant), ('partial', '446.01')); // replay 360.33 → 453.66
         // Unmoved (replay v67 = v68).
         // RE-PIN (M80 batch, v80, M80-1): the coat budgeted on the onion —
         // complete (was partial, 217.50; = the v80 replay).
@@ -1248,13 +1260,20 @@ void main() {
         // (−108.41 / 6); still partial.
         expect(of(_maple), ('partial', '444.28')); // = replay
         // RE-PIN (M82 batch, v84): was 695.99 (the replay 696.06 → 695.86).
-        expect(of(_skillet), ('partial', '695.79')); // replay 696.06
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2512381 rice): was
+        // 695.79.
+        expect(of(_skillet), ('partial', '715.95')); // replay 696.06
         // RE-PIN (M82 batch, v84): was 662.00 (the replay 662.07 → 681.29).
-        expect(of(_chickenMarsala), ('complete', '681.23')); // replay 662.07
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 1999629 mushrooms,
+        // 2685580 tomato): was 681.23.
+        expect(of(_chickenMarsala), ('complete', '686.80')); // replay 662.07
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 376.78.
         // RE-PIN (M82 batch, v84): was 378.55 (the replay 346.62 → 347.83).
-        expect(of(_francese2), ('complete', '378.82')); // replay 376.82
-        expect(of(_tacos), ('complete', '609.06')); // replay 609.07
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 378.82.
+        expect(of(_francese2), ('complete', '386.76')); // replay 376.82
+        // RE-PIN (M86 batch, v90, 958: 2346407 cabbage, 2685573 cauliflower):
+        // was 609.06.
+        expect(of(_tacos), ('complete', '602.30')); // replay 609.07
       },
     );
 

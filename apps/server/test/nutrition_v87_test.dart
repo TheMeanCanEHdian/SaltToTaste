@@ -264,18 +264,25 @@ const List<_Row> _rows = [
 const Map<String, (String, String, String)> _totals = {
   _kale: ('complete', '263.21', '629.40'), // = replay; v86 265.26
   // RE-PIN (M90 batch, v89): the replay 647.55 → 641.85: was 648.42, 1521.80.
-  _meatloaf: ('complete', '642.72', '1515.90'), // replay 647.55; v86 649.60
-  _farfalle: ('complete', '704.76', '658.70'), // = replay; v86 705.79
-  _ziti: ('complete', '595.31', '1752.40'), // replay 595.35; v86 597.41
+  // RE-PIN (M86 batch, v90, 958: 2514747 turkey): was 642.72.
+  _meatloaf: ('complete', '654.06', '1515.90'), // replay 647.55; v86 649.60
+  // RE-PIN (M86 batch, v90, 958: 2346392 nuts): was 704.76.
+  _farfalle: ('complete', '701.02', '658.70'), // = replay; v86 705.79
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2346386 cream): was 595.31.
+  _ziti: ('complete', '599.90', '1752.40'), // replay 595.35; v86 597.41
   _onion: ('complete', '362.29', '3620.50'), // = replay; v86 364.34
   _frico: ('complete', '222.26', '453.60'), // = replay; v86 238.70
   // Unmoved: its Parmesan rows count 0 g.
-  _minestrone: ('complete', '264.97', '1833.60'), // replay 265.05 both
+  // RE-PIN (M86 batch, v90, 958: 2644281 beans, 2346405 celery, 2258586
+  // carrots, 2685568 squash +1 more): was 264.97.
+  _minestrone: ('complete', '259.46', '1833.60'), // replay 265.05 both
   // The re-solved budgets add grams (v86 1,782.60 and 2,765.00 g).
   // RE-PIN (M88 batch, v88): was 298.40 / 1,785.10 (replay 298.43) — the
   // dredge split (the v88 replay 288.50).
-  _lighter: ('complete', '288.46', '1768.80'), // replay 288.50; v86 297.64
-  _eggplant: ('partial', '451.60', '2767.50'), // replay 451.58; v86 452.38
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 288.46.
+  _lighter: ('complete', '294.42', '1768.80'), // replay 288.50; v86 297.64
+  // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 451.60.
+  _eggplant: ('partial', '446.01', '2767.50'), // replay 451.58; v86 452.38
 };
 
 /// The recorded cached answers (FixtureProvider) every Parmesan, Asiago and
@@ -284,10 +291,11 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 84 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 85 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
-    expect(matcherVersion, 84);
+    // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
+    expect(matcherVersion, 85);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "

@@ -152,7 +152,9 @@ const List<_Row> _guarded = [
     2258586,
     '0.936667',
     '72.00',
-    '34.55',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
+    // tomato): was 34.55.
+    '32.38',
     '1 × 72 g each',
   ),
   (
@@ -162,7 +164,9 @@ const List<_Row> _guarded = [
     2346405,
     '0.970000',
     '40.00',
-    '6.68',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
+    // tomato): was 6.68.
+    '5.93',
     '1 × 40 g each',
   ),
   // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
@@ -193,7 +197,8 @@ const List<_Row> _guarded = [
     2346405,
     '0.970000',
     '40.00',
-    '6.68',
+    // RE-PIN (M86 batch, v90, 958: 2346405 celery, 2258586 carrots): was 6.68.
+    '5.93',
     '1 × 40 g each',
   ),
   (
@@ -203,7 +208,8 @@ const List<_Row> _guarded = [
     2258586,
     '0.936667',
     '61.00',
-    '29.27',
+    // RE-PIN (M86 batch, v90, 958: 2346405 celery, 2258586 carrots): was 29.27.
+    '27.44',
     '1 × 61 g each',
   ),
   (
@@ -223,7 +229,9 @@ const List<_Row> _guarded = [
     2258586,
     '0.936667',
     '61.00',
-    '29.27',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 2685578
+    // tomatoes, 2644286 beans): was 29.27.
+    '27.44',
     '1 × 61 g each',
   ),
   (
@@ -263,7 +271,9 @@ const List<_Row> _guarded = [
     2258586,
     '0.936667',
     '72.00',
-    '34.55',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2346407 cabbage, 2258586
+    // carrots): was 34.55.
+    '32.38',
     '1 × 72 g each',
   ),
   (
@@ -363,7 +373,9 @@ const List<_Row> _daube = [
     2258586,
     '0.936667',
     '288.00',
-    '138.21',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 2685578
+    // tomatoes): was 138.21.
+    '129.54',
     '4 × 72 g each',
   ),
   (
@@ -373,7 +385,9 @@ const List<_Row> _daube = [
     2685580,
     '0.856667',
     '32.53',
-    '33.92',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 2685578
+    // tomatoes): was 33.92.
+    '28.80',
     '2 tablespoon ≈ 30 mL',
   ),
   (
@@ -484,7 +498,9 @@ const List<_Row> _daube = [
     2685578,
     '0.860000',
     '221.98',
-    '49.89',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 2685578
+    // tomatoes): was 49.89.
+    '42.51',
     'from the printed weight × 0.54 drained · approximate (ATK: 2 (28-ounce) cans whole tomatoes, drained, give 3 cups juice)',
   ),
   (
@@ -534,7 +550,8 @@ const List<_Row> _sauceStrains = [
     2258586,
     '0.936667',
     '122.00',
-    '58.55',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was 58.55.
+    '54.87',
     '2 × 61 g each',
   ),
   (

@@ -331,9 +331,13 @@ const List<_Row> _negatives = [
     2258589,
     '0.660000',
     '680.39',
-    // The record's first energy number, 957 30.8 (the replay's kcalPer100g
-    // prices 209.38 — unchanged from v62 either way).
-    '209.56',
+    // The record's energy as the fixtures' search hit prints it (FDC's
+    // rounded figures): its Atwater 958 26.6 since v90 (M86; its 957 30.8
+    // before). The replay reads the snapshot's detail (958 26.58104, 957
+    // 30.7743): 180.85 since v90, 209.38 before — unchanged from v62 either
+    // way.
+    // RE-PIN (M86 batch, v90, 958: 2258589 yellow bell peppers): was 209.56.
+    '180.98',
     '4 × 170 g (printed weight)',
   ),
   (
@@ -971,14 +975,23 @@ void main() {
         const [
           // RE-PIN (M90 batch, v89, sugar): its sugar at the print (the
           // replay 525.79 → 525.51): was 525.79.
-          ('complete', '525.51'), // 533.20; 533.20 → 525.79 (P10)
-          ('partial', '404.88'), // 489.26; 489.04 → 403.85 (F9)
-          ('complete', '504.00'), // 420.00; 419.95 → 503.95 (the yield)
-          ('complete', '670.38'), // 671.01; 670.73 → 670.11 (bay)
+          // RE-PIN (M86 batch, v90, 958: 2346394 walnuts): was '525.51'.
+          ('complete', '517.23'), // 533.20; 533.20 → 525.79 (P10)
+          // RE-PIN (M86 batch, v90, 958: 2727569 chicken breasts): was
+          // '404.88'.
+          ('partial', '418.72'), // 489.26; 489.04 → 403.85 (F9)
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was '504.00'.
+          ('complete', '491.42'), // 420.00; 419.95 → 503.95 (the yield)
+          // RE-PIN (M86 batch, v90, 958: 2727567 chicken thighs): was '670.38'.
+          ('complete', '682.29'), // 671.01; 670.73 → 670.11 (bay)
           // RE-PIN (M70 batch, v69, pE Q6): 748.74 (was 748.47) — its
           // chopped basil on SR's chopped cup (replay 748.42 → 748.69).
-          ('complete', '748.54'), // 748.63; 748.58 → 748.42 (bay)
-          ('partial', '682.12'), // 678.81; 678.78 → 678.46 (bay)
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste, 2685581 crushed
+          // tomatoes, 2346386 heavy cream): was '748.54'.
+          ('complete', '733.93'), // 748.63; 748.58 → 748.42 (bay)
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste, 2346402
+          // potatoes, 2258586 carrots): was '682.12'.
+          ('partial', '677.77'), // 678.81; 678.78 → 678.46 (bay)
           ('complete', '715.06'), // 715.27; 715.27 → 715.06 (bay)
           // RE-PIN (M71 batch, v71): 404.60 (was 596.80) — the galangal
           // strained (pE R-E3, −12.80) and the jam's oil at its printed 2
@@ -989,7 +1002,8 @@ void main() {
           // RE-PIN (M90 batch, v89, brown sugar + sugar): the chili jam's
           // brown sugar and the soup's sugar at their prints (the replay
           // 404.62 → 401.90): was 404.60.
-          ('complete', '401.87'), // 601.75; 601.77 → 596.82 (H1)
+          // RE-PIN (M86 batch, v90, 958: 1999627 mushrooms): was '401.87'.
+          ('complete', '397.51'), // 601.75; 601.77 → 596.82 (H1)
         ],
       );
     });

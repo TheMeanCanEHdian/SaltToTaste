@@ -163,9 +163,12 @@ Future<(SaltDatabase, _Counted, AppliedToOthers?, List<String>)> _applied({
   expect(
     [for (final id in ids) db.nutritionFor(id)!.caloriesPerServing],
     [
-      571.59,
+      // RE-PIN (M86 batch, v90, 958: 2514744 ground beef 80/20): was 571.59.
+      579.46,
       350.84,
-      784.73,
+      // RE-PIN (M86 batch, v90, 958: 2685581 crushed tomatoes, 2710835 masa
+      // harina): was 784.73.
+      781.87,
     ],
   );
   for (final (id, at, cooked) in [(ids[0], 17, 65.49), (ids[1], 0, 110.88)]) {
@@ -272,7 +275,8 @@ void main() {
         [for (final id in ids.take(2)) db.nutritionFor(id)!.caloriesPerServing],
         // RE-PIN (M82 batch, v84, C3a): the meatloaf's garlic — was 575.11.
         // RE-PIN (M90 batch, v89, brown sugar): its brown sugar — was 575.01.
-        [571.59, 350.84],
+        // RE-PIN (M86 batch, v90, 958: 2514744 ground beef 80/20): was 571.59.
+        [579.46, 350.84],
       );
       expect(
         [for (final id in ids.take(2)) _staleReason(db, id)],
@@ -882,7 +886,9 @@ void main() {
         // 261b14d5…; the base tree with only the bump gives this literal).
         // RE-PIN (M90 batch, v89): the hash at matcherVersion 84 (was
         // 037e93f7…; the base tree with only the bump gives this literal).
-        'f33ea1340d57fe3e89f2588885996682aa80aba464d25af0cc47c4f2fcc2c537',
+        // RE-PIN (M86 batch, v90): the hash at matcherVersion 85 (was
+        // f33ea134…; the base tree with only the bump gives this literal).
+        '3d506465e0262493e6b3c5ca617e45bbe05e5aa4ba20932ca6f1ca9d02859f7b',
       );
     });
   });

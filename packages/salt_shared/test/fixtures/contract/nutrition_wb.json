@@ -2,13 +2,13 @@
   "status": "complete",
   "serving_basis": 8,
   "basis_kind": "per_serving",
-  "calories_per_serving": 445.08,
+  "calories_per_serving": 438.44,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 445.08,
+      "amount": 438.44,
       "unit": "kcal",
-      "dv_percent": 22.3
+      "dv_percent": 21.9
     },
     "fat": {
       "label": "Total Fat",

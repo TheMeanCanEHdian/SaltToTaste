@@ -627,26 +627,40 @@ void main() {
         // 220.60 → 220.10 g, 1,135.14 → 1,133.23; each parent by the replay's
         // delta): was 642.9, 3056.69, 571.51; 642.9, 3056.69, 597.13; 220.6,
         // 1135.14, 273.62; 220.6, 1135.14, 450.14; 220.6, 1135.14, 598.27.
-        (_blueberry, 0, _allButter, 642.7, 3056.05, 571.43, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream, 2346411
+        // blueberries, 1750342 Granny Smith): was 3056.05, 571.43.
+        (_blueberry, 0, _allButter, 642.7, 3054.47, 562.97, 'complete'),
         // v43 (Y8): its two apple lines × 0.78 (AH-102 item 17).
-        (_deepDish, 0, _allButter, 642.7, 3056.05, 596.97, 'complete'),
-        (_summerBerry, 7, _graham, 220.1, 1133.23, 272.10, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
+        // 3056.05, 596.97.
+        (_deepDish, 0, _allButter, 642.7, 3054.47, 596.77, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: 2346410 raspberries, 2346411
+        // blueberries): was 272.10.
+        (_summerBerry, 7, _graham, 220.1, 1133.23, 267.71, 'complete'),
         // RE-PIN (M47 batch, v49 Q6): its 4 tsp lime zest plus ½ cup juice
         // counts, two parts (was 445.87, partial).
-        (_keyLime, 3, _graham, 220.1, 1133.23, 449.90, 'complete'),
-        (_coconut, 9, _graham, 220.1, 1133.23, 597.91, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: 2346386 heavy cream): was 449.90.
+        (_keyLime, 3, _graham, 220.1, 1133.23, 447.69, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: 2346386 heavy cream): was 597.91.
+        (_coconut, 9, _graham, 220.1, 1133.23, 594.59, 'complete'),
         // v44: its |5 now routes to its own One-Minute Salsa (+23.00).
         // RE-PIN (M82 batch, v84, C3a; critic K-5's whole-recipe hop): the
         // guacamole's garlic clove at its printed ¼ teaspoon, and the salsa's
         // (the replay 1,098.56 → 1,097.92): was 522.5, 1032.78, 1098.56.
-        (_nachos, 6, _guacamole, 522.3, 1032.49, 1097.92, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: the guacamole's 2710824 avocados,
+        // 2346387 sour cream): was 1032.49, 1097.92.
+        (_nachos, 6, _guacamole, 522.3, 954.71, 1077.42, 'complete'),
         // RE-PIN (M47 batch, v49): the lemon tart's strained zest line counts
         // its juice (Q6; was 399.33), the fruit tart's kiwis 150 g (Q12; was
         // 547.59, partial).
-        (_lemonTart, 0, _tartDough, 401.8, 1870.07, 403.79, 'partial'),
+        // RE-PIN (M86 batch, v90, 958: the dough's and the tart's 2346386 heavy
+        // cream): was 1870.07, 403.79.
+        (_lemonTart, 0, _tartDough, 401.8, 1868.96, 403.24, 'partial'),
         // RE-PIN (M90 batch, v89, cornstarch): its pastry cream's cornstarch
         // |4 at the print (the replay 559.80 → 558.51): was 559.79.
-        (_fruitTart, 7, _tartDough, 401.8, 1870.07, 558.51, 'complete'),
+        // RE-PIN (M86 batch, v90, 958: the dough's 2346386 heavy cream, the
+        // fruit's 2710831 / 2346410 / 2346411): was 1870.07, 558.51.
+        (_fruitTart, 7, _tartDough, 401.8, 1868.96, 553.89, 'complete'),
       ]) {
         final parent = r(file);
         final row = rowAt(parent, position);
@@ -676,7 +690,9 @@ void main() {
       expect(
         gramBasisFor(db, line, row, recipe: stored(blueberry)),
         // RE-PIN (M90 batch, v89, sugar): was 3,057 kcal.
-        'from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,056 kcal',
+        // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
+        // 3,056 kcal.
+        'from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,054 kcal',
       );
       expect(
         compositeFlagOf(db, stored(blueberry), line, row, ResolverMemo(db)),
@@ -760,7 +776,9 @@ void main() {
       // v43 (Y8): its two peeled, cored apple pounds × 0.78 (AH-102 item 17).
       // RE-PIN (M90 batch, v89, sugar): its sugar's plus part at the print (the
       // replay 143.11 → 143.00): was 143.11.
-      expect(label(tart).caloriesPerServing, closeTo(143.0, 0.005));
+      // RE-PIN (M86 batch, v90, 958: 1750342 Granny Smith (the replay 143.00 →
+      // 139.52)): was 143.0.
+      expect(label(tart).caloriesPerServing, closeTo(139.52, 0.005));
       expect(fresh(tart), isTrue);
 
       final tips = r(_steakTips);
@@ -796,7 +814,9 @@ void main() {
         // cups red wine simmer 20 + 5 = 25 min → USDA 5004 40 % of its
         // ethanol kept (347.96 kcal; −208.78 for the section), the parent
         // reading ½ of it: −104.39 a batch, 131.34 → 105.24 a serving.
-        (_herbSauce, 0, 10, 10, 105.24),
+        // RE-PIN (M86 batch, v90, 958: the Sauce Base's 2685580 tomato paste
+        // (its batch 428.23 → 425.67, the parent reads ½)): was 105.24.
+        (_herbSauce, 0, 10, 10, 104.92),
       ]) {
         final recipe = r(file);
         final row = rowAt(recipe, position);
@@ -847,7 +867,9 @@ void main() {
       // RE-PIN (M49 batch, v51): the v51 replay's 277.44 (was 301.66).
       // RE-PIN (M82 batch, v84, C3a): its garlic |7 at its printed ½
       // teaspoon, 3.00 → 1.40 g — the v84 replay's 276.87 (was 277.44).
-      expect(label(salad).caloriesPerServing, closeTo(276.87, 0.005));
+      // RE-PIN (M86 batch, v90, 958: 1999632 baby spinach, the replay 276.87 →
+      // 274.37): was 276.87.
+      expect(label(salad).caloriesPerServing, closeTo(274.36, 0.005));
       // Its "3 hard-cooked eggs (recipe follows)": counted on its food, as
       // in v40 (a count of the food itself — no route).
       final eggs = rowAt(salad, 8);

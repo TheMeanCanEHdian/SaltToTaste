@@ -699,7 +699,9 @@ void plans() {
     // 93.89, 3630.71.
     expect(
       await fishWith('¼ cup tapioca starch', 'tapioca starch'),
-      ('96.56', '3632.89'),
+      // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod):
+      // was 3632.89.
+      ('96.56', '3637.05'),
     );
   });
 
@@ -773,7 +775,9 @@ void plans() {
     // RE-PIN (M90 batch, v89, cornstarch): the coat re-solves on the
     // batter's starch at the print (the replay's 854.89 → 855.43 a
     // serving): was 3548.84.
-    expect(kcal, '3551.03');
+    // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod):
+    // was 3551.03.
+    expect(kcal, '3555.19');
   });
 }
 
@@ -888,7 +892,8 @@ void persons() {
     // replay's 455.86 → 452.38 a serving): was 2735.29.
     // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
     // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2709.63');
+    // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 2709.63.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2676.06');
     await _put(db, fdc, r.id, 0, {'confirmed': true});
     expect(
       _sig(_row(db, r.id, 0)),
@@ -898,7 +903,8 @@ void persons() {
     // replay's 455.86 → 452.38 a serving): was 2735.29.
     // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
     // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2709.63');
+    // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 2709.63.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2676.06');
     await _settled(db, fdc, r.id);
     // The gate in `derivedFor`: the confirmed eggplant derives with no plan
     // of its own — the GET plans once (routed to the plan: twice).
@@ -914,7 +920,8 @@ void persons() {
     // replay's 455.86 → 452.38 a serving): was 2735.29.
     // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
     // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2709.63');
+    // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 2709.63.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2676.06');
     await _settled(db, fdc, r.id);
   });
 
@@ -1112,7 +1119,9 @@ void persons() {
       // print — was 63.88.
       '3 overridden|169698|56.70|density|null',
       '3 overridden|169698|null|null|coating',
-      '1506.1605',
+      // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod):
+      // was 1506.1605.
+      '1479.7070',
     ),
   ]) {
     test('F7, a pick (closer 4, verify4 D1): $file |$picked picked on its own '
@@ -1266,7 +1275,8 @@ void persons() {
       // RE-PIN (M82 batch, v84, C1 + C5a): the crumb coat's bread and flour
       // (crunchy-oven-fried-fish|0 65.12 g, |5 57.01 g at the replay): was
       // 1382.5822.
-      '1408.3556',
+      // RE-PIN (M86 batch, v90, 958: 2684444 cod): was 1408.3556.
+      '1433.8701',
     ),
     (
       '0149-easier-fried-chicken.yaml',

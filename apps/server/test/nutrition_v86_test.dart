@@ -158,18 +158,21 @@ const Map<String, (String, String, String)> _totals = {
   _chinese: ('complete', '832.71', '4996.25'),
   // v85: 613.48 / 3680.89 — the row's 3,050.52 kcal × (1 − 0.924475) =
   // 230.39 less (per serving × 6, −230.40).
-  _shanks: ('complete', '575.08', '3450.50'),
+  // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
+  // tomato): was 575.08, 3450.50.
+  _shanks: ('complete', '573.06', '3438.37'),
   // RE-PIN (M90 batch, v89, brown sugar): its Spice Rub's light brown sugar
   // at the print (the replay 1,070.60 → 1,068.03): was 1070.60, 4282.38.
   _memphis: ('complete', '1068.03', '4272.13'),
 };
 
 void main() {
-  test('matcherVersion 84 (v86 set it to 81, batch M84: rows move)', () {
+  test('matcherVersion 85 (v86 set it to 81, batch M84: rows move)', () {
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
-    expect(matcherVersion, 84);
+    // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
+    expect(matcherVersion, 85);
   });
 
   group('matcher v86 (batch M84) — whole recipes', skip: skipIfNoCorpus, () {

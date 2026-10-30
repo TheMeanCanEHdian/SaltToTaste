@@ -365,7 +365,8 @@ void readers() {
       // replay 794.35 → 797.57): was 794.35.
       expect(
         _g2(db.nutritionFor(r.id)!.caloriesPerServing!),
-        '797.57',
+        // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
+        '797.14',
         reason: tag,
       );
       expect(

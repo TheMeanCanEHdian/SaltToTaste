@@ -133,21 +133,28 @@ const _negatives = [
     '1 (1½- to 1¾-pound) flank steak',
     2646175,
     '737.09',
-    '1208.82',
+    // RE-PIN (M86 batch, v90, 958: 2646175 beef): was 1208.82.
+    '1253.05',
     'from the printed weight (1½–1¾ lb, the midpoint)',
   ),
 ];
 
 /// (file, status, per serving, stored batch energy) after the compute.
 const _totals = [
-  (_newEngland, 'complete', '592.11', '4736.91'),
-  (_corned, 'complete', '628.01', '5024.10'),
+  // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+  // cabbage): was 592.11, 4736.91.
+  (_newEngland, 'complete', '584.18', '4673.45'),
+  // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+  // cabbage): was 628.01, 5024.10.
+  (_corned, 'complete', '620.79', '4966.36'),
   // RE-PIN (M82 batch, v84): was 588.82, 3532.95 (the replay 588.82 → 590.30).
   // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 at the print
   // (the replay 590.30 → 589.45): was 590.30, 3541.81.
-  (_onion, 'complete', '589.45', '3536.68'),
+  // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 589.45, 3536.68.
+  (_onion, 'complete', '589.02', '3534.12'),
   // RE-PIN (M82 batch, v84): was 794.35, 4766.11 (the replay 794.35 → 797.57).
-  (_pomegranate, 'complete', '797.57', '4785.41'),
+  // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 797.57, 4785.41.
+  (_pomegranate, 'complete', '797.14', '4782.85'),
   // RE-PIN (M90 batch, v89, brown sugar + sugar): its rub's sugars at their
   // prints (the replay 697.49 → 696.88): was 697.49, 12554.79.
   (_barbecued, 'complete', '696.88', '12543.90'),
@@ -155,7 +162,8 @@ const _totals = [
   // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 586.89 / 2347.57 (the replay
   // 586.71 → 590.86).
   // RE-PIN (M82 batch, v84): was 591.05, 2364.18 (the replay 590.86 → 589.59).
-  (_tacos, 'partial', '589.77', '2359.09'),
+  // RE-PIN (M86 batch, v90, 958: 2646175 beef): was 589.77, 2359.09.
+  (_tacos, 'partial', '600.83', '2403.31'),
 ];
 
 void main() {
@@ -362,10 +370,13 @@ void main() {
       // RE-PIN (M82 batch, v84): the onion brisket's garlic |5 (C3a, 9.00 →
       // 8.45 g) and flour |9 (C5a, 15.08 → 17.72 g) — the v84 replay's KCAL
       // CHECK reads rows 4,326.79: was 4317.93.
-      expect(gross(_corned).toStringAsFixed(2), '6964.56');
+      // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+      // cabbage): was 6964.56.
+      expect(gross(_corned).toStringAsFixed(2), '6906.81');
       // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 13.75 →
       // 12.40 g (the v89 replay's row): was 4326.79.
-      expect(gross(_onion).toStringAsFixed(2), '4321.67');
+      // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 4321.67.
+      expect(gross(_onion).toStringAsFixed(2), '4319.10');
       final corned = row(_corned) * (1 - braisedKept[173128]!['energy']!);
       expect(corned.toStringAsFixed(2), '1940.46');
       expect(
@@ -388,7 +399,9 @@ void main() {
       expect(recomputeTotals(db, recipe), isTrue);
       expect(
         db.nutritionFor(recipe.id)!.caloriesPerServing!.toStringAsFixed(2),
-        '628.01',
+        // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes,
+        // 2346407 cabbage): was 628.01.
+        '620.79',
       );
       expect(braisedKeptOf(line.raw, 173128, recipe), braisedKept[173128]);
       final items =

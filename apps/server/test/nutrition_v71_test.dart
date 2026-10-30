@@ -600,7 +600,8 @@ const List<_Row> _unmoved = [
     '226.80',
     'auto',
     null,
-    '92.99',
+    // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 92.99.
+    '75.52',
     'from 8 ounce',
   ),
   (
@@ -797,7 +798,9 @@ const List<_Row> _unmoved = [
     '453.59',
     'auto',
     null,
-    '142.09',
+    // RE-PIN (M86 batch, v90, 958: 2258590 peppers, 2346406 cucumber): was
+    // 142.09.
+    '122.42',
     'from 1 pound',
   ),
   (
@@ -811,7 +814,9 @@ const List<_Row> _unmoved = [
     '453.59',
     'auto',
     null,
-    '72.16',
+    // RE-PIN (M86 batch, v90, 958: 2258590 peppers, 2346406 cucumber): was
+    // 72.16.
+    '63.21',
     'from 1 pound',
   ),
   (
@@ -1054,7 +1059,8 @@ const List<_Row> _unmoved = [
     '340.19',
     'auto',
     null,
-    '257.19',
+    // RE-PIN (M86 batch, v90, 958: 2346402 potatoes): was 257.19.
+    '249.70',
     'from 12 ounce',
   ),
   (
@@ -1110,7 +1116,8 @@ const List<_Row> _unmoved = [
     '793.79',
     'auto',
     null,
-    '841.41',
+    // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2512381 rice): was 841.41.
+    '889.04',
     '4 × 198 g (printed 6–8 oz, the midpoint)',
   ),
   (
@@ -1223,7 +1230,8 @@ const List<_Row> _unmoved = [
     '301.65',
     'auto',
     null,
-    '1082.03',
+    // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2512381 rice): was 1082.03.
+    '1115.01',
     '1 1/2 cup ≈ 355 mL',
   ),
   (
@@ -2142,7 +2150,8 @@ const List<_Row> _unmoved = [
     '1133.98',
     'auto',
     null,
-    '1905.09',
+    // RE-PIN (M86 batch, v90, 958: 2646168 pork): was 1905.09.
+    '1973.13',
     'from the printed weight',
   ),
   (
@@ -2326,7 +2335,8 @@ const List<_Row> _unmoved = [
     '566.99',
     'auto',
     null,
-    '374.21',
+    // RE-PIN (M86 batch, v90, 958: 2684444 fish): was 374.21.
+    '399.73',
     'from 1 1/4 pound',
   ),
   (
@@ -2354,7 +2364,8 @@ const List<_Row> _unmoved = [
     '1102.23',
     'auto',
     null,
-    '919.26',
+    // RE-PIN (M86 batch, v90, 958: 2346401 potatoes, 2684444 fish): was 919.26.
+    '892.81',
     'from 3 pound × 0.81 edible · approximate (USDA AH-102 item 2018: potatoes, raw whole, all samples → pared 81 % (61–94))',
   ),
   (
@@ -2490,7 +2501,8 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '449.06',
+    // RE-PIN (M86 batch, v90, 958: 2346401 potatoes, 2684444 fish): was 449.06.
+    '479.67',
     'from 1 1/2 pound',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 167.52 g, 72.03 kcal (the v84 replay's row).
@@ -2773,7 +2785,8 @@ const List<_Row> _unmoved = [
     '108.00',
     'auto',
     null,
-    '18.48',
+    // RE-PIN (M86 batch, v90, 958: 2346388 lettuce): was 18.48.
+    '15.61',
     '1 1/2 cup · USDA portion of "Lettuce, iceberg (includes crisphead types), raw"',
   ),
   (
@@ -2874,7 +2887,9 @@ const List<_Row> _unmoved = [
     '453.59',
     'auto',
     null,
-    '299.37',
+    // RE-PIN (M86 batch, v90, 958: 2684444 fish, 2685578 tomatoes, 2258590
+    // peppers, 2258588 peppers): was 299.37.
+    '319.78',
     'from 1 pound',
   ),
   (
@@ -2930,7 +2945,9 @@ const List<_Row> _unmoved = [
     '411.07',
     'auto',
     null,
-    '92.49',
+    // RE-PIN (M86 batch, v90, 958: 2684444 fish, 2685578 tomatoes, 2258590
+    // peppers, 2258588 peppers): was 92.49.
+    '78.51',
     'from the printed weight',
   ),
   (
@@ -2975,7 +2992,9 @@ const List<_Row> _unmoved = [
     '119.00',
     'auto',
     null,
-    '37.28',
+    // RE-PIN (M86 batch, v90, 958: 2684444 fish, 2685578 tomatoes, 2258590
+    // peppers, 2258588 peppers): was 37.28.
+    '32.12',
     '1 × 119 g each',
   ),
   (
@@ -2989,7 +3008,9 @@ const List<_Row> _unmoved = [
     '119.00',
     'auto',
     null,
-    '27.29',
+    // RE-PIN (M86 batch, v90, 958: 2684444 fish, 2685578 tomatoes, 2258590
+    // peppers, 2258588 peppers): was 27.29.
+    '23.43',
     '1 × 119 g each',
   ),
   (
@@ -3459,7 +3480,8 @@ const List<_Row> _unmoved = [
     '918.52',
     'auto',
     null,
-    '766.05',
+    // RE-PIN (M86 batch, v90, 958: 2346401 potatoes): was 766.05.
+    '744.00',
     'from 2 1/2 pound × 0.81 edible · approximate (USDA AH-102 item 2018: potatoes, raw whole, all samples → pared 81 % (61–94))',
   ),
   (
@@ -3503,7 +3525,8 @@ const List<_Row> _unmoved = [
     '1133.98',
     'auto',
     null,
-    '833.48',
+    // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 833.48.
+    '811.93',
     'from 2 1/2 pound',
   ),
   (
@@ -3618,7 +3641,8 @@ const List<_Row> _unmoved = [
     '396.89',
     'auto',
     null,
-    '89.30',
+    // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes): was 89.30.
+    '75.81',
     'from the printed weight',
   ),
   // RE-PIN (M82 batch, v84, C6a): was 27.21 g, 240.52 kcal (the v84 replay's row).
@@ -3949,7 +3973,8 @@ const List<_Row> _unmoved = [
     '74.67',
     'auto',
     null,
-    '256.36',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream, 2514745 pork): was 256.36.
+    '250.82',
     '5 tablespoon ≈ 74 mL',
   ),
   // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
@@ -4021,7 +4046,8 @@ const List<_Row> _unmoved = [
     '170.10',
     'auto',
     null,
-    '387.82',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream, 2514745 pork): was 387.82.
+    '396.33',
     'from 6 ounce',
   ),
   (
@@ -4248,7 +4274,9 @@ const List<_Row> _unmoved = [
     '122.00',
     'auto',
     null,
-    '58.55',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 1999629
+    // mushrooms): was 58.55.
+    '54.87',
     '2 × 61 g each',
   ),
   (
@@ -4446,7 +4474,9 @@ const List<_Row> _unmoved = [
     '5.42',
     'auto',
     null,
-    '5.65',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 1999629
+    // mushrooms): was 5.65.
+    '4.80',
     '1 teaspoon ≈ 5 mL',
   ),
   (
@@ -4559,7 +4589,9 @@ const List<_Row> _unmoved = [
     '283.50',
     'auto',
     null,
-    '88.45',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato, 1999629
+    // mushrooms): was 88.45.
+    '70.59',
     'from 10 ounce',
   ),
   (
@@ -4700,8 +4732,10 @@ const List<_Row> _unmoved = [
     '430.20',
     'auto',
     null,
-    '1694.71',
-    'from the recipe Faux Leftover Rice: 430 g, 1,695 kcal',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1694.71.
+    '1738.68',
+    // RE-PIN (M86 batch, v90, 958: the child's 2512381 rice): was 1,695 kcal.
+    'from the recipe Faux Leftover Rice: 430 g, 1,739 kcal',
   ),
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -4770,7 +4804,8 @@ const List<_Row> _unmoved = [
     '402.20',
     'auto',
     null,
-    '1442.71',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1442.71.
+    '1486.68',
     '2 cup ≈ 473 mL',
   ),
   (
@@ -4798,7 +4833,8 @@ const List<_Row> _unmoved = [
     '873.16',
     'auto',
     null,
-    '1641.55',
+    // RE-PIN (M86 batch, v90, 958: 2727567 chicken): was 1641.55.
+    '1685.21',
     '8 × 156 g (printed 5–6 oz, the midpoint) × 0.70 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat and skin 70 % (63–81))',
   ),
   (
@@ -5085,7 +5121,8 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '1143.05',
+    // RE-PIN (M86 batch, v90, 958: 2727568 chicken): was 1143.05.
+    '1177.07',
     'from 3 pound × 0.50 edible · approximate (USDA AH-102 item 590: chicken wing, raw → meat and skin 50 % (41–60))',
   ),
   (
@@ -5099,7 +5136,8 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '952.54',
+    // RE-PIN (M86 batch, v90, 958: 2727574 beef): was 952.54.
+    '993.37',
     'from 1 1/2 pound · approximation (counted as Beef, top sirloin steak, raw)',
   ),
   (
@@ -5801,7 +5839,9 @@ const List<_Row> _unmoved = [
     '182.76',
     'auto',
     null,
-    '171.21',
+    // RE-PIN (M86 batch, v90, 958: 2259794 yogurt, 2346406 cucumber, 2646170
+    // chicken, 2258588 peppers): was 171.21.
+    '172.73',
     '3/4 cup ≈ 177 mL',
   ),
   (
@@ -5815,7 +5855,9 @@ const List<_Row> _unmoved = [
     '150.00',
     'auto',
     null,
-    '23.86',
+    // RE-PIN (M86 batch, v90, 958: 2259794 yogurt, 2346406 cucumber, 2646170
+    // chicken, 2258588 peppers): was 23.86.
+    '20.90',
     '1/2 × 300 g each',
   ),
   (
@@ -5885,7 +5927,9 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '721.21',
+    // RE-PIN (M86 batch, v90, 958: 2259794 yogurt, 2346406 cucumber, 2646170
+    // chicken, 2258588 peppers): was 721.21.
+    '762.03',
     'from 1 1/2 pound',
   ),
   // RE-PIN (M82 batch, v84, C6a): was 72.55 g, 641.37 kcal (the v84 replay's row).
@@ -5972,7 +6016,9 @@ const List<_Row> _unmoved = [
     '119.00',
     'auto',
     null,
-    '27.29',
+    // RE-PIN (M86 batch, v90, 958: 2259794 yogurt, 2346406 cucumber, 2646170
+    // chicken, 2258588 peppers): was 27.29.
+    '23.43',
     '1 × 119 g each',
   ),
   (
@@ -6042,7 +6088,8 @@ const List<_Row> _unmoved = [
     '907.18',
     'auto',
     null,
-    '685.83',
+    // RE-PIN (M86 batch, v90, 958: 2346402 potatoes): was 685.83.
+    '665.87',
     'from 2 pound',
   ),
   (
@@ -6252,7 +6299,9 @@ const List<_Row> _unmoved = [
     '238.00',
     'auto',
     null,
-    '54.57',
+    // RE-PIN (M86 batch, v90, 958: 2258588 peppers, 2685577 eggplant, 2685568
+    // squash): was 54.57.
+    '46.87',
     '2 × 119 g each',
   ),
   (
@@ -6266,7 +6315,9 @@ const List<_Row> _unmoved = [
     '300.00',
     'auto',
     null,
-    '78.25',
+    // RE-PIN (M86 batch, v90, 958: 2258588 peppers, 2685577 eggplant, 2685568
+    // squash): was 78.25.
+    '67.08',
     '1 × 300 g each',
   ),
   (
@@ -6280,7 +6331,9 @@ const List<_Row> _unmoved = [
     '255.15',
     'auto',
     null,
-    '48.48',
+    // RE-PIN (M86 batch, v90, 958: 2258588 peppers, 2685577 eggplant, 2685568
+    // squash): was 48.48.
+    '40.82',
     'from the printed weight (8–10 oz, the midpoint)',
   ),
   (
@@ -6350,7 +6403,8 @@ const List<_Row> _unmoved = [
     '907.18',
     'auto',
     null,
-    '254.92',
+    // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 254.92.
+    '213.19',
     'from 2 pound',
   ),
   // RE-PIN (M82 batch, v84, C6a): was 40.81 g, 360.77 kcal (the v84 replay's row).
@@ -6424,7 +6478,9 @@ const List<_Row> _unmoved = [
     '243.69',
     'auto',
     null,
-    '189.96',
+    // RE-PIN (M86 batch, v90, 958: 2259793 yogurt, 2644283 lentils, 2512381
+    // rice): was 189.96.
+    '188.41',
     '1 cup ≈ 237 mL',
   ),
   (
@@ -6480,7 +6536,9 @@ const List<_Row> _unmoved = [
     '240.97',
     'auto',
     null,
-    '867.49',
+    // RE-PIN (M86 batch, v90, 958: 2259793 yogurt, 2644283 lentils, 2512381
+    // rice): was 867.49.
+    '845.81',
     'from 8 1/2 ounce',
   ),
   (
@@ -6508,7 +6566,9 @@ const List<_Row> _unmoved = [
     '251.37',
     'auto',
     null,
-    '901.69',
+    // RE-PIN (M86 batch, v90, 958: 2259793 yogurt, 2644283 lentils, 2512381
+    // rice): was 901.69.
+    '929.17',
     '1 1/4 cup ≈ 296 mL',
   ),
   (
@@ -6804,7 +6864,8 @@ const List<_Row> _unmoved = [
     '238.95',
     'auto',
     null,
-    '820.35',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 820.35.
+    '802.63',
     '1 cup ≈ 237 mL',
   ),
   (
@@ -7241,7 +7302,8 @@ const List<_Row> _unmoved = [
     '119.00',
     'auto',
     null,
-    '37.28',
+    // RE-PIN (M86 batch, v90, 958: 2258590 peppers): was 37.28.
+    '32.12',
     '1 × 119 g each',
   ),
   (
@@ -7409,7 +7471,8 @@ const List<_Row> _unmoved = [
     '453.59',
     'auto',
     null,
-    '333.39',
+    // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 333.39.
+    '324.77',
     'from 1 pound',
   ),
   (
@@ -7479,7 +7542,8 @@ const List<_Row> _unmoved = [
     '555.65',
     'auto',
     null,
-    '1044.62',
+    // RE-PIN (M86 batch, v90, 958: 2727567 chicken): was 1044.62.
+    '1072.40',
     'from 1 1/2–2 pound (the midpoint) × 0.70 edible · approximate (USDA AH-102 item 586: chicken thigh, raw → meat and skin 70 % (63–81))',
   ),
   (
@@ -8371,7 +8435,8 @@ void main() {
           null,
           'complete',
           // RE-PIN (M90 batch, v89): the replay 404.62 → 401.90: was 404.60.
-          '401.87',
+          // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 401.87.
+          '397.51',
         ), // 596.82 → 404.62
         (
           '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
@@ -8410,7 +8475,8 @@ void main() {
           '0316-classic-french-fries.yaml',
           null,
           'complete',
-          '315.52',
+          // RE-PIN (M86 batch, v90, 958: 2346401 potatoes): was 315.52.
+          '310.01',
         ), // 431.27 → 315.56
         // RE-PIN (M83 batch, v85): was 361.46 — B4: the joined bacon fat |2
         // takes 2.52 g of the uptake at 897 kcal/100 g, the peanut oil the
@@ -8419,7 +8485,8 @@ void main() {
           '0317-easier-french-fries.yaml',
           null,
           'complete',
-          '361.44',
+          // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 361.44.
+          '356.05',
         ), // 477.10 → 361.38
         // RE-PIN (M82 batch, v84): was 811.14 (the replay 811.11 → 810.26).
         (
@@ -8429,14 +8496,16 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 808.37.
           // RE-PIN (M85 batch, v87): was 810.29 (the replay 810.26 → 804.10).
           // RE-PIN (M90 batch, v89): the replay 804.10 → 803.94: was 804.12.
-          '803.96',
+          // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes): was 803.96.
+          '800.59',
         ), // 774.92 → 808.35
         (
           '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
           null,
           'complete',
           // RE-PIN (M90 batch, v89): the replay 803.21 → 800.65: was 803.21.
-          '800.65',
+          // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 800.65.
+          '811.64',
         ), // 939.71 → 803.21
         (
           '0554-shrimp-pad-thai.yaml',
@@ -8449,7 +8518,8 @@ void main() {
           '0659-grilled-potatoes-with-garlic-and-rosemary.yaml',
           null,
           'complete',
-          '300.90',
+          // RE-PIN (M86 batch, v90, 958: 2346402 potatoes): was 300.90.
+          '295.91',
         ), // 307.69 → 300.81
         // RE-PIN (M82 batch, v84): was 161.44 (the replay 161.45 → 159.96).
         (
@@ -8457,13 +8527,15 @@ void main() {
           null,
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 157.29.
-          '159.95',
+          // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 159.95.
+          '149.52',
         ), // 156.93 → 157.29
         (
           '1171-bulalo-hearty-beef-shank-and-vegetable-soup.yaml',
           null,
           'complete',
-          '392.03',
+          // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 392.03.
+          '390.60',
         ), // 434.01 → 392.02
       ]) {
         final n = db.nutritionFor(recipeIn(file, section).id)!;
@@ -8823,7 +8895,8 @@ void main() {
       ];
       expect(rows, [(1, '8.19', null), (2, '0.21', null), (5, '7.50', null)]);
       expect(row(db, stored.id, 5).gramSource, 'portion');
-      expect(_g2(db.nutritionFor(stored.id)!.caloriesPerServing!), '301.13');
+      // RE-PIN (M86 batch, v90, 958: 2346402 red potatoes): was 301.13.
+      expect(_g2(db.nutritionFor(stored.id)!.caloriesPerServing!), '296.14');
     });
 
     test("pF R2 sums the reserved spoonfuls of the line's own SCOPE: two "

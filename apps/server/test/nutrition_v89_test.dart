@@ -573,7 +573,9 @@ const List<_Host> _hosts = [
     <String>[],
     'recipe',
     '260.60',
-    'from the recipe Spicy Peanut Dipping Sauce: 261 g, 928 kcal',
+    // RE-PIN (M86 batch, v90, 958: the sauce's 2262072 peanut butter): was
+    // 928 kcal.
+    'from the recipe Spicy Peanut Dipping Sauce: 261 g, 873 kcal',
   ),
   // D3: foolproof-double-crust-pie-dough's Foolproof Single-Crust Pie Dough (v88: 357.00 g, 1824.22 kcal → 1823.58 kcal).
   (
@@ -618,7 +620,9 @@ const List<_Host> _hosts = [
     <String>[],
     'recipe',
     '893.40',
-    'from the recipe Curtido: 893 g, 316 kcal',
+    // RE-PIN (M86 batch, v90, 958: the Curtido's 2346407 cabbage, 2258586
+    // carrot): was 316 kcal.
+    'from the recipe Curtido: 893 g, 299 kcal',
   ),
   // D3: Slab Pie Dough (v88: 761.30 g, 3963.66 kcal → 3962.38 kcal).
   (
@@ -632,8 +636,9 @@ const List<_Host> _hosts = [
 ];
 
 void main() {
-  test('matcherVersion 84 (v89, batch M90: rows move)', () {
-    expect(matcherVersion, 84);
+  test('matcherVersion 85 (v89 set it to 84, batch M90: rows move)', () {
+    // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
+    expect(matcherVersion, 85);
   });
 
   test("the six keys' figures are the corpus's printed cups, oz × 28.3495 ÷ "
@@ -1027,11 +1032,14 @@ IngredientMatchRow _row(SaltDatabase db, String id, int position) =>
 /// Each recipe's (status, kcal per serving) — the fresh compute; the v89
 /// replay's in the comment (v88's before the arrow).
 const Map<String, (String, String)> _totals = {
-  _chutney: ('complete', '444.30'), // replay 471.63 → 444.30
+  // RE-PIN (M86 batch, v90, 958: 1750342 Granny Smith apples): was 444.30
+  // (the v90 replay 444.30 → 437.12).
+  _chutney: ('complete', '437.12'), // replay 471.63 → 444.30
   // The fresh compute in its own database; the replay's 513.09 → 512.69
   // (other rows' search-hit energies recorded from earlier snapshots differ
   // from the library's; the coat rows |8 |9 are the replay's, above).
-  _wings: ('complete', '513.46'),
+  // RE-PIN (M86 batch, v90, 958: 2727568 chicken): was 513.46.
+  _wings: ('complete', '521.96'),
 };
 
 /// Each cap shape's counts on the tree — equal to base d02f207's (fix89

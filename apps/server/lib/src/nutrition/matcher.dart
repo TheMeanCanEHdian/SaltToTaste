@@ -136,7 +136,8 @@ const Map<String, String> _synonyms = {
 /// v82: matcher v87 (batch M85) — grated Parmesan on SR 170848.
 /// v83: matcher v88 (batch M88) — the dredge's own figure (2706442 split).
 /// v84: matcher v89 (batch M90) — printed densities over a record's own cup.
-const int matcherVersion = 84;
+/// v85: matcher v90 (batch M86) — Foundation energy: 958 before 957.
+const int matcherVersion = 85;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

@@ -18872,7 +18872,7 @@ FdcFood? _foodFromCache(SaltDatabase db, int fdcId) {
 }
 
 /// The calories 100 g of [food] counts, as the totals count them: its first
-/// published energy (208, then the Atwater 957/958), else 4/9/4 from its
+/// published energy (208, then the Atwater 958, then 957), else 4/9/4 from its
 /// protein, fat and carbohydrate — what the fix sheet shows beside a match
 /// with no amount yet ("80 kcal per 100 g"), and what the totals add for a
 /// record with no energy. Fat as the nutrient sum reads it (nutrients.dart:

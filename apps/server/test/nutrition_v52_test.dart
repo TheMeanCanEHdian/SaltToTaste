@@ -441,7 +441,9 @@ void main() {
               _friedRice,
               'Basic White Rice',
               402.2,
-              1442.71,
+              // RE-PIN (M86 batch, v90, 958: 2512381 rice's 958 369.637 — K-4's
+              // +43.97): was 1442.71.
+              1486.68,
               2,
               18,
             ),
@@ -490,7 +492,9 @@ void main() {
       }
       expect(
         db.nutritionFor(stored(_beans).id)!.caloriesPerServing,
-        closeTo(711.48, 0.005),
+        // RE-PIN (M86 batch, v90, 958: the rice section's 2512381 (K-4's
+        // +43.97), 2258588 green bell pepper, 2346405 celery): was 711.48.
+        closeTo(718.04, 0.005),
       );
       final rice = rowAt(_friedRice, 1, section: 'Basic White Rice');
       expect(

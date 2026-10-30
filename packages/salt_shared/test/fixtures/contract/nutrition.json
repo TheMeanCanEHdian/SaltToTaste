@@ -2,11 +2,11 @@
   "status": "partial",
   "serving_basis": 12,
   "basis_kind": "per_serving",
-  "calories_per_serving": 464.8,
+  "calories_per_serving": 464.1,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 464.8,
+      "amount": 464.1,
       "unit": "kcal",
       "dv_percent": 23.2
     },

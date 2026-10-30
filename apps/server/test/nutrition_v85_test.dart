@@ -303,12 +303,13 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 84 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 85 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
-    expect(matcherVersion, 84);
+    // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
+    expect(matcherVersion, 85);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
@@ -483,7 +484,9 @@ void main() {
       final label = db.nutritionFor(id)!;
       expect(
         (label.servingBasis, label.caloriesPerServing?.toStringAsFixed(2)),
-        (8, '107.86'),
+        // RE-PIN (M86 batch, v90, 958: 2258590 red bell pepper, 2346406
+        // cucumber): was 107.86.
+        (8, '104.30'),
       );
       expect(
         nutritionIsFresh(db, db.recipeByIdOrSlug(id)!.recipe, label),

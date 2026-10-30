@@ -246,13 +246,16 @@ const _totals = [
   // 171.67 → 340.01 (partial → complete).
   // RE-PIN (M85 batch, v87): was 339.97 (the replay 340.01 → 326.65: |3's
   // Parmesan on 170848).
-  (_parmesan, 'complete', '326.61'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
+  (_parmesan, 'complete', '332.99'),
   // 438.34 → 346.62.
   // RE-PIN (M82 batch, v84, C5a): its 1 tablespoon flour |2 at 5 oz a cup,
   // 7.54 → 8.86 g (the replay 346.62 → 347.83): was 346.57.
-  (_francese, 'complete', '347.78'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
+  (_francese, 'complete', '357.13'),
   // 511.56 → 407.88.
-  (_saltimbocca, 'complete', '407.82'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 407.82.
+  (_saltimbocca, 'complete', '417.18'),
   // 349.73 → 258.01.
   (_meuniere, 'complete', '258.01'),
 ];
@@ -648,7 +651,8 @@ void main() {
         'the GET agree: saltimbocca|5 9.92 g, meunière|4 5.51 g, `discarded`, '
         'the pan basis; the per serving unmoved', () async {
       for (final (file, position, grams, basis, perServing) in [
-        (_saltimbocca, 5, '9.92', _pan('chicken breast'), '407.82'),
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 407.82.
+        (_saltimbocca, 5, '9.92', _pan('chicken breast'), '417.18'),
         (_meuniere, 4, '5.51', _pan('flatfish', butter: true), '258.01'),
       ]) {
         final recipe = await variant(loadCorpusRecipe(file), 'confirm');

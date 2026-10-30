@@ -1697,12 +1697,15 @@ void main() {
       // RE-PIN (M82 batch, v84): was 350.48 (the replay 350.53 → 350.98).
       expect(of(_breaded), (
         'complete',
-        '350.93',
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 350.93.
+        '360.29',
         7,
       )); // replay 350.53; v60 372.02
-      expect(of(_katsu), ('complete', '411.79', 5)); // 411.86; 429.12
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 411.79.
+      expect(of(_katsu), ('complete', '423.69', 5)); // 411.86; 429.12
       // RE-PIN (M82 batch, v84): was 423.57 (the replay 423.64 → 423.39).
-      expect(of(_schnitzel), ('complete', '423.32', 9)); // 423.64; 460.09
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 423.32.
+      expect(of(_schnitzel), ('complete', '435.22', 9)); // 423.64; 460.09
       // RE-PIN (M66 batch, v65): nut-crusted, lighter and almond complete —
       // the nut or cheese layer R3 releases was each one's only uncounted
       // line; onion-rings' cayenne joins the held dip (R3').
@@ -1713,20 +1716,24 @@ void main() {
       // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
       // RE-PIN (M88 batch, v88): was 566.32 (the replay 566.38 → 516.05: the
       // dredge split).
-      expect(of(_nutCrusted), ('complete', '515.98', 13)); // 575.56; 407.15
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 515.98.
+      expect(of(_nutCrusted), ('complete', '527.89', 13)); // 575.56; 407.15
       // RE-PIN (M82 batch, v84): was 638.65 (the replay 638.71 → 639.11).
       // RE-PIN (M88 batch, v88): was 639.06 (the replay 639.11 → 641.38).
-      expect(of(_stuffed), ('complete', '641.32', 14)); // 638.71; 572.91
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 641.32.
+      expect(of(_stuffed), ('complete', '650.68', 14)); // 638.71; 572.91
       // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
       // RE-PIN (M88 batch, v88): was 668.35 (the replay 668.42 → 672.70).
-      expect(of(_kiev), ('complete', '672.63', 14)); // 667.12; 584.97
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 672.63.
+      expect(of(_kiev), ('complete', '685.38', 14)); // 667.12; 584.97
       expect(of(_crispyFried), ('complete', '832.44', 13)); // = replay; 858.08
       // RE-PIN (M82 batch, v84): was 480.50 (the replay 480.50 → 480.49).
       expect(of(_porkChops), ('partial', '480.49', 8)); // = replay; 506.39
       // RE-PIN (M82 batch, v84): was 468.36 (the replay 468.90 → 476.47).
       // RE-PIN (M85 batch, v87): was 475.93 (the replay 476.47 → 475.96:
       // |7's Parmesan on 170848).
-      expect(of(_crunchy), ('complete', '475.41', 14)); // 468.90; 480.86
+      // RE-PIN (M86 batch, v90, 958: 2727575 pork): was 475.41.
+      expect(of(_crunchy), ('complete', '489.30', 14)); // 468.90; 480.86
       // RE-PIN (M82 batch, v84): was 367.75 (the replay 367.75 → 367.54).
       expect(of(_porkSchnitzel), (
         'complete',
@@ -1744,8 +1751,12 @@ void main() {
       // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43: the
       // coat re-solves on its Parmesan part's 170848).
       // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50).
-      expect(of(_lighter), ('complete', '288.46', 12)); // 298.97; 239.19
-      expect(of(_almond), ('complete', '520.26', 11)); // 520.31; 431.67
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
+      // 288.46.
+      expect(of(_lighter), ('complete', '294.42', 12)); // 298.97; 239.19
+      // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 1999632 spinach): was
+      // 520.26.
+      expect(of(_almond), ('complete', '527.52', 11)); // 520.31; 431.67
       // H: the counted lines fall by the held dips.
       // RE-PIN (M69 batch, v68): the eggplant (R2), parmesan-crusted and
       // francese (R1, C4) coats are budgeted — their dips counted; francese
@@ -1758,7 +1769,8 @@ void main() {
       // coat re-solves on its Parmesan part's 170848, |15 on it too).
       expect(of(_eggplant), (
         'partial',
-        '451.60',
+        // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 451.60.
+        '446.01',
         16,
       )); // replay 453.66; v67 360.33; v60 409.66, 13
       // RE-PIN (M80 batch, v80, M80-1): the coat budgeted on the onion —
@@ -1776,7 +1788,8 @@ void main() {
       // crust's Parmesan on 170848).
       expect(of(_parmesanCrusted), (
         'complete',
-        '326.61',
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
+        '332.99',
         8,
       )); // replay 340.01; v67 153.54; v60 167.60, 6
       // RE-PIN (M78 batch, v78, Q7 (c)): |12 and |13's pan fat, wiped out
@@ -1784,7 +1797,8 @@ void main() {
       // RE-PIN (M82 batch, v84): was 346.57 (the replay 346.62 → 347.83).
       expect(of(_francese), (
         'complete',
-        '347.78',
+        // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
+        '357.13',
         15,
       )); // replay 346.62; v67 407.44; v60 449.08, 14
     });

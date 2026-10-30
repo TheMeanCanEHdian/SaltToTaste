@@ -1034,7 +1034,9 @@ const List<_Row> _parents = [
     'auto',
     null,
     '218.00',
-    'from the recipe Simple Tomato Sauce: 829 g, 218 kcal',
+    // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 218
+    // kcal.
+    'from the recipe Simple Tomato Sauce: 829 g, 215 kcal',
   ),
 ];
 
@@ -5399,7 +5401,8 @@ void main() {
       // serving.
       // RE-PIN (M82 batch, v84, C5a): its ¼ cup flour |11 30.16 → 35.44 g
       // (the replay's 794.35 → 797.57): was 794.35, 4766.11.
-      expect(totalsOf(_pomegranate), ('complete', '797.57', '4785.41'));
+      // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 797.57, 4785.41.
+      expect(totalsOf(_pomegranate), ('complete', '797.14', '4782.85'));
     });
 
     test("2 by hand: the host's turkey prints 12–14 lb (5,896.70 g at the "
@@ -5457,8 +5460,12 @@ void main() {
         totalsOf(_classicTurkey, section: _gravy),
         ('complete', '1168.15', '1168.15'),
       );
-      expect(totalsOf(_classicTurkey).$2, '716.10');
-      expect(totalsOf(_stuffedTurkey).$2, '1259.95');
+      // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
+      // 716.10.
+      expect(totalsOf(_classicTurkey).$2, '715.58');
+      // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, the
+      // stuffing's 1750342 apples): was '1259.95'.
+      expect(totalsOf(_stuffedTurkey).$2, '1257.01');
     });
 
     test("2: a host-only edit of the bird's printed weight (12–14 → 16–18 lb) "
@@ -5620,7 +5627,8 @@ void main() {
       for (final (file, perServing) in const [
         // The fresh compute (the replay: 512.98, 1,047.88 — search-hit
         // energies in other rows).
-        ('0859-marbled-blueberry-bundt-cake.yaml', '512.99'),
+        // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was '512.99'.
+        ('0859-marbled-blueberry-bundt-cake.yaml', '511.45'),
         // RE-PIN (M72 batch, v72, R-Y): 567.20 each (was 584.35) — the
         // peaches peeled at AH-102 item 1654's 76 %.
         // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
@@ -5628,9 +5636,12 @@ void main() {
         // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
         ('1115-fresh-peach-pie-with-all-butter-lattice-top.yaml', '566.38'),
         // RE-PIN (M90 batch, v89): the replay 1047.88 → 1046.60: was 1047.67.
-        ('0944-raspberry-sorbet.yaml', '1046.39'),
+        // RE-PIN (M86 batch, v90, 958: 2346410 raspberries): was '1046.39'.
+        ('0944-raspberry-sorbet.yaml', '1012.94'),
         // RE-PIN (M90 batch, v89): the replay 476.91 → 475.89: was 476.91.
-        ('0985-fresh-strawberry-pie.yaml', '475.89'),
+        // RE-PIN (M86 batch, v90, 958: 2346409 strawberries, 2346386 heavy
+        // cream): was '475.89'.
+        ('0985-fresh-strawberry-pie.yaml', '467.76'),
       ]) {
         final (status, kcal, _) = totalsOf(file);
         expect((status, kcal), ('complete', perServing), reason: file);
@@ -5648,48 +5659,59 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 494.58.
           // RE-PIN (M85 batch, v87): was 514.09 (the replay 513.41 → 511.35).
-          '512.03',
+          // RE-PIN (M86 batch, v90, 958: 2514747 turkey, 2685578 tomatoes,
+          // 2685580 tomato): was 512.03.
+          '515.76',
         ), // replay complete 493.64 → complete 493.90
         (
           // RE-PIN (M82 batch, v84): was 265.34 (the replay 265.43 → 265.05).
           '0028-hearty-minestrone.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 264.42.
-          '264.97',
+          // RE-PIN (M86 batch, v90, 958: 2644281 beans, 2346405 celery, 2258586
+          // carrots, 2685568 squash +1 more): was 264.97.
+          '259.46',
         ), // replay partial 264.15 → complete 264.51
         (
           // RE-PIN (M82 batch, v84): was 366.72 (the replay 366.69 → 369.91).
           '0034-lighter-corn-chowder.yaml',
           'complete',
-          '369.93',
+          // RE-PIN (M86 batch, v90, 958: 2346402 potatoes): was 369.93.
+          '368.69',
         ), // replay complete 366.73 → complete 366.69
         (
           // RE-PIN (M82 batch, v84): was 587.77 (the replay 587.70 → 584.30).
           '0047-panzanella-italian-bread-salad.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 576.70.
-          '584.37',
+          // RE-PIN (M86 batch, v90, 958: 1999634 tomato, 2346406 cucumber): was
+          // 584.37.
+          '578.28',
         ), // replay complete 576.36 → complete 576.62
         (
           // RE-PIN (M82 batch, v84): was 910.64 (the replay 910.67 → 908.78).
           '0060-antipasto-pasta-salad.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 905.10.
-          '908.75',
+          // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2258590 peppers):
+          // was 908.75.
+          '901.55',
         ), // replay complete 904.42 → complete 905.13
         (
           // RE-PIN (M82 batch, v84): was 494.84 (the replay 494.84 → 493.99).
           '0061-italian-pasta-salad.yaml',
           'partial',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 492.07.
-          '493.99',
+          // RE-PIN (M86 batch, v90, 958: 2710822 arugula): was 493.99.
+          '493.63',
         ), // replay partial 491.54 → partial 492.07
         (
           // RE-PIN (M82 batch, v84): was 723.42 (the replay 722.98 → 722.78).
           '0067-skillet-lasagna.yaml',
           'complete',
           // RE-PIN (M85 batch, v87): was 723.23 (the replay 722.78 → 720.73).
-          '721.17',
+          // RE-PIN (M86 batch, v90, 958: 2514744 beef): was 721.17.
+          '726.84',
         ), // replay complete 723.04 → complete 722.98
         (
           // RE-PIN (M82 batch, v84): was 514.09 (the replay 514.09 → 513.66).
@@ -5697,32 +5719,40 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 512.70.
           // RE-PIN (M85 batch, v87): was 513.66 (the replay 513.66 → 511.61).
-          '511.61',
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 511.61.
+          '511.40',
         ), // replay complete 512.44 → complete 512.70
         (
           // RE-PIN (M82 batch, v84): was 646.79 (the replay 646.74 → 646.35).
           '0068-skillet-baked-ziti.yaml',
           'complete',
           // RE-PIN (M85 batch, v87): was 646.40 (the replay 646.35 → 644.29).
-          '644.34',
+          // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes, 2346386 cream): was
+          // 644.34.
+          '631.01',
         ), // replay complete 646.48 → complete 646.74
         (
           // RE-PIN (M82 batch, v84): was 714.17 (the replay 714.17 → 716.10).
           '0154-classic-roast-turkey.yaml',
           'complete',
-          '716.10',
+          // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
+          // '716.10'.
+          '715.58',
         ), // replay complete 678.04 → complete 714.17
         (
           // RE-PIN (M82 batch, v84): was 1258.02 (the replay 1258.02 → 1259.95).
           '0158-classic-roast-stuffed-turkey.yaml',
           'complete',
-          '1259.95',
+          // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, the
+          // stuffing's 1750342 apples): was '1259.95'.
+          '1257.01',
         ), // replay complete 1221.89 → complete 1258.02
         (
           // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
           '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
           'complete',
-          '797.57',
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was '797.57'.
+          '797.14',
         ), // replay complete 729.93 → complete 794.35
         (
           // RE-PIN (M82 batch, v84): was 631.13 (the replay 631.13 → 629.43).
@@ -5730,7 +5760,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 625.59.
           // RE-PIN (M85 batch, v87): was 629.43 (the replay 629.43 → 627.37).
-          '627.37',
+          // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 627.37.
+          '626.27',
         ), // replay complete 625.63 → complete 625.59
         (
           // RE-PIN (M82 batch, v84): was 554.17 (the replay 554.17 → 552.76).
@@ -5743,7 +5774,9 @@ void main() {
           // RE-PIN (M82 batch, v84): was 748.74 (the replay 748.69 → 748.49).
           '0326-pasta-with-creamy-tomato-sauce.yaml',
           'complete',
-          '748.54',
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685581 tomatoes,
+          // 2346386 cream): was 748.54.
+          '733.93',
         ), // replay complete 748.42 → complete 748.69
         (
           // RE-PIN (M82 batch, v84): was 831.49 (the replay 831.49 → 829.22).
@@ -5757,7 +5790,8 @@ void main() {
           '0329-quick-tomato-sauce.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 216.14.
-          '217.23',
+          // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes): was 217.23.
+          '202.41',
         ), // replay complete 216.13 → complete 216.07
         (
           // RE-PIN (M82 batch, v84): was 187.27 (the replay 187.27 → 185.85).
@@ -5771,34 +5805,42 @@ void main() {
           '0330-meatless-meat-sauce-with-chickpeas-and-mushrooms.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 256.90.
-          '260.73',
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685581 tomatoes,
+          // 2644288 chickpeas (garbanzo beans): was 260.73.
+          '250.01',
         ), // replay complete 256.98 → complete 256.95
         (
           // RE-PIN (M82 batch, v84): was 484.55 (the replay 484.52 → 483.39).
           '0335-pasta-alla-norma.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 480.86.
-          '483.42',
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant, 2685581 tomatoes):
+          // was 483.42.
+          '471.79',
         ), // replay complete 480.91 → complete 480.83
         (
           // RE-PIN (M82 batch, v84): was 713.64 (the replay 713.64 → 711.52).
           '0341-campanelle-with-asparagus-basil-and-balsamic-glaze.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 706.72.
-          '711.51',
+          // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 711.51.
+          '706.30',
         ), // replay complete 705.66 → complete 706.72
         (
           // RE-PIN (M82 batch, v84): was 378.67 (the replay 378.62 → 377.77).
           '0347-shrimp-fra-diavolo.yaml',
           'partial',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 375.90.
-          '377.82',
+          // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes): was 377.82.
+          '371.07',
         ), // replay partial 375.59 → partial 375.85
         (
           // RE-PIN (M82 batch, v84): was 1039.71 (the replay 1039.44 → 1033.09).
           '0351-pasta-with-hearty-italian-meat-sauce-sunday-gravy.yaml',
           'complete',
-          '1033.36',
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685581 tomatoes,
+          // 2514744 beef): was 1033.36.
+          '1024.12',
         ), // replay complete 1039.31 → complete 1039.44
         (
           // RE-PIN (M82 batch, v84): was 886.16 (the replay 886.19 → 872.92).
@@ -5806,7 +5848,9 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 883.39.
           // RE-PIN (M85 batch, v87): was 872.89 (the replay 872.92 → 871.89).
-          '871.87',
+          // RE-PIN (M86 batch, v90, 958: 2514745 pork, 2685581 tomatoes): was
+          // 871.87.
+          '862.17',
         ), // replay complete 883.44 → complete 883.42
         (
           // RE-PIN (M82 batch, v84): was 949.27 (the replay 949.32 → 948.70).
@@ -5814,7 +5858,9 @@ void main() {
           'partial',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 947.89.
           // RE-PIN (M85 batch, v87): was 948.65 (the replay 948.70 → 946.65).
-          '946.59',
+          // RE-PIN (M86 batch, v90, 958: 2514745 pork, 2685581 tomatoes): was
+          // 946.59.
+          '937.37',
         ), // replay partial 947.76 → partial 947.94
         (
           // RE-PIN (M82 batch, v84): was 643.30 (the replay 643.48 → 627.68).
@@ -5822,13 +5868,17 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 640.53.
           // RE-PIN (M85 batch, v87): was 627.50 (the replay 627.68 → 626.31).
-          '626.13',
+          // RE-PIN (M86 batch, v90, 958: 2514745 pork, 2346386 cream, 2685581
+          // tomatoes): was 626.13.
+          '617.79',
         ), // replay complete 640.73 → complete 640.71
         (
           // RE-PIN (M82 batch, v84): was 677.93 (the replay 677.88 → 677.74).
           '0361-penne-alla-vodka-penne-with-vodka-sauce.yaml',
           'complete',
-          '677.78',
+          // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes, 2685580 tomato,
+          // 2346386 cream): was 677.78.
+          '668.18',
         ), // replay complete 677.92 → complete 677.88
         (
           // RE-PIN (M82 batch, v84): was 586.26 (the replay 586.26 → 585.65).
@@ -5837,7 +5887,8 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 584.87.
           // RE-PIN (M85 batch, v87): was 585.65 (the replay 585.65 → 582.57).
           // RE-PIN (M90 batch, v89): the replay 582.57 → 582.46: was 582.57.
-          '582.46',
+          // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 582.46.
+          '580.25',
         ), // replay complete 584.63 → complete 584.87
         (
           // RE-PIN (M82 batch, v84): was 647.55 (the replay 647.55 → 646.85).
@@ -5853,7 +5904,9 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 557.60.
           // RE-PIN (M90 batch, v89): the replay 559.50 → 559.34: was 559.52.
-          '559.36',
+          // RE-PIN (M86 batch, v90, 958: 2346386 cream, 2685581 tomatoes,
+          // 2685580 tomato): was 559.36.
+          '551.42',
         ), // replay complete 557.61 → complete 557.58
         (
           // RE-PIN (M82 batch, v84): was 632.99 (the replay 632.96 → 631.12).
@@ -5862,14 +5915,18 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 627.91.
           // RE-PIN (M85 batch, v87): was 631.14 (the replay 631.12 → 627.01).
           // RE-PIN (M90 batch, v89): the replay 627.01 → 626.87: was 627.03.
-          '626.89',
+          // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes, 2346386 cream,
+          // 2685577 eggplant, 2685568 squash +2 more): was 626.89.
+          '610.04',
         ), // replay complete 627.78 → complete 627.89
         (
           // RE-PIN (M82 batch, v84): was 832.42 (the replay 832.19 → 831.92).
           '0374-lasagna-with-hearty-tomato-meat-sauce.yaml',
           'complete',
           // RE-PIN (M85 batch, v87): was 832.16 (the replay 831.92 → 828.50).
-          '828.73',
+          // RE-PIN (M86 batch, v90, 958: 2514744 beef, 2346386 cream, 2685582
+          // tomato): was 828.73.
+          '823.84',
         ), // replay complete 831.83 → complete 832.19
         (
           // RE-PIN (M82 batch, v84): was 2682.87 (the replay 2682.77 → 2681.63).
@@ -5877,7 +5934,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 2680.10.
           // RE-PIN (M85 batch, v87): was 2681.73 (the replay 2681.63 → 2679.58).
-          '2679.67',
+          // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes): was 2679.67.
+          '2657.45',
         ), // replay complete 2680.08 → complete 2680.00
         (
           // RE-PIN (M82 batch, v84): was 773.03 (the replay 773.03 → 772.11).
@@ -5900,14 +5958,18 @@ void main() {
           '0404-pasta-e-fagioli-italian-pasta-and-bean-soup.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 285.32.
-          '285.65',
+          // RE-PIN (M86 batch, v90, 958: 2346405 celery, 2644287 beans): was
+          // 285.65.
+          '283.55',
         ), // replay partial 285.61 → complete 285.61
         (
           // RE-PIN (M82 batch, v84): was 265.96 (the replay 265.94 → 264.24).
           '0405-ciambotta-italian-vegetable-stew.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 260.43.
-          '264.26',
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant, 2346401 potatoes,
+          // 2685580 tomato, 2685578 tomatoes +2 more): was 264.26.
+          '251.41',
         ), // replay complete 260.16 → complete 260.40
         (
           // RE-PIN (M82 batch, v84): was 455.86 (the replay 455.86 → 452.38).
@@ -5915,13 +5977,16 @@ void main() {
           'partial',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.01.
           // RE-PIN (M85 batch, v87): was 452.38 (the replay 452.38 → 451.58).
-          '451.58',
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 451.58.
+          '445.95',
         ), // replay partial 453.66 → partial 454.01
         (
           // RE-PIN (M82 batch, v84): was 475.17 (the replay 475.12 → 483.43).
           '0409-eggplant-involtini.yaml',
           'complete',
-          '483.48',
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant, 2685578 tomatoes):
+          // was 483.48.
+          '464.06',
         ), // replay complete 474.87 → complete 475.12
         (
           // RE-PIN (M82 batch, v84): was 489.25 (the replay 489.23 → 488.66).
@@ -5929,7 +5994,9 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
           // RE-PIN (M85 batch, v87): was 488.68 (the replay 488.66 → 485.58).
-          '485.60',
+          // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes, 2646170 chicken):
+          // was 485.60.
+          '480.44',
         ), // replay complete 486.50 → complete 486.46
         (
           // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
@@ -5940,7 +6007,9 @@ void main() {
           // RE-PIN (M85 batch, v87): was 297.61 (the replay 297.64 → 298.43).
           // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50:
           // the dredge split).
-          '288.46',
+          // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
+          // 288.46.
+          '294.42',
         ), // replay complete 235.29 → complete 235.26
         (
           // RE-PIN (M82 batch, v84): was 246.13 (the replay 246.13 → 252.03).
@@ -5948,21 +6017,26 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 240.59.
           // RE-PIN (M85 batch, v87): was 252.03 (the replay 252.03 → 249.29).
-          '249.29',
+          // RE-PIN (M86 batch, v90, 958: 2685568 squash, 2685569 squash): was
+          // 249.29.
+          '245.02',
         ), // replay complete 240.41 → complete 240.59
         (
           // RE-PIN (M82 batch, v84): was 218.15 (the replay 218.15 → 216.64).
           '0441-walkaway-ratatouille.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 213.23.
-          '216.64',
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant, 2685568 squash,
+          // 2258590 peppers, 2258589 peppers): was 216.64.
+          '208.76',
         ), // replay complete 213.26 → complete 213.23
         (
           // RE-PIN (M82 batch, v84): was 464.02 (the replay 464.02 → 462.32).
           '0654-grilled-swordfish-skewers-with-tomato-scallion-caponata.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 458.49.
-          '462.32',
+          // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 462.32.
+          '459.15',
         ), // replay complete 458.53 → complete 458.49
         (
           // RE-PIN (M82 batch, v84): was 285.55 (the replay 285.45 → 283.75).
@@ -5970,18 +6044,21 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 280.01.
           // RE-PIN (M85 batch, v87): was 283.85 (the replay 283.75 → 281.69).
-          '281.79',
+          // RE-PIN (M86 batch, v90, 958: 1999634 tomato): was 281.79.
+          '274.99',
         ), // replay complete 279.94 → complete 279.91
         (
           '0859-marbled-blueberry-bundt-cake.yaml',
           'complete',
-          '512.99',
+          // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was '512.99'.
+          '511.45',
         ), // replay partial 503.23 → complete 512.98
         (
           '0944-raspberry-sorbet.yaml',
           'complete',
           // RE-PIN (M90 batch, v89): the replay 1047.88 → 1046.60: was 1047.67.
-          '1046.39',
+          // RE-PIN (M86 batch, v90, 958: 2346410 raspberries): was '1046.39'.
+          '1012.94',
         ), // replay partial 1034.88 → complete 1047.88
         (
           '0982-fresh-peach-pie.yaml',
@@ -5994,14 +6071,18 @@ void main() {
           '0985-fresh-strawberry-pie.yaml',
           'complete',
           // RE-PIN (M90 batch, v89): the replay 476.91 → 475.89: was 476.91.
-          '475.89',
+          // RE-PIN (M86 batch, v90, 958: 2346409 strawberries, 2346386 heavy
+          // cream): was '475.89'.
+          '467.76',
         ), // replay partial 474.47 → complete 476.91
         (
           // RE-PIN (M82 batch, v84): was 641.38 (the replay 641.18 → 639.19).
           '1089-braciole.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 634.92.
-          '639.40',
+          // RE-PIN (M86 batch, v90, 958: 2646175 beef, 2685580 tomato, 2685581
+          // tomatoes): was 639.40.
+          '640.49',
         ), // replay complete 634.51 → complete 634.72
         (
           '1098-fried-yuca.yaml',
@@ -6022,7 +6103,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 549.93.
           // RE-PIN (M85 batch, v87): was 551.85 (the replay 551.85 → 550.48).
-          '550.48',
+          // RE-PIN (M86 batch, v90, 958: 2685568 squash): was 550.48.
+          '543.67',
         ), // replay complete 549.97 → complete 549.93
         (
           '1198-meringue-christmas-trees.yaml',
@@ -6069,7 +6151,8 @@ void main() {
       final id = recipes[_pomegranate]!.id;
       expect(recomputeTotals(db, recipes[_pomegranate]!), isTrue);
       // RE-PIN (M82 batch, v84, C5a): the flour |11's 35.44 g: was 4766.11.
-      expect(_g2(batchTotalsOf(db.nutritionFor(id)!)['energy']!), '4785.41');
+      // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 4785.41.
+      expect(_g2(batchTotalsOf(db.nutritionFor(id)!)['energy']!), '4782.85');
     });
 
     test(

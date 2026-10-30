@@ -727,7 +727,8 @@ void main() {
       expect(of(_tempura), ('partial', '281.09')); // v56 381.94
       // RE-PIN (M82 batch, v84, C5a): the coats' flour re-solves (the
       // replay's 512.96 → 513.09, 1,028.23 → 1,028.15): was 512.96, 1028.23.
-      expect(of(_wings), ('complete', '512.69')); // v56 601.62
+      // RE-PIN (M86 batch, v90, 958: 2727568 chicken): was 512.69.
+      expect(of(_wings), ('complete', '521.61')); // v56 601.62
       expect(of(_sandwiches), ('complete', '1028.92')); // v56 1,057.75
       // fish-and-chips (replay 981.40, v56 1,003.49): its oil |1 reads
       // 172336 in a fresh compute, 2710187 in snapshot 23 (above) — the

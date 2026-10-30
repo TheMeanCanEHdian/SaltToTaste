@@ -611,19 +611,23 @@ const _totals = [
   // coat re-solves on its Parmesan part's 170848).
   // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50: the
   // dredge split).
-  (_lighter, 'complete', '288.46'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 288.46.
+  (_lighter, 'complete', '294.42'),
   // 540.19 → 667.12.
   // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
   // RE-PIN (M88 batch, v88): was 668.35 (the replay 668.42 → 672.70).
-  (_kiev, 'complete', '672.63'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 672.63.
+  (_kiev, 'complete', '685.38'),
   // 544.51 → 638.71.
   // RE-PIN (M82 batch, v84): was 638.65 (the replay 638.71 → 639.11).
   // RE-PIN (M88 batch, v88): was 639.06 (the replay 639.11 → 641.38).
-  (_stuffed, 'complete', '641.32'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 641.32.
+  (_stuffed, 'complete', '650.68'),
   // 385.84 → 575.56.
   // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
   // RE-PIN (M88 batch, v88): was 566.32 (the replay 566.38 → 516.05).
-  (_nut, 'complete', '515.98'),
+  // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 515.98.
+  (_nut, 'complete', '527.89'),
 ];
 
 /// STATED synthesized (M80-1): 0315 whose S3 FRIES the rings — its "Bake,

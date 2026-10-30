@@ -1035,14 +1035,20 @@ void main() {
       // RE-PIN (M72 batch, v72, R-Y): 283.63 (was 290.37) — its 1½ pounds
       // of sprouts trimmed at AH-102 item 423's 90 % (replay 290.36 →
       // 283.61).
-      expect(of(_brussels), ('complete', '283.63')); // partial 240.27 → 290.36
+      // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts):
+      // was 283.63.
+      expect(of(_brussels), ('complete', '270.16')); // partial 240.27 → 290.36
       // RE-PIN (M70 batch, v69, pE Q6): 480.88 (was 480.96) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 480.91 → 480.83).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 480.88.
       // RE-PIN (M82 batch, v84): was 484.57 (the replay 484.52 → 483.39).
-      expect(of(_norma), ('complete', '483.44')); // partial 443.35 → 480.91
+      // RE-PIN (M86 batch, v90, 958: 2685577 eggplant, 2685581 crushed
+      // tomatoes): was 483.44.
+      expect(of(_norma), ('complete', '471.83')); // partial 443.35 → 480.91
       // RE-PIN (M90 batch, v89): the replay 719.39 → 719.28: was 719.31.
-      expect(of(_tamales), ('complete', '719.20')); // partial 719.39 → 719.39
+      // RE-PIN (M86 batch, v90, 958: 2710835 corn flour, 2646171 chicken): was
+      // 719.20.
+      expect(of(_tamales), ('complete', '722.04')); // partial 719.39 → 719.39
       expect(of(_nikujaga).$1, 'partial'); // its unmatched katsuobushi
       expect(of(_rainbow).$1, 'complete');
     });

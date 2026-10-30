@@ -1047,7 +1047,8 @@ const List<_Row> _unmoved = [
     '226.80',
     'auto',
     null,
-    '92.99',
+    // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 92.99.
+    '75.52',
     'from 8 ounce',
   ),
   (
@@ -1568,7 +1569,8 @@ const List<_Row> _unmoved = [
     '477.91',
     'auto',
     null,
-    '1640.71',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 1640.71.
+    '1605.26',
     '2 cup ≈ 473 mL',
   ),
   (
@@ -1722,7 +1724,9 @@ const List<_Row> _unmoved = [
     '42.67',
     'auto',
     null,
-    '20.48',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
+    // pork): was 20.48.
+    '19.19',
     '1/3 cup · USDA portion of "Carrots, raw"',
   ),
   (
@@ -1736,7 +1740,9 @@ const List<_Row> _unmoved = [
     '33.67',
     'auto',
     null,
-    '5.62',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
+    // pork): was 5.62.
+    '4.99',
     '1/3 cup · USDA portion of "Celery, raw"',
   ),
   (
@@ -1792,7 +1798,9 @@ const List<_Row> _unmoved = [
     '453.59',
     'auto',
     null,
-    '1034.19',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
+    // pork): was 1034.19.
+    '1056.87',
     'from 1 pound',
   ),
   (
@@ -2087,7 +2095,8 @@ const List<_Row> _unmoved = [
     '27.50',
     'auto',
     null,
-    '13.20',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 13.20.
+    '12.37',
     '1/4 cup · USDA portion of "Carrots, raw"',
   ),
   (
@@ -2227,7 +2236,8 @@ const List<_Row> _unmoved = [
     '340.19',
     'auto',
     null,
-    '775.64',
+    // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 775.64.
+    '792.65',
     'from 12 ounce',
   ),
   (
@@ -2498,7 +2508,9 @@ const List<_Row> _unmoved = [
     '907.18',
     'auto',
     null,
-    '283.04',
+    // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2346386 cream, 1999628
+    // mushrooms): was 283.04.
+    '225.89',
     'from 2 pound',
   ),
   (
@@ -2554,7 +2566,9 @@ const List<_Row> _unmoved = [
     '238.95',
     'auto',
     null,
-    '820.35',
+    // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2346386 cream, 1999628
+    // mushrooms): was 820.35.
+    '802.63',
     '1 cup ≈ 237 mL',
   ),
   (
@@ -2596,8 +2610,12 @@ const List<_Row> _unmoved = [
     '255.20',
     'auto',
     null,
-    '303.37',
-    'from the recipe Sautéed Wild Mushrooms: 255 g, 303 kcal',
+    // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2346386 cream, 1999628
+    // mushrooms): was 303.37.
+    '285.90',
+    // RE-PIN (M86 batch, v90, 958: the child's 1999628 shiitake mushrooms): was
+    // 303 kcal.
+    'from the recipe Sautéed Wild Mushrooms: 255 g, 286 kcal',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
@@ -2624,7 +2642,9 @@ const List<_Row> _unmoved = [
     '226.80',
     'auto',
     null,
-    '100.02',
+    // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2346386 cream, 1999628
+    // mushrooms): was 100.02.
+    '82.55',
     'from 8 ounce',
   ),
   (
@@ -3048,7 +3068,8 @@ const List<_Row> _unmoved = [
     '30.00',
     'auto',
     null,
-    '7.98',
+    // RE-PIN (M86 batch, v90, 958: 1999632 spinach, 2346392 nuts): was 7.98.
+    '6.22',
     '1 cup · USDA portion of "Spinach, raw"',
   ),
   (
@@ -3232,7 +3253,8 @@ const List<_Row> _unmoved = [
     '16.27',
     'auto',
     null,
-    '112.07',
+    // RE-PIN (M86 batch, v90, 958: 1999632 spinach, 2346392 nuts): was 112.07.
+    '104.59',
     '2 tablespoon ≈ 30 mL',
   ),
   (
@@ -3372,7 +3394,9 @@ const List<_Row> _unmoved = [
     '41.00',
     'auto',
     null,
-    '245.17',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 245.17.
+    '229.88',
     '1/3 cup · USDA portion of "Nuts, pistachio nuts, dry roasted, without salt added"',
   ),
   (
@@ -3386,7 +3410,9 @@ const List<_Row> _unmoved = [
     '612.35',
     'auto',
     null,
-    '364.35',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 364.35.
+    '298.83',
     'from 1 1/2 pound × 0.90 edible · approximate (USDA AH-102 item 423: Brussels sprouts, raw, untrimmed, good quality → trimmed, ready to cook 90 % (88–92; outer leaves 10))',
   ),
   (
@@ -3597,8 +3623,10 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'partial',
-    '401.87',
-    '1607.50',
+    // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 401.87.
+    '397.51',
+    // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 1607.50.
+    '1590.03',
   ),
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 455.70, 455.70.
   (
@@ -3631,16 +3659,22 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'complete',
-    '281.02',
-    '2248.19',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 281.02.
+    '276.59',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 2248.19.
+    '2212.74',
   ),
   (
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
     null,
     'complete',
     'complete',
-    '655.51',
-    '3933.07',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
+    // pork): was 655.51.
+    '658.97',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
+    // pork): was 3933.07.
+    '3953.84',
   ),
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 68.57, 2742.91.
   (
@@ -3648,8 +3682,10 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'complete',
-    '68.40',
-    '2736.08',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 68.40.
+    '68.38',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 2736.08.
+    '2735.25',
   ),
   // RE-PIN (M82 batch, v84): was 74.29, 1783.03 (the replay 74.33 → 74.32).
   (
@@ -3657,8 +3693,10 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'complete',
-    '74.28',
-    '1782.75',
+    // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 74.28.
+    '74.99',
+    // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 1782.75.
+    '1799.76',
   ),
   // RE-PIN (M82 batch, v84): was 384.04, 384.04 (the replay 384.04 → 378.94).
   (
@@ -3678,16 +3716,22 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'complete',
-    '399.36',
-    '2396.15',
+    // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2346386 cream, 1999628
+    // mushrooms): was 399.36.
+    '383.97',
+    // RE-PIN (M86 batch, v90, 958: 1999629 mushrooms, 2346386 cream, 1999628
+    // mushrooms): was 2396.15.
+    '2303.81',
   ),
   (
     '0017-creamy-mushroom-soup.yaml',
     'Sautéed Wild Mushrooms',
     'complete',
     'complete',
-    '303.37',
-    '303.37',
+    // RE-PIN (M86 batch, v90, 958: 1999628 shiitake mushrooms): was 303.37,
+    // 303.37.
+    '285.90',
+    '285.90',
   ),
   // RE-PIN (M82 batch, v84): was 578.50, 5785.01 (the replay 578.50 → 579.95).
   // RE-PIN (M83 batch, v85): was 579.95, 5799.48 — B5: the porcini |11
@@ -3715,8 +3759,10 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'partial',
     'partial',
-    '303.28',
-    '1819.68',
+    // RE-PIN (M86 batch, v90, 958: 1999632 spinach, 2346392 nuts): was 303.28.
+    '302.99',
+    // RE-PIN (M86 batch, v90, 958: 1999632 spinach, 2346392 nuts): was 1819.68.
+    '1817.91',
   ),
   (
     '0603-grilled-stuffed-pork-tenderloin.yaml',
@@ -3733,16 +3779,22 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'complete',
     // RE-PIN (M85 batch, v87): was 380.49 / 380.49 — |2's Parmesan on SR
     // 170848 (the v87 replay's section batch kcal 380.49 → 372.26).
-    '372.26',
-    '372.26',
+    // RE-PIN (M86 batch, v90, 958: |5 2346392 pine nuts): was 372.26,
+    // 372.26.
+    '364.78',
+    '364.78',
   ),
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
     null,
     'complete',
     'complete',
-    '283.63',
-    '1701.76',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 283.63.
+    '270.16',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 1701.76.
+    '1620.95',
   ),
   // RE-PIN (M82 batch, v84): was 580.41, 2321.62 (the replay 580.41 → 580.26).
   (

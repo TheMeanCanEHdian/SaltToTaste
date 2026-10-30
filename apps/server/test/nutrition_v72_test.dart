@@ -204,7 +204,9 @@ const List<_Row> _reach = [
     '612.35',
     'auto',
     null,
-    '364.35',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 364.35.
+    '298.83',
     'from 1 1/2 pound × 0.90 edible · approximate (USDA AH-102 item 423: Brussels sprouts, raw, untrimmed, good quality → trimmed, ready to cook 90 % (88–92; outer leaves 10))',
   ),
   // v71: 1020.58 g, 607.25 kcal; from 2 1/4 pound
@@ -219,7 +221,8 @@ const List<_Row> _reach = [
     '918.52',
     'auto',
     null,
-    '546.52',
+    // RE-PIN (M86 batch, v90, 958: 2685575 brussels sprouts): was 546.52.
+    '448.24',
     'from 2 1/4 pound × 0.90 edible · approximate (USDA AH-102 item 423: Brussels sprouts, raw, untrimmed, good quality → trimmed, ready to cook 90 % (88–92; outer leaves 10))',
   ),
   // v71: 453.59 g, 269.89 kcal; from 1 pound
@@ -234,7 +237,8 @@ const List<_Row> _reach = [
     '408.23',
     'auto',
     null,
-    '242.90',
+    // RE-PIN (M86 batch, v90, 958: 2685575 brussels sprouts): was 242.90.
+    '199.22',
     'from 1 pound × 0.90 edible · approximate (USDA AH-102 item 423: Brussels sprouts, raw, untrimmed, good quality → trimmed, ready to cook 90 % (88–92; outer leaves 10))',
   ),
   // v71: 2041.16 g, 5674.44 kcal; from the printed weight (4–5 lb, the midpoint) · approximate (the prin
@@ -921,8 +925,10 @@ const List<_Row> _unmoved = [
     '430.20',
     'auto',
     null,
-    '1694.71',
-    'from the recipe Faux Leftover Rice: 430 g, 1,695 kcal',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1694.71.
+    '1738.68',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1,695 kcal.
+    'from the recipe Faux Leftover Rice: 430 g, 1,739 kcal',
   ),
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -991,7 +997,8 @@ const List<_Row> _unmoved = [
     '402.20',
     'auto',
     null,
-    '1442.71',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1442.71.
+    '1486.68',
     '2 cup ≈ 473 mL',
   ),
   (
@@ -1132,7 +1139,8 @@ const List<_Row> _unmoved = [
     '113.40',
     'auto',
     null,
-    '850.49',
+    // RE-PIN (M86 batch, v90, 958: 2346395 nuts): was 850.49.
+    '793.79',
     'from 4 ounce',
   ),
   (
@@ -1786,7 +1794,8 @@ const List<_Row> _unmoved = [
     '57.37',
     'auto',
     null,
-    '112.69',
+    // RE-PIN (M86 batch, v90, 958: 2346387 cream): was 112.69.
+    '110.58',
     '1/4 cup ≈ 59 mL',
   ),
   (
@@ -1926,7 +1935,9 @@ const List<_Row> _unmoved = [
     '59.74',
     'auto',
     null,
-    '205.09',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream, 2346410 raspberries): was
+    // 205.09.
+    '200.66',
     '1/4 cup ≈ 59 mL',
   ),
   (
@@ -1968,7 +1979,9 @@ const List<_Row> _unmoved = [
     '170.10',
     'auto',
     null,
-    '583.96',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream, 2346410 raspberries): was
+    // 583.96.
+    '571.34',
     'from 6 ounce · approximation (counted as Cream, heavy)',
   ),
   (
@@ -1996,7 +2009,9 @@ const List<_Row> _unmoved = [
     '566.99',
     'auto',
     null,
-    '324.89',
+    // RE-PIN (M86 batch, v90, 958: 2346386 cream, 2346410 raspberries): was
+    // 324.89.
+    '291.43',
     'from 20 ounce',
   ),
   (
@@ -2094,7 +2109,8 @@ const List<_Row> _unmoved = [
     '141.75',
     'auto',
     null,
-    '90.58',
+    // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was 90.58.
+    '81.36',
     'from 5 ounce',
   ),
   // RE-PIN (M90 batch, v89, sugar): was 62.84 g (the v89 replay's row).
@@ -2634,7 +2650,8 @@ const List<_Row> _unmoved = [
     '283.50',
     'auto',
     null,
-    '170.38',
+    // RE-PIN (M86 batch, v90, 958: 2346398 pineapple): was 170.38.
+    '153.09',
     'from 10 ounce',
   ),
   (
@@ -2818,7 +2835,9 @@ const List<_Row> _unmoved = [
     '41.00',
     'auto',
     null,
-    '245.17',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 245.17.
+    '229.88',
     '1/3 cup · USDA portion of "Nuts, pistachio nuts, dry roasted, without salt added"',
   ),
   (
@@ -3045,7 +3064,8 @@ const List<_Row> _unmoved = [
     '16.27',
     'auto',
     null,
-    '16.96',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 16.96.
+    '14.40',
     '1 tablespoon ≈ 15 mL',
   ),
   (
@@ -3468,7 +3488,9 @@ const List<_Row> _unmoved = [
     '557.92',
     'auto',
     null,
-    '267.75',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 267.75.
+    '250.94',
     'from 1 1/2 pound × 0.82 edible · approximate (USDA AH-102 item 481: carrots without tops, raw → hand-scraped root 82 % (58–93))',
   ),
   (
@@ -3482,7 +3504,9 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '514.37',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 514.37.
+    '499.40',
     'from 1 1/2 pound',
   ),
   (
@@ -3510,7 +3534,9 @@ const List<_Row> _unmoved = [
     '907.18',
     'auto',
     null,
-    '285.11',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 285.11.
+    '252.83',
     'from 2 pound',
   ),
   // RE-PIN (M74 batch, v74; the owner's Q1 (b)): S1's printed ⅛" trim moves
@@ -3653,7 +3679,9 @@ const List<_Row> _unmoved = [
     '366.00',
     'auto',
     null,
-    '175.65',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 175.65.
+    '164.62',
     '6 × 61 g each',
   ),
   (
@@ -3667,7 +3695,9 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '514.37',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 514.37.
+    '499.40',
     'from 1 1/2 pound',
   ),
   (
@@ -3681,7 +3711,9 @@ const List<_Row> _unmoved = [
     '907.18',
     'auto',
     null,
-    '285.11',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 285.11.
+    '252.83',
     'from 2 pound',
   ),
   // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): its own 0" pair, the steps
@@ -3784,7 +3816,8 @@ const List<_Row> _unmoved = [
     '16.27',
     'auto',
     null,
-    '16.96',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 16.96.
+    '14.40',
     '1 tablespoon ≈ 15 mL',
   ),
   (
@@ -3981,7 +4014,8 @@ const List<_Row> _unmoved = [
     '122.00',
     'auto',
     null,
-    '58.55',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was 58.55.
+    '54.87',
     '2 × 61 g each',
   ),
   (
@@ -4065,7 +4099,8 @@ const List<_Row> _unmoved = [
     '16.27',
     'auto',
     null,
-    '16.96',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was 16.96.
+    '14.40',
     '1 tablespoon ≈ 15 mL',
   ),
   (
@@ -4164,7 +4199,8 @@ const List<_Row> _unmoved = [
     '16.27',
     'auto',
     null,
-    '16.96',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2258586 carrots): was 16.96.
+    '14.40',
     '1 tablespoon ≈ 15 mL',
   ),
   (
@@ -4220,7 +4256,9 @@ const List<_Row> _unmoved = [
     '288.00',
     'auto',
     null,
-    '138.21',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2258586 carrots): was
+    // 138.21.
+    '129.54',
     '4 × 72 g each',
   ),
   (
@@ -4346,7 +4384,8 @@ const List<_Row> _unmoved = [
     '32.53',
     'auto',
     null,
-    '33.92',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 33.92.
+    '28.80',
     '2 tablespoon ≈ 30 mL',
   ),
   (
@@ -4547,7 +4586,9 @@ const List<_Row> _unmoved = [
     '16.27',
     'auto',
     null,
-    '16.96',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685578 tomatoes): was
+    // 16.96.
+    '14.40',
     '1 tablespoon ≈ 15 mL',
   ),
   (
@@ -4603,7 +4644,9 @@ const List<_Row> _unmoved = [
     '411.07',
     'auto',
     null,
-    '92.49',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685578 tomatoes): was
+    // 92.49.
+    '78.51',
     'from the printed weight',
   ),
   (
@@ -4673,7 +4716,9 @@ const List<_Row> _unmoved = [
     '32.53',
     'auto',
     null,
-    '33.92',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2346407 cabbage, 2258586
+    // carrots): was 33.92.
+    '28.80',
     '2 tablespoon ≈ 30 mL',
   ),
   (
@@ -4855,7 +4900,9 @@ const List<_Row> _unmoved = [
     '420.00',
     'auto',
     null,
-    '132.00',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2346407 cabbage, 2258586
+    // carrots): was 132.00.
+    '117.05',
     '6 cup · USDA portion of "Cabbage, raw"',
   ),
   (
@@ -4883,7 +4930,9 @@ const List<_Row> _unmoved = [
     '72.00',
     'auto',
     null,
-    '34.55',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2346407 cabbage, 2258586
+    // carrots): was 34.55.
+    '32.38',
     '1 × 72 g each',
   ),
   (
@@ -5318,7 +5367,8 @@ const List<_Row> _unmoved = [
     '35.75',
     'auto',
     null,
-    '223.71',
+    // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was 223.71.
+    '208.64',
     '1/4 cup · USDA portion of "Nuts, almonds"',
   ),
   (
@@ -5389,7 +5439,8 @@ const List<_Row> _unmoved = [
     '226.80',
     'auto',
     null,
-    '92.99',
+    // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was 92.99.
+    '75.52',
     'from 8 ounce',
   ),
   (
@@ -5614,7 +5665,8 @@ const List<_Row> _unmoved = [
     '57.37',
     'auto',
     null,
-    '112.69',
+    // RE-PIN (M86 batch, v90, 958: 2346387 cream): was 112.69.
+    '110.58',
     '1/4 cup ≈ 59 mL',
   ),
   (
@@ -6147,7 +6199,8 @@ const List<_Row> _unmoved = [
     '680.39',
     'auto',
     null,
-    '500.09',
+    // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 500.09.
+    '487.16',
     'from 1 1/2 pound',
   ),
   (
@@ -6250,6 +6303,37 @@ const Set<(String, String?)> _m90Moved = {
   ('1172-nikujaga-beef-and-potato-stew.yaml', null),
 };
 
+/// The `_totals` entries M86 (v90) moves since v71: every one whose rows
+/// read a Foundation record publishing 958 (Atwater specific, now read
+/// before 957) — the v90 replay's moved recipes and sections.
+const Set<(String, String?)> _m86Moved = {
+  ('0523-nasi-goreng-indonesian-style-fried-rice.yaml', null),
+  ('0523-nasi-goreng-indonesian-style-fried-rice.yaml', 'Faux Leftover Rice'),
+  ('0962-peach-crisp.yaml', null),
+  ('0875-summer-peach-cake.yaml', null),
+  ('0996-the-best-summer-fruit-tart.yaml', null),
+  ('0998-free-form-summer-fruit-tart.yaml', null),
+  ('1166-fruit-hand-pies.yaml', 'Pineapple Hand Pie Filling'),
+  ('0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml', null),
+  ('0669-roasted-brussels-sprouts.yaml', null),
+  (
+    '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
+    null,
+  ),
+  ('0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml', null),
+  ('0090-new-englandstyle-home-corned-beef-and-cabbage.yaml', null),
+  ('0091-home-corned-beef-with-vegetables.yaml', null),
+  ('0223-onion-braised-beef-brisket.yaml', null),
+  ('0007-tuscan-style-beef-stew.yaml', null),
+  ('0087-braised-beef-short-ribs.yaml', null),
+  ('0088-slow-cooker-beer-braised-short-ribs.yaml', null),
+  ('0350-beef-short-rib-ragu.yaml', null),
+  ('0481-carne-deshebrada-shredded-beef-tacos.yaml', null),
+  ('0084-catalan-style-beef-stew-with-mushrooms.yaml', null),
+  ('0194-pub-style-steak-and-ale-pie.yaml', null),
+  ('1172-nikujaga-beef-and-potato-stew.yaml', null),
+};
+
 const List<_Totals> _totals = [
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 1713.63 /serving, batch
   // 1713.63, fat 117.6809, protein 20.5184, sodium 1184.5820.
@@ -6303,8 +6387,10 @@ const List<_Totals> _totals = [
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
     'complete',
-    '800.65',
-    '3202.59',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 800.65.
+    '811.64',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 3202.59.
+    '3246.55',
     '105.9561',
     '17.4871',
     '41.2971',
@@ -6317,8 +6403,9 @@ const List<_Totals> _totals = [
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     'Faux Leftover Rice',
     'complete',
-    '1694.71',
-    '1694.71',
+    // RE-PIN (M86 batch, v90, 958: 2512381 rice): was 1694.71, 1694.71.
+    '1738.68',
+    '1738.68',
     '32.1547',
     '3.7520',
     '11.8720',
@@ -6348,8 +6435,10 @@ const List<_Totals> _totals = [
     '0962-peach-crisp.yaml',
     null,
     'complete',
-    '641.96',
-    '2567.85',
+    // RE-PIN (M86 batch, v90, 958: 2346395 nuts): was 641.96.
+    '627.79',
+    // RE-PIN (M86 batch, v90, 958: 2346395 nuts): was 2567.85.
+    '2511.15',
     '144.7907',
     '43.2788',
     '61.1988',
@@ -6445,8 +6534,9 @@ const List<_Totals> _totals = [
     '0875-summer-peach-cake.yaml',
     null,
     'complete',
-    '403.97',
-    '3231.77',
+    // RE-PIN (M86 batch, v90, 958: 2346387 sour cream): was 403.97, 3231.77.
+    '403.71',
+    '3229.66',
     '119.0901',
     '66.8619',
     '32.5967',
@@ -6459,8 +6549,10 @@ const List<_Totals> _totals = [
     '0996-the-best-summer-fruit-tart.yaml',
     null,
     'complete',
-    '456.51',
-    '3652.10',
+    // RE-PIN (M86 batch, v90, 958: 2346386 heavy cream, 2346410 raspberries):
+    // was 456.51, 3652.10.
+    '450.20',
+    '3601.60',
     '219.7980',
     '129.6106',
     '55.2551',
@@ -6475,8 +6567,10 @@ const List<_Totals> _totals = [
     '0998-free-form-summer-fruit-tart.yaml',
     null,
     'complete',
-    '385.80',
-    '2314.78',
+    // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was 385.80.
+    '384.26',
+    // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was 2314.78.
+    '2305.57',
     '120.0221',
     '71.5961',
     '33.2250',
@@ -6571,8 +6665,9 @@ const List<_Totals> _totals = [
     '1166-fruit-hand-pies.yaml',
     'Pineapple Hand Pie Filling',
     'complete',
-    '470.29',
-    '470.29',
+    // RE-PIN (M86 batch, v90, 958: 2346398 pineapple): was 470.29, 470.29.
+    '452.99',
+    '452.99',
     '0.8440',
     '0.0055',
     '0.0056',
@@ -6586,8 +6681,12 @@ const List<_Totals> _totals = [
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
     null,
     'complete',
-    '283.63',
-    '1701.76',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 283.63.
+    '270.16',
+    // RE-PIN (M86 batch, v90, 958: 2515379 nuts, 2685575 brussels sprouts): was
+    // 1701.76.
+    '1620.95',
     '117.1127',
     '24.5244',
     '35.3583',
@@ -6601,8 +6700,10 @@ const List<_Totals> _totals = [
     '0669-roasted-brussels-sprouts.yaml',
     null,
     'complete',
-    '154.09',
-    '924.52',
+    // RE-PIN (M86 batch, v90, 958: 2685575 brussels sprouts): was 154.09.
+    '137.71',
+    // RE-PIN (M86 batch, v90, 958: 2685575 brussels sprouts): was 924.52.
+    '826.24',
     '47.1897',
     '6.5100',
     '28.7280',
@@ -6620,8 +6721,10 @@ const List<_Totals> _totals = [
     // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413 (884 kcal, fat 100 g — was Atwater 843.3, NLEA fat 93.7), |1's 5 tablespoons — was 225.54,
     // 902.14, 71.8052, 14.1201, 48.7368, 6.2986, 23.0624 (unmoved),
     // 409.7572, 22.1128 (unmoved).
-    '230.33',
-    '921.33',
+    // RE-PIN (M86 batch, v90, 958: 2685575 brussels sprouts): was 230.33.
+    '219.41',
+    // RE-PIN (M86 batch, v90, 958: 2685575 brussels sprouts): was 921.33.
+    '877.65',
     '75.1293',
     '12.8992',
     '50.6199',
@@ -6636,8 +6739,10 @@ const List<_Totals> _totals = [
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
     null,
     'complete',
-    '797.57',
-    '4785.41',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
+    '797.14',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 4785.41.
+    '4782.85',
     '287.1422',
     '110.6942',
     '121.9443',
@@ -6667,8 +6772,10 @@ const List<_Totals> _totals = [
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
     null,
     'complete',
-    '592.11',
-    '4736.91',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 592.11, 4736.91.
+    '584.18',
+    '4673.45',
     '209.0599',
     '76.0415',
     '97.6493',
@@ -6684,8 +6791,12 @@ const List<_Totals> _totals = [
     '0091-home-corned-beef-with-vegetables.yaml',
     null,
     'complete',
-    '628.01',
-    '5024.10',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 628.01.
+    '620.79',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
+    // cabbage): was 5024.10.
+    '4966.36',
     '270.0050',
     '111.6934',
     '114.0034',
@@ -6705,8 +6816,10 @@ const List<_Totals> _totals = [
     '0223-onion-braised-beef-brisket.yaml',
     null,
     'complete',
-    '589.45',
-    '3536.68',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 589.45.
+    '589.02',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 3536.68.
+    '3534.12',
     '126.1858',
     '47.7967',
     '53.6581',
@@ -6722,8 +6835,12 @@ const List<_Totals> _totals = [
     '0007-tuscan-style-beef-stew.yaml',
     null,
     'complete',
-    '762.59',
-    '4575.56',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was
+    // 762.59.
+    '761.55',
+    // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was
+    // 4575.56.
+    '4569.33',
     '311.8976',
     '133.1289',
     '158.1784',
@@ -6737,8 +6854,12 @@ const List<_Totals> _totals = [
     '0087-braised-beef-short-ribs.yaml',
     null,
     'complete',
-    '655.94',
-    '3935.64',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2258586 carrots): was
+    // 655.94.
+    '654.07',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2258586 carrots): was
+    // 3935.64.
+    '3924.41',
     '288.2195',
     '118.3767',
     '144.8143',
@@ -6752,8 +6873,10 @@ const List<_Totals> _totals = [
     '0088-slow-cooker-beer-braised-short-ribs.yaml',
     null,
     'complete',
-    '990.32',
-    '3961.28',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 990.32.
+    '989.04',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 3961.28.
+    '3956.16',
     '273.5298',
     '122.7347',
     '134.6926',
@@ -6771,8 +6894,12 @@ const List<_Totals> _totals = [
     // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413 (884 kcal, fat 100 g — was Atwater 843.3, NLEA fat 93.7), |2's 1 tablespoon — was 468.90,
     // 2344.51, 163.6417, 68.0461, 85.9603, 7.7614, 170.7866 (unmoved),
     // 2397.6839, 672.4443 (unmoved).
-    '469.67',
-    '2348.35',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685578 tomatoes): was
+    // 469.67.
+    '466.36',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685578 tomatoes): was
+    // 2348.35.
+    '2331.81',
     '164.3065',
     '67.8019',
     '86.3369',
@@ -6786,8 +6913,12 @@ const List<_Totals> _totals = [
     '0481-carne-deshebrada-shredded-beef-tacos.yaml',
     null,
     'partial',
-    '807.69',
-    '4846.13',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2346407 cabbage, 2258586
+    // carrots): was 807.69.
+    '803.98',
+    // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2346407 cabbage, 2258586
+    // carrots): was 4846.13.
+    '4823.89',
     '269.6605',
     '116.7962',
     '123.7415',
@@ -6818,8 +6949,11 @@ const List<_Totals> _totals = [
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
     null,
     'complete',
-    '951.30',
-    '3805.19',
+    // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was 951.30.
+    '943.17',
+    // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was
+    // 3805.19.
+    '3772.66',
     '292.0047',
     '102.5688',
     '157.8026',
@@ -6833,8 +6967,10 @@ const List<_Totals> _totals = [
     '0194-pub-style-steak-and-ale-pie.yaml',
     null,
     'complete',
-    '881.01',
-    '5286.07',
+    // RE-PIN (M86 batch, v90, 958: 2346387 cream): was 881.01.
+    '880.66',
+    // RE-PIN (M86 batch, v90, 958: 2346387 cream): was 5286.07.
+    '5283.96',
     '368.0701',
     '168.7837',
     '162.6707',
@@ -6905,8 +7041,10 @@ const List<_Totals> _totals = [
     '1172-nikujaga-beef-and-potato-stew.yaml',
     null,
     'partial',
-    '501.85',
-    '2007.39',
+    // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 501.85.
+    '498.61',
+    // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 2007.39.
+    '1994.46',
     '102.8276',
     '38.8793',
     '49.2610',
@@ -7577,7 +7715,10 @@ void main() {
                         '0084-catalan-style-beef-stew-with-mushrooms.yaml',
                         '0194-pub-style-steak-and-ale-pie.yaml',
                       }.contains(file))) ||
-              _m90Moved.contains((file, section)),
+              _m90Moved.contains((file, section)) ||
+              // RE-PIN (M86 batch, v90): M86's movers — the 22 entries whose
+              // rows read a 958 Foundation record — `_m86Moved`.
+              _m86Moved.contains((file, section)),
           reason: '$file ${section ?? ''}',
         );
       }
@@ -7734,7 +7875,8 @@ void main() {
           '2041.16',
           '202.12',
           '1838.33',
-          '797.57',
+          // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
+          '797.14',
           ['76.67', '85.50', '7.94'],
         ),
         // RE-PIN (M90 batch, v89, brown sugar + sugar): the deduction
@@ -7858,10 +8000,23 @@ void main() {
                   kcalPer100g(knownFood(db, r.fdcId!)!) /
                   100,
         ].fold<double>(0, (a, b) => a + b);
+        // RE-PIN (M86 batch, v90): a row on a Foundation record publishing
+        // 958 counts it since v90 (958 before 957) — its v71 energy is its
+        // grams at the record's 957 (was `v71 + evoo - m90 - now - by`).
+        final m86 = [
+          for (final r in db.ingredientMatchesFor(recipes[file]!.id))
+            if (r.fdcId != null && (r.grams ?? 0) > 0)
+              if (knownFood(
+                    db,
+                    nutrientSiblings[r.fdcId] ?? r.fdcId!,
+                  )?.nutrientsPer100g
+                  case final n? when n['958'] != null && n['208'] == null)
+                r.grams! * (n['958']! - n['957']!) / 100,
+        ].fold<double>(0, (a, b) => a + b);
         // The v71 batch is printed to 2 dp: the move equals the deduction
         // within its rounding.
         expect(
-          (v71 + evoo - m90 - now - by).abs(),
+          (v71 + evoo - m90 + m86 - now - by).abs(),
           lessThan(0.006),
           reason: file,
         );
