@@ -2704,10 +2704,13 @@ _whole = [
   // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod) — the energy
   // before and after the ethanol moves alike, after = this compute: was
   // 3400.54, 3394.29.
+  // RE-PIN (M95 batch, v97, the chips' uptake at FNDDS 2709458's 12.51 %:
+  // the oil |1 170.78 → 242.53 g) — the energy before and after the ethanol
+  // moves alike (+634.27), after = this compute: was 3404.70, 3398.45.
   (
     '0255-fish-and-chips.yaml',
-    3404.70,
-    3398.45,
+    4038.97,
+    4032.72,
     0,
     0,
     [(10, 2710616, 154.50, 85)],

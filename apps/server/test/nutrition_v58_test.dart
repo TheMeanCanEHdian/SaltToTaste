@@ -88,15 +88,16 @@ const List<_Row> _reach = [
   // v57: 226.78 g. The replay reads 2710187 (0.990000, 1,537.02 kcal);
   // a fresh compute reads 172336 (as v57's test states) — grams and basis
   // equal.
+  // RE-PIN (M95 batch, v97): was 170.78 g, 1509.70 kcal on SR 170698's derived 6.0 % for the chips (the v97 replay's 242.53 g: 2709458's read 12.51 %; the cod's 104.64 g unchanged).
   (
     _fishChips,
     1,
     '3 quarts plus ¼ cup peanut oil or canola oil',
     172336,
     '0.683333',
-    '170.78',
-    '1509.70',
-    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    '242.53',
+    '2143.97',
+    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 12.51 % of the raw potatoes\' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))',
   ),
   // v57: 137.53 g, 1,237.77 kcal
   // RE-PIN (M90 batch, v89, cornstarch + cornmeal: the budget re-solves on it): was 73.30 g, 659.70 kcal (the v89 replay's row).
@@ -381,7 +382,8 @@ void main() {
           rowOf(file, position).grams!.toStringAsFixed(2);
       expect(g(_saltPepper, 7), '64.06');
       expect(g(_orangeBeef, 8), '95.29');
-      expect(g(_fishChips, 1), '170.78');
+      // RE-PIN (M95 batch, v97): was 170.78 (the chips at 2709458's 12.51 %).
+      expect(g(_fishChips, 1), '242.53');
       // RE-PIN (M90 batch, v89, cornstarch + cornmeal): was 73.30.
       expect(g(_cauliflower, 4), '65.74');
       expect(basisOf(_fishChips, 1), contains('the steps rinse it off'));

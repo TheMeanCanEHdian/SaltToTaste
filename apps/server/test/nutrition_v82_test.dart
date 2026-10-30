@@ -701,7 +701,9 @@ void plans() {
       await fishWith('¼ cup tapioca starch', 'tapioca starch'),
       // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod):
       // was 3632.89.
-      ('96.56', '3637.05'),
+      // RE-PIN (M95 batch, v97): the chips' uptake at FNDDS 2709458's 12.51 %
+      // (the oil |1 + 71.75 g on the fixtures' 172336, 884 kcal): was 3637.05.
+      ('96.56', '4271.32'),
     );
   });
 
@@ -777,7 +779,9 @@ void plans() {
     // serving): was 3548.84.
     // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod):
     // was 3551.03.
-    expect(kcal, '3555.19');
+    // RE-PIN (M95 batch, v97): the chips' uptake at FNDDS 2709458's 12.51 %
+    // (+634.27): was 3555.19.
+    expect(kcal, '4189.46');
   });
 }
 
@@ -1121,7 +1125,10 @@ void persons() {
       '3 overridden|169698|null|null|coating',
       // RE-PIN (M86 batch, v90, 958: 2346401 russet potatoes, 2684444 cod):
       // was 1506.1605.
-      '1479.7070',
+      // RE-PIN (M95 batch, v97): the fish skipped, the oil |1 is the chips'
+      // uptake alone at FNDDS 2709458's 12.51 % (66.13 → 137.89 g on the
+      // fixtures' 172336, +634.36): was 1479.7070.
+      '2114.0654',
     ),
   ]) {
     test('F7, a pick (closer 4, verify4 D1): $file |$picked picked on its own '

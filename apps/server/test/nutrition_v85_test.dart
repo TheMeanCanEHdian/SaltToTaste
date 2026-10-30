@@ -60,11 +60,16 @@ import 'support/fdc_fixtures.dart';
 
 const _source = 'atk-tv-2023';
 
+// RE-PIN (M95 batch, v97): was "… 6.0 % of the raw potatoes' weight —
+// derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in
+// vegetable oil")" — the fries' uptake is FNDDS 2709458's read 12.51 %.
 const _uptake =
     'discarded in cooking — only the oil the fried food absorbs counted · '
-    "approximation (frying oil absorbed: 6.0 % of the raw potatoes' weight — "
-    'derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in '
-    'vegetable oil")';
+    "approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight "
+    '— USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its '
+    'baked potato brought to raw by carbohydrate on SR 170030 / 170027 '
+    '(russet, a stand-in for the generic baked potato) and SR 170033 / '
+    'Foundation 2346401))';
 const _strained =
     'discarded in cooking — counted as 0 g · approximate (strained out and '
     'discarded — what it gives the liquid is not counted)';
@@ -107,47 +112,51 @@ const List<_Row> _b1a = [
 /// and 51.60 / 1,395.60 of the uptake.
 const List<_Row> _b4 = [
   // v84: 55.11 g, 495.99 kcal
+  // RE-PIN (M95 batch, v97): was 53.53 g, 481.77 kcal (2709458's 12.51 %).
   (
     _classic,
     1,
     '2 quarts peanut oil',
     2710187,
     'discarded',
-    '53.53',
-    '481.77',
+    '111.60',
+    '1004.40',
     _uptake,
   ),
   // v84: 0.00 g, 0.00 kcal, "… counted as 0 g · part of the frying medium (…)"
+  // RE-PIN (M95 batch, v97): was 1.59 g, 14.26 kcal (2709458's 12.51 %).
   (
     _classic,
     2,
     '¼ cup bacon fat, strained (optional)',
     172345,
     'discarded',
-    '1.59',
-    '14.26',
+    '3.31',
+    '29.69',
     _uptake,
   ),
   // v84: 68.04 g, 612.36 kcal
+  // RE-PIN (M95 batch, v97): was 65.52 g, 589.68 kcal (2709458's 12.51 %).
   (
     _easier,
     1,
     '6 cups peanut oil',
     2710187,
     'discarded',
-    '65.52',
-    '589.68',
+    '136.62',
+    '1229.58',
     _uptake,
   ),
   // v84: 0.00 g, 0.00 kcal, "… counted as 0 g · part of the frying medium (…)"
+  // RE-PIN (M95 batch, v97): was 2.52 g, 22.60 kcal (2709458's 12.51 %).
   (
     _easier,
     2,
     '¼ cup bacon fat, strained (optional)',
     172345,
     'discarded',
-    '2.52',
-    '22.60',
+    '5.25',
+    '47.09',
     _uptake,
   ),
 ];
@@ -310,7 +319,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 91 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 92 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -322,7 +331,8 @@ void main() {
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
     // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
-    expect(matcherVersion, 91);
+    // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
+    expect(matcherVersion, 92);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
@@ -419,14 +429,17 @@ void main() {
     test("B4: the uptake is unchanged — the fries absorb SR 170698's 6.0 % "
         'of the raw potatoes either way (v84: classic 55.11 g on |1 alone, '
         'easier 68.04 g); the plan rounds each fryer alone (53.53 + 1.59 = '
-        '55.12)', () {
+        "55.12) — RE-PIN (M95, v97): FNDDS 2709458's 12.51 %, 111.60 + 3.31 "
+        '= 114.91, easier 136.62 + 5.25 = 141.87', () {
       String sum(String file) {
         final id = recipes[file]!.id;
         return (rowIn(id, 1).grams! + rowIn(id, 2).grams!).toStringAsFixed(2);
       }
 
-      expect(sum(_classic), '55.12');
-      expect(sum(_easier), '68.04');
+      // RE-PIN (M95 batch, v97): was '55.12' / '68.04' (SR 170698's 6.0 %);
+      // the one uptake is 12.51 % × 918.52 / 1,133.98 g = 114.91 / 141.86 g.
+      expect(sum(_classic), '114.91');
+      expect(sum(_easier), '141.87');
     });
 
     test('a second compute writes nothing: every row of the five reached '

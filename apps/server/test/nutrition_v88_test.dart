@@ -321,7 +321,7 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 91 (v88 set it to 83, batch M88: rows move)', () {
+  test('matcherVersion 92 (v88 set it to 83, batch M88: rows move)', () {
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
@@ -330,7 +330,8 @@ void main() {
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
     // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
-    expect(matcherVersion, 91);
+    // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
+    expect(matcherVersion, 92);
   });
 
   test("pin (7) — the figures: FNDDS 2706442's two inputs by sequenceNumber "

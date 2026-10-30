@@ -144,7 +144,9 @@ const Map<String, String> _synonyms = {
 /// v90: matcher v95 (batch M93) — the C4 pan-fat share 3.71 % (two records).
 /// v91: matcher v96 (batch M94) — the skimmed / poured-off browning fat
 /// (FNDDS 2705972's oil per raw breast, 1.52 %).
-const int matcherVersion = 91;
+/// v92: matcher v97 (batch M95) — the fries' uptake from FNDDS 2709458
+/// (15 g oil per 119.89 g raw potato, 12.51 %; was SR 170698's derived 6.0).
+const int matcherVersion = 92;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

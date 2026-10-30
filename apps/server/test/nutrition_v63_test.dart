@@ -351,6 +351,7 @@ const List<_Row> _negatives = [
     '126.00',
     '1 tablespoon · USDA portion',
   ),
+  // RE-PIN (M95 batch, v97): was 40.82 g, 367.38 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     _eggplant,
     null,
@@ -358,9 +359,9 @@ const List<_Row> _negatives = [
     '2 cups vegetable oil',
     2710180,
     '0.923333',
-    '40.82',
-    '367.38',
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw eggplant\'s weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil" (no record for eggplant; read as Fast foods, potato, french fried in vegetable oil))',
+    '85.12',
+    '766.08',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw eggplant's weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401) (no record for eggplant; read as Potato, french fries, from fresh, fried))",
   ),
   (
     _guayTiew,
@@ -790,6 +791,9 @@ void main() {
           in <(String Function(String), String?, int, String, String)>[
             // D1: the MAIN recipe prints its frying oil out; the eggplant it
             // fries (6.0 % uptake, 40.82 g unedited) is inside the ¼ cup.
+            // RE-PIN (M95 batch, v97): text only — the uptake is now 12.51 %
+            // (85.12 g unedited), above the ¼ cup; the printed yield's part
+            // still rules (no uptake on top of it), 56.00 g unchanged.
             (
               (s) => s.replaceFirst(
                 'servings: SERVES 2 TO 3\n',
@@ -981,7 +985,10 @@ void main() {
           // '404.88'.
           ('partial', '418.72'), // 489.26; 489.04 → 403.85 (F9)
           // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was '504.00'.
-          ('complete', '491.42'), // 420.00; 419.95 → 503.95 (the yield)
+          // RE-PIN (M95 batch, v97, 2709458's fries uptake on the eggplant
+          // stand-in, |10 40.82 → 85.12 g): was '491.42' (the replay 491.27
+          // → 690.62; the fixtures' standing +0.15).
+          ('complete', '690.77'), // 420.00; 419.95 → 503.95 (the yield)
           // RE-PIN (M86 batch, v90, 958: 2727567 chicken thighs): was '670.38'.
           ('complete', '682.29'), // 671.01; 670.73 → 670.11 (bay)
           // RE-PIN (M70 batch, v69, pE Q6): 748.74 (was 748.47) — its

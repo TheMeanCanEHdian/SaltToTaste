@@ -508,8 +508,9 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 }
 
 void main() {
-  test('matcherVersion 91 (v96, batch M94: the browning fat)', () {
-    expect(matcherVersion, 91);
+  test('matcherVersion 92 (v96 set it to 91, batch M94: the browning fat)', () {
+    // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
+    expect(matcherVersion, 92);
   });
 
   test("the share from the figures the flag prints (2705972's inputFoods: "

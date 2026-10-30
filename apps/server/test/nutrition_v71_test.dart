@@ -330,6 +330,7 @@ const List<_Row> _reach = [
     null,
   ),
   // v70: 51.60 g, 462.85 kcal; 1/4 cup · USDA portion
+  // RE-PIN (M95 batch, v97): was 1.59 g, 14.26 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0316-classic-french-fries.yaml',
     null,
@@ -341,13 +342,14 @@ const List<_Row> _reach = [
     // RE-PIN (M83 batch, v85): was '0.00' … '0.00', "… counted as 0 g ·
     // part of the frying medium (…)" — B4: a fat joined to the frying oil
     // takes its mass share of the same uptake, flagged as the oil is.
-    '1.59',
+    '3.31',
     'auto',
     null,
-    '14.26',
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    '29.69',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))",
   ),
   // v70: 51.60 g, 462.85 kcal; 1/4 cup · USDA portion
+  // RE-PIN (M95 batch, v97): was 2.52 g, 22.60 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0317-easier-french-fries.yaml',
     null,
@@ -359,11 +361,11 @@ const List<_Row> _reach = [
     // RE-PIN (M83 batch, v85): was '0.00' … '0.00', "… counted as 0 g ·
     // part of the frying medium (…)" — B4: a fat joined to the frying oil
     // takes its mass share of the same uptake, flagged as the oil is.
-    '2.52',
+    '5.25',
     'auto',
     null,
-    '22.60',
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    '47.09',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))",
   ),
   // v70: 0.00 g, 0.00 kcal; no amount on the line — counted as 0 g
   (
@@ -2375,6 +2377,7 @@ const List<_Row> _unmoved = [
     '892.81',
     'from 3 pound × 0.81 edible · approximate (USDA AH-102 item 2018: potatoes, raw whole, all samples → pared 81 % (61–94))',
   ),
+  // RE-PIN (M95 batch, v97): was 170.78 g, 1509.70 kcal (on the fixtures' 172336) on SR 170698's derived 6.0 % for the chips (the v97 replay's 242.53 g: 2709458's read 12.51 %).
   (
     '0255-fish-and-chips.yaml',
     null,
@@ -2383,11 +2386,11 @@ const List<_Row> _unmoved = [
     172336,
     'Oil, canola',
     '0.683333',
-    '170.78',
+    '242.53',
     'auto',
     null,
-    '1509.70',
-    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    '2143.97',
+    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 12.51 % of the raw potatoes\' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 89.12 g, 326.18 kcal (the v84 replay's row).
   // RE-PIN (M90 batch, v89, cornstarch: the budget re-solves on it): was 93.89 g (the v89 replay's row).
@@ -3491,6 +3494,7 @@ const List<_Row> _unmoved = [
     '744.00',
     'from 2 1/2 pound × 0.81 edible · approximate (USDA AH-102 item 2018: potatoes, raw whole, all samples → pared 81 % (61–94))',
   ),
+  // RE-PIN (M95 batch, v97): was 53.53 g, 481.77 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0316-classic-french-fries.yaml',
     null,
@@ -3501,11 +3505,11 @@ const List<_Row> _unmoved = [
     '0.990000',
     // RE-PIN (M83 batch, v85): was '55.11' … '495.99' — B4: the joined bacon
     // fat |2 takes its mass share of the same uptake (1.59 g).
-    '53.53',
+    '111.60',
     'auto',
     null,
-    '481.77',
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    '1004.40',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))",
   ),
   (
     '0316-classic-french-fries.yaml',
@@ -3536,6 +3540,7 @@ const List<_Row> _unmoved = [
     '811.93',
     'from 2 1/2 pound',
   ),
+  // RE-PIN (M95 batch, v97): was 65.52 g, 589.68 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0317-easier-french-fries.yaml',
     null,
@@ -3546,11 +3551,11 @@ const List<_Row> _unmoved = [
     '0.990000',
     // RE-PIN (M83 batch, v85): was '68.04' … '612.36' — B4: the joined bacon
     // fat |2 takes its mass share of the same uptake (2.52 g).
-    '65.52',
+    '136.62',
     'auto',
     null,
-    '589.68',
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    '1229.58',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))",
   ),
   (
     '0317-easier-french-fries.yaml',
@@ -8499,7 +8504,10 @@ void main() {
           null,
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2346401 potatoes): was 315.52.
-          '310.01',
+          // RE-PIN (M95 batch, v97): was 310.01 — the uptake at FNDDS
+          // 2709458's 12.51 % (|1 111.60 + |2 3.31 g; the replay 309.90 →
+          // 444.41, the fixtures' standing +0.11).
+          '444.52',
         ), // 431.27 → 315.56
         // RE-PIN (M83 batch, v85): was 361.46 — B4: the joined bacon fat |2
         // takes 2.52 g of the uptake at 897 kcal/100 g, the peanut oil the
@@ -8509,7 +8517,10 @@ void main() {
           null,
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 361.44.
-          '356.05',
+          // RE-PIN (M95 batch, v97): was 356.05 — the uptake at FNDDS
+          // 2709458's 12.51 % (|1 136.62 + |2 5.25 g; the replay 355.98 →
+          // 522.08, the fixtures' standing +0.07).
+          '522.15',
         ), // 477.10 → 361.38
         // RE-PIN (M82 batch, v84): was 811.14 (the replay 811.11 → 810.26).
         (
@@ -9138,7 +9149,9 @@ void main() {
       // sentence ("bacon grease"), it joins too: discarded, at its share.
       // RE-PIN (M83 batch, v85): was ('0.00', 'discarded', null) — B4: the
       // joined bacon fat takes its mass share of the fries' uptake.
-      expect(at(2), ('1.59', 'discarded', null));
+      // RE-PIN (M95 batch, v97): was ('1.59', …) — the uptake at FNDDS
+      // 2709458's 12.51 % (the corpus row's 3.31 g; the duck fat unjoined).
+      expect(at(2), ('3.31', 'discarded', null));
       expect(at(4), ('25.60', 'portion', null));
     });
 

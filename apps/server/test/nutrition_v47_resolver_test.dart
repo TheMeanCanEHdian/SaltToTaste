@@ -411,7 +411,9 @@ void main() {
           // version alone — the base engine with 90 gives this literal).
           // RE-PIN (M94 batch, v96): matcherVersion 91 (was aabe4abe…; the
           // version alone — the base engine with 91 gives this literal).
-          '743de98454269cd98cb9eb1e0afef51d74148e9b22ac7a0ebaf6b2db7931bbdf',
+          // RE-PIN (M95 batch, v97): matcherVersion 92 (was 743de984…; the
+          // version alone — the base engine with 92 gives this literal).
+          '4d1ea6a6cf825d208e17f6c3fe09e880b500fc4dc0b9cd53bb83e84edfc816f2',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

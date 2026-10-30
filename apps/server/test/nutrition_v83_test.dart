@@ -900,7 +900,9 @@ void main() {
         // aa243fa7…; the version alone — the base engine with 90 gives this literal).
         // RE-PIN (M94 batch, v96): the hash at matcherVersion 91 (was
         // f656c45d…; the version alone — the base engine with 91 gives this literal).
-        'b2e51a29cc88a42486e1262a9f19b46e3dfb10ff1abce7668d3314f106877abb',
+        // RE-PIN (M95 batch, v97): the hash at matcherVersion 92 (was
+        // b2e51a29…; the version alone — the base engine with 92 gives this literal).
+        '0384cb5a828ea992a799bd657c546642201e13ddaf45d625d566f1deb35c996d',
       );
     });
   });

@@ -93,7 +93,8 @@ void main() {
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
     // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
-    expect(matcherVersion, 91); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
+    expect(matcherVersion, 92); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -219,7 +220,11 @@ void main() {
       // 856d6f4e…; M94 adds no hash term — it reads steps and rows, already
       // hashed — the version alone: the base engine with 91 gives this
       // literal).
-      '1e4cd3fb5a6b73d398c0ccc9514687f0bab1d32c775d2262e9d0f16e634b3d2f',
+      // RE-PIN (M95 batch, v97): the hash at matcherVersion 92 (was
+      // 1e4cd3fb…; M95 adds no hash term — a record tuple, a figure and a
+      // flag string — the version alone: the base engine with 92 gives this
+      // literal).
+      '3223266e3a7369e0c47c82767ee665a49811225bd902fe13ec7e5a1fa54398ef',
     );
   });
 

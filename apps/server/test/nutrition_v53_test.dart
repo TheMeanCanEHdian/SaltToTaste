@@ -184,18 +184,20 @@ _rows = [
   // O2 cod 15.38 % + O4 chips 6.0 % on top of its kept ¼ cup
   // RE-PIN (M59 batch, v58, F1): the ¼ cup tossed with the fries is
   // drained and rinsed off in step 1 — the uptake alone (was 225.19)
+  // RE-PIN (M95 batch, v97): was 170.78 g, 1537.02 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0255-fish-and-chips.yaml',
     null,
     1,
     '3 quarts plus ¼ cup peanut oil or canola oil',
     172336,
-    '170.78',
+    '242.53',
     'discarded',
     null,
-    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    'discarded in cooking — only the oil the fried food absorbs counted ("plus ¼ cup peanut oil or canola oil": the steps rinse it off) · approximation (frying oil absorbed: 15.38 % of the raw cod\'s weight — USDA FNDDS 2706244 recipe: 10 g oil per 65 g raw cod; 12.51 % of the raw potatoes\' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))',
   ),
   // O4 6.0 % × 918.52 g of potatoes (derived, SR 170698)
+  // RE-PIN (M95 batch, v97): was 53.53 g, 481.77 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0316-classic-french-fries.yaml',
     null,
@@ -205,22 +207,23 @@ _rows = [
     // RE-PIN (M83 batch, v85): was '55.11' — B4: the joined bacon fat |2
     // takes its mass share of the same uptake (1.59 g; 53.53 + 1.59 = 55.12,
     // each fryer rounded alone).
-    '53.53',
+    '111.60',
     'discarded',
     null,
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil")',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))",
   ),
   // eggplant 6.0 %, a flagged stand-in on SR 170698
+  // RE-PIN (M95 batch, v97): was 40.82 g, 367.38 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0053-crispy-thai-eggplant-salad.yaml',
     null,
     10,
     '2 cups vegetable oil',
     2710180,
-    '40.82',
+    '85.12',
     'discarded',
     null,
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw eggplant\'s weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil" (no record for eggplant; read as Fast foods, potato, french fried in vegetable oil))',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw eggplant's weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401) (no record for eggplant; read as Potato, french fries, from fresh, fried))",
   ),
   // the strained-and-kept shallot oil: shallots have no class, 0 g
   // RE-PIN (M64 batch, v63, Q12 (a)): still no uptake (no class), but the
@@ -738,16 +741,17 @@ _rows = [
     'discarded in cooking — only the coat on the food counted · approximation (coat: 3.94 g carbohydrate per 100 g of the raw squid — derived from USDA SR Legacy 171982 "Mollusks, squid, mixed species, cooked, fried"; the dredge\'s excess not counted)',
   ),
   // sweet potatoes 6.0 % × 1088.62 g, a flagged stand-in on SR 170698
+  // RE-PIN (M95 batch, v97): was 65.32 g, 587.88 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
   (
     '0318-thick-cut-sweet-potato-fries.yaml',
     null,
     4,
     '3 cups peanut oil',
     2710187,
-    '65.32',
+    '136.19',
     'discarded',
     null,
-    'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 6.0 % of the raw sweet potatoes\' weight — derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in vegetable oil" (no record for sweet potatoes; read as Fast foods, potato, french fried in vegetable oil))',
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw sweet potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401) (no record for sweet potatoes; read as Potato, french fries, from fresh, fried))",
   ),
 ];
 
@@ -899,9 +903,11 @@ void main() {
       // RE-PIN (M59 batch, v58, F1): the kept ¼ cup is rinsed off (step 1
       // tosses the fries in it, then drains and rinses them) — the uptake
       // alone.
+      // RE-PIN (M95 batch, v97): the chips' uptake is FNDDS 2709458's read
+      // 12.51 % (was SR 170698's derived 6.0 %; 170.78 → 242.53 g).
       expect(
         g2(gramsOf(chips, 1)),
-        g2(cod * 15.38 / 100 + gramsOf(chips, 0) * 6.0 / 100),
+        g2(cod * 15.38 / 100 + gramsOf(chips, 0) * 12.51 / 100),
       );
       // Katsu (the Q24 b cascade): C1 5.73 on the breasts, the panko alone.
       final katsu = await computed(

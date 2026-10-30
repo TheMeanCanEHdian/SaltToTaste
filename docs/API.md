@@ -5158,6 +5158,142 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v97 (batch M95; matcherVersion 92 — the fries' uptake from 2709458:
+a fried potato keeps FNDDS 2709458's read 15 g oil per 119.89 g raw potato,
+12.51 %, not SR 170698's derived 6.0 %; 10 rows, 8 recipes' totals; prep51
+design_v2 §1 Q9 / §2 M95, ruled by the owner 2026-10-29 for the record's
+own input; zero requests; replayed on snapshot 30 against the v96 rows, both
+orders byte-identical, the rule reverted alone reproducing v96 byte for
+byte, calls 0).** The O4 uptake (M52's fried-food class, `_friedClassOf`)
+of a potato fried from raw — and of the sweet-potato and eggplant stand-ins
+that read it — was DERIVED from analytical SR 170698 "Fast foods, potato,
+french fried in vegetable oil" (fat 14.7 : carbohydrate 41.4); FNDDS's own
+recipe for fries from fresh lists the oil it adds.
+- **The record (`_friesFried`, engine.dart; the `_yucaFries` form).** FNDDS
+  2709458 "Potato, french fries, from fresh, fried" (cached detail: E 198,
+  P 1.93, F 13.1, C 18.5 per 100 g; the cache holds no inputs) — its
+  inputFoods, read at live step L51 #2 (.claude/diag/2026-10-29/live51_raw/
+  2709458.json), per 100 g of fries: 50 g 11674 "Potatoes, baked, flesh and
+  skin, without salt", 50 g 11363 "Potatoes, baked, flesh, without salt",
+  15 g 82101000 "Vegetable oil, NFS", 0.4 g salt.
+- **The tracer pairs (carbohydrate, 205 — P3's uncoated convention).**
+  11674 is not cached (as a hit or a detail), so the flesh-and-skin half
+  reads the RUSSET pair, a stand-in by cultivar: SR 170030 "Potatoes,
+  Russet, flesh and skin, baked" (a cached hit, 21.4 g — the orchestrator's
+  live step L52 read its raw detail, .claude/diag/2026-10-30/live52_raw/
+  raw_170030.json: NDB 11356, not 11674; 21.44) over SR 170027 "Potatoes,
+  russet, flesh and skin, raw" (a hit, 18.1): 50 × 21.4 / 18.1 = 59.12 g
+  raw. The flesh half is 11363 itself, SR 170033 (a hit, 21.6; L52's
+  raw_170033.json: NDB 11363, 21.55 — the engine reads the cached hit's
+  21.6; at 21.55 r would be 119.75) over the raw flesh the corpus fries
+  lines land on, Foundation 2346401 "Potatoes, russet, without skin, raw"
+  (the cached detail, 17.77125): 50 × 21.6 / 17.77125 = 60.77 g raw. r =
+  119.89 g raw per 100 g of fries: 15 / 119.89 = 12.51 % (0.1251) of the
+  raw potato's weight, was 6.0 %. Both halves on the russet pair (118.23 g,
+  12.69 %) is not the record's flesh-and-skin / flesh and was not built.
+  The three `_friedClassOf` sites read `_readFig('12.51', _friesFried)`
+  (the sweet potato and eggplant keep `standIn`); `_friesSr` is gone. The
+  split across a recipe's fryers (M83's B4, by the fryers' whole grams) and
+  the cap are unchanged. The clause (`_uptakeClause`, derived from two
+  records so the flag says so) was "6.0 % of the raw potatoes' weight —
+  derived from USDA SR Legacy 170698 "Fast foods, potato, french fried in
+  vegetable oil"", now "12.51 % of the raw potatoes' weight — USDA FNDDS
+  2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato
+  brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in
+  for the generic baked potato) and SR 170033 / Foundation 2346401)"; a
+  stand-in adds "(no record for sweet potatoes; read as Potato, french
+  fries, from fresh, fried)" (eggplant alike).
+- **Reach (fix97 gate1, the v96 rows; 10 rows, 8 recipes, 0 person
+  rows).** Every row printing the O4 clause, all `auto` / `discarded`,
+  grams (kcal), each uptake × 2.085 of its fries' part:
+  classic-french-fries|1 "2 quarts peanut oil" 53.53 → 111.60 g (+522.63)
+  and |2 "¼ cup bacon fat, strained (optional)" 1.59 → 3.31 g (+15.43) —
+  one uptake, 12.51 % × 918.52 g = 114.91 g, split by mass;
+  easier-french-fries|1 65.52 → 136.62 g (+639.90) and |2 2.52 → 5.25 g
+  (+24.49) (1,133.98 g gold potatoes); fish-and-chips|1 "3 quarts plus ¼
+  cup peanut oil or canola oil" 170.78 → 242.53 g (+645.75) — the cod's
+  15.38 % × 680.39 g = 104.64 g unchanged, the chips' 6.0 % → 12.51 % ×
+  1,102.23 g = 66.13 → 137.89 g; steak-fries|1 and steak-frites|9 68.04 →
+  141.86 g (+664.38 each); patatas-bravas|12 "3 cups vegetable oil" 49.60 →
+  103.42 g (+484.38); thick-cut-sweet-potato-fries|4 (the stand-in) 65.32 →
+  136.19 g (+637.83); crispy-thai-eggplant-salad|10 (the stand-in) 40.82 →
+  85.12 g (+398.70) — its Fried Shallots section's oil (56.00 g, the
+  printed yield) unmoved. ROW column 3,525,644.75 → 3,530,342.62 =
+  +4,697.87; recipe energy 3,376,553.95 → 3,381,251.77 = +4,697.82 (the
+  cents are per-serving rounding): per serving classic 309.90 → 444.41,
+  easier 355.98 → 522.08, fish-and-chips 856.27 → 1,017.71, steak-fries
+  382.59 → 548.68, steak-frites 1,079.57 → 1,245.66, patatas-bravas 423.36 →
+  544.45, the sweet-potato fries 435.03 → 594.49 (4 servings each), the
+  eggplant salad 491.27 → 690.62 (2); no status changes (two stay partial).
+  Sections, holds, notes, buckets and calls identical; staleAfter 0,
+  sectionsStale 0; a recompute writes nothing.
+Attribution: the three sites put back alone (matcherVersion 92 kept) give
+v96's rows, recipes, sections, calls, notes and buckets byte for byte; the
+figure alone (12.51 on the old source) moves the same ten rows' grams and
+energy and the same eight recipes byte for byte as the rule; the flag alone
+the ten bases only; 0 unattributed.
+Calibration (reported, never fitted; the direction was known — the FNDDS
+record's fat : carbohydrate 0.708 against SR 170698's 0.355 — and every hand
+was drawn on a lower uptake): audit 6 R06 easier-french-fries +16.71 →
++71.16 % (hand 305.02) and R07 classic-french-fries −5.32 → +35.77 % (hand
+327.32); audit 5 R05 and audit 2 R02 crispy-thai-eggplant-salad +7.26 →
++50.79 % (hand 458.00) and +12.47 → +58.11 % (436.79); audit 3 R13
+fish-and-chips +4.46 → +24.15 % (819.75) — all AWAY, disclosed (audit 6's
+calibrator sized the uptake on SR 169836's 0.376 and trimmed R06's potatoes
+15 % with no figure; at 2709458's 0.708 the audit put R06's hand at 417.8).
+Audit 6 median |err| 3.23 % unchanged (mean 7.11 → 10.51); audits 2–5
+median 6.87 → 6.95 % (mean 9.71 → 10.80). The owner gate's ruling on the
+calibration (the orchestrator under the standing authorization): the gap
+is the CHOICE OF RECORD the owner ruled on in Q9, not the arithmetic —
+calibrator 1 sized the fries' oil on SR 169836's restaurant-fry fat :
+carbohydrate 0.376, judged 2709458 "a soft-fry composition, not a crisp
+1/4-inch fry" and trimmed R06's potatoes 15 % with no source (the audit's
+own §6 item 7: "Neither is a measurement"); at 2709458's 0.708 it put
+R07's hand at 447 a serving, which v97's 444.41 meets within 0.6 %, and
+R06's at 417.8, a figure still carrying the unsourced trim (scaled to the
+whole 1,133.98 g, roughly 492). Shipped as ruled; a re-ruling of Q9 is the
+owner's. Not built, and a MISREAD (corrected here in the owner gate): the
+record's 13.1 g fat per 100 g read as a NET of its inputs' 15.1 g ("about
+10.8 % of the raw weight") — the record's profile is its inputs divided by
+their 115.4 g sum (15 + 0.4 + 50 + 50), so (15 + 50 × 0.13 / 100 + 50 ×
+0.10 / 100) / 1.154 = 13.10, the record's 13.1 exactly (the baked halves'
+fat from L52's raw_170030 / raw_170033), and water 74.9, carbohydrate 21.5
+and protein 2.30 over 1.154 give 64.9 / 18.6 / 1.99 against 65.1 / 18.5 /
+1.93, within the russet stand-in's spread; nothing is netted out, and the
+oil per gram of raw potato does not depend on that base. The uptake reads
+the INPUT, as the yuca figure reads 2709565's (15 g per 100 g raw cassava,
+its fries 13.94 g fat).
+Person path: no hunk touches nutrition_handlers.dart, `derivedFor`,
+`applyDecisionToOthers` or `decisionRecordOf` (a record tuple, a figure and
+a flag string), so GATE-P was not run.
+Pins: nutrition_v97_test (9 tests — matcherVersion 92; the engine's own
+figure through `uptakeFigureForTest` on the real rows' records: 12.51,
+2709458, 15 / 119.89 exactly and printed as its own o / r, the stand-ins
+flagged, the plantain and yuca figures unchanged; the tracer pairs from the
+fixtures' hits and detail → 119.89 = the engine's r; the ten rows on the
+fixtures equal the replay (record, grams, energy, the basis verbatim); the
+uptake by hand (the B4 split, fish-and-chips' two parts); the converses
+crunchy-kettle-potato-chips|0 (10.9 %, the site's chips branch) and the
+Fried Shallots oil; the eight totals (the fixtures' standing offsets, each
+move the replay's); the GET basis; a second compute writes nothing). Each
+mutant killed by a value pin (snapshot copy, anchor count 1, cmp restore):
+the potato's figure back to 6.0 (classic|1 / |2 53.53 / 1.59 g), the
+eggplant's or the sweet potato's alone, the sweet potato's stand-in flag
+dropped, r read on the flesh-and-skin pair for the flesh (120.44) or on one
+pair (118.23), the salt read as oil (15.4 g), the tracer clause dropped or
+printed on every read figure (fish-and-chips' cod clause), matcherVersion
+91. The existing suite re-pinned as equalities (RE-PIN M95): fourteen
+version literals (v84–v96, seasoning_ci), three hashes (seasoning_ci,
+v47_resolver F2, v83 F5c — the base engine with 92 gives them), the ten
+rows and their totals in v53 / v54 / v58 / v60 / v63 / v66 / v69 / v71 /
+v85 and 0255's STATED variants in v82 (F5's dips, F7's pick); no numeric
+bound widened, nothing deleted.
+Cost: no new reader — a record tuple, a figure and a string; every cap
+shape keeps its counts.
+Deploy note: matcherVersion 92 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 8 recipes' stored totals move (no
+users).
+
 **Matcher v96 (batch M94; matcherVersion 91 — the browning fat at 2705972's
 share 1.52 %: a fat line a browning heats before the recipe's first skim or
 plain pour-off of fat keeps only the film the browned food holds; 22 rows,

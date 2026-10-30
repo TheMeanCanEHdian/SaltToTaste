@@ -21069,10 +21069,6 @@ const _Sr _squidFried = (
   id: 171982,
   description: 'Mollusks, squid, mixed species, cooked, fried',
 );
-const _Sr _friesSr = (
-  id: 170698,
-  description: 'Fast foods, potato, french fried in vegetable oil',
-);
 const _Sr _chipsSr = (
   id: 19411,
   description: 'Snacks, potato chips, plain, salted',
@@ -21144,6 +21140,32 @@ const _Fndds _yucaFries = (
   b: '0',
   o: '15',
   r: '100',
+);
+
+/// v97 (batch M95, prep51 design_v2 §1 Q9 / §2 M95, ruled by the owner
+/// 2026-10-29; read at live step L51 #2, .claude/diag/2026-10-29/
+/// live51_raw/2709458.json): FNDDS 2709458 lists, per 100 g of fries, 50 g
+/// 11674 "Potatoes, baked, flesh and skin, without salt", 50 g 11363
+/// "Potatoes, baked, flesh, without salt", 15 g "Vegetable oil, NFS" and
+/// 0.4 g salt. Its baked potato is brought to raw by CARBOHYDRATE (P3's
+/// uncoated convention) on two cached pairs: 11674 is not cached, so the
+/// flesh-and-skin half reads the russet pair, a stand-in by cultivar — SR
+/// 170030 "Potatoes, Russet, flesh and skin, baked" (NDB 11356, live step
+/// L52's raw_170030.json; its hit 21.4 g) over SR 170027 "…, russet, flesh
+/// and skin, raw" (18.1): 50 × 21.4 / 18.1 = 59.12 g; the flesh half is
+/// 11363 itself, SR 170033 (L52's raw_170033.json; its hit 21.6, the raw
+/// 21.55) over the raw flesh the fries lines land on, Foundation 2346401
+/// "Potatoes, russet, without skin, raw" (17.77125): 50 × 21.6 / 17.77125 =
+/// 60.77 g. r = 119.89 g raw: 15 / 119.89 = 12.51 % (was 6.0 %, derived
+/// from analytical SR 170698 "Fast foods, potato, french fried in vegetable
+/// oil").
+const _Fndds _friesFried = (
+  id: 2709458,
+  description: 'Potato, french fries, from fresh, fried',
+  food: 'potatoes',
+  b: '0',
+  o: '15',
+  r: '119.89',
 );
 
 /// R-e: FNDDS 2707408 "Falafel" lists one cup of oil, the frying medium
@@ -21569,7 +21591,7 @@ _FriedClass? _friedClassOf(
   final potato = RegExp(r'\bpotato(?:es)?\b|\bfries\b');
   return switch (words) {
     _ when words.contains('sweet potato') => (
-      figure: _derivedFig('6.0', _friesSr, standIn: true),
+      figure: _readFig('12.51', _friesFried, standIn: true),
       name: 'sweet potatoes',
       word: potato,
       meat: false,
@@ -21577,7 +21599,7 @@ _FriedClass? _friedClassOf(
     _ when words.contains('potato') => (
       figure: chips
           ? _derivedFig('10.9', _chipsSr)
-          : _derivedFig('6.0', _friesSr),
+          : _readFig('12.51', _friesFried),
       name: 'potatoes',
       word: potato,
       meat: false,
@@ -21589,7 +21611,7 @@ _FriedClass? _friedClassOf(
       meat: false,
     ),
     _ when words.contains('eggplant') => (
-      figure: _derivedFig('6.0', _friesSr, standIn: true),
+      figure: _readFig('12.51', _friesFried, standIn: true),
       name: 'eggplant',
       word: RegExp(r'\beggplants?\b'),
       meat: false,
@@ -21615,6 +21637,36 @@ _FriedClass? _friedClassOf(
     ),
     _ => null,
   };
+}
+
+/// v97 (M95): the uptake figure [_friedClassOf] gives a fried
+/// [description] read by [item] (uncoated, not chips) — its printed value,
+/// its record, a read record's oil per raw gram and whether it stands in —
+/// for the pins (the v95 D1 lesson: a pin reads the engine's own figure).
+@visibleForTesting
+({String value, int id, double? oilPerRaw, bool standIn})? uptakeFigureForTest(
+  String description,
+  String item,
+) {
+  final f = _friedClassOf(
+    description,
+    item.toLowerCase(),
+    coatHeld: false,
+    shape: null,
+    chips: false,
+  )?.figure;
+  if (f == null) {
+    return null;
+  }
+  final read = f.read;
+  return (
+    value: f.value,
+    id: read?.id ?? f.derived!.id,
+    oilPerRaw: read == null
+        ? null
+        : double.parse(read.o) / double.parse(read.r),
+    standIn: f.standIn,
+  );
 }
 
 /// v59 (M61, Q12): the fried PRODUCT the [frying] sentences name when no
@@ -21868,7 +21920,14 @@ String _uptakeClause(
       ? ' (no record for $name; read as a cake doughnut; by its protein '
             "30.62 %; FNDDS 2708024's fritter batter reads 23.32 %)"
       : _standIn(name, read?.description ?? figure.derived!.description);
-  final tracer = cake ? ' by its carbohydrate' : '';
+  // v97 (M95): the fries' raw potato is derived from two cached pairs.
+  final tracer = cake
+      ? ' by its carbohydrate'
+      : read?.id == _friesFried.id
+      ? ' (its baked potato brought to raw by carbohydrate on SR 170030 / '
+            '170027 (russet, a stand-in for the generic baked potato) and SR '
+            '170033 / Foundation 2346401)'
+      : '';
   if (batter != null) {
     final u = double.parse(figure.value) * batter.c / batter.k;
     return '${u.toStringAsFixed(2)} % of the raw $whose weight — $source, '
