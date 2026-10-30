@@ -8465,11 +8465,13 @@ void main() {
         // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
         // RE-PIN (M83 batch, v85): was 579.95 — B5: the porcini |11 strained
         // out by its own word (the replay 579.95 → 575.75).
+        // RE-PIN (M92 batch, v94): was 575.75 — Q8 (b″): |2 and |3 on the roasted
+        // turkey pairs, deducted (the replay 575.75 → 536.07).
         (
           '0172-braised-turkey.yaml',
           null,
           'complete',
-          '575.75',
+          '536.07',
         ), // 601.81 → 578.50
         (
           '0235-maple-glazed-pork-tenderloin.yaml',

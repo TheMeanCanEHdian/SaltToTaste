@@ -7496,7 +7496,17 @@ void main() {
     // (its shares pinned in nutrition_v74_test; was `design.keys.toSet()`).
     // RE-PIN (M84 batch, v86, D3b): 167853 and 172513 joined (their shares
     // pinned in nutrition_v86_test; was `{...design.keys, 168743}`).
-    expect(braisedKept.keys.toSet(), {...design.keys, 168743, 167853, 172513});
+    // RE-PIN (M92 batch, v94), Q8 (b″): 171093 and 171533 joined (their shares
+    // pinned in nutrition_v94_test; was `{...design.keys, 168743, 167853,
+    // 172513}`).
+    expect(braisedKept.keys.toSet(), {
+      ...design.keys,
+      168743,
+      167853,
+      172513,
+      171093,
+      171533,
+    });
     for (final MapEntry(:key, value: shares) in design.entries) {
       expect(braisedKept[key]!.keys.toList(), columns, reason: '$key');
       expect(

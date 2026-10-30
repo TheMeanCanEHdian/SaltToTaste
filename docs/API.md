@@ -5158,6 +5158,107 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v94 (batch M92; matcherVersion 89 — the braised turkey: the
+roasted same-cut SR pairs behind a line-order gate; 0 rows, 3 recipes'
+totals; prep51 design_v2 §1 Q8 option (b″) / §2 M92, ruled by the owner
+2026-10-29; zero requests; replayed on snapshot 30 against the v93 rows,
+both orders byte-identical, the rule reverted alone reproducing v93 byte
+for byte, calls 0).** The doctrine (§0.3): a raw → cooked pair deducts the
+fat that leaves the meat only where the recipe's own steps print that it
+is not served — and a served breast is never deducted.
+- **The rule (`braisedKept` + `_lineOrderGated` + `braisedKeptOf`,
+  engine.dart).** No braised turkey record is cached; the ROASTED same-cut
+  SR pairs stand in by cooking method, shares by the protein tracer
+  (cooked × P raw ÷ (P cooked × raw)), the raw side from the cached DETAIL,
+  the cooked side from the cached HIT (neither cooked twin has a cached
+  detail): 171093 "Turkey, all classes, breast, meat and skin, raw" (E 157,
+  P 21.89, F 7.02, sat 1.91, mono 2.66, poly 1.66) → SR 171492 "…, cooked,
+  roasted" (a hit in 'bone-in turkey breast': E 189, P 28.7, F 7.41, sat
+  2.1, mono 2.45, poly 1.8) — energy 0.918176, fat 0.805091, saturated
+  0.838590, mono 0.702503, poly 0.827043; 171533 "Turkey, retail parts,
+  thigh, meat and skin, raw" (E 161, P 19.54, F 9.16, sat 2.386, mono
+  2.994, poly 2.454) → SR 171137 "…, cooked, roasted" (a hit in 'bone-in
+  turkey thigh': E 183, P 24.0, F 9.5, sat 2.96, mono 3.59, poly 2.95) —
+  0.925419, 0.844387, 1.010031 (above 1: the tracer's figure, kept — the
+  saturated column gains 1.0 % of the row's), 0.976239, 0.978725. Trans
+  stays gross (171093 prints no 605; 171533 → 171137 0.106 → 0.138). For
+  these two keys only (`_lineOrderGated`), behind M72's recipe-wide gate, a
+  NEW line-order gate: the row's line is named (`_lineMentionsOf`)
+  strictly BEFORE the recipe's first defatting sentence (`_firstDefatOf`).
+  A line first named in that sentence, after it, or never is counted gross.
+  M72's keys (173128, 168664, 168743, 170827) and M84's D3b pairs (167853,
+  172513) carry NO such gate — unchanged. The rows stay GROSS (record,
+  grams, kcal column, basis — no flag); the totals deduct through the one
+  `recomputeTotals` arm, which passes the row's position. Not the
+  mixed-part FNDDS 2706118 (option (s)).
+- **Reach (fix94 gate1, the v93 rows; 0 rows move, 0 person rows).**
+  braised-turkey (S5 "Transfer the liquid to a fat separator", both meat
+  lines named in S4): |2 breast 1,817.11 g −233.43 kcal, |3 drumsticks
+  and thighs 1,360.78 g −163.40; batch 5,757.53 → 5,360.70, 575.75 →
+  536.07 a serving (10). turkey-and-gravy-for-a-crowd (S4's fat separator):
+  |12 leg quarters 2,254.35 g −270.69 (named in S2); |16's two breasts,
+  first named in S6, roasted on a rack, "Pour any juices from sheet into
+  bowl" for the gravy — SERVED, gross (the recipe-wide gate alone would take
+  427.96 more); 10,228.93 → 9,958.24, 568.27 → 553.24 (18).
+  turkey-thigh-confit-with-citrus-mustard-sauce (S5's fat separator, the
+  thighs named in S1): |5 1,487.78 g −178.65; 3,065.16 → 2,886.52, 510.86 →
+  481.09 (6). The seven other rows on the two records (roast-whole-turkey-
+  breast-with-gravy|0 and -2|0, slow-roasted-turkey-with-gravy|6 |7,
+  turkey-breast-en-cocotte-with-pan-gravy|0, grillroasted-boneless-turkey-
+  breast|1, porchetta-style-turkey-breast|8) print no defatting sentence:
+  gross. ROW column unchanged (3,527,858.70); recipe energy 3,379,613.77 →
+  3,378,767.81 = −845.96 (the three stored batch deductions sum to
+  −846.16; the 20 cents are per-serving rounding). Rows, sections, statuses, holds, notes, buckets
+  and calls identical; staleAfter 0, sectionsStale 0; a recompute writes
+  nothing.
+Attribution: the rule reverted alone (matcherVersion 89 kept) gives v93's
+rows, recipes, sections, calls, notes and buckets byte for byte; 171093
+dropped leaves braised-turkey only the thighs' deduction (559.41); 171533
+dropped leaves only its breast's (552.41) and puts the crowd and the confit
+back; the line-order gate dropped moves the crowd alone, to 529.46; 0
+unattributed.
+Calibration (reported, never fitted): audit 6 R12 braised-turkey +10.99 →
++3.34 % (hand 518.73); audit 4 R20 the crowd −4.28 → −6.81 % (hand 593.70) —
+AWAY, disclosed: its hand counts the legs' rendered fat the steps reserve
+for the gravy, which no ingredient line restores. audit 6 median |err| 3.23
+% unchanged; audits 2–5 6.77 → 6.87 %.
+Person path: no hunk touches nutrition_handlers.dart, `derivedFor`,
+`applyDecisionToOthers` or `decisionRecordOf`, so GATE-P was not run.
+Pins: nutrition_v94_test (17 tests — matcherVersion 89; the ten shares from
+the recorded pairs; the 12 real rows' gate (deducts exactly braised-
+turkey|2 |3, crowd|12, confit|5; none with no position, no flag); their
+census (5 rows in the 3 recipes that defat, each line's first naming step:
+braised-turkey S4 ×2, the crowd S2 / S6, confit S1); M72's and
+M84's real rows deduct with no position; STATED on braised-turkey's real
+steps (no corpus line sits at the boundary): a breast never named, named
+before, IN, after the first defatting sentence and between it and a second
+— only "before" deducts; `memo:defatsLiquid` read once for two rows,
+nothing read with no position; the three whole recipes on the fixtures equal
+the replay (gross rows, per serving, batch energy, fat, saturated); a second
+compute writes nothing; two cap shapes). Each mutant killed by a value pin
+(snapshot copy, anchor count 1, cmp restore): either key dropped, the gate
+dropped, the boundary read at-or-before, the last defatting sentence read,
+no position keeping, an unnamed line read as before, the gate on every key,
+a share on the hit's rounded protein, the scan under its own memo key, the
+totals passing no position, matcherVersion 88. The existing suite re-pinned
+as equalities (RE-PIN M92): ten version literals (v84–v93), seasoning_ci's
+version and three hashes (seasoning_ci, v47_resolver, v83 F5c — the version
+alone: with 88 put back they read their old literals), braised-turkey's per
+serving in v59 / v71 / v73 (and the crowd's in v59), and the map's key set
+in v69 / v72 / v74 (the M74 / M84 precedent); no numeric bound widened,
+nothing deleted.
+Cost: no new sentence scan or regex — `memo:defatsLiquid`'s one scan keeps
+where it stopped; the gate reads the per-head naming memo. M72's cap shape
+(400 short-rib lines) counts equal on base and tip; the new TRUE / QUIET
+shapes (400 thigh rows under 120 × 10,000-character steps) count exactly:
+the compute + 1 `memo:defatsLiquid`, the GET unchanged, the recompute + 1
+`memo:defatsLiquid`, + 1 `memo:naming` and the index's word list (built
+once, as the compute and the GET already do) — recompute +2–9 %, far
+under the backstop.
+Deploy note: matcherVersion 89 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 3 recipes' stored totals move (no
+users).
+
 **Matcher v93 (batch M91; matcherVersion 88 — doubanjiang as miso: the
 Asian broad-bean chili paste on SR 172442 "Miso", flagged; 2 rows; prep51
 design_v2 §1 Q7 (i) option (a) / §2 M91, ruled by the owner 2026-10-29;

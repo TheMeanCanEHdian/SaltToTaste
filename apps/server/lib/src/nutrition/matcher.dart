@@ -140,7 +140,8 @@ const Map<String, String> _synonyms = {
 /// v86: matcher v91 (batch M87) — the own-section rice route (two-word tail).
 /// v87: matcher v92 (batch M89) — the grilled pizza's repeat multiplier.
 /// v88: matcher v93 (batch M91) — doubanjiang on the miso record.
-const int matcherVersion = 88;
+/// v89: matcher v94 (batch M92) — the braised turkey (roasted pairs, gated).
+const int matcherVersion = 89;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

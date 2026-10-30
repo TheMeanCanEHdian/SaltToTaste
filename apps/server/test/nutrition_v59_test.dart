@@ -683,10 +683,14 @@ void main() {
         // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
         // RE-PIN (M83 batch, v85): was 579.95 — B5: the porcini |11 strained
         // out by its own word, 14.17 g → 0 (the replay 579.95 → 575.75).
-        (_braised, '575.75'), // v58 576.52
+        // RE-PIN (M92 batch, v94): was 575.75 — Q8 (b″): |2 and |3 on the roasted turkey
+        // pairs, deducted (the replay 575.75 → 536.07).
+        (_braised, '536.07'), // v58 576.52
         (_grillroasted, '482.28'), // v58 440.12
         // RE-PIN (M82 batch, v84): was 566.13 (the replay 566.13 → 568.27).
-        (_crowd, '568.27'), // v58 540.37
+        // RE-PIN (M92 batch, v94): was 568.27 — Q8 (b″): |12's legs deducted, |16's served
+        // breast gross (the replay 568.27 → 553.24).
+        (_crowd, '553.24'), // v58 540.37
         // RE-PIN (M82 batch, v84): was 618.09 (the replay 618.09 → 621.31).
         // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
         // 621.31.

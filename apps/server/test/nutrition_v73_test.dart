@@ -3740,13 +3740,15 @@ const List<(String, String?, String, String, String, String)> _totals = [
   // RE-PIN (M82 batch, v84): was 578.50, 5785.01 (the replay 578.50 → 579.95).
   // RE-PIN (M83 batch, v85): was 579.95, 5799.48 — B5: the porcini |11
   // strained out, −41.96 kcal a batch (the replay 579.95 → 575.75).
+  // RE-PIN (M92 batch, v94): was 575.75, 5757.53 — Q8 (b″): |2 and |3 on the
+  // roasted turkey pairs, −396.83 kcal a batch (the replay 575.75 → 536.07).
   (
     '0172-braised-turkey.yaml',
     null,
     'complete',
     'complete',
-    '575.75',
-    '5757.53',
+    '536.07',
+    '5360.70',
   ),
   // RE-PIN (M82 batch, v84): was 480.50, 1922.00 (the replay 480.50 → 480.49).
   (

@@ -90,7 +90,8 @@ void main() {
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
-    expect(matcherVersion, 88); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
+    expect(matcherVersion, 89); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -206,7 +207,10 @@ void main() {
       // RE-PIN (M91 batch, v93): the hash at matcherVersion 88 (was
       // 03553dd7…; M91 adds no hash term — two table entries — the version
       // alone: the keys with 87 put back give 03553dd7).
-      'e221ccd2e54231d3be0359463eee9f764ac9f19c912572d137bb9cc33896de6a',
+      // RE-PIN (M92 batch, v94): the hash at matcherVersion 89 (was
+      // e221ccd2…; M92 adds no hash term — two map keys and a totals gate —
+      // the version alone: the rule with 88 put back gives e221ccd2).
+      '47f71249bc1d9d07651f8cd0c0917bbd109edf295d7c56331068c20840fcf94a',
     );
   });
 

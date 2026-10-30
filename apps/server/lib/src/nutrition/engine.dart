@@ -15970,6 +15970,20 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// gross, as M72's: 167854 prints no 605; 172513 → 172514 does (0.524 →
 /// 0.642) — the five columns, the stated gap. No basis flag (the brief's
 /// "nothing else"): the rows read as before, the totals deduct.
+/// v94 (batch M92; prep51 design_v2 §1 Q8 option (b″) / §2 M92, ruled by
+/// the owner 2026-10-29): no braised turkey record is cached, so the
+/// ROASTED same-cut SR pairs stand in by cooking method — 171093 "Turkey,
+/// all classes, breast, meat and skin, raw" (DETAIL: E 157, P 21.89, F
+/// 7.02, sat 1.91, mono 2.66, poly 1.66) → SR 171492 "…, cooked, roasted"
+/// (a HIT in the cached 'bone-in turkey breast' answer: E 189, P 28.7, F
+/// 7.41, sat 2.1, mono 2.45, poly 1.8) and 171533 "Turkey, retail parts,
+/// thigh, meat and skin, raw" (DETAIL: E 161, P 19.54, F 9.16, sat 2.386,
+/// mono 2.994, poly 2.454) → SR 171137 "…, cooked, roasted" (a HIT in
+/// 'bone-in turkey thigh': E 183, P 24.0, F 9.5, sat 2.96, mono 3.59, poly
+/// 2.95 — its saturated share 1.010 is above 1, the tracer's figure, kept).
+/// Behind M72's gate AND a line-order gate ([_lineOrderGated]). Trans
+/// gross, as M72's: 171093 prints no 605; 171533 → 171137 does (0.106 →
+/// 0.138). No basis flag: the rows read as before, the totals deduct.
 /// ponytail: one pair per record; a braised cut with no same-cut USDA pair
 /// stays gross (§2's gaps: the meatloaf's loaf pair, Boston butt).
 const Map<int, Map<String, double>> braisedKept = {
@@ -16015,7 +16029,31 @@ const Map<int, Map<String, double>> braisedKept = {
     'monounsaturated': 4.12 * 20.09 / (30.4 * 3.283),
     'polyunsaturated': 0.697 * 20.09 / (30.4 * 0.518),
   },
+  171093: {
+    'energy': 189 * 21.89 / (28.7 * 157),
+    'fat': 7.41 * 21.89 / (28.7 * 7.02),
+    'saturated': 2.1 * 21.89 / (28.7 * 1.91),
+    'monounsaturated': 2.45 * 21.89 / (28.7 * 2.66),
+    'polyunsaturated': 1.8 * 21.89 / (28.7 * 1.66),
+  },
+  171533: {
+    'energy': 183 * 19.54 / (24.0 * 161),
+    'fat': 9.5 * 19.54 / (24.0 * 9.16),
+    'saturated': 2.96 * 19.54 / (24.0 * 2.386),
+    'monounsaturated': 3.59 * 19.54 / (24.0 * 2.994),
+    'polyunsaturated': 2.95 * 19.54 / (24.0 * 2.454),
+  },
 };
+
+/// v94 (batch M92, Q8 (b″)): the [braisedKept] keys that deduct only for a
+/// row whose own line is named ([_lineMentionsOf]) strictly BEFORE the
+/// recipe's first defatting sentence ([_firstDefatOf]) — the roasted turkey
+/// pairs standing in for a braise. A line first named in or after that
+/// sentence is served with its fat (turkey-and-gravy-for-a-crowd|16: the
+/// breasts first named in S6, after S4's fat separator, roasted on a rack,
+/// their juices poured into the gravy): a served breast is never deducted.
+/// M72's and M84's keys carry no such gate.
+const Set<int> _lineOrderGated = {171093, 171533};
 
 /// v76 (batch M79, prep50 design_v2 §2 M79, the orchestrator's Q10 (b′);
 /// §0.3's dry-heat clause — a record moved by an owner ruling keeps its
@@ -16077,13 +16115,25 @@ const Map<String, int> _dryHeatPairOf = {'roasted': 172552, 'broiled': 174378};
 /// v76 (batch M79, Q10 (b′)): a [dryHeatKept] record keeps the pair of the
 /// cooking its recipe's steps print ([_dryHeatOf]) — none printed, none
 /// kept (gross); no skim gate.
-Map<String, double>? braisedKeptOf(String raw, int? fdcId, Recipe? recipe) {
+/// v94 (batch M92, Q8 (b″)): a [_lineOrderGated] key also needs its row's
+/// line [position] named before the first defatting sentence; with no
+/// [position] (the flag, which names no such key) it keeps none.
+Map<String, double>? braisedKeptOf(
+  String raw,
+  int? fdcId,
+  Recipe? recipe, {
+  int? position,
+}) {
   if (dryHeatKept[fdcId] case final pairs?) {
     final cooking = recipe == null ? null : _dryHeatOf(recipe);
     return cooking == null ? null : pairs[cooking];
   }
   final kept = braisedKept[fdcId];
   if (kept == null || recipe == null) {
+    return null;
+  }
+  final ordered = _lineOrderGated.contains(fdcId);
+  if (ordered && position == null) {
     return null;
   }
   final (depth, moves) = trimDepthRecords.first;
@@ -16094,7 +16144,14 @@ Map<String, double>? braisedKeptOf(String raw, int? fdcId, Recipe? recipe) {
   if (moves.containsKey(fdcId) && printed) {
     return null;
   }
-  return _defatsLiquid(recipe) ? kept : null;
+  if (!ordered) {
+    return _defatsLiquid(recipe) ? kept : null;
+  }
+  final defat = _firstDefatOf(recipe);
+  return defat != null &&
+          _lineMentionsOf(recipe, position!).any((p) => _before(p, defat))
+      ? kept
+      : null;
 }
 
 /// v70 (M72 R-E3, §0.3 the braised-pair doctrine): whether [recipe]'s own
@@ -16109,10 +16166,21 @@ Map<String, double>? braisedKeptOf(String raw, int? fdcId, Recipe? recipe) {
 /// (`memo:defatsLiquid`, the [_thinPiece] shape), each sentence LINEAR
 /// ([defatsSentence]); by step, so no flat sentence list is built for it
 /// (a recompute builds none otherwise).
-bool _defatsLiquid(Recipe recipe) => _stepIndexOf(recipe).memo(
-  #defatsLiquid,
-  () => _stepIndexOf(recipe).sentences.any((s) => s.any(defatsSentence)),
-);
+bool _defatsLiquid(Recipe recipe) => _firstDefatOf(recipe) != null;
+
+/// v94 (batch M92): the (step, sentence) of [recipe]'s FIRST defatting
+/// sentence, or null — `memo:defatsLiquid`'s one scan (it always stopped at
+/// the first), keeping where it stopped for [_lineOrderGated]'s gate.
+(int, int)? _firstDefatOf(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#defatsLiquid, () {
+      for (final (i, step) in _stepIndexOf(recipe).sentences.indexed) {
+        final j = step.indexWhere(defatsSentence);
+        if (j >= 0) {
+          return (i, j);
+        }
+      }
+      return null;
+    });
 
 final RegExp _defatPhrase = RegExp(
   r'\bfat separator\b|\bdefatted\b|\bstrain off the fat\b',
@@ -17329,7 +17397,13 @@ bool recomputeTotals(
     // ([braisedKeptOf], the gate its flag reads with the same recipe); its
     // grams, its record and every other nutrient count as they are (Q25's
     // shape; a person's typed grams too). Energy and fat never part.
-    if (braisedKeptOf(lines[row.position].raw, row.fdcId, planned)
+    // v94 (M92): the row's own line, for [_lineOrderGated]'s gate.
+    if (braisedKeptOf(
+          lines[row.position].raw,
+          row.fdcId,
+          planned,
+          position: row.position,
+        )
         case final kept?) {
       for (final MapEntry(:key, value: share) in kept.entries) {
         final per100 = key == 'energy'

@@ -171,6 +171,9 @@ void main() {
       "(cooked × P raw ÷ (P cooked × raw)), the design's five", () {
     // RE-PIN (M84 batch, v86, D3b): 167853 and 172513 joined (their shares
     // pinned in nutrition_v86_test; was {173128, 168664, 168743, 170827}).
+    // RE-PIN (M92 batch, v94), Q8 (b″): 171093 and 171533 joined (their shares
+    // pinned in nutrition_v94_test; was {173128, 168664, 168743, 170827,
+    // 167853, 172513}).
     expect(braisedKept.keys.toSet(), {
       173128,
       168664,
@@ -178,6 +181,8 @@ void main() {
       170827,
       167853,
       172513,
+      171093,
+      171533,
     });
     // Snapshot 27's hits in the cached 'beef brisket' answer: P 20.2 → 32.2,
     // E 169 → 221, F 9.86 → 9.24, sat 3.7 → 3.64, mono 4.77 → 3.98, poly
