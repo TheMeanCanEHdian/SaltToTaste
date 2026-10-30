@@ -5158,6 +5158,206 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v96 (batch M94; matcherVersion 91 — the browning fat at 2705972's
+share 1.52 %: a fat line a browning heats before the recipe's first skim or
+plain pour-off of fat keeps only the film the browned food holds; 22 rows,
+21 recipes' totals — the 15 of prep51 design_v2 §1 Q3 Part B and 7 beyond
+them, RULED ACCEPT by the orchestrator 2026-10-30 (fix96/ruling4.md; v96
+closer 1, verify1 D1);
+option (d), ruled by the owner 2026-10-29; zero requests; replayed on
+snapshot 30 against the v95 rows, both orders byte-identical, calls 0).**
+A browning fat the steps then skim off a braise or pour off a skillet (no
+kept part printed) counted whole; it now keeps the fat USDA's sautéed-breast
+recipe holds per gram of the raw browned food, capped at the line.
+- **The record and the share (`_breastSauteed`, `_browningFatShare`,
+  engine.dart — its OWN constant, never the C4 `_panFatShare`).** FNDDS
+  2705972 "Chicken breast, sauteed, skin not eaten" (a cached detail on
+  snapshot 30: E 176, P 29.6, F 5.45; its `inputFoods` only in the raw JSON
+  read by L51 #1, `.claude/diag/2026-10-29/live51_raw/2705972.json`): 98 g
+  24122131 "Chicken breast, baked, broiled, or roasted, skin not eaten, from
+  raw" and 2 g 82101000 "Vegetable oil, NFS". The 98 g brought to raw by
+  protein on prep47's pair (p3_read_figures.md row 27, `_breastFried`'s
+  104.76): FNDDS 2705956 (= 24122131; a cached search hit only, P 30.22) ÷
+  SR 171077 "Chicken, broiler or fryers, breast, skinless, boneless, meat
+  only, raw" (a cached detail, P 22.5) → 98 × 30.22 / 22.5 = 131.62 g; share
+  = 2 / 131.62 = 0.015195 (1.52 g fat per 100 g raw; the design's ≈ 1.43 %
+  was the protein-BALANCE estimate before L51 #1 read the inputFoods). The
+  record lists an oil input, so design (c)'s fallback is not built.
+- **The trigger (`_browningFatLines`, memo:browningFat, once per index).**
+  The first sentence outside a parenthesis that skims, separates or pours
+  off fat (`_skimsFat`: K1 a fat skim or fat separator, K2 a plain pour /
+  spoon / drain-off of fat or grease) and is no pour-off down to a printed
+  part (`_pourOffAllButFat` — that part is kept, `_partialUseOf`; bulalo's
+  "Pour off and reserve oil left in pot" names no fat and is no trigger). A
+  fat line (`_panFatHeads`) is admitted when every one of its own mentions
+  (`_lineMentionsOf`; none: not admitted) lies before it, each in a sentence
+  that heats it (`_panOil`, or a "repeat with the remaining …" of the step's
+  browning, `_repeatWith`). A recipe with no fat line is not scanned.
+- **The plan (`_browningFatPlan`, merged into `_m52Plan`'s returns first —
+  the C4 arm's own write wins on a row both name, the C4 exclusion).** The
+  browned food = the recipe's heaviest counted meat row (`_meatRecords` +
+  lamb, veal, duck, game — pD d2_optc's set); each admitted engine row
+  (unheld, not below the gate, no medium but a printed part used: bulalo's
+  ¼ cup, 2 × 1 tablespoon used) is weighed whole as the engine writes it and
+  keeps min(whole, share × the browned raw grams ÷ its OWN lipid, 204 of the
+  record the totals read) — per line (v96 closer 1, verify1 D3: no budget
+  shared between two lines); a line the rule leaves whole is not planned,
+  its row as it was (closer 1, verify1 D4). Basis "skimmed / poured off —
+  only the fat the browned food keeps counted" and the flag "approximation
+  (browning fat: 1.52 g fat per 100 g of the raw beef — USDA FNDDS 2705972
+  recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a
+  film; the steps skim / pour off the rest))" (a butter line adds "; a
+  butter line weighed by its own fat"; the food's name the browned row's).
+- **Reach (fix96/c1 gate, the v95 rows; 0 person, section or status rows).**
+  The 15 (v95 → v96 g; 2710180 / 2710186 at 900 kcal, 748608 at its sibling
+  171413's 884): hearty-chicken-noodle-soup|0 14.00 → 6.89 (ground chicken
+  453.59 g), old-fashioned-slow-cooker-chicken-noodle-soup|2 14.00 → 6.10
+  (S2's "Pour off all but 1 tablespoon fat" no trigger; S4's skim),
+  pressure-cooker-chicken-noodle-soup|0 14.00 → 11.97, simple-pot-roast|2
+  28.00 → 24.12, braised-beef-short-ribs|2 28.00 → 24.12 (beside |0's M72
+  deduction), braised-oxtails…|3 26.82 → 15.56, maple-glazed-pork-tenderloin
+  |11 28.00 → 18.95 (S3's "Pour off the fat"), pasta-with-hearty-italian-meat
+  -sauce-sunday-gravy|0 28.00 → 10.13, chicken-bouillabaisse|2 26.82 → 15.30
+  (the brief's 26.83 is M82's rounding), french-style-chicken-and-stuffing-
+  in-a-pot|14 9.07 → 6.72, daube-provencal|4 56.00 → 24.12, irish-stew…|1
+  42.00 → 20.39, pot-roast-with-root-vegetables|3 42.00 → 25.85,
+  braised-lamb-shanks…|2 28.00 → 25.33 (beside M84's |0 pair),
+  bulalo…|0 28.00 → 16.82 — ROW −1,439.47. BEYOND them (D1, RULED ACCEPT
+  2026-10-30: the design's 15 were pD's hand-cleared rows; the trigger was
+  never run over the corpus; the trigger built is the design's, two of the
+  seven are true joins the hand pass missed, and no measured vessel or
+  browning-subject narrowing keeps the 15 — fix96/ruling4.md): sunday-gravy|20 112.00 → 10.13 (the meatballs'
+  skillet, another pan), albondigas-en-chipotle|2 26.82 → 5.17 (the sauce's
+  saucepan), broiled-chicken-with-gravy|12 butter 28.36 → 20.68 (the gravy's
+  roux), hungarian-beef-stew|6 28.00 → 24.12 (an onion sweat),
+  chicken-teriyaki(1178)|6 9.07 → 8.44, best-beef-stew|4 28.00 → 27.57,
+  slow-cooker-beer-braised-short-ribs|3 butter 28.36 → 27.93 — ROW
+  −1,210.86. ROW column 3,528,295.08 → 3,525,644.75 = −2,650.33; recipe energy
+  3,379,204.17 → 3,376,553.95 = −2,650.22 (the cents per-serving rounding).
+  Admitted but left whole (20 lines capped on their own fat, e.g.
+  steak-au-poivre|7, classic-chicken-noodle-soup|0; coq-au-vin|1's 0 g
+  "as needed") and the C4 row
+  saltimbocca|5 (23.14 g, the C4 arm's) do not move. Negatives (K-1):
+  skillet-roasted-chicken-breasts-with-potatoes|2 84.00 g (mentions at and
+  after the pour-off; its S2 bowl toss no heat sentence) and
+  chicken-under-a-brick…|2 32.53 g (S2's small-bowl mix no heat sentence);
+  steak-au-poivre|0 56.72 g (whisked in off the heat after the pour-off).
+- **Person path (v96 closer 1, verify1 D2).** `derivedFor`'s Confirm arm reads
+  `_m52OnConfirm` behind `_browningFatAt` too (M78 verify2 D2's `_panFatAt`
+  form): a Confirm of a planned browning line is the plan's grams on the
+  stored row, the derivation and the GET alike (short-ribs|2 24.12 g, bulalo|0
+  16.82 g, maple|11 18.95 g); a line the rule leaves whole confirms at its
+  engine weight; typed grams stand. GATE-P (person_sweeps run.sh, 12
+  shards, fresh snapshot-30 copies; a `derivedFor` hunk): base f912190 sw5
+  31,229, sw6 36,916, sw7 1,839, sw8 56,043 combos and the tip sw5 31,757,
+  sw6 37,444, sw7 1,875, sw8 56,943 — 0 divergent, 0 refused, calls 0 on
+  both. Those sweeps settle only the recipes holding an `auto` M52 row on
+  the snapshot, so they reach 13 of the 21 moved recipes (as `discarded`
+  plan rows): the 8 holding none on snapshot 30 —
+  pressure-cooker-chicken-noodle-soup, braised-oxtails…, sunday-gravy,
+  chicken-bouillabaisse, irish-stew…, chicken-teriyaki(1178),
+  pot-roast-with-root-vegetables, braised-lamb-shanks… — are never settled
+  or swept there (v96 closer 2, verify2 D4). sw8 with its `planned()` = the
+  21 (closer 2, fresh snapshot-30 copies, 12 shards): settled 21, a second
+  pass moves 0, calls 0; base 3,858 combos, the tip 5,433 — 0 divergent, 0
+  refused on both. Pinned (closer 2): a person's skip of the browned meat
+  through the PUT (`_unplannedOf` reads `_browningFatAt`) puts the browning
+  line back to its engine row — short-ribs|0 skipped, |2 24.12 → 28.00 g
+  `portion` (83.18 /serving); irish-stew|0 skipped, |1 20.39 → 42.00 g
+  (166.10) — and a full compute after it writes nothing (verify2 D2); a
+  browning line's engine and planned forms key alike in `_m52Key`
+  (short-ribs|2, irish-stew|1; the K-1 negative skillet-roasted|2 keys its
+  medium bit — verify2 D3, M78's `pans` twin).
+Disclosed: a per-raw-gram share overstates a film on a large single piece —
+the 1,247.38 g tenderloin keeps 18.95 g, 68 % of its 2 tablespoons.
+Calibration (reported, never fitted; rescore2's loaders over v95_recs):
+a6 R11 bulalo +8.47 → +3.81 % (hand 360.09; the design's +3.8 alone) and
+R19 maple +13.01 → +9.56 % (hand 393.13; the design's +9.1 at 1.43 %) —
+both toward; beyond rows move audit 3 R08 chicken-teriyaki-2 +11.95 →
++11.48 % and R12 slow-cooker-beer +4.60 → +4.52 % (toward); medians
+unchanged (audit 6 3.23 %, audits 2–5 6.87 %).
+Attribution: the bump alone (the base engine, matcherVersion 91) gives v95's
+rows, recipes, sections, calls, notes and buckets byte for byte; the arm
+alone (matcherVersion 90 kept) gives the tip's byte for byte; 0
+unattributed. A literal `_panFatAt` exclusion (measured for the ruling,
+not built) refuses maple-glazed-pork-tenderloin|11 — one of the 15, its C4
+coat held with no budget — and chicken-teriyaki(1178)|6: 20 rows.
+Sections, statuses, holds, notes, buckets and calls
+identical to v95; staleAfter 0, sectionsStale 0, kcalCheck 209; a recompute
+writes nothing.
+Pins: nutrition_v96_test (20 tests — matcherVersion 91; the engine's own
+share (`browningFatShareForTest`) equal to 2 / 131.62 and 0.015195 at six
+places, ≠ the C4 share; the tracer pair from the fixtures' search hits
+(2705956 30.22, 171077 22.5 → 131.62) and 2705972's 176 / 29.62 / 5.45; the
+text reader on the real steps (the 22 rows named; the negatives refused; a
+capped line and the C4 row named); the 15 rows and the 7 beyond on the
+fixtures equal the replay (record, grams, energy, basis, below the whole);
+the unmoved rows (the negatives, steak-au-poivre|0 / |7,
+classic-chicken-noodle-soup|0 at `portion`, saltimbocca|5 at the C4 arm's
+23.14 g); per line (sunday-gravy |0 and |20 10.13 g each; slow-cooker-beer
+|3 27.93 g, |2 unplanned); STATED synthesized (a real recipe less one real
+sentence, named): a K1 skim and a K2 plain pour-off each a recipe's only
+trigger, a "pour off all but N" and bulalo's "pour off and reserve oil" no
+trigger, a parenthetical skim no trigger (hungarian S4), a fat line no
+sentence names (short-ribs less S1's two oil sentences), a mention IN the
+first trigger sentence refused (skillet-roasted less its three real
+non-browning oil sentences — S3's toss, S6's whisk and drizzle: |2 named in
+S2's "Heat 1 tablespoon of the oil" and IN S5's "pour off any fat in the
+skillet, add 1 tablespoon more oil" — closer 3); the heat sentence;
+the 21 recipes' per serving (settled; every move the replay's to the cent;
+the fixtures' standing offsets stated per recipe); a third compute and a
+recompute write nothing; the Confirm, the typed-grams and the skip person
+paths; the M52 key; the two cap shapes). Each mutant killed by a value
+pin (snapshot copy, anchor count 1, cmp restore): the trigger dropped,
+"none at or after" dropped
+(steak-au-poivre|0 56.72 → 19.12 g; EQUIVALENT on skillet-roasted|2, which
+the heat test refuses too — verify1 D6), the heat test dropped (brick|2
+32.53 → 12.58 g), the share = the C4 share, the browning plan winning over
+the C4 arm (saltimbocca|5 23.14 → 9.48 g), the derivedFor gate dropped, a
+budget shared between lines, capped rows planned, the repeat arm dropped,
+the "all but N" exclusion dropped, the parenthetical exclusion dropped, the
+no-mention test dropped, `_unplannedOf`'s `_browningFatAt` gate dropped
+(short-ribs|2 stays 24.12 g `discarded` after the skip — closer 2),
+`_m52Key`'s `_browningFatAt` gate dropped (short-ribs|2's two forms key
+apart — closer 2), the boundary read at-or-before (the IN case above {} →
+{2}; equivalent on the corpus — its text census over the 1,198 files equals
+the tip's 44 lines (closer 3), its replay the tip's rows (verify3 D6)), matcherVersion 90. EQUIVALENT, named: the plan's
+guards copied from the C4 arm (an engine row, a held row, a row below the
+gate, a medium other than a printed part used) — their mutant replays move
+no row. The existing suite re-pinned as equalities (RE-PIN M94): 13 version
+literals (v84–v95, seasoning_ci), 3 hashes (the base engine with 91 gives
+them), cost maps (+ `memo:browningFat` 1 in v84 / v86 / v87 / v89 / v94;
+v82 DECIDED's knownFoodReads + 2 and STRAIN TRUE's recompute strain read —
+the plan weighing an admitted line), the 15's rows and totals in v56 / v68 /
+v71 / v72 / v86, v72 R-E3's balance (+ the browning rows' move, its 0.006
+bound kept), v71 pF R2's bulalo variant (the row the plan's 16.82 g on
+either text — R2's own outcome 28.00 / 56.00 g pinned beside it), v81 F1's
+sweep 17 → 18; tagged "D1 RULED" (kept by the ACCEPT of 2026-10-30):
+v69 sunday-gravy, v71 chicken-teriyaki|6, v72 slow-cooker-beer|3 and its
+totals, v54 best-beef-stew, the sweep audit's lazy-portions probe (its
+subject, the portion on the cached detail, pinned beside the plan's row).
+Cost (RULE C): the reader once per index under `memo:browningFat`, each fat
+line's mentions once (`browningFatLineReads`, bounded by lines in
+support/cost_bounds.dart); no fat line, no scan; the parenthetical index
+only once a sentence skims fat. Two NEW cap shapes in nutrition_v96_test
+(braised-beef-short-ribs' real meat line and 399 copies of its real "2
+tablespoons vegetable oil" under 120 × 10,000-character steps heating the
+oil; TRUE: the last step skims — every oil line named and planned, 24.12 g;
+QUIET: no skim — none) count-pinned EXACTLY on compute / GET / recompute.
+Base vs tip on the same shapes (closer 1's probe, twice each): QUIET adds
+only `memo:browningFat` 1 (compute 924 / 931 → 953 / 944 ms, GET 758 / 792
+→ 772 / 772, recompute 320 / 333 → 322 / 322); TRUE adds the reader (399
+line reads, one `memo:naming`, the parenthetical index) and, its 399 rows
+now plan rows, the plan's own readers once per index on the GET and the
+recompute (compute 1,070 / 1,058 → 1,166 / 1,171 ms, GET 791 / 796 → 1,018
+/ 1,009, recompute 327 / 331 → 443 / 427 — a NEW reader's TRUE shape,
+count-pinned exactly; far under the 10,000 ms backstop). Every
+exact-pinned existing cap shape (v84, v86, v87, v89, v94) gains exactly
+`memo:browningFat` 1.
+Deploy note: matcherVersion 91 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 21 recipes' stored totals move (no
+users).
+
 **Matcher v95 (batch M93; matcherVersion 90 — the C4 pan-fat share 3.71 %:
 the fried coated breast's oil per gram of breading at the baked coated
 breast's breading per gram of raw; 6 rows, 4 recipes' totals; prep51

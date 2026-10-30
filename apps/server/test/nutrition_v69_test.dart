@@ -5852,7 +5852,11 @@ void main() {
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685581 tomatoes,
           // 2514744 beef): was 1033.36.
-          '1024.12',
+          // RE-PIN (M94 batch, v96): was 1024.12 — |0's browning oil keeps
+          // 10.13 of its 28.00 g and (D1 RULED, beyond the brief's 15,
+          // ACCEPT 2026-10-30) |20's meatball oil 10.13 of its 112.00 g
+          // (the replay 1024.04 → 889.33).
+          '889.41',
         ), // replay complete 1039.31 → complete 1039.44
         (
           // RE-PIN (M82 batch, v84): was 886.16 (the replay 886.19 → 872.92).

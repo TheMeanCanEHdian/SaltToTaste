@@ -1400,8 +1400,23 @@ void main() {
         raw: line.raw,
       )!;
       expect(expected.source, GramSource.portion);
-      expect(row.gramSource, 'portion');
-      expect(row.grams, expected.grams);
+      // RE-PIN (M94 batch, v96) — D1 RULED (best-beef-stew|4 beyond the
+      // brief's 15, ACCEPT 2026-10-30): the stored row is the browning-fat
+      // plan's (was 'portion' at expected.grams); the line's whole — the
+      // engine's outcome on the cached detail, what this pins — keeps the
+      // portion.
+      final stew = recipes['best-beef-stew']!;
+      final whole = engineOutcome(
+        stew,
+        line,
+        detail,
+        lineGrams(db, line, detail, recipe: stew),
+      );
+      expect((whole.source, whole.grams), ('portion', expected.grams));
+      expect(
+        (row.gramSource, row.grams?.toStringAsFixed(2)),
+        ('discarded', '27.57'),
+      );
       expect(provider.fetched.where((id) => id == row.fdcId), hasLength(1));
     });
 

@@ -224,7 +224,9 @@ void writes() {
         swept++;
       }
     }
-    expect(swept, 17);
+    // RE-PIN (M94 batch, v96): was 17 — maple|11's browning oil is now a
+    // `discarded` plan row the sweep round-trips too.
+    expect(swept, 18);
     final barolo = loadCorpusRecipe('0426-beef-braised-in-barolo.yaml').id;
     expect(
       _sig(_row(db, barolo, 2)),

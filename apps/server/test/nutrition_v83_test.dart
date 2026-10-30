@@ -898,7 +898,9 @@ void main() {
         // 62e9afcd…; the version alone — the rule with 88 put back gives 62e9afcd).
         // RE-PIN (M93 batch, v95): the hash at matcherVersion 90 (was
         // aa243fa7…; the version alone — the base engine with 90 gives this literal).
-        'f656c45d79573048a096ab1c181e557770e2fd73440f9dc13f87a37dd36b2495',
+        // RE-PIN (M94 batch, v96): the hash at matcherVersion 91 (was
+        // f656c45d…; the version alone — the base engine with 91 gives this literal).
+        'b2e51a29cc88a42486e1262a9f19b46e3dfb10ff1abce7668d3314f106877abb',
       );
     });
   });

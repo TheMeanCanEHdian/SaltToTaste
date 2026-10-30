@@ -4172,11 +4172,14 @@ const List<_Row> _unmoved = [
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '28.00',
+    // RE-PIN (M94 batch, v96): was 28.00 g, 252.00 kcal, "2 tablespoon ·
+    // USDA portion" — S1's browning oil before S3's fat separator keeps
+    // 1.52 % of the 1,587.57 g ribs as fat (beside |0's M72 deduction).
+    '24.12',
     'auto',
     null,
-    '252.00',
-    '2 tablespoon · USDA portion',
+    '217.08',
+    'skimmed / poured off — only the fat the browned food keeps counted · approximation (browning fat: 1.52 g fat per 100 g of the raw beef — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a film; the steps skim / pour off the rest))',
   ),
   (
     '0087-braised-beef-short-ribs.yaml',
@@ -4357,11 +4360,15 @@ const List<_Row> _unmoved = [
     173430,
     'Butter, without salt',
     '1.000000',
-    '28.36',
+    // RE-PIN (M94 batch, v96) — D1 RULED (a row beyond the brief's 15,
+    // ACCEPT 2026-10-30): was 28.36 g, 203.35 kcal, "2 tablespoon ≈ 30 mL"
+    // — S2's onion butter in the ribs' skillet before S4's skim keeps
+    // 1.52 % of the 1,490.90 g ribs as fat, by its own fat (81.11 %).
+    '27.93',
     'auto',
     null,
-    '203.35',
-    '2 tablespoon ≈ 30 mL',
+    '200.26',
+    'skimmed / poured off — only the fat the browned food keeps counted · approximation (browning fat: 1.52 g fat per 100 g of the raw beef — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a film; the steps skim / pour off the rest); a butter line weighed by its own fat)',
   ),
   (
     '0088-slow-cooker-beer-braised-short-ribs.yaml',
@@ -6863,14 +6870,18 @@ const List<_Totals> _totals = [
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2258586 carrots): was
     // 655.94.
-    '654.07',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2258586 carrots): was
     // 3935.64.
-    '3924.41',
-    '288.2195',
-    '118.3767',
-    '144.8143',
-    '21.5695',
+    // RE-PIN (M94 batch, v96): was 654.07, 3924.41, 288.2195, 118.3767,
+    // 144.8143, 21.5695 — |2's browning oil 28.00 → 24.12 g (its 3.88 g of
+    // vegetable oil's fat and its three classes; the replay 654.07 →
+    // 648.25).
+    '648.25',
+    '3889.49',
+    '284.3395',
+    '117.8568',
+    '143.1692',
+    '20.0796',
     '280.4856',
     '2003.5248',
     '1158.9276',
@@ -6881,16 +6892,20 @@ const List<_Totals> _totals = [
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 990.32.
-    '989.04',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 3961.28.
-    '3956.16',
-    '273.5298',
-    '122.7347',
-    '134.6926',
-    '13.3252',
-    '268.5069',
-    '3444.0221',
-    '1149.3358',
+    // RE-PIN (M94 batch, v96) — D1 RULED (beyond the brief's 15, ACCEPT
+    // 2026-10-30): was 989.04, 3956.16, 273.5298, 122.7347, 134.6926,
+    // 13.3252, 268.5069, 3444.0221, 1149.3358 — |3's onion butter 28.36 →
+    // 27.93 g (the replay 989.04 → 988.27).
+    '988.27',
+    '3953.07',
+    '273.1801',
+    '122.5170',
+    '134.5916',
+    '13.3122',
+    '268.5032',
+    '3443.9746',
+    '1148.4089',
   ),
   // v71: 512.88 /serving, batch 2564.41, fat 188.0887
   // RE-PIN (M82 batch, v84): was 470.01, 2350.05, 164.4988, 67.8284, 86.4772, 7.9560, 2397.9560 (the replay 469.99 → 469.65).
@@ -8040,10 +8055,36 @@ void main() {
                   case final n? when n['958'] != null && n['208'] == null)
                 r.grams! * (n['958']! - n['957']!) / 100,
         ].fold<double>(0, (a, b) => a + b);
+        // RE-PIN (M94 batch, v96): a browning fat the steps skim keeps
+        // 1.52 % of the browned food's raw grams as fat since v96 — its v71
+        // energy is its whole (the engine's outcome) at its record (was
+        // `v71 + evoo - m90 + m86 - now - by`).
+        final m94 = [
+          for (final r in db.ingredientMatchesFor(recipes[file]!.id))
+            if (basisIn(file, r.position)?.startsWith(
+                  'skimmed / poured off — only the fat the browned food',
+                ) ??
+                false)
+              () {
+                final line = nutritionLines(recipes[file]!)[r.position];
+                final record = knownFood(db, r.fdcId!)!;
+                final whole = engineOutcome(
+                  recipes[file]!,
+                  line,
+                  record,
+                  lineGrams(db, line, record, recipe: recipes[file]),
+                ).grams!;
+                return (whole - r.grams!) *
+                    kcalPer100g(
+                      knownFood(db, nutrientSiblings[r.fdcId] ?? r.fdcId!)!,
+                    ) /
+                    100;
+              }(),
+        ].fold<double>(0, (a, b) => a + b);
         // The v71 batch is printed to 2 dp: the move equals the deduction
         // within its rounding.
         expect(
-          (v71 + evoo - m90 + m86 - now - by).abs(),
+          (v71 + evoo - m90 + m86 - m94 - now - by).abs(),
           lessThan(0.006),
           reason: file,
         );

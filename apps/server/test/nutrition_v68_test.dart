@@ -1266,7 +1266,10 @@ void main() {
         // RE-PIN (M71 batch, v71, D-E1): 444.28 (was 462.34) — the sugar,
         // salt and pepper whisked into the held cornstarch are held with it
         // (−108.41 / 6); still partial.
-        expect(of(_maple), ('partial', '444.28')); // = replay
+        // RE-PIN (M94 batch, v96): was 444.28 — the browning oil |11 the
+        // steps pour off keeps 18.95 of its 28.00 g (the replay 444.28 →
+        // 430.70).
+        expect(of(_maple), ('partial', '430.70')); // = replay
         // RE-PIN (M82 batch, v84): was 695.99 (the replay 696.06 → 695.86).
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2512381 rice): was
         // 695.79.

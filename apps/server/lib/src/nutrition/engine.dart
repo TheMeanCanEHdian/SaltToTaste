@@ -17652,6 +17652,8 @@ IngredientMatchRow? _unplannedOf(
       !_keptSolidsAt(recipe, row.position) &&
       // v75 (M78): a sauté's fat the steps pour off or wipe out.
       !_panFatAt(recipe, row.position) &&
+      // v96 (M94): a browning fat the steps skim or pour off.
+      !_browningFatAt(recipe, row.position) &&
       // v71 (M71 D-E1): a coat's mixture part the plan held — v82 closer 5
       // (verify5 D1): in either plan form, so a Confirm H resolved (0 g
       // `discarded`, no hold) once its coat has a budget again.
@@ -18323,6 +18325,12 @@ String? _gramBasis(
     }
   }
   String discardedBasis() {
+    // v96 (M94): a browning fat the plan sized says so — before a pour-off
+    // down to a printed part that names the line but kept it all
+    // ([_keptInPanBasis]: 0003's "Pour off all but 1 tablespoon fat").
+    if (m52?.basis == _browningFatBasis) {
+      return _browningFatBasis;
+    }
     // v51 (M49 Q19): an oil the steps pour down to a printed part
     // ([_keptInPan]) — never a medium's row (a frying oil keeps its own).
     final pan = recipe == null || row.grams! <= 0
@@ -20061,7 +20069,10 @@ derivedFor(
                     _keptSolidsAt(recipe, position) ||
                     // v75 (M78): a sauté's fat the steps pour off or wipe
                     // out.
-                    _panFatAt(recipe, position)
+                    _panFatAt(recipe, position) ||
+                    // v96 closer 1 (verify1 D2, M78 verify2 D2's form): a
+                    // browning fat the steps skim or pour off.
+                    _browningFatAt(recipe, position)
                 ? _m52OnConfirm(
                     db,
                     recipe,
@@ -20908,6 +20919,23 @@ const _Fndds _breastBaked = (
   b: '10',
   o: '2',
   r: '125.77',
+);
+
+/// v96 (M94; L51 #1, live51_raw/2705972.json): FNDDS 2705972 "Chicken
+/// breast, sauteed, skin not eaten" lists 98 g "Chicken breast, baked,
+/// broiled, or roasted, skin not eaten, from raw" (24122131) and 2 g
+/// "Vegetable oil, NFS" (82101000) — no breading (`b` 0). `r`: the 98 g
+/// brought to raw by protein on prep47's pair (p3_read_figures.md row 27,
+/// [_breastFried]'s 104.76): FNDDS 2705956 (= 24122131) 30.22 g ÷ SR
+/// 171077 "Chicken, broiler or fryers, breast, skinless, boneless, meat
+/// only, raw" 22.5 g → 98 × 30.22 / 22.5 = 131.62.
+const _Fndds _breastSauteed = (
+  id: 2705972,
+  description: 'Chicken breast, sauteed, skin not eaten',
+  food: 'chicken breast',
+  b: '0',
+  o: '2',
+  r: '131.62',
 );
 
 /// v67 (M69 R2, Q6 a; L49 #3, live61_raw/2710050.json): FNDDS 2710050
@@ -21980,6 +22008,225 @@ String _panFatFlag(String food, {required bool butter}) =>
     'wipe out the rest)'
     '${butter ? '; a butter line weighed by its own fat' : ''})';
 
+/// The browning fat a piece keeps once the steps skim or pour off the rest,
+/// as FAT grams per gram of the raw browned food. v96 (batch M94, prep51
+/// design_v2 §1 Q3 Part B (d)): FNDDS 2705972's oil per raw breast
+/// ([_breastSauteed]: 2 g per 131.62 g) = 1.5195 % — its OWN constant,
+/// never [_panFatShare] (a coated piece's pan fat).
+final double _browningFatShare =
+    double.parse(_breastSauteed.o) / double.parse(_breastSauteed.r);
+
+/// [_browningFatShare], for the pins (the v95 D1 lesson: a pin reads the
+/// engine's own figure, not the arithmetic on literals).
+@visibleForTesting
+double get browningFatShareForTest => _browningFatShare;
+
+/// v96 (M94): the flag of a browning-fat row on the raw [food]
+/// ([_browningFatPlan]); a butter line says it is weighed by its own fat.
+String _browningFatFlag(String food, {required bool butter}) =>
+    'approximation (browning fat: '
+    '${(_browningFatShare * 100).toStringAsFixed(2)} g fat per 100 g of the '
+    'raw $food — USDA FNDDS ${_breastSauteed.id} recipe: '
+    '${_breastSauteed.o} g oil per ${_breastSauteed.r} g raw '
+    '${_breastSauteed.food} (the browned piece keeps a film; the steps '
+    'skim / pour off the rest)'
+    '${butter ? '; a butter line weighed by its own fat' : ''})';
+
+/// v96 (M94): the basis of a row [_browningFatPlan] sizes (pD D2's text).
+const String _browningFatBasis =
+    'skimmed / poured off — only the fat the browned food keeps counted';
+
+/// v96 (M94): a sentence that puts the fat in a pan over the heat — the
+/// shipped [_panOil] — or repeats the step's browning with the rest of it
+/// ([_repeatWith]: "Repeat with the remaining 1 tablespoon oil and the
+/// remaining meat", 0087 S1); a native find before the regex.
+bool _heatsFat(String s) =>
+    _panOil.hasMatch(s) ||
+    (s.contains('repeat with') && _repeatWith.hasMatch(s));
+
+/// v96 (batch M94, prep51 design_v2 §1 Q3 Part B (d)): the lines of
+/// [recipe] whose browning fat the steps then skim off a braise or pour off
+/// a skillet with no kept part printed — a fat line ([_panFatHeads]) whose
+/// every own mention ([_lineMentionsOf]; none: not one) stands before the
+/// FIRST sentence, outside a parenthesis ([_parenthetical]), that skims,
+/// separates or pours off the fat ([_skimsFat]: K1 skims and the fat
+/// separator, K2 plain pour-offs of fat or grease) — never a pour-off down
+/// to a printed part ([_pourOffAllButFat]: that part is kept, read by
+/// [_partialUseOf] / [_keptBrowningOil], and is no trigger) — each in a
+/// sentence that heats it ([_heatsFat]); none at or after it. Text only,
+/// once per step index (RULE C, `memo:browningFat`; its cap shapes in
+/// nutrition_v96_test). The plan ([_browningFatPlan]) weighs them; a row
+/// the C4 arm weighs ([_panFatLines]) keeps that arm's entry.
+/// ponytail: the whole recipe (or section) is the pot, as [_fatSkimmed];
+/// a fat heated in another pan or browning no meat before the skim joins
+/// (measured, v96 closer 1: 5 corpus rows — sunday-gravy|20's meatball
+/// skillet, albondigas|2, broiled-chicken-with-gravy|12, hungarian|6,
+/// slow-cooker-beer|3 — RULED ACCEPT by the orchestrator 2026-10-30,
+/// fix96/ruling4.md: the trigger is the design's, each row disclosed in
+/// API.md; a vessel or browning-subject narrowing would be new grammar and
+/// none measured keeps the 15 — verify1 D1).
+Set<int> _browningFatLines(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#browningFat, () {
+      // v96 closer 1: no fat line, no scan (the heads once per Recipe).
+      final heads = _headsOf(recipe);
+      if (!heads.any(_panFatHeads.contains)) {
+        return const <int>{};
+      }
+      final index = _stepIndexOf(recipe);
+      // Read only once a sentence skims fat (v96 closer 1: a recipe that
+      // skims nothing never builds it).
+      late final inside = _parenthetical(recipe);
+      (int, int)? first;
+      scan:
+      for (final (i, sentences) in index.sentences.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          // Every [_skimsFat] arm names fat or grease (a native find).
+          if ((s.contains('fat') || s.contains('grease')) &&
+              _skimsFat.hasMatch(s) &&
+              !inside[i][j] &&
+              !((s.contains(' but ') || s.contains(' except ')) &&
+                  _pourOffAllButFat.hasMatch(s))) {
+            first = (i, j);
+            break scan;
+          }
+        }
+      }
+      if (first == null) {
+        return const <int>{};
+      }
+      final heats = <(int, int), bool>{};
+      final lines = <int>{};
+      for (final (k, head) in heads.indexed) {
+        if (!_panFatHeads.contains(head)) {
+          continue;
+        }
+        // Each fat line's mentions once per index (RULE C).
+        _count('browningFatLineReads');
+        final mentions = _lineMentionsOf(recipe, k);
+        if (mentions.isNotEmpty &&
+            mentions.every(
+              (m) =>
+                  _before(m, first!) &&
+                  (heats[m] ??= _heatsFat(index.sentence(m))),
+            )) {
+          lines.add(k);
+        }
+      }
+      return lines;
+    });
+
+/// [_browningFatLines], for the v96 pins.
+@visibleForTesting
+Set<int> browningFatLinesOf(Recipe recipe) => _browningFatLines(recipe);
+
+/// Whether line [i] of [recipe] is one [_browningFatLines] names — text
+/// only, the gate of the readers beside [_m52Plan] ([_m52RowOf],
+/// [_unplannedOf], [_m52Key], [_gramBasis]); the plan decides.
+bool _browningFatAt(Recipe recipe, int i) =>
+    _browningFatLines(recipe).contains(i);
+
+/// The record families a browned food is counted on ([_browningFatPlan]):
+/// [_meatRecords] and the other meats a braise browns (pD d2_optc's set —
+/// the 15 rows' two lamb recipes).
+const List<String> _brownedRecords = [
+  ..._meatRecords,
+  'Lamb,',
+  'Veal,',
+  'Duck,',
+  'Game meat,',
+];
+
+/// v96 (M94): [_m52Plan]'s browning-fat entries ([_browningFatLines]) —
+/// the browned food is the largest counted meat row ([_brownedRecords];
+/// [_m52Plan]'s coated-food rule; pD d2_optc's "heaviest meat/poultry/fish
+/// row" — its prose's "the row a sentence of that step names", read by
+/// [_lineMentionsOf], keeps 9 of the 15: v96 closer 1, measured); each
+/// admitted engine row (unheld, not auto below the gate, no medium but a
+/// printed part used, [_partialUseOf]: bulalo's ¼ cup, 2 × 1 tablespoon
+/// used) weighed WHOLE as the engine
+/// writes it ([engineOutcome] on [lineGrams], never its stored grams: the
+/// plan writes those), each keeping [_browningFatShare] × the browned raw
+/// grams of FAT on its own fat (whole × the totals' record's 204): kept =
+/// that ÷ its fat of its whole when below 1 — a line it leaves whole is no
+/// entry (v96 closer 1, verify1 D3 / D4).
+Map<int, _M52Row> _browningFatPlan(
+  SaltDatabase db,
+  Recipe recipe,
+  Map<int, IngredientMatchRow> at,
+  FdcFood? Function(int fdcId, IngredientLine line) food,
+) {
+  final browning = _browningFatLines(recipe);
+  if (browning.isEmpty) {
+    return const {};
+  }
+  IngredientMatchRow? browned;
+  for (final r in at.values) {
+    if (_m52Counted(r) &&
+        _brownedRecords.any(r.description!.startsWith) &&
+        (browned == null ||
+            r.grams! > browned.grams! ||
+            (r.grams == browned.grams && r.position < browned.position))) {
+      browned = r;
+    }
+  }
+  if (browned == null) {
+    return const {};
+  }
+  final name = _m52FoodName(browned.description!);
+  final lines = nutritionLines(recipe);
+  final plan = <int, _M52Row>{};
+  for (final k in browning) {
+    final r = at[k];
+    final medium = _mediumAt(recipe, k);
+    if (!_m52Engine(r) ||
+        r!.hold != null ||
+        (r.status == 'auto' && belowConfidenceGate(r.confidence)) ||
+        (medium != null && medium != DiscardedMedium.partialUse)) {
+      continue;
+    }
+    final record = food(r.fdcId!, lines[k]);
+    final whole = record == null
+        ? null
+        : engineOutcome(
+            recipe,
+            lines[k],
+            record,
+            lineGrams(db, lines[k], record, recipe: recipe),
+          ).grams;
+    if (whole == null || whole <= 0) {
+      continue;
+    }
+    final lipid =
+        food(
+          nutrientSiblings[r.fdcId] ?? r.fdcId!,
+          lines[k],
+        )?.nutrientsPer100g['204'] ??
+        0;
+    final fat = whole * lipid / 100;
+    // v96 closer 1 (verify1 D3, D4): each line on its OWN fat — min(whole,
+    // share × its browned raw grams ÷ its lipid), the brief's per-line rule
+    // (pD d2_optc's), never a budget shared with another line — and a line
+    // that rule leaves whole (kept ≥ 1) is no entry: the engine's row
+    // stands as it was.
+    final kept = fat <= 0 ? 1.0 : _browningFatShare * browned.grams! / fat;
+    if (kept >= 1) {
+      continue;
+    }
+    plan[k] = (
+      grams: double.parse((kept * whole).toStringAsFixed(2)),
+      flag: _browningFatFlag(name, butter: _headsOf(recipe)[k] == 'butter'),
+      kept: 0,
+      coat: false,
+      noNetUptake: false,
+      dip: false,
+      held: false,
+      cut: false,
+      basis: _browningFatBasis,
+    );
+  }
+  return plan;
+}
+
 /// One row M52 counts ([_m52Plan]), `discarded` as a medium's kept part
 /// is: its `grams`, the `flag` its basis carries, the part `kept` outside
 /// the budget (a frying oil's kept part, a coat's part eaten outside the
@@ -22105,8 +22352,12 @@ Map<int, _M52Row> _m52Plan(
   ]..sort();
   // v71 (M71 R-E2): the strained solids the steps keep a printed part of.
   final solids = _keptSolidsPlan(db, recipe, at, food);
+  // v96 (M94): the browning fat the steps skim or pour off
+  // ([_browningFatPlan]) — merged first, so a row the C4 arm weighs below
+  // keeps that arm's entry (the C4 exclusion).
+  final browning = _browningFatPlan(db, recipe, at, food);
   if (coats.isEmpty && batter.isEmpty && oils.isEmpty) {
-    return solids;
+    return {...browning, ...solids};
   }
   bool counted(IngredientMatchRow r) => _m52Counted(r);
   bool engine(IngredientMatchRow? r) => _m52Engine(r);
@@ -22141,7 +22392,7 @@ Map<int, _M52Row> _m52Plan(
                     _thinPiece(recipe, lines[coated.position])
                 ? _CoatShape.c4
                 : null);
-  final plan = <int, _M52Row>{...solids};
+  final plan = <int, _M52Row>{...browning, ...solids};
   // M58 W's batter parts' carbohydrate at their WHOLE grams (the line's, as
   // the dredge takes them): the plan writes those rows `discarded`, so D
   // ([batterOf]) reads them here — never the stored row — on every path.
@@ -22947,7 +23198,9 @@ _M52Row? _m52RowOf(
       // v71 (M71 R-E2): a strained line sharing a kept part.
       !_keptSolidsAt(recipe, row.position) &&
       // v75 (M78): a sauté's fat the steps pour off or wipe out.
-      !_panFatAt(recipe, row.position)) {
+      !_panFatAt(recipe, row.position) &&
+      // v96 (M94): a browning fat the steps skim or pour off.
+      !_browningFatAt(recipe, row.position)) {
     return null;
   }
   final at = (memo == null
@@ -23137,7 +23390,11 @@ String _m52Key(
             _coatOfPart(recipe, i) != null ||
             cutLine(i, r) ||
             _keptSolidsAt(recipe, i) ||
-            pans.contains(i),
+            pans.contains(i) ||
+            // v96 (M94): a browning-fat line is read on its line, record
+            // and hold only — its engine form and the plan's `discarded`
+            // one key alike.
+            _browningFatAt(recipe, i),
         offB:
             c5 &&
             _m52Counted(r) &&

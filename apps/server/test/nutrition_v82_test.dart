@@ -2482,9 +2482,12 @@ void costShapes() {
         expect(seen, {
           'compute': {'indexes': 1, 'memo:strainAt': 1, 'lastMatching': 1},
           'GET': {'indexes': 1, 'memo:strainAt': 1, 'lastMatching': 1},
-          'recompute': loud
-              ? {'indexes': 1, 'memo:strainAt': null, 'lastMatching': null}
-              : {'indexes': 1, 'memo:strainAt': 1, 'lastMatching': 1},
+          // RE-PIN (M94 batch, v96): TRUE's recompute was {'indexes': 1,
+          // 'memo:strainAt': null, 'lastMatching': null} — the browning-fat
+          // plan now weighs 0088's admitted |2 oil and |3 butter through
+          // `engineOutcome`, whose strain guard reads the last solids
+          // sentence once per index, as QUIET's recompute already did.
+          'recompute': {'indexes': 1, 'memo:strainAt': 1, 'lastMatching': 1},
         });
       },
       timeout: const Timeout(Duration(minutes: 5)),
@@ -2763,19 +2766,28 @@ void costShapes() {
         'indexes': 1,
         'carriedReads': 1,
         'leanOnlyReads': null,
-        'knownFoodReads': 401,
+        // RE-PIN (M94 batch, v96): was 401 — + 2: the browning-fat plan
+        // weighs 0239's admitted |7 oil (its record and its lipid record; the
+        // 391 pork roast rows cap it, no entry).
+        'knownFoodReads': 403,
       },
       'GET': {
         'indexes': 1,
         'carriedReads': null,
         'leanOnlyReads': 1,
-        'knownFoodReads': 801,
+        // RE-PIN (M94 batch, v96): was 801 — + 2: the browning-fat plan
+        // weighs 0239's admitted |7 oil (its record and its lipid record; the
+        // 391 pork roast rows cap it, no entry).
+        'knownFoodReads': 803,
       },
       'recompute': {
         'indexes': 1,
         'carriedReads': null,
         'leanOnlyReads': null,
-        'knownFoodReads': 400,
+        // RE-PIN (M94 batch, v96): was 400 — + 2: the browning-fat plan
+        // weighs 0239's admitted |7 oil (its record and its lipid record; the
+        // 391 pork roast rows cap it, no entry).
+        'knownFoodReads': 402,
       },
     });
   }, timeout: const Timeout(Duration(minutes: 5)));

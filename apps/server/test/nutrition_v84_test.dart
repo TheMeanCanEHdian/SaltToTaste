@@ -525,7 +525,7 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 90 (v84 set it to 79, batch M82: rows move)', () {
+  test('matcherVersion 91 (v84 set it to 79, batch M82: rows move)', () {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
@@ -537,7 +537,8 @@ void main() {
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
-    expect(matcherVersion, 90);
+    // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
+    expect(matcherVersion, 91);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {
@@ -1047,6 +1048,9 @@ _capShapes = [
       'memo:dips': 1,
       'memo:leftInBowl': 1,
       'memo:keptSolids': 1,
+      // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+      // per index (every `_m52Plan` reads it).
+      'memo:browningFat': 1,
     },
     {
       'indexes': 1,
@@ -1074,6 +1078,9 @@ _capShapes = [
       'memo:dips': 1,
       'memo:cutShare': 1,
       'memo:keptSolids': 1,
+      // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+      // per index (every `_m52Plan` reads it).
+      'memo:browningFat': 1,
       'memo:panFatLines': 1,
       'memo:skinSentences': 1,
       'allSentences': 1,
@@ -1113,6 +1120,9 @@ _capShapes = [
       'memo:dips': 1,
       'memo:leftInBowl': 1,
       'memo:keptSolids': 1,
+      // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+      // per index (every `_m52Plan` reads it).
+      'memo:browningFat': 1,
     },
     {
       'indexes': 1,
@@ -1140,6 +1150,9 @@ _capShapes = [
       'memo:dips': 1,
       'memo:cutShare': 1,
       'memo:keptSolids': 1,
+      // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+      // per index (every `_m52Plan` reads it).
+      'memo:browningFat': 1,
       'memo:panFatLines': 1,
       'memo:skinSentences': 1,
       'allSentences': 1,

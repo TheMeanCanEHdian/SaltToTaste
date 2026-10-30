@@ -291,7 +291,7 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 90 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 91 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
@@ -300,7 +300,8 @@ void main() {
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
-    expect(matcherVersion, 90);
+    // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
+    expect(matcherVersion, 91);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "
@@ -608,6 +609,9 @@ const Map<String, int> _shared = {
   'memo:dips': 1,
   'memo:leftInBowl': 1,
   'memo:keptSolids': 1,
+  // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+  // per index (every `_m52Plan` reads it).
+  'memo:browningFat': 1,
   'memo:cutShare': 1,
   'memo:panFatLines': 1,
   'memo:liftedFromMarinade': 1,

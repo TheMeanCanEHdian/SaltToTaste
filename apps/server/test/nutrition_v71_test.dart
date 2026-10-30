@@ -480,11 +480,15 @@ const List<_Row> _reach = [
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '28.00',
+    // RE-PIN (M94 batch, v96): was 28.00 g, 252.00 kcal, "only 1 tablespoon
+    // + 1 tablespoon of it used (from step 2) — the rest counted as 0 g ·
+    // approximate (…)" — that 28.00 g is now the browning-fat plan's whole:
+    // S1's oil before S6's skim keeps 1.52 % of the 1,106.76 g shanks.
+    '16.82',
     'auto',
     null,
-    '252.00',
-    "only 1 tablespoon + 1 tablespoon of it used (from step 2) — the rest counted as 0 g · approximate (the steps use 1 tablespoon + 1 tablespoon of the reserved oil; the rest is not used here — the fried aromatics' oil not counted)",
+    '151.38',
+    'skimmed / poured off — only the fat the browned food keeps counted · approximation (browning fat: 1.52 g fat per 100 g of the raw beef — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a film; the steps skim / pour off the rest))',
   ),
 ];
 
@@ -2031,11 +2035,14 @@ const List<_Row> _unmoved = [
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '28.00',
+    // RE-PIN (M94 batch, v96): was 28.00 g, 252.00 kcal, "2 tablespoon ·
+    // USDA portion" — S3's "Pour off the fat" leaves 1.52 % of the 1,247.38 g
+    // tenderloins as fat.
+    '18.95',
     'auto',
     null,
-    '252.00',
-    '2 tablespoon · USDA portion',
+    '170.55',
+    'skimmed / poured off — only the fat the browned food keeps counted · approximation (browning fat: 1.52 g fat per 100 g of the raw pork — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a film; the steps skim / pour off the rest))',
   ),
   // RE-PIN (M73 batch, v73): the whole-grain mustard flag (R1, the 2026-10-18 ruling).
   (
@@ -7632,11 +7639,14 @@ const List<_Row> _unmoved = [
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '9.07',
+    // RE-PIN (M94 batch, v96) — D1 RULED (a row beyond the brief's 15,
+    // ACCEPT 2026-10-30): was 9.07 g, 81.62 kcal, "2 teaspoon ≈ 10 mL" —
+    // S4's "pour off fat" leaves 1.52 % of the 555.65 g thighs as fat.
+    '8.44',
     'auto',
     null,
-    '81.62',
-    '2 teaspoon ≈ 10 mL',
+    '75.96',
+    'skimmed / poured off — only the fat the browned food keeps counted · approximation (browning fat: 1.52 g fat per 100 g of the raw chicken thigh — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a film; the steps skim / pour off the rest))',
   ),
   (
     '1181-jellied-cranberry-sauce.yaml',
@@ -8477,7 +8487,9 @@ void main() {
           '0235-maple-glazed-pork-tenderloin.yaml',
           null,
           'partial',
-          '444.28',
+          // RE-PIN (M94 batch, v96): was 444.28 — the browning oil |11
+          // keeps 18.95 of its 28.00 g (the replay 444.28 → 430.70).
+          '430.70',
         ), // 462.34 → 444.28
         // RE-PIN (M83 batch, v85): was 315.51 — B4: the joined bacon fat |2
         // takes 1.59 g of the uptake (1.59 + 53.53 = 55.12 g, each fryer
@@ -8548,7 +8560,9 @@ void main() {
           null,
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2346403 potatoes): was 392.03.
-          '390.60',
+          // RE-PIN (M94 batch, v96): was 390.60 — |0's browning oil keeps
+          // 16.82 of its 28.00 g (the replay 390.58 → 373.81).
+          '373.83',
         ), // 434.01 → 392.02
       ]) {
         final n = db.nutritionFor(recipeIn(file, section).id)!;
@@ -9020,19 +9034,40 @@ void main() {
       expect(nutritionLines(real).first.raw, '¼ cup vegetable oil');
       const from = 'Discard any remaining reserved oil.';
       expect(real.steps[1].text, endsWith(' $from'));
-      Future<(String, String?, String?)> oil(Recipe r) async {
+      // RE-PIN (M94 batch, v96): the row is now the browning-fat plan's
+      // (S1's oil before S6's skim keeps 1.52 % of the 1,106.76 g shanks as
+      // fat, 16.82 g, on either text); R2's own read — the engine's outcome
+      // the plan weighs as the line's whole — is returned beside it.
+      Future<((String, String?, String?), (String, String?))> oil(
+        Recipe r,
+      ) async {
         final db = freshDb();
         final p = FixtureProvider(pending: {...pendingSearches});
         db.upsertRecipe(r, sourceSlug: _source, contentHash: r.id);
         final stored = db.recipeByIdOrSlug(r.id)!.recipe;
         expect(await matchAndCompute(db, p, stored), isNull);
         final m = row(db, stored.id, 0);
-        return (_g2(m.grams!), m.gramSource, m.hold);
+        final line = nutritionLines(stored).first;
+        final record = knownFood(db, m.fdcId!)!;
+        final whole = engineOutcome(
+          stored,
+          line,
+          record,
+          lineGrams(db, line, record, recipe: stored),
+        );
+        return (
+          (_g2(m.grams!), m.gramSource, m.hold),
+          (_g2(whole.grams!), whole.source),
+        );
       }
 
       // As printed: the remainder discarded, the two printed tablespoons
       // of the ¼ cup kept (the corpus row's 28.00 g).
-      expect(await oil(real), ('28.00', 'discarded', null));
+      // RE-PIN (M94 batch, v96): the row was ('28.00', 'discarded', null).
+      expect(await oil(real), (
+        ('16.82', 'discarded', null),
+        ('28.00', 'discarded'),
+      ));
       // Rewritten: the remainder is stirred in, so the ¼ cup is counted
       // whole (v69's 56.00 g). The anchor dropped (`discard` anywhere in
       // the sentence), "then discard the bay leaf" unblocks it: 28.00 g.
@@ -9050,7 +9085,11 @@ void main() {
                 : step,
         ],
       );
-      expect(await oil(rewritten), ('56.00', 'portion', null));
+      // RE-PIN (M94 batch, v96): the row was ('56.00', 'portion', null).
+      expect(await oil(rewritten), (
+        ('16.82', 'discarded', null),
+        ('56.00', 'portion'),
+      ));
     });
 
     test('pF R3 joins only the fat line the sentence adds: a typed duck fat '

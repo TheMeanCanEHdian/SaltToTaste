@@ -163,10 +163,11 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    "matcherVersion 90 (v94 set it to 89, batch M92: three recipes' totals move)",
+    "matcherVersion 91 (v94 set it to 89, batch M92: three recipes' totals move)",
     () {
       // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
-      expect(matcherVersion, 90);
+      // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
+      expect(matcherVersion, 91);
     },
   );
 
@@ -585,6 +586,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:dips': 1,
     'memo:leftInBowl': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:defatsLiquid': 1,
   },
   'TRUE GET': {
@@ -613,6 +617,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:dips': 1,
     'memo:cutShare': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:panFatLines': 1,
     'memo:skinSentences': 1,
     'allSentences': 1,
@@ -626,6 +633,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:leftInBowl': 1,
     'heads': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:defatsLiquid': 1,
     'words': 215089,
     'memo:naming': 1,
@@ -657,6 +667,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:dips': 1,
     'memo:leftInBowl': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:defatsLiquid': 1,
   },
   'QUIET GET': {
@@ -685,6 +698,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:dips': 1,
     'memo:cutShare': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:panFatLines': 1,
     'memo:skinSentences': 1,
     'allSentences': 1,
@@ -698,6 +714,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:leftInBowl': 1,
     'heads': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:defatsLiquid': 1,
     'words': 215089,
     'memo:naming': 1,

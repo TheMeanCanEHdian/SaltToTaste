@@ -2615,10 +2615,13 @@ _whole = [
   // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste, 2258586 carrots, 2346403
   // gold potatoes) — the energy before and after the ethanol moves alike, after
   // = this compute: was 4956.58, 4626.01.
+  // RE-PIN (M94 batch, v96) — D1 RULED (|4 beyond the brief's 15, ACCEPT
+  // 2026-10-30): its browning oil 28.00 → 27.57 g (−3.87 kcal) — the energy
+  // before and after the ethanol moves alike: was 4938.05, 4607.48.
   (
     '0005-best-beef-stew.yaml',
-    4938.05,
-    4607.48,
+    4934.18,
+    4603.61,
     193.33,
     390.14,
     [(8, 2710688, 468.44, 5)],

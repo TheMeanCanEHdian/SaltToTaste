@@ -142,7 +142,9 @@ const Map<String, String> _synonyms = {
 /// v88: matcher v93 (batch M91) — doubanjiang on the miso record.
 /// v89: matcher v94 (batch M92) — the braised turkey (roasted pairs, gated).
 /// v90: matcher v95 (batch M93) — the C4 pan-fat share 3.71 % (two records).
-const int matcherVersion = 90;
+/// v91: matcher v96 (batch M94) — the skimmed / poured-off browning fat
+/// (FNDDS 2705972's oil per raw breast, 1.52 %).
+const int matcherVersion = 91;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

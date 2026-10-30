@@ -192,9 +192,13 @@ SaltDatabase _db() {
 }
 
 void main() {
-  test('matcherVersion 90 (v95, batch M93: six rows, four totals)', () {
-    expect(matcherVersion, 90);
-  });
+  test(
+    'matcherVersion 91 (v95 set it to 90, batch M93: six rows, four totals)',
+    () {
+      // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
+      expect(matcherVersion, 91);
+    },
+  );
 
   test("the share from the four figures the flag prints (2705975's o 7, b "
       "15; 2705980's b 10, r 125.77 — the raw JSONs' inputFoods and "

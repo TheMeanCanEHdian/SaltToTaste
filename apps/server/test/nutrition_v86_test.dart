@@ -160,14 +160,17 @@ const Map<String, (String, String, String)> _totals = {
   // 230.39 less (per serving × 6, −230.40).
   // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
   // tomato): was 575.08, 3450.50.
-  _shanks: ('complete', '573.06', '3438.37'),
+  // RE-PIN (M94 batch, v96): was 573.06, 3438.37 — beside |0's M84 pair,
+  // |2's browning oil before S4's skim keeps 25.33 of its 28.00 g (−24.03;
+  // the replay 573.06 → 569.06).
+  _shanks: ('complete', '569.06', '3414.34'),
   // RE-PIN (M90 batch, v89, brown sugar): its Spice Rub's light brown sugar
   // at the print (the replay 1,070.60 → 1,068.03): was 1070.60, 4282.38.
   _memphis: ('complete', '1068.03', '4272.13'),
 };
 
 void main() {
-  test('matcherVersion 90 (v86 set it to 81, batch M84: rows move)', () {
+  test('matcherVersion 91 (v86 set it to 81, batch M84: rows move)', () {
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
@@ -177,7 +180,8 @@ void main() {
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
-    expect(matcherVersion, 90);
+    // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
+    expect(matcherVersion, 91);
   });
 
   group('matcher v86 (batch M84) — whole recipes', skip: skipIfNoCorpus, () {
@@ -634,6 +638,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:dips': 1,
     'memo:leftInBowl': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
   },
   'E2b-QUIET': {
     'indexes': 1,
@@ -662,6 +669,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:dips': 1,
     'memo:leftInBowl': 1,
     'memo:keptSolids': 1,
+    // RE-PIN (M94 batch, v96): + the browning-fat reader's memo, once
+    // per index (every `_m52Plan` reads it).
+    'memo:browningFat': 1,
     'memo:cutShare': 1,
     'memo:panFatLines': 1,
     'memo:liftedFromMarinade': 1,

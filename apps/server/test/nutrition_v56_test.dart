@@ -342,9 +342,12 @@ const List<_Row> _daube = [
     '4 tablespoons olive oil',
     2710186,
     '0.990000',
-    '56.00',
-    '504.00',
-    '4 tablespoon · USDA portion',
+    // RE-PIN (M94 batch, v96): was 56.00 g, 504.00 kcal, "4 tablespoon ·
+    // USDA portion" — the browning oil the steps skim keeps 1.52 % of the
+    // chuck-eye's 1,587.57 g as fat.
+    '24.12',
+    '217.08',
+    'skimmed / poured off — only the fat the browned food keeps counted · approximation (browning fat: 1.52 g fat per 100 g of the raw beef — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast (the browned piece keeps a film; the steps skim / pour off the rest))',
   ),
   (
     '0456-daube-provencal.yaml',
