@@ -5158,6 +5158,109 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v95 (batch M93; matcherVersion 90 — the C4 pan-fat share 3.71 %:
+the fried coated breast's oil per gram of breading at the baked coated
+breast's breading per gram of raw; 6 rows, 4 recipes' totals; prep51
+design_v2 §1 Q3 Part A option (b) / §2 M93, ruled by the owner 2026-10-29;
+zero requests; replayed on snapshot 30 against the v94 rows, both orders
+byte-identical, the rule reverted alone reproducing v94 byte for byte,
+calls 0).** M78's C4 pan fat (the sauté fat the steps pour off or wipe out
+after a flour-dusted piece is pan-fried, `_panFatLines`) kept the BAKED
+coated breast's oil; the pieces are pan-FRIED, so the kept fat now reads
+the FRIED coated record's oil per gram of breading, at the breading the C4
+stand-in already counts.
+- **The rule (`_panFatShare`, engine.dart).** Two FNDDS recipes already in
+  the tree, their `inputFoods` re-read from the raw JSONs on disk: FNDDS
+  2705975 "Chicken breast, fried, coated, prepared skinless, coating eaten,
+  from raw" (`_breastFried`: breading 99995000 15 g, baked breast skin not
+  eaten 24122131 78 g, "Vegetable oil, NFS" 82101000 7 g) and FNDDS 2705980
+  "Chicken breast, baked, coated, skin / coating eaten" (`_breastBaked`:
+  baked breast skin eaten 24122130 88 g, breading 10 g, oil 2 g; 125.77 g
+  raw = its 88 g cooked breast brought to raw by protein, USDA's retention
+  convention, prep47's read figures). Share = 7 / 15 × 10 / 125.77 =
+  3.7105 g fat per 100 g of the raw coated food (was 2705980's own 2 /
+  125.77 = 1.5902). The split over the lines' fat (204, the record the
+  totals read), the cap at the whole line, `_panFatLines` and every reader
+  are unchanged. `_panFatFlag` names both records — derived from two
+  records, so the flag says so. Was: "approximation (pan fat: 1.59 g fat
+  per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 2 g oil
+  per 125.77 g raw chicken breast (no record for the fat a sautéed piece
+  keeps; the steps pour off / wipe out the rest))"; now: "approximation
+  (pan fat: 3.71 g fat per 100 g of the raw chicken breast — derived from
+  two USDA FNDDS recipes: 2705975's 7 g oil per 15 g breading × 2705980's
+  10 g breading per 125.77 g raw chicken breast (no record for the fat a
+  sautéed piece keeps; the steps pour off / wipe out the rest))" (a butter
+  line adds "; a butter line weighed by its own fat"; a flatfish reads "the
+  raw flatfish").
+- **Reach (fix95 gate1, the v94 rows; 6 rows, 4 recipes, 0 person
+  rows).** Every row that prints the flag, none capped (each below its whole
+  line), all `auto` / `discarded`, grams and basis: chicken-saltimbocca|5 "4
+  tablespoons olive oil" (FNDDS 2710186, 900 kcal) 9.92 → 23.14 g (+118.98
+  kcal); chicken-francese|13 "2 tablespoons olive oil" 5.44 → 12.70 g
+  (+65.34) and |12 "2 tablespoons unsalted butter" (SR 173430, 717; the
+  split by its own fat, 81.11 %) 5.51 → 12.87 g (+52.77);
+  fish-meuniere-with-browned-butter-and-lemon|3 "2 tablespoons vegetable
+  oil" (FNDDS 2710180, 900) 5.44 → 12.70 g (+65.34) and |4 butter 5.51 →
+  12.87 g (+52.77); parmesan-crusted-chicken-cutlets|6 "4 teaspoons olive
+  oil" 6.76 → 15.78 g (+81.18; its whole line 18.14 g — uncapped). No fat
+  record here is Foundation (all publish 208). ROW column 3,527,858.70 →
+  3,528,295.08 = +436.38; recipe energy 3,378,767.81 → 3,379,204.17 =
+  +436.36 (the 2 cents are per-serving rounding): per serving saltimbocca
+  417.49 → 447.24, francese 357.45 → 386.97, meunière 258.01 → 287.54,
+  parmesan-crusted 333.21 → 353.50 (4 servings each; all stay complete).
+  Sections, statuses, holds, notes, buckets and calls identical; staleAfter
+  0, sectionsStale 0; a recompute writes nothing.
+Attribution: the engine reverted alone (matcherVersion 90 kept) gives v94's
+rows, recipes, sections, calls, notes and buckets byte for byte; the share
+alone (the v94 flag text kept) moves the same six rows' grams and the same
+four recipes byte for byte as the rule; 0 unattributed.
+Calibration (reported, never fitted; audit 5 drew these recipes, audit 6
+none): R12 francese −19.49 → −12.84 % (hand 444.00); R18 meunière −12.48 →
+−2.47 % (hand 294.81); R17 saltimbocca +4.23 → +11.66 % (hand 400.53) and
+R21 parmesan-crusted +12.67 → +19.53 % (hand 295.75) — both AWAY,
+disclosed (the design's +1.8 → +9.3 % for R17 was priced on v82's rows;
+M86's 958 on the breast had already moved it to +4.23 %; R21 lands on the
+design's +19.5 %). Audit 5 mean |err| 8.30 → 8.20
+%; audits 2–5 median |err| 6.87 % and audit 6 median 3.23 % unchanged.
+Person path: no hunk touches nutrition_handlers.dart, `derivedFor`,
+`applyDecisionToOthers` or `decisionRecordOf` (a constant and a flag
+string), so GATE-P was not run.
+Pins: nutrition_v95_test (9 tests — matcherVersion 90; the engine's own
+`_panFatShare` (`panFatShareForTest`) equal to 7 / 15 × 10 / 125.77 and
+0.037105 at six places; the six real rows on the fixtures
+equal the replay (record, grams, energy, the new basis, below the whole
+line); meunière's split 23.142 g of fat → 12.70 / 12.87 g; the four totals;
+the converses blackened-chicken|10 (in a pan-fat window, no dredged
+pan-fry), chicken-piccata|4 (C4, no pour-off) and francese|0 (a fat before
+the dredge) unchanged; the GET basis; STATED synthesized (no corpus row is
+capped under either share): saltimbocca's pan line as skillet-lasagna's real
+"1 tablespoon olive oil" — capped at its whole 14.00 g (v94 kept 9.92) —
+and as 0258's real "1 teaspoon olive oil" (4.53 g, capped under both); a
+second compute writes nothing). Each mutant killed by a value pin (snapshot
+copy, anchor count 1, cmp restore): the share back to 2705980's own oil per
+raw (saltimbocca|5 9.92 g), either record's figure swapped for the other's
+(oil, breading, raw), the flag naming one record or its oil, the butter's
+fat read as oil (meunière|4 11.65 g), the share hard-coded at its rounded
+3.71 % (0.0371 — it passed every grams pin and the flag's two places until
+the accessor pin), matcherVersion 89; the cap dropped is
+EQUIVALENT on parmesan-crusted|6 (uncapped) and is killed by the STATED
+capped line (14.00 → 23.14 g). The existing suite re-pinned as equalities
+(RE-PIN M93): twelve version literals (v84–v94, seasoning_ci), three hashes
+(seasoning_ci, v47_resolver F2, v83 F5c — the version alone: the base
+engine with 90 gives them), the four recipes' per serving in v61 / v68 /
+v78, v78's six rows, its flag text and its STATED EVOO / clamp / Confirm
+cases (the clamp's 4.53 g unchanged), and v26's C4 cap shape's per-line
+grams (0.03 → 0.06); no numeric bound widened, nothing deleted.
+Cost: no new reader — a constant and a string. Every shape reading
+`memo:panFatLines` (v26's C4 quiet / loud, v84 ×2, v86, v87, v89, v94 ×2)
+keeps its exact count pins; nutrition_v27_cost_test's O9 / S8 shapes are
+bounded by support/cost_bounds.dart, not exact-pinned — a measured probe
+(closer 1, verify1's) gives all nine of its count maps base == tip, the
+end-to-end O9 GET the one reading `memo:panFatLines` (1 on both).
+Deploy note: matcherVersion 90 stales every stamp — run the owner's stale
+sweep after the deploy (0 requests); 4 recipes' stored totals move (no
+users).
+
 **Matcher v94 (batch M92; matcherVersion 89 — the braised turkey: the
 roasted same-cut SR pairs behind a line-order gate; 0 rows, 3 recipes'
 totals; prep51 design_v2 §1 Q8 option (b″) / §2 M92, ruled by the owner

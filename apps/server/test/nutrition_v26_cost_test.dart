@@ -3435,11 +3435,13 @@ void review71() {
           ];
           expect(oils, hasLength(capLines - own.length + 1));
           expect(panFatLinesOf(stored()), hasLength(loud ? oils.length : 0));
-          // The TRUE path: 9.918 g of fat (623.69 g of breast × 2 / 125.77)
-          // over 390 × 56 g — each line 0.03 g, `discarded`; quiet: whole.
+          // The TRUE path: 23.142 g of fat (623.69 g of breast × 7 / 15 × 10
+          // / 125.77) over 390 × 56 g — each line 0.06 g, `discarded`; quiet:
+          // whole. RE-PIN (M93 batch, v95): was 9.918 g of fat (× 2 / 125.77),
+          // each line 0.03 g — the share alone; the counts below unchanged.
           expect(
             {for (final row in oils) (row.gramSource, row.grams)},
-            {if (loud) ('discarded', 0.03) else ('portion', 56.0)},
+            {if (loud) ('discarded', 0.06) else ('portion', 56.0)},
           );
           await timed('GET', () => matchesBody(db, provider, stored()));
           await timed('recompute', () async => recomputeTotals(db, stored()));

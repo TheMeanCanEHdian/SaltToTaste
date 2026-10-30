@@ -1789,7 +1789,9 @@ void main() {
       expect(of(_parmesanCrusted), (
         'complete',
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
-        '332.99',
+        // RE-PIN (M93 batch, v95): was 332.99 — |6's pan fat at 3.71 % (the
+        // replay 333.21 → 353.50).
+        '353.29',
         8,
       )); // replay 340.01; v67 153.54; v60 167.60, 6
       // RE-PIN (M78 batch, v78, Q7 (c)): |12 and |13's pan fat, wiped out
@@ -1798,7 +1800,9 @@ void main() {
       expect(of(_francese), (
         'complete',
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
-        '357.13',
+        // RE-PIN (M93 batch, v95): was 357.13 — |12 and |13's pan fat at
+        // 3.71 % (the replay 357.45 → 386.97).
+        '386.66',
         15,
       )); // replay 346.62; v67 407.44; v60 449.08, 14
     });

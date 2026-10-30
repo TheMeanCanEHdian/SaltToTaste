@@ -35,6 +35,10 @@
 // corpus recipes under their own ids (the shared rows stay `auto`). The
 // `fat > 0` guard has no reach on snapshot-27 fixtures (the one fat record
 // without 204, 748608, is sibling-mapped).
+// RE-PIN (M93 batch, v95): the share is now derived from two FNDDS records —
+// 2705975's 7 g oil per 15 g breading × 2705980's 10 g breading per 125.77 g
+// raw = 3.71 % (was 2705980's 2 / 125.77 = 1.59 %); the pins below carry the
+// v95 figures (nutrition_v95_test), the v78 ones in their comments.
 
 import 'dart:io';
 
@@ -62,8 +66,11 @@ const _crust =
     "1/4 cup ≈ 59 mL · grated, at ATK's printed 1 ounce = ½ cup + 6 ounces · approximate (a pressed cheese crust: no USDA record of a cheese crust, and the coat record's breading does not describe one — the line counted whole as printed; the part left in the dish is not deducted)";
 
 /// §1 Q7's flag (its "…" pC's recipe figures) on a pan line of [food].
+// RE-PIN (M93 batch, v95): the flag names both records (was "… pan fat:
+// 1.59 g fat per 100 g of the raw $food — USDA FNDDS 2705980 recipe: 2 g oil
+// per 125.77 g raw chicken breast (no record …").
 String _pan(String food, {bool butter = false}) =>
-    'discarded in cooking — only the fat the sautéed food keeps counted · approximation (pan fat: 1.59 g fat per 100 g of the raw $food — USDA FNDDS 2705980 recipe: 2 g oil per 125.77 g raw chicken breast (no record for the fat a sautéed piece keeps; the steps pour off / wipe out the rest)${butter ? '; a butter line weighed by its own fat' : ''})';
+    "discarded in cooking — only the fat the sautéed food keeps counted · approximation (pan fat: 3.71 g fat per 100 g of the raw $food — derived from two USDA FNDDS recipes: 2705975's 7 g oil per 15 g breading × 2705980's 10 g breading per 125.77 g raw chicken breast (no record for the fat a sautéed piece keeps; the steps pour off / wipe out the rest)${butter ? '; a butter line weighed by its own fat' : ''})";
 
 /// The 7 rows M78 moves (file, position, raw, fdc id, grams, kcal, basis)
 /// — the v77 replay's value in each comment.
@@ -86,8 +93,9 @@ final _reach = [
     6,
     '4 teaspoons olive oil',
     2710186,
-    '6.76',
-    '60.84',
+    // RE-PIN (M93 batch, v95): was 6.76 g, 60.84 kcal (the v95 replay's row).
+    '15.78',
+    '142.02',
     _pan('chicken breast'),
   ),
   // 28.36 g, 203.35 kcal.
@@ -96,8 +104,9 @@ final _reach = [
     12,
     '2 tablespoons unsalted butter',
     173430,
-    '5.51',
-    '39.51',
+    // RE-PIN (M93 batch, v95): was 5.51 g, 39.51 kcal (the v95 replay's row).
+    '12.87',
+    '92.28',
     _pan('chicken breast', butter: true),
   ),
   // 28.00 g, 252.00 kcal.
@@ -106,8 +115,9 @@ final _reach = [
     13,
     '2 tablespoons olive oil',
     2710186,
-    '5.44',
-    '48.96',
+    // RE-PIN (M93 batch, v95): was 5.44 g, 48.96 kcal (the v95 replay's row).
+    '12.70',
+    '114.30',
     _pan('chicken breast'),
   ),
   // 56.00 g, 504.00 kcal.
@@ -116,8 +126,9 @@ final _reach = [
     5,
     '4 tablespoons olive oil',
     2710186,
-    '9.92',
-    '89.28',
+    // RE-PIN (M93 batch, v95): was 9.92 g, 89.28 kcal (the v95 replay's row).
+    '23.14',
+    '208.26',
     _pan('chicken breast'),
   ),
   // 28.00 g, 252.00 kcal.
@@ -126,8 +137,9 @@ final _reach = [
     3,
     '2 tablespoons vegetable oil',
     2710180,
-    '5.44',
-    '48.96',
+    // RE-PIN (M93 batch, v95): was 5.44 g, 48.96 kcal (the v95 replay's row).
+    '12.70',
+    '114.30',
     _pan('flatfish'),
   ),
   // 28.36 g, 203.35 kcal.
@@ -136,8 +148,9 @@ final _reach = [
     4,
     '2 tablespoons unsalted butter, cut into 2 pieces',
     173430,
-    '5.51',
-    '39.51',
+    // RE-PIN (M93 batch, v95): was 5.51 g, 39.51 kcal (the v95 replay's row).
+    '12.87',
+    '92.28',
     _pan('flatfish', butter: true),
   ),
 ];
@@ -247,17 +260,21 @@ const _totals = [
   // RE-PIN (M85 batch, v87): was 339.97 (the replay 340.01 → 326.65: |3's
   // Parmesan on 170848).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
-  (_parmesan, 'complete', '332.99'),
+  // RE-PIN (M93 batch, v95): was 332.99 (the replay 333.21 → 353.50).
+  (_parmesan, 'complete', '353.29'),
   // 438.34 → 346.62.
   // RE-PIN (M82 batch, v84, C5a): its 1 tablespoon flour |2 at 5 oz a cup,
   // 7.54 → 8.86 g (the replay 346.62 → 347.83): was 346.57.
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
-  (_francese, 'complete', '357.13'),
+  // RE-PIN (M93 batch, v95): was 357.13 (the replay 357.45 → 386.97).
+  (_francese, 'complete', '386.66'),
   // 511.56 → 407.88.
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 407.82.
-  (_saltimbocca, 'complete', '417.18'),
+  // RE-PIN (M93 batch, v95): was 417.18 (the replay 417.49 → 447.24).
+  (_saltimbocca, 'complete', '446.92'),
   // 349.73 → 258.01.
-  (_meuniere, 'complete', '258.01'),
+  // RE-PIN (M93 batch, v95): was 258.01 (the replay 258.01 → 287.54).
+  (_meuniere, 'complete', '287.54'),
 ];
 
 /// The corpus recipes whose steps put a fat line in a pan-fat window
@@ -450,20 +467,23 @@ void main() {
       }
     });
 
-    test("the fat-content split: meunière's 9.918 g of fat (623.69 g of "
-        'sole × 2 / 125.77) over 28.00 g of oil at 100 % and 28.36 g of '
-        'butter at 81.11 % — the butter 5.51 g, not the 4.99 g an oil '
+    // RE-PIN (M93 batch, v95): the share 7 / 15 × 10 / 125.77 — was 9.918 g
+    // of fat (sole × 2 / 125.77), the butter 5.51 g, the oil 5.44 g, the oil
+    // reading 4.99 g.
+    test("the fat-content split: meunière's 23.142 g of fat (623.69 g of "
+        'sole × 7 / 15 × 10 / 125.77) over 28.00 g of oil at 100 % and 28.36 '
+        'g of butter at 81.11 % — the butter 12.87 g, not the 11.64 g an oil '
         'reading gives (STATED: the oil reading is arithmetic, no row)', () {
       final sole = rowOf(_meuniere, 1).grams!;
       expect(sole.toStringAsFixed(2), '623.69');
-      final fat = sole * 2 / 125.77;
-      expect(fat.toStringAsFixed(3), '9.918');
+      final fat = sole * 7 / 15 * 10 / 125.77;
+      expect(fat.toStringAsFixed(3), '23.142');
       final kept = fat / (28.00 * 1.00 + 28.36 * 0.8111);
-      expect((kept * 28.36).toStringAsFixed(2), '5.51');
-      expect((kept * 28.00).toStringAsFixed(2), '5.44');
-      expect((fat / (28.00 + 28.36) * 28.36).toStringAsFixed(2), '4.99');
-      expect(rowOf(_meuniere, 4).grams, 5.51);
-      expect(rowOf(_meuniere, 3).grams, 5.44);
+      expect((kept * 28.36).toStringAsFixed(2), '12.87');
+      expect((kept * 28.00).toStringAsFixed(2), '12.70');
+      expect((fat / (28.00 + 28.36) * 28.36).toStringAsFixed(2), '11.64');
+      expect(rowOf(_meuniere, 4).grams, 12.87);
+      expect(rowOf(_meuniere, 3).grams, 12.70);
       // Francese: the same breast weight, butter and oil — the same split.
       expect(rowOf(_francese, 7).grams!.toStringAsFixed(2), '623.69');
     });
@@ -618,17 +638,20 @@ void main() {
       );
       final row = rowIn(evoo.id, 5);
       expect((row.fdcId, row.gramSource), (748608, 'discarded'));
-      expect(row.grams?.toStringAsFixed(2), '9.92');
-      // 53.66 g whole × 9.918 / 53.66 g of fat (171413's 100 %): the
-      // olive oil's 9.92; the basis names the sibling (M77).
+      // RE-PIN (M93 batch, v95): was 9.92 g (9.918 g of fat) and the v94 flag
+      // ("… 1.59 g … USDA FNDDS 2705980 recipe: 2 g oil per 125.77 g …").
+      expect(row.grams?.toStringAsFixed(2), '23.14');
+      // 53.66 g whole × 23.142 / 53.66 g of fat (171413's 100 %): the
+      // olive oil's 23.14; the basis names the sibling (M77).
       expect(
         basisOf(evoo, 5),
-        'discarded in cooking — only the fat the sautéed food keeps counted · nutrients of "Oil, olive, salad or cooking" · approximation (pan fat: 1.59 g fat per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 2 g oil per 125.77 g raw chicken breast (no record for the fat a sautéed piece keeps; the steps pour off / wipe out the rest))',
+        "discarded in cooking — only the fat the sautéed food keeps counted · nutrients of \"Oil, olive, salad or cooking\" · approximation (pan fat: 3.71 g fat per 100 g of the raw chicken breast — derived from two USDA FNDDS recipes: 2705975's 7 g oil per 15 g breading × 2705980's 10 g breading per 125.77 g raw chicken breast (no record for the fat a sautéed piece keeps; the steps pour off / wipe out the rest))",
       );
     });
 
+    // RE-PIN (M93 batch, v95): the breast keeps 23.142 g of fat (was 9.918).
     test("the share's clamp — STATED synthesized: saltimbocca's pan line as "
-        'the real "1 teaspoon olive oil" (4.53 g, under the 9.918 g of fat '
+        'the real "1 teaspoon olive oil" (4.53 g, under the 23.142 g of fat '
         'the breast keeps) — the line kept whole, never more', () async {
       final small = await variant(
         withLine(
@@ -642,18 +665,21 @@ void main() {
       final row = rowIn(small.id, 5);
       expect((row.fdcId, row.gramSource), (2710186, 'discarded'));
       expect(row.grams?.toStringAsFixed(2), '4.53');
-      // min(1, 9.918 / 4.53) = 1: the whole line, never the 9.92 g share.
+      // min(1, 23.142 / 4.53) = 1: the whole line, never the 23.14 g share
+      // (RE-PIN (M93 batch, v95): was 9.918 / 4.53, the 9.92 g share).
       expect(basisOf(small, 5), _pan('chicken breast'));
     });
 
+    // RE-PIN (M93 batch, v95): saltimbocca|5 was 9.92 g at 417.18 a serving,
+    // meunière|4 5.51 g at 258.01 (the pan fat at 3.71 %).
     test("a person's Confirm of a pan line is the plan's grams (verify2 D2: "
         '`_panFatAt` in `derivedFor`) — the stored row, the derivation and '
-        'the GET agree: saltimbocca|5 9.92 g, meunière|4 5.51 g, `discarded`, '
-        'the pan basis; the per serving unmoved', () async {
+        'the GET agree: saltimbocca|5 23.14 g, meunière|4 12.87 g, '
+        '`discarded`, the pan basis; the per serving unmoved', () async {
       for (final (file, position, grams, basis, perServing) in [
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 407.82.
-        (_saltimbocca, 5, '9.92', _pan('chicken breast'), '417.18'),
-        (_meuniere, 4, '5.51', _pan('flatfish', butter: true), '258.01'),
+        (_saltimbocca, 5, '23.14', _pan('chicken breast'), '446.92'),
+        (_meuniere, 4, '12.87', _pan('flatfish', butter: true), '287.54'),
       ]) {
         final recipe = await variant(loadCorpusRecipe(file), 'confirm');
         final line = nutritionLines(recipe)[position];

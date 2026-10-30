@@ -141,7 +141,8 @@ const Map<String, String> _synonyms = {
 /// v87: matcher v92 (batch M89) — the grilled pizza's repeat multiplier.
 /// v88: matcher v93 (batch M91) — doubanjiang on the miso record.
 /// v89: matcher v94 (batch M92) — the braised turkey (roasted pairs, gated).
-const int matcherVersion = 89;
+/// v90: matcher v95 (batch M93) — the C4 pan-fat share 3.71 % (two records).
+const int matcherVersion = 90;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

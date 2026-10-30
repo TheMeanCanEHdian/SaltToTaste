@@ -1228,19 +1228,27 @@ void main() {
         // 258.01, 171.67 → 340.01.
         // RE-PIN (M82 batch, v84): was 346.57 (the replay 346.62 → 347.83).
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
-        expect(of(_francese), ('complete', '357.13')); // replay 407.44 → 438.34
+        // RE-PIN (M93 batch, v95): was 357.13 — the pan fat at 3.71 % (the
+        // replay 357.45 → 386.97).
+        expect(of(_francese), ('complete', '386.66')); // replay 407.44 → 438.34
         expect(of(_saltimbocca), (
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 407.82.
-          '417.18',
+          // RE-PIN (M93 batch, v95): was 417.18 — the pan fat at 3.71 % (the
+          // replay 417.49 → 447.24).
+          '446.92',
         )); // replay 488.08 → 511.56
-        expect(of(_meuniere), ('complete', '258.01')); // replay 326.25 → 349.73
+        // RE-PIN (M93 batch, v95): was 258.01 — the pan fat at 3.71 % (the
+        // replay 258.01 → 287.54).
+        expect(of(_meuniere), ('complete', '287.54')); // replay 326.25 → 349.73
         // RE-PIN (M85 batch, v87): was 339.97 (the replay 340.01 → 326.65:
         // the crust's Parmesan on 170848).
         expect(of(_parmesanCrusted), (
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
-          '332.99',
+          // RE-PIN (M93 batch, v95): was 332.99 — |6's pan fat at 3.71 % (the
+          // replay 333.21 → 353.50).
+          '353.29',
         )); // replay 153.54 → 171.67
         // RE-PIN (M70 batch, v69, pE Q6): 454.04 (was 453.68) — its chopped
         // basil |12 on SR's chopped cup (replay 453.66 → 454.01).

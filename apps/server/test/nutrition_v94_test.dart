@@ -162,9 +162,13 @@ SaltDatabase _db() {
 }
 
 void main() {
-  test("matcherVersion 89 (v94, batch M92: three recipes' totals move)", () {
-    expect(matcherVersion, 89);
-  });
+  test(
+    "matcherVersion 90 (v94 set it to 89, batch M92: three recipes' totals move)",
+    () {
+      // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
+      expect(matcherVersion, 90);
+    },
+  );
 
   test('the shares: the protein tracer on the recorded pairs — the raw '
       "record's DETAIL, the roasted record's HIT (cooked × P raw ÷ (P cooked "

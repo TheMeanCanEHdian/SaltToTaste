@@ -21950,17 +21950,32 @@ String m52KeyOf(Recipe recipe, Iterable<IngredientMatchRow> rows) =>
 /// Whether line [i] of [recipe] is one [_panFatLines] names.
 bool _panFatAt(Recipe recipe, int i) => _panFatLines(recipe).contains(i);
 
-/// The C4 stand-in's oil ([_breastBaked]: 2 g per 125.77 g raw breast),
-/// per gram of raw food — the sauté fat a coated piece keeps, as FAT grams.
+/// The sauté fat a coated piece keeps, as FAT grams per gram of raw food.
+/// v95 (batch M93, prep51 design_v2 §1 Q3 Part A (b)): the FRIED coated
+/// breast's oil per gram of breading ([_breastFried]: 7 g per 15 g) at the
+/// C4 stand-in's breading per gram of raw ([_breastBaked]: 10 g per 125.77
+/// g) = 3.7105 % — derived from two records, and the flag says so (was
+/// [_breastBaked]'s own oil per raw, 2 / 125.77 = 1.5902 %).
 final double _panFatShare =
-    double.parse(_breastBaked.o) / double.parse(_breastBaked.r);
+    double.parse(_breastFried.o) /
+    double.parse(_breastFried.b) *
+    double.parse(_breastBaked.b) /
+    double.parse(_breastBaked.r);
+
+/// [_panFatShare], for the pins (verify1 D1: the six-place pin reads the
+/// engine's own figure, not the arithmetic on literals).
+@visibleForTesting
+double get panFatShareForTest => _panFatShare;
 
 /// v75 (batch M78, §1 Q7 (c)'s text): the flag of a pan-fat row on the raw
 /// [food] ([_m52Plan]); a butter line says it is weighed by its own fat.
+/// v95 (M93): names both records the share is derived from.
 String _panFatFlag(String food, {required bool butter}) =>
     'approximation (pan fat: ${(_panFatShare * 100).toStringAsFixed(2)} g '
-    'fat per 100 g of the raw $food — USDA FNDDS ${_breastBaked.id} recipe: '
-    '${_breastBaked.o} g oil per ${_breastBaked.r} g raw ${_breastBaked.food} '
+    'fat per 100 g of the raw $food — derived from two USDA FNDDS recipes: '
+    "${_breastFried.id}'s ${_breastFried.o} g oil per ${_breastFried.b} g "
+    "breading × ${_breastBaked.id}'s ${_breastBaked.b} g breading per "
+    '${_breastBaked.r} g raw ${_breastBaked.food} '
     '(no record for the fat a sautéed piece keeps; the steps pour off / '
     'wipe out the rest)'
     '${butter ? '; a butter line weighed by its own fat' : ''})';
@@ -22380,7 +22395,8 @@ Map<int, _M52Row> _m52Plan(
       );
     }
     // v75 (M78, §1 Q7 (c), F12): under C4 the sauté fat the steps pour off
-    // or wipe out ([_panFatLines]) keeps the stand-in's oil — [_panFatShare]
+    // or wipe out ([_panFatLines]) keeps [_panFatShare] (v95, M93: the fried
+    // record's oil per breading at the stand-in's breading per raw gram)
     // of the coated raw food as FAT grams, shared by the lines' fat (whole
     // grams × their record's total lipid, 204 — the record the totals read,
     // [nutrientSiblings]), each line at that one share of its whole grams:
