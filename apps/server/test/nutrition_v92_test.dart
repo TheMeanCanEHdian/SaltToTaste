@@ -743,9 +743,16 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:named': 388,
     'stepPrints': 9705,
     'repeats': 9705,
+    // RE-PIN (v98, Run 071/072 P4): + each repeat step's counts read once
+    // for its rounds (`repeatFirstPasses`; every one of the 120 steps holds
+    // a counted repeat, each "remaining 2 crusts" after "1 crust": 2 rounds).
+    'repeatFirstPasses': 120,
     'stepPrintsWalked': 9705,
     'memo:stepAmountGrams': 400,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
+    'skinScans': 399,
     'allSentences': 1,
   },
   'QUIET': {
@@ -764,6 +771,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'stepPrintsWalked': 9325,
     'memo:stepAmountGrams': 400,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
+    'skinScans': 399,
     'allSentences': 1,
   },
 };

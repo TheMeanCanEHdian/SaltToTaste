@@ -7734,15 +7734,26 @@ bool skinDiscarded(Recipe recipe, IngredientLine line) {
   final item = (line.item ?? line.raw).toLowerCase();
   // The sentences naming the skin, read once per recipe (v60 closer 2: once
   // per LINE, 399 frying oils' grams read every sentence of the caps, 1.4 s).
+  // v98 (Run 071/072 P8): and the answer once per item — the scan's only
+  // input beside them — each scan counted (`skinScans`): v96's browning
+  // plan weighs every browning line per plan pass, and each weighing
+  // rescanned every skin sentence (a recompute at the caps with a skin
+  // sentence per chunk, 4.7 s, 14 × f912190).
   final skin = _stepIndexOf(recipe).memo(
     #skinSentences,
-    () => [
-      for (final sentence in _stepIndexOf(recipe).allSentences)
-        if (_skinWord.hasMatch(sentence)) sentence,
-    ],
+    () => (
+      sentences: [
+        for (final sentence in _stepIndexOf(recipe).allSentences)
+          if (_skinWord.hasMatch(sentence)) sentence,
+      ],
+      answers: <String, bool>{},
+    ),
   );
-  return !skin.any(_skinKept.hasMatch) &&
-      skin.any((sentence) => _skinOffFor(item, sentence));
+  return skin.answers[item] ??= () {
+    _count('skinScans');
+    return !skin.sentences.any(_skinKept.hasMatch) &&
+        skin.sentences.any((sentence) => _skinOffFor(item, sentence));
+  }();
 }
 
 bool _skinOffFor(String item, String sentence) {
@@ -13505,10 +13516,10 @@ _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
   final repeats = <int, List<(int, int)>>{};
   for (final i in repeatable) {
     if (index.lower[i].contains('repeat with')) {
-      for (final (j, text) in index.sentences[i].indexed) {
-        if (_repeatsOf(text) case final n?) {
-          (repeats[i] ??= []).add((j, n));
-        }
+      // v98 (Run 071/072 P4): the rounds, not the pieces.
+      if (_repeatRoundsIn(index.sentences[i]) case final list
+          when list.isNotEmpty) {
+        repeats[i] = list;
       }
     }
   }
@@ -13563,21 +13574,24 @@ final RegExp _eachServing = RegExp(
 /// print serves it "with (about) <amount>" (group 1: "about ").
 final RegExp _servedWith = RegExp(r'\bwith\s+(about\s+)?$');
 
-/// v92 (batch M89; prep51 design_v2 §1 Q5 (c), v2 K-6 clause (1)): the
-/// counted repeat a lower-cased step [sentence] prints — "repeat with (the)
-/// remaining <N> <noun>" — its N; null when none. N is a digit run or a
-/// number word ([_numberWords]); <noun> a PIECE (rounds, crusts, chops …),
-/// never a measure: a unit of the shipped vocabulary ([isMeasureUnit])
-/// refuses — braised-beef-short-ribs' "Repeat with the remaining 1
-/// tablespoon oil and the remaining meat" is the remainder of a print, not
-/// a count (21 corpus recipes print a unit there). The sentence's other
-/// words multiply nothing ([_multiplies], once the phrase and a "for each
-/// <its noun>" are blanked: "… adding 1 tablespoon oil to baking sheet for
-/// each round"), else it refuses as guard (ii) does. The guard reads the
-/// noun word and, for the vocabulary's one two-word unit ("2 fluid
-/// ounces"), the two words together. Anchored on a literal, every run
-/// bounded: linear per sentence.
-int? _repeatsOf(String sentence) {
+/// v92 (batch M89; prep51 design_v2 §1 Q5 (c), v2 K-6 clause (1)): the counted
+/// repeat a lower-cased step [sentence] prints — "repeat with (the) remaining
+/// <N> <noun>" — its N; null when none. N is a digit run or a number word
+/// ([_numberWords]) — v98 (Run 071/072 P2): one to three digits
+/// ([_repeatWith]), so no count throws (a 20-digit run left `int.tryParse` null
+/// and the word map's `!` threw out of the memoised [_stepPrintsOf]: the whole
+/// compute failed), wraps (2^63 − 1: `1 + N` negative) or runs unbounded
+/// (1,000,000 crusts: 13,411,681 g); <noun> a PIECE (rounds, crusts, chops …),
+/// never a measure: a unit of the shipped vocabulary ([isMeasureUnit]) refuses
+/// — braised-beef-short-ribs' "Repeat with the remaining 1 tablespoon oil and
+/// the remaining meat" is the remainder of a print, not a count (21 corpus
+/// recipes print a unit there). The sentence's other words multiply nothing
+/// ([_multiplies], once the phrase and a "for each <its noun>" are blanked: "…
+/// adding 1 tablespoon oil to baking sheet for each round"), else it refuses as
+/// guard (ii) does. The guard reads the noun word and, for the vocabulary's one
+/// two-word unit ("2 fluid ounces"), the two words together. Anchored on a
+/// literal, every run bounded: linear per sentence.
+(int, String)? _repeatsOf(String sentence) {
   final m = _repeatWith.firstMatch(sentence);
   if (m == null ||
       isMeasureUnit(m[2]!) ||
@@ -13594,16 +13608,99 @@ int? _repeatsOf(String sentence) {
   if (_multiplies.hasMatch(rest)) {
     return null;
   }
-  return int.tryParse(m[1]!) ?? _numberWords[m[1]!]!.toInt();
+  return switch (int.tryParse(m[1]!) ?? _numberWords[m[1]!]?.toInt()) {
+    final n? => (n, m[2]!),
+    null => null,
+  };
 }
 
-/// [_repeatsOf] on a step sentence as the index holds it (lower-cased).
+/// [_repeatsOf]'s N on a step sentence as the index holds it (lower-cased).
 @visibleForTesting
-int? repeatsOfForTest(String sentence) => _repeatsOf(sentence.toLowerCase());
+int? repeatsOfForTest(String sentence) =>
+    _repeatsOf(sentence.toLowerCase())?.$1;
 
-/// v92 (M89): "repeat with (the) remaining <N> <noun>( <word>)".
+/// v98 (Run 071/072 P4): the counted repeats of one step's [sentences] —
+/// (sentence, rounds), in sentence order — the rounds each makes beyond the
+/// step's pass it repeats: an "in M batches" tail ([_inBatches]) M; else its
+/// N pieces ([_repeatsOf]) in rounds of that pass's count of the same piece
+/// noun — the NEAREST count before a form of it ([_formsOf]), within one
+/// word, in an earlier sentence of the step ([_countedPieces]): ceil(N ÷ that
+/// count). "Carefully lay 3 patties in skillet … repeat with remaining 3
+/// patties" one round (0314), "place 2 balls … Repeat with remaining 2 balls"
+/// one (0311), 0041's "Transfer 6 pieces …" (not its "12 equal pieces"
+/// before) one, the pizza's "Transfer 1 dough round … Repeat with remaining
+/// 2 dough rounds" and "Drizzle top of 1 crust … repeat with remaining 2
+/// crusts" two each (v92's rows unchanged); no such count, N — one piece a
+/// round, v92's reading. Step text only; each step's counts read once, and
+/// only where a repeat is (`repeatFirstPasses`), each repeat's looked up by
+/// a binary search: linear in the step.
+List<(int, int)> _repeatRoundsIn(List<String> sentences) {
+  final out = <(int, int)>[];
+  Map<String, List<(int, int)>>? passes;
+  for (final (j, text) in sentences.indexed) {
+    final repeat = _repeatsOf(text);
+    if (repeat == null) {
+      continue;
+    }
+    final (n, noun) = repeat;
+    final batches = _inBatches.firstMatch(text)?[1];
+    if (int.tryParse(batches ?? '') ?? _numberWords[batches]?.toInt()
+        case final m? when m > 0) {
+      out.add((j, m));
+      continue;
+    }
+    passes ??= () {
+      _count('repeatFirstPasses');
+      final found = <String, List<(int, int)>>{};
+      for (final (k, s) in sentences.indexed) {
+        for (final c in _countedPieces.allMatches(s)) {
+          final count = int.tryParse(c[1]!) ?? _numberWords[c[1]!]?.toInt();
+          if (count != null && count > 0) {
+            for (final word in [c[2]!, ?c[3]]) {
+              for (final form in _formsOf(word)) {
+                (found[form] ??= []).add((k, count));
+              }
+            }
+          }
+        }
+      }
+      return found;
+    }();
+    final counts = passes[noun] ?? const <(int, int)>[];
+    final at = _firstAfter(counts, j, (c) => c.$1);
+    final k = at == 0 ? null : counts[at - 1].$2;
+    out.add((j, k == null ? n : (n + k - 1) ~/ k));
+  }
+  return out;
+}
+
+/// [_repeatRoundsIn] on a step's text as the index splits it (lower-cased):
+/// each sentence's rounds, or null.
+@visibleForTesting
+List<int?> repeatRoundsForTest(String step) {
+  final sentences = step.toLowerCase().split(_sentenceBreak);
+  final rounds = {for (final (j, r) in _repeatRoundsIn(sentences)) j: r};
+  return [for (var j = 0; j < sentences.length; j++) rounds[j]];
+}
+
+/// v98 (P4): a counted repeat's batch tail — "remaining 8 sandwiches in 2
+/// batches" (0820).
+final RegExp _inBatches = RegExp(
+  r"\bremaining (?:\d{1,3}|one|two|three|four) [a-z’'-]+ in "
+  r'(\d{1,3}|one|two|three|four) batch(?:es)?\b',
+);
+
+/// v98 (P4): a count and the (up to two) words after it — a first pass's
+/// pieces ("lay 3 patties", "stand 2 pork chops"); anchored on the count,
+/// every run bounded: linear per sentence.
+final RegExp _countedPieces = RegExp(
+  r"\b(\d{1,3}|one|two|three|four) ([a-z’'-]+)(?: ([a-z’'-]+))?",
+);
+
+/// v92 (M89): "repeat with (the) remaining <N> <noun>( <word>)" — v98 (P2):
+/// N at most three digits (no corpus count exceeds 8).
 final RegExp _repeatWith = RegExp(
-  r'\brepeat with (?:the )?remaining (\d+|one|two|three|four) '
+  r'\brepeat with (?:the )?remaining (\d{1,3}|one|two|three|four) '
   "([a-z’'-]+)(?: ([a-z’'-]+))?",
 );
 
@@ -13947,6 +14044,15 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
     if (references || _prepNotesRead(recipe)) 'prep_notes': recipe.prepNotes,
     if (references) ...{
       'sections': [for (final sub in recipe.subsections) sub.title],
+      // v98 (Run 071/072 P6): and their yields, which the own-section route
+      // reads ([_yieldTailOf]'s `atYield(sub.servings)`, reached only
+      // through [isReferenceIn] and the resolver's list) — beside a standing
+      // reference line (v91: 0521's |9) a yield edit re-routing another line
+      // flipped no other term; with none, the edit that routes a line flips
+      // `references` itself. Under `references` as the titles are: a host
+      // routing to no section is never staled by one (the v44 / v47 / v81
+      // stale-scope design).
+      'section_servings': [for (final sub in recipe.subsections) sub.servings],
       // v52 (M51 Q8): the group headings — rule SW reads a CONDIMENTS one.
       'groups': [for (final group in recipe.ingredients) group.group],
       // v47 (F2): and whether the section a line names lists lines — only
@@ -13994,6 +14100,12 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
         {
           'raw': line.raw,
           'item': line.item,
+          // v98 (Run 071/072 P1): the structured prep, which v84 C1b reads
+          // ([lineGrams]' crusts-removed share) — stored apart from raw (the
+          // editor's Prep field, the API, a hand-edited YAML): a prep-only
+          // edit left the stamp fresh while the recompute moved the row
+          // (0014|6 56.31 → 136.08 g). Every line, for every prep reader.
+          'prep': line.prep,
           'amounts': [for (final amount in line.amounts) amount.toMap()],
           // A sub-recipe's eaten "plus" part is read from its subsection
           // ([weighedLine]): an edit there changes what the line counts
@@ -15930,7 +16042,8 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// kept 55.4 %; the lean-only flat pair keeps all its energy). Applied in
 /// [recomputeTotals] beside Q25's alcohol, ENERGY only, only where
 /// [trimStandInFlagOf] flags the line (one raw test: the flag and the
-/// deduction never part); the row's grams and kcal column stay gross.
+/// deduction never part — for M70's and M72's keys; v86's and v94's deduct
+/// with NO flag, below); the row's grams and kcal column stay gross.
 /// v70 (batch M72; prep50 design_v2 §2 M72, pE R-E1/R-E2 and R-E3, §0.3 the
 /// braised-pair doctrine; decided under the 2026-10-07 standing
 /// authorization): [braisedKept] is the share of
@@ -15948,7 +16061,13 @@ final List<(RegExp, Map<int, int>)> trimDepthRecords = [
 /// trimmed to 0" fat, choice", raw DETAIL → braised hit: R-E3). Read only
 /// through [braisedKeptOf], whose gate ([_defatsLiquid]: the recipe's own
 /// steps print that the fat is not served) applies to EVERY key — the
-/// deduction, the basis flag and the GET read the same recipe.
+/// deduction, the basis flag and the GET read the same recipe. v98 (Run
+/// 071/072 critic, the design stated): a key with no flag case in
+/// [trimStandInFlagOf] (v86's 167853 / 172513, v94's 171093 / 171533)
+/// deducts with no basis flag, and that call passes no `position` — so a
+/// `_lineOrderGated` key answers null there: a flag case added for one
+/// must pass the row's position, or it would print "not deducted" beside a
+/// deducting total.
 /// v72 (batch M74; prep50 design_v2 §2 M74, the owner's Q1 (a′) for
 /// onion-braised, 2026-10-15): 168743 → SR 169440 "Beef, brisket, flat half,
 /// separable lean and fat, trimmed to 0" fat, choice, cooked, braised" (the
@@ -23433,6 +23552,25 @@ String _m52Key(
   final key = StringBuffer(
     '${food?.position} ${food?.grams} ${food?.description}',
   );
+  // v98 (Run 071/072, RECORDED with P3): the browning plan's browned food
+  // ([_browningFatPlan]: the largest counted row over [_brownedRecords]) —
+  // the coated food above reads [_meatRecords] only, so two row lists whose
+  // lamb, veal, duck or game row differs keyed alike with different plans.
+  if (_browningFatLines(recipe).isNotEmpty) {
+    IngredientMatchRow? browned;
+    for (final r in at.values) {
+      if (_m52Counted(r) &&
+          _brownedRecords.any(r.description!.startsWith) &&
+          (browned == null ||
+              r.grams! > browned.grams! ||
+              (r.grams == browned.grams && r.position < browned.position))) {
+        browned = r;
+      }
+    }
+    key.write(
+      ' browned ${browned?.position} ${browned?.grams} ${browned?.description}',
+    );
+  }
   // v75 (M78): a C4 sauté's pan-fat line is read on its line, record and
   // hold only (as a dip's) — only beside a coated meat ([_panFatLines]).
   // Its medium bit is read nowhere in the plan: a pan line has no
@@ -23540,14 +23678,17 @@ bool _m52KeysAlike(
 ) {
   final lines = nutritionLines(recipe);
   bool laid(IngredientMatchRow r) => _m52Laid(lines, r);
-  // v82 (F8): a coat's mixture part keys as a dip's line ([_m52Key]).
+  // v82 (F8): a coat's mixture part keys as a dip's line ([_m52Key]); v98
+  // (Run 071/072 P3): so does a browning-fat line, as [_m52Key] keys it.
   final dip =
       _dipsOf(recipe).containsKey(row.position) ||
-      _coatOfPart(recipe, row.position) != null;
+      _coatOfPart(recipe, row.position) != null ||
+      _browningFatAt(recipe, row.position);
   return laid(row) &&
       laid(confirmed) &&
       !(_m52Counted(row) &&
-          (_meatRecords.any(row.description!.startsWith) ||
+          // v98 (P3): a browned food too ([_brownedRecords] ⊇ the meats).
+          (_brownedRecords.any(row.description!.startsWith) ||
               // v67 (M69 R2): a coated vegetable is the coated food too.
               _coatVegetables.any(row.description!.startsWith) ||
               _dredgeHeads.contains(_headsOf(recipe)[row.position]))) &&
@@ -23676,7 +23817,24 @@ _M52Row? _m52OnConfirm(
         (coat &&
             ((row != null && _m52KeysAlike(recipe, row, confirmed)) ||
                 _m52Key(recipe, confirming(stored.rows.values)) ==
-                    stored.key))) {
+                    stored.key)) ||
+        // v98 (Run 071/072 P3): a browning-fat line's entry
+        // ([_browningFatPlan], or the C4 / kept-solids arm's that wins it)
+        // reads its row on its line, record and hold, never its grams or
+        // source — so the request's plan answers a confirm whose row keys as
+        // the stored one in O(1): a line the rule leaves whole is stored on
+        // its engine source, never the confirm's `discarded` (400 plans,
+        // 320,001 food reads and ~14 s a GET at the editor caps before; one
+        // now). Its hold exactly (the key reads none or `coating`, the arm
+        // none); never a frying oil's (the fryer block's entry reads the
+        // row's `discarded`: the whole plan's key). A cut dough line's cut
+        // entry reads it as the browning arm does (engine, hold, gate,
+        // record), and a fat's record is no fried food.
+        (row != null &&
+            row.hold == null &&
+            _browningFatAt(recipe, at) &&
+            _mediumAt(recipe, at) != DiscardedMedium.fryingOil &&
+            _m52KeysAlike(recipe, row, confirmed))) {
       return stored.plan[at];
     }
   }

@@ -563,6 +563,9 @@ const Map<String, Map<String, int>> _capCounts = {
   'TRUE compute': {
     'indexes': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text (`skinScans`; uncounted before).
+    'skinScans': 1,
     'allSentences': 1,
     'lower': 1,
     'sentences': 30847,
@@ -623,6 +626,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:browningFat': 1,
     'memo:panFatLines': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text (`skinScans`; uncounted before).
+    'skinScans': 1,
     'allSentences': 1,
     'memo:liftedFromMarinade': 1,
   },
@@ -644,6 +650,9 @@ const Map<String, Map<String, int>> _capCounts = {
   'QUIET compute': {
     'indexes': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text (`skinScans`; uncounted before).
+    'skinScans': 1,
     'allSentences': 1,
     'lower': 1,
     'sentences': 30847,
@@ -704,6 +713,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:browningFat': 1,
     'memo:panFatLines': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text (`skinScans`; uncounted before).
+    'skinScans': 1,
     'allSentences': 1,
     'memo:liftedFromMarinade': 1,
   },

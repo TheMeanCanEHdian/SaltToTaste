@@ -16,6 +16,7 @@ fix82 run — re-point `W` and `SNAP` before a re-run; each shard reads its own 
 | sw6.dart (+ run_sw6_sw7.sh) | verify5 (c5 and v5 copies identical) | sw5 + spec `pall` (every M52 row of the recipe picked on its own record) | 250 of 36,828 (named 196, order C 46, pall 8) | 0 of 36,828 after closer 5 (A 16,740, B 16,740, C 3,348) |
 | sw7.dart (+ run_sw6_sw7.sh) | closer 5 | sw6 re-specced: a person's SKIP / typed 77 g / skip + un-skip of a PLAN ROW itself (no food op) — 611 rows × 3 | — | 1,833 combos, 0 divergent |
 | sw8.dart (+ run_sw8.sh) | verify6 | sw6 + specs cp / pc (the plan row confirmed then picked / picked then confirmed) + order D (food skipped → plan-row op → food PICKED on its own record) | 519 of 55,893 (reproduces verify4's 195 and sw6's 250 exactly) | 0 of 55,893, 0 refused, 0 errors, calls 0 |
+| sw8r.dart (+ run.sh) | v96 closer 2 (verify2 D4; committed at v98) | sw8 with `planned()` = the 21 recipes the v96 browning arm moves (8 hold no M52 row on snapshot 30, so sw5–sw8 never settle them); snapshot 30 | base f912190 (v95): 3,858 combos, 0 divergent | v96: 5,433 combos, 0 divergent, 0 refused, calls 0 |
 | sw9.dart (+ run.sh) | fix83 (v83 F2, ledger Q13) | the cold-cache apply: settle the 128 recipes and child sections (bulkScopeIds(all), closer 1: 124 recipes + 4 sections) of the 8 keys holding a Rule B1 row (bacon, thick-cut bacon, pancetta, pancetta or bacon, lemon / lime zest plus juice, orange peel plus juice, chickpea); from EACH auto food line of a key (130: 126 recipe lines + 4 section lines, each through its own recipe as the `?section=` PUT), evict the key's part records no library row counts as its food from both caches (168322 for the four bacon keys; none for the other four — each of their part records is a row food, cached by that row's compute), serve them from the provider (NoNet otherwise), pick another cached record then the line's own, each apply_to_all; every recipe of the key: stale_reason null, stored == a full matchAndCompute (0 requests), requests == the evicted parts the key's rows read, each once | base 4325a3d: 54 of 130 divergent (every line of a key whose rows read 168322 — 52 recipe lines + 2 section lines: requests [] and these left `underived`, stored != compute (each line's own recipe or section excepted): from the 28 bacon lines (2 of them section lines) the 8 B1 recipes and 0158's stuffing section; the 18 pancetta lines 0333 pasta-alla-gricia and 0434 salade-lyonnaise; the 6 thick-cut bacon lines 0040 wilted-spinach-salad, 0446 potato-casserole and 1134 tartiflette; the 2 pancetta or bacon lines 0332 pasta-with-tomato-bacon-and-onion — by key 14 recipes and 0158's section (closer 2); before closer 1 the sweep read main recipes only: 52 of 126) | v83: 0 of 130, 0 refused, 0 skipped; those 54 lines ask 168322 once |
 | sw10.dart (one process) | fix83 (v83 F3, ledger Q14) | the Confirm round trip: every snapshot-29 row whose UNGATED move inverse names another record (156: 155 `weight`, 1 `piece`) Confirmed through the real PUT, the row removed (stands in for a text edit) and the recipe computed; the landed row == the row (record, grams, source), stored == a second full compute, calls 0; closer 1: each row also Confirmed with its own grams TYPED (`override`), which must decide what the bare Confirm decides | base 4325a3d: 155 of 156, bare and typed (0150\|6 decides 172378, lands on 172378 at 1,376.00 g, 958.56 /serving); before closer 1: 156 bare, 125 of 156 typed (the 31 gated `weight` rows decided their moved record) | v83: 156 of 156, bare and typed |
 
@@ -28,3 +29,17 @@ v83 (batch M81, 2026-10-27): GATE-P on base 4325a3d and on v83 — sw5 31,141, s
 55,893 combos, 0 divergent, 0 refused, 0 errors on both (12 shards each, run.sh); + sw9 and sw10 above.
 sw9 runs as sw4–sw8 (`run.sh sw9.dart <tree> <snap> <workdir> 12`); sw10 alone
 (`dart --packages=<tree>/.dart_tool/package_config.json sw10.dart <snap> <workdir>`, ~20 s with the typed pass).
+
+v88 (batch M88, 2026-10-29; docs/API.md "Matcher v88"): GATE-P on base dbb6092 and on v88 (12 shards, fresh
+snapshot-29 copies) — sw5 31,229, sw6 36,916, sw7 1,839, sw8 56,043 combos, 0 divergent, 0 refused, 0 errors on
+both, calls 0.
+
+v96 (batch M94, 2026-10-30; docs/API.md "Matcher v96"): GATE-P on base f912190 and on v96 (12 shards, fresh
+snapshot-30 copies, .claude/diag/2026-10-29/snap30.db) — base sw5 31,229,
+sw6 36,916, sw7 1,839, sw8 56,043; the tip sw5 31,757, sw6 37,444, sw7 1,875, sw8 56,943 combos; 0 divergent, 0
+refused, calls 0 on both. Those sweeps reach 13 of the 21 moved recipes; sw8r.dart (above) the 21: settled 21, a
+second pass moves 0, base 3,858 / tip 5,433 combos, 0 / 0, calls 0.
+
+v98 (the Run 071/072 fixes, 2026-10-31; docs/API.md "Matcher v98"): GATE-P on base bdd0c5e and on v98 (12 shards,
+fresh snapshot-30 copies) — sw5 31,757, sw6 37,444, sw7 1,875, sw8 56,943 and sw8r 5,433 combos, 0 divergent, 0
+refused on both, calls 0; settled 268 (sw8r 21), a second pass moves 0.

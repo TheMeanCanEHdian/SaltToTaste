@@ -674,6 +674,9 @@ void main() {
         // The cap recipe's sentences and skin sentences, once.
         'allSentences': 1,
         'memo:skinSentences': 1,
+        // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+        // skin sentences, once per index and item text (`skinScans`; uncounted before).
+        'skinScans': 1,
         'sentences': sentences,
         'words': words,
       };
@@ -902,7 +905,11 @@ void main() {
         // f656c45d…; the version alone — the base engine with 91 gives this literal).
         // RE-PIN (M95 batch, v97): the hash at matcherVersion 92 (was
         // b2e51a29…; the version alone — the base engine with 92 gives this literal).
-        '0384cb5a828ea992a799bd657c546642201e13ddaf45d625d566f1deb35c996d',
+        // RE-PIN (v98, the Run 071/072 fixes): matcherVersion 92 unchanged (was
+        // 0384cb5a…; two hash terms — P1 `prep`, which alone gives this
+        // literal, and P6 the sections' yields of a recipe holding a
+        // reference line, none on this section).
+        '3e0437cafdeb80174305b38e56f25a838002ecde539858c599e5d6813781524f',
       );
     });
   });

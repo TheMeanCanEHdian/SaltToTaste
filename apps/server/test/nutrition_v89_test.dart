@@ -1079,6 +1079,9 @@ const Map<String, int> _shared = {
   'memo:savesRemainder': 1,
   'memo:setAsideLine': 1,
   'memo:skinSentences': 1,
+  // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+  // skin sentences, once per index and item text (`skinScans`; uncounted before).
+  'skinScans': 1,
   'memo:starter': 1,
   'memo:strain': 1,
   'memo:strainAt': 1,

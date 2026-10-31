@@ -413,7 +413,11 @@ void main() {
           // version alone — the base engine with 91 gives this literal).
           // RE-PIN (M95 batch, v97): matcherVersion 92 (was 743de984…; the
           // version alone — the base engine with 92 gives this literal).
-          '4d1ea6a6cf825d208e17f6c3fe09e880b500fc4dc0b9cd53bb83e84edfc816f2',
+          // RE-PIN (v98, the Run 071/072 fixes): matcherVersion 92 unchanged
+          // (was 4d1ea6a6…; two hash terms — P1 `prep`, alone 7f225d51…, and
+          // P6 the sections' yields beside their titles: chraime holds a
+          // reference line).
+          '164f3e5ceca9749eb679f63a41c7b18ac6d456c0f2f556bd08cf2e14bcd341f3',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

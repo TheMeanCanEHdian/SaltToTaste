@@ -243,6 +243,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // v92 (M89): the counted repeats `_repeatsOf` finds — each sentence of a
     // step holding a print read once per index (`memo:stepAmounts`).
     'repeats': sentences,
+    // v98 (Run 071/072 P4): a repeat step's counts read for its rounds, once
+    // per step holding a counted repeat and index.
+    'repeatFirstPasses': steps,
     // v71 closer 1 (verify1 D1): the prints R-H1 indexes — one per match
     // of a unit amount, so at most one per character of the steps — and
     // the prints the read lines walk: each print is filed under at most
@@ -333,6 +336,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // line's lead amount of its head out as a dredge's coat (v33), once
       // per lead amount and head.
       'memo:setsOut',
+      // v98 (Run 071/072 P8): `skinDiscarded`'s scan of the skin sentences,
+      // once per index and item text.
+      'skinScans',
     ])
       perText: 3 * texts,
     'mentions': mentions,

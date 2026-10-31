@@ -588,6 +588,9 @@ IngredientMatchRow _row(SaltDatabase db, String id, int position) =>
 const Map<String, int> _shared = {
   'indexes': 1,
   'memo:skinSentences': 1,
+  // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+  // skin sentences, once per index and item text (`skinScans`; uncounted before).
+  'skinScans': 1,
   'allSentences': 1,
   'lower': 1,
   'sentences': 15,

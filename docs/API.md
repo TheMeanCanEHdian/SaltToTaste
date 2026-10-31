@@ -1823,12 +1823,17 @@ vegetable oil, for frying" (each zeroed by the mass rule). A smaller line a sent
 matcher v27 EVERY medium threshold reads both unit families (Run 057: each
 read `volumeMlOf` only, so a line written by weight skipped them all): a
 line's written volume, else its grams at its food's table density — ¼ cup
-of oil 54.4 g (0.92 g/mL), of flour 30.2 g (0.51), of panko 14.8 g (0.25),
-of bread crumbs 26.6 g (0.45) and of a starch 31.9 g (0.54) since v28
+of oil 54.4 g (0.92 g/mL), of flour 35.4 g (0.5991 since matcher v84, M82
+C5a; 30.2 g at 0.51 before), of panko 14.8 g (0.25),
+of bread crumbs 26.6 g (0.45) and of a starch 31.9 g (0.54) since v28 —
+cornstarch 28.35 g (0.4793) since matcher v89 (M90; the generic starch's
+0.54 still reads tapioca and potato starch)
 (Run 058 S6: the corpus's "bread crumbs" and a tapioca or potato starch had
 no figure, so "8 ounces plain dried bread crumbs" was no dredge — figures a
 reader with no food reads, never a line's grams, which keep the record's
-own portion), of sugar 50.3 g (0.85); the brine salt's 3 tablespoons (44 mL) 53.7 g of
+own portion), of sugar 49.61 g (0.8388 since matcher v89; 50.3 g at 0.85
+before — nutrition_v28_rule_b's I3(f) brine-sugar boundary pair is 50 / 49 g
+since, 51 / 50 before); the brine salt's 3 tablespoons (44 mL) 53.7 g of
 table salt (1.22) or 26.8 g of kosher (0.60865 since v63; 31.7 g at 0.72 before); a buttermilk soak's or a cheese
 milk's 4 cups (exactly a written "4 cups", 946.35 mL, since v28) 974.7 g
 (1.03): "20 ounces flour" is a dredge like "4
@@ -2247,7 +2252,7 @@ oysters bought by weight),
 line of a sourdough starter whose feeding step keeps a little starter and
 discards the rest — "discard remaining starter"; how much of the flour ends in the kept starter nothing says),
 `coating` (since v22, Q2: ¼ cup or more of flour, starch or crumbs — since
-v27 by weight too, 30.2 g of flour — that
+v27 by weight too, 35.4 g of flour since matcher v84 (30.2 g before) — that
 a step names in a dredge — "dredge … in the flour", "shake off excess
 flour", or set out in a shallow dish — or a line that says "for dredging" /
 "for coating". Since matcher v33 (the owner's dredge-reach ruling,
@@ -3377,16 +3382,21 @@ beef, steak-frites' rib-eye and the tostadas' pork are not fried in it).
 | O2 battered cod, haddock | 15.38 | FNDDS 2706244, 2706258 |
 | O2s battered shrimp | 15.38 | FNDDS 2706364 |
 | O3 floured squid or shrimp (a C3 coat) | 5.3 | SR 171982, derived |
-| O4 potatoes | 6.0 | SR 170698, derived |
+| O4 potatoes | 12.51 (since matcher v97, M95; 6.0 on SR 170698, derived, before) | FNDDS 2709458 "Potato, french fries, from fresh, fried", read (15 g oil per 119.89 g raw potatoes) |
 | O4c chips (a grated or shredded potato, or steps saying "chips") | 10.9 | SR 19411 "Snacks, potato chips, plain, salted" (FNDDS 2709422's one input), derived |
 | O4p plantains | 5.5 | SR 168200, derived |
-| eggplant, sweet potatoes | 6.0 | SR 170698, stand-in |
+| eggplant, sweet potatoes | 12.51 (since matcher v97; 6.0 on SR 170698 before) | FNDDS 2709458, stand-in |
 | O5 battered cauliflower | 30.32 | FNDDS 2710042 |
 | O6 corn tortillas | 13.4 | SR 167525, derived |
 
 The flag: `· approximation (frying oil absorbed: {u} % of the raw {food}'s
 weight — USDA FNDDS {id} recipe: {o} g oil per {R} g raw {food})`, derived
-`… — derived from USDA SR Legacy {id} "{description}"`, a stand-in adding
+`… — derived from USDA SR Legacy {id} "{description}"`, a record whose
+cooked input is brought to raw naming its tracer (since matcher v97 the
+fries' ` (its baked potato brought to raw by carbohydrate on SR 170030 /
+170027 (russet, a stand-in for the generic baked potato) and SR 170033 /
+Foundation 2346401)`, after the recipe; the cake doughnut's ` by its
+carbohydrate`), a stand-in adding
 ` (no record for {food}; read as {record})`, several fried foods joined by
 "; "; the basis `discarded in cooking — only the oil the fried food absorbs
 counted` (with a kept part `only "{part}" and the oil the fried food
@@ -5158,6 +5168,157 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v98 (the dual-fleet Run 071/072 fixes over the prep51 chain v83–v97;
+matcherVersion 92 unchanged — no corpus row moves: the replay of snapshot 30 is
+byte-identical to the v97 set (rows, recs, sections, calls, notes, buckets; main
+== rev; calls 0; staleAfter 0); zero requests; server only).** Each restores an
+invariant the Sonnet 5.5 and Opus 5.5 fleets found broken (union_P.md, P1–P8 +
+RECORDED); every fleet reproduction was re-run before (base bdd0c5e) and after:
+- **P1 (MED) — a line's `prep` is a hash term.** v84 C1b's crusts-removed share
+  reads the structured `prep` (`_crustsRemoved.hasMatch(line.prep ?? '')`), which
+  `ingredientsHashOf` never hashed: a prep-only edit left the stamp fresh while
+  the recompute moved the row. The prep reaches the document apart from raw: the
+  API (`item` / `prep` per line), a hand-edited YAML (file wins) and the app
+  editor's own Prep field (`_setStructured` sends the ORIGINAL raw with the new
+  prep; `_autoParse` re-derives only lines not edited by hand — the app is not
+  changed). The 'lines' payload hashes every line's `prep`. Before / after:
+  creamy-gazpacho-andaluz|7 "crust removed, torn …" → "torn …" on a snapshot-30
+  copy: fresh true → false (the recompute 18.77 → 45.36 g, 334.73 → 352.41 kcal
+  a serving, calls 0, on both); 0014|6 and 0357|0 hash equal → differing (56.31
+  → 136.08 g, 37.54 → 90.72 g).
+- **P6 (LOW) — the sections' yields are a hash term** (`section_servings`,
+  beside the section titles under `references`): the own-section route reads
+  them (`_yieldTailOf`'s `atYield`, reached only through `isReferenceIn` and the
+  resolver's list), and beside a standing reference line (v91: 0521's |9) a
+  yield edit re-routing another line flipped no other term — 0521's "Fried Rice
+  with Peas and Bean Sprouts" SERVES 4 TO 6 → MAKES 1 cup: hash equal →
+  differing with |9 present, fresh true → false; the recompute re-routes |10 "1
+  cup bean sprouts" from FNDDS 2709768 90 g `portion` to its own section at
+  share 1.0 (both trees). With no reference line, the edit that creates or
+  removes the only route flips `references` itself. Not on every recipe (built
+  first, measured): a host routing to no section then read stale when a section
+  was added or its yield edited — nutrition_v81's three F17 stale scopes and
+  v44's chraime stamp failed; under `references` only that last pin re-pins
+  (chraime holds a reference line: its own stamp moves too, stale either way).
+- **P2 (MED) — the repeat count is bounded.** `_repeatWith` read `\d+` and
+  `_repeatsOf` ended `int.tryParse(…) ?? _numberWords[…]!`: a 20-digit count
+  threw a TypeError out of the memoised `_stepPrintsOf` (the compute of the
+  recipe failed — no rows, no totals — on every sweep; `derivedFor` threw on a
+  decided pizza|12), 2^63 − 1 wrapped `1 + N` (40.23 g silently) and 1,000,000
+  read 13,411,681.25 g (29,640,616 kcal a serving). Now one to three digits (no
+  corpus count exceeds 8) and the fallback null-safe: a longer run is no counted
+  repeat — on the pizza's step 9 every such count reads step 9's print × 1,
+  53.65 g `portion`, 919.15 kcal (the real "2 crusts": 80.47 g, 978.43; 999
+  stays 999, the stated cap, 13,451.86 g).
+- **P3 (MED) — the matches GET plans M52 once for any number of confirmed
+  browning lines.** v96 put `_browningFatAt` in `derivedFor`'s Confirm arm, so
+  every confirmed browning row reached `_m52OnConfirm`, whose memo path
+  shortcut only `sameMatchRow` or a coat keyed alike: a browning line the
+  per-line rule leaves WHOLE is stored on its engine source (`portion`), never
+  the confirm's `discarded`, so the GET ran a full `_m52Plan` per row — at the
+  caps (0087's meat line + 399 × hearty-chicken-noodle-soup|0's "1 tablespoon
+  vegetable oil", 120 × 10,000-character steps, the last skimming) 400 plans,
+  320,001 food reads, 13.9 s (the fleets 14–19 s; f912190 0 plans). Now
+  `_m52OnConfirm`'s memo path answers a browning line from the request's plan
+  (`stored.plan[at]`; none = the engine row stands) when its stored row holds no
+  hold, its line is no frying oil and the row keys as the confirm's in O(1)
+  (`_m52KeysAlike`, which now keys a browning line as `_m52Key` does — medium
+  bit masked — and refuses a counted row over `_brownedRecords`): 1 plan, 1,599
+  food reads, 1.1 s; the PLANNED control (24.12 g `discarded`) 1 plan before and
+  after; the compute 2 plans and the recompute 1, unchanged. Its gates: the
+  browning / C4 / kept-solids entries read the row on line, record and hold only;
+  a frying oil's fryer entry reads its `discarded` (the whole plan's key); the
+  hold exactly (the key reads none or `coating` alike). The RECORDED gap (Opus
+  critics 2 / 3) closed in the same hunk: `_m52Key` writes the browned food the
+  browning plan reads (the largest counted row over `_brownedRecords` — the
+  coated food's `_meatRecords` never read 'Lamb,' / 'Veal,' / 'Duck,' / 'Game
+  meat,'), so two row lists differing in a lamb row no longer key alike in the
+  compute's pass. classic-chicken-noodle-soup|0 confirmed through the PUT: the
+  GET 2 plans → 1, serving the stored 14.00 g `portion`.
+- **P8 (LOW) — the skin scans are answered once.** v96's `_browningFatPlan`
+  weighs each browning line (`lineGrams`) per plan pass, and `lineGrams` asks
+  `skinDiscarded`, which rescanned every skin sentence on every call,
+  uncounted: v96's TRUE shape with one "Remove the skin from the chicken thighs
+  and discard." per chunk took compute 14.2 s, GET 5.3 s, recompute 4.7 s
+  (Opus: ~14 × f912190's recompute). The answer is now kept per index and item
+  text inside the `#skinSentences` memo (the scan's only inputs), each scan
+  counted `skinScans` (per text in cost_bounds): 1.2 s / 1.0 s / 0.43 s, 2 / 2
+  / 1 scans, the oils 24.12 g `discarded` either way.
+- **P4 (LOW) — a counted repeat counts rounds, not pieces.** v92 multiplied by
+  N PIECES, N rounds only when each piece is its own round (the pizza): a batch
+  repeated once read 1.5–2 ×. Now rounds = ceil(N ÷ k), k the NEAREST count of
+  the same piece noun (a form of it within one word after a count) in an
+  earlier sentence of the step — the pass being repeated; an "in M batches"
+  tail M; no such count N (`_repeatRoundsIn`, once per step holding a repeat,
+  `repeatFirstPasses`; step text only). On the real sentences with the line
+  made amount-less: 0314|12 "4 teaspoons × 2" = 8 tsp, 36.28 g (was × 4,
+  72.55 g; the recipe prints 8), 0311|9 ⅛ teaspoon × 2 = 0.75 g (was × 3),
+  0201|2 1 tablespoon × 2 = 27.21 g (was × 3, 40.81 g); "remaining 8
+  sandwiches in 2 batches" 2. The census of the 22 corpus counted repeats:
+  one piece a round keeps N (the pizza's 2 and 2 — pizza|12 stays 80.47 g —,
+  0198's 7 chops, 0499's eggs), a batch of N is one round. No corpus row moves
+  (every corpus line a step prints carries its amount).
+- **P5 (LOW) — every guard of the span pinned.** Sonnet's seven (v92's "one" /
+  "four"; v96's `grease` and ` except ` prefilters, `_heatsFat`'s `&&`, the
+  Veal / Duck / Game heads; v85's `serves < 1` and its 24-character window)
+  and the four guards `_browningFatPlan` copied from the C4 arm (an engine row,
+  a held row, a row below the gate, a medium other than a printed part used)
+  each carry a STATED pin killing its mutant — v96's "EQUIVALENT" held on the
+  corpus replay only: dropping the engine-row guard throws "Null check operator
+  used on a null value" on an unmatched browning line (0087 with the oil's
+  search answered empty), dropping the gate rewrites a below-gate row (the
+  fixtures' 'bacon fat' hits: 27.21 g `density` → 24.24 g `discarded`), the
+  hold (0087|2 held, recomputed: 612.07 → 648.25 kcal) and the medium (0215
+  with an appended skim and its fried potato skipped: |3 23.07 → 13.78 g) each
+  move a row.
+- **P7 (LOW) — docs and proof artefacts.** The M52 uptake table's O4 potatoes
+  and eggplant / sweet potatoes rows read 12.51 % FNDDS 2709458 since v97, the
+  flag template its tracer clause; RULE B's medium thresholds read flour 35.4 g
+  (v84), cornstarch 28.35 g and sugar 49.61 g (v89; the I3(f) pair 50 / 49 g),
+  the `coating` hold's 35.4 g; the v71 R-H1 "Not read" list marks pizza|12
+  (v92) and classic-gazpacho|10 (v85) closed; the M78 pan-fat rule and flag
+  carry v95's 3.71 %; the M72 Known-gaps Brussels entry is closed at v90;
+  engine `braisedKeptOf`'s doc states that v86's and v94's keys deduct with no
+  flag (and why a flag case must pass the position). The v96 sw8 `planned()`
+  variant is committed (tool/replay/person_sweeps/sw8r.dart) and the sweeps'
+  README carries v88's, v96's and v98's figures.
+Pins: nutrition_v98_test (27 tests; corpus-gated but the version; every corpus
+line and step real, each STATED synthesized input named in its test): P1 the
+two prep-only edits on the fixtures (fresh false, the compute's 45.36 / 136.08
+g) with raw / item / identical controls; P6 0521 with and without |9; P2 the
+reader on 2 / two / 999 / 1000 / 1,000,000 / 2^63 − 1 / 20 digits and the
+pizza's whole compute and `derivedFor` at 2, 2^63 − 1 and 20 digits; P3
+classic|0, the lamb key, the four gate cases (a held row, a frying oil, a C4
+line carried by an amount edit with and without a browning line, a counted
+lamb row at the line) and the WHOLE / PLANNED cap shapes (plans, food reads and
+keys exact on the GET / compute / recompute: (1, 1,599, 1), (2, 2,394, 399),
+(1, 1,198, —); PLANNED's GET 1,200); P8 the SKIN cap shape's three count maps
+exact; P4 the three amount-less probes, the 22-repeat census, the
+nearest-count case; P5 one pin per guard. Mutants (snapshot copy, anchor
+count 1, restored by copy + cmp; 32 run): every one KILLED by a value or count
+pin but `_repeatsOf`'s null-safe fallback put back to `!`, EQUIVALENT (the
+bounded regex reaches the word map with its four keys only) — stated, not
+counted. RE-PINs (each an equality with a RE-PIN (v98) comment, nothing
+deleted or widened): the three hash literals (seasoning_ci 3223266e… →
+a80d8680…, v47_resolver F2 4d1ea6a6… → 164f3e5c…, v83 F5c 0384cb5a… →
+3e0437ca…); `skinScans` added to 23 exact count maps (v83, v84 ×4, v85 ×5,
+v87, v89, v92 ×2, v94 ×4, v96 ×5 — every other count equal, measured with the
+family stripped); v92 TRUE's `repeatFirstPasses` 120; v44 storage's chraime
+stamp (above). Cost (RULE C): P3 and P8 lower the GET / recompute at their caps
+(above); P4's reader is the one new read — a repeat step's counts once per
+index and step holding a counted repeat (`repeatFirstPasses`, bound: steps; v92
+TRUE 120, QUIET none), each repeat's count by a binary search; P2 adds nothing;
+P1 / P6 two payload terms. Every existing cap shape's exact counts unchanged
+but the two new families.
+GATE-P (`derivedFor`'s memo path, `_m52Key` and `_m52KeysAlike` touched;
+person_sweeps run.sh, 12 shards, fresh snapshot-30 copies, base bdd0c5e vs the
+tip): sw5 31,757, sw6 37,444, sw7 1,875, sw8 56,943 combos and sw8r (the v96
+`planned()` = the 21, now committed) 5,433 on BOTH — 0 divergent, 0 refused,
+calls 0; settled 268 (sw8r 21), a second pass moves 0. Deploy note:
+matcherVersion stays 92, but the two hash terms change every recipe's stamp
+(P1's `prep` is on every line) — every stamp stales once on deploy and the
+stale sweep re-stamps on identical rows (the replay: 0 rows move, 0 requests).
+
 **Matcher v97 (batch M95; matcherVersion 92 — the fries' uptake from 2709458:
 a fried potato keeps FNDDS 2709458's read 15 g oil per 119.89 g raw potato,
 12.51 %, not SR 170698's derived 6.0 %; 10 rows, 8 recipes' totals; prep51
@@ -5460,7 +5621,10 @@ apart — closer 2), the boundary read at-or-before (the IN case above {} →
 the tip's 44 lines (closer 3), its replay the tip's rows (verify3 D6)), matcherVersion 90. EQUIVALENT, named: the plan's
 guards copied from the C4 arm (an engine row, a held row, a row below the
 gate, a medium other than a printed part used) — their mutant replays move
-no row. The existing suite re-pinned as equalities (RE-PIN M94): 13 version
+no row (CORRECTED at v98, Run 071/072 P5: pinned at v98 — equivalent on the
+corpus replay only; off it, dropping the engine-row guard crashes the compute
+on an unmatched browning line and dropping the gate rewrites a below-gate
+row, the held-row and medium guards each move a row too). The existing suite re-pinned as equalities (RE-PIN M94): 13 version
 literals (v84–v95, seasoning_ci), 3 hashes (the base engine with 91 gives
 them), cost maps (+ `memo:browningFat` 1 in v84 / v86 / v87 / v89 / v94;
 v82 DECIDED's knownFoodReads + 2 and STRAIN TRUE's recompute strain read —
@@ -7561,8 +7725,10 @@ soak — 1.00 g counted, a gap), quick-cooked-tough-greens|4 "Red pepper
 flakes" 0.45 g: +286.08 kcal. Not read: pizza|12 (its PIZZA steps print
 "Pour ¼ cup oil onto center of rimmed baking sheet." and "Drizzle top of 1
 crust with 1 tablespoon oil.", but "Repeat with remaining 2 dough rounds,
-adding 1 tablespoon oil …" names oil with `repeat` / `remaining`),
-classic-gazpacho|10 ("each portion"), lighter-corn-chowder|10 ("up to 1
+adding 1 tablespoon oil …" names oil with `repeat` / `remaining` — closed at
+v92, M89: a counted repeat, 80.47 g `portion` from steps 8, 9),
+classic-gazpacho|10 ("each portion" — closed at v85, M83 B1a: 35.76 g
+`portion`, 1 teaspoon × 8 portions), lighter-corn-chowder|10 ("up to 1
 tablespoon sugar … to taste"), moqueca|8, the mac and cheese|5,
 barbecued-pulled-chicken|18 and chocolate-volcano-cakes|9 (another line of
 the scope shares the head), meringue-christmas-trees|6 (no print), and the
@@ -7943,7 +8109,8 @@ auditors' 0.83× — no row names a spiral or cured half ham); the yuca at
 row on sweet yuca, the stem ends and core unsourced; the corned briskets'
 cure sodium (Q2 (c)); the peaches' pits on pitted-only lines (no
 all-samples pit row); Brussels' Foundation energy order (F9: 2685575 is
-read at Atwater 957's 59.49 kcal per 100 g, not 958's 48.78); the whole
+read at Atwater 957's 59.49 kcal per 100 g, not 958's 48.78 — closed at v90,
+M86: 958 read first, roasted-brussels-sprouts|0 546.38 → 448.04 kcal); the whole
 brisket's 2 h dry grill phase is not in USDA's braised pair, and the cup of
 defatted juices returned carries a little protein the tracer reads as lost;
 a make-ahead note in parentheses that skims fat would gate (none on a
@@ -8352,15 +8519,20 @@ step that pours off the fat with no kept part written (`\bpour off (?:the
 line a sentence names after the first sentence that coats or dredges and
 before the first such step (engine `_panFatLines`, once per step index) —
 keep FNDDS 2705980's oil (`_breastBaked`: 2 g oil per 125.77 g raw breast,
-1.5902 % of the coated raw food) as FAT grams: the kept fat is shared by
+1.5902 % of the coated raw food — since matcher v95 (M93) 3.71 %, derived
+from two records: 2705975's 7 g oil per 15 g breading × 2705980's 10 g
+breading per 125.77 g raw breast, `_panFatShare`) as FAT grams: the kept fat is shared by
 the lines' fat (each line's whole grams × its record's total lipid, 204, on
 the record the totals read — a `nutrientSiblings` entry's), and each line
 counts that one share of its whole grams, so an oil line's grams are its
 fat's and a butter line's its fat ÷ 0.8111 (never more than the whole
-line). Flag `approximation (pan fat: 1.59 g fat per 100 g of the raw
-<food> — USDA FNDDS 2705980 recipe: 2 g oil per 125.77 g raw chicken breast
+line). Flag (since matcher v95) `approximation (pan fat: 3.71 g fat per 100
+g of the raw <food> — derived from two USDA FNDDS recipes: 2705975's 7 g oil
+per 15 g breading × 2705980's 10 g breading per 125.77 g raw chicken breast
 (no record for the fat a sautéed piece keeps; the steps pour off / wipe out
-the rest)[; a butter line weighed by its own fat])`, after the basis
+the rest)[; a butter line weighed by its own fat])` (v78–v94: `pan fat: 1.59
+g fat … — USDA FNDDS 2705980 recipe: 2 g oil per 125.77 g raw chicken
+breast …`), after the basis
 `discarded in cooking — only the fat the sautéed food keeps counted`. A
 line the engine reads as a discarded medium (a frying oil, whose uptake
 rule the fryer pass applies) is never a pan line — on the corpus 0042|7,

@@ -602,7 +602,8 @@ void main() {
       // route (step 2): "1 tablespoon tabil (recipe follows)" of "MAKES
       // ABOUT ½ CUP" reads 0.125 (the v44 replay's chraime|7, 5.66 g); the
       // yield edited to "MAKES ABOUT 1 CUP" — a SYNTHESIZED edit, the
-      // negative path — moves only the section's hash (its `servings` term),
+      // negative path — moves only the section's hash (its `servings` term;
+      // v98: and the host's own, P6 — see the RE-PIN below),
       // and the sweep re-reads the share from the section's new yield.
       final chraime = store('1208-chraime.yaml');
       await sweep(BulkScope.missing);
@@ -629,7 +630,10 @@ void main() {
       });
       expect(result.changed, isTrue);
       // v47 (F5): its own stamp current, its routed section's not — stale.
-      expect(nutritionStampCurrent(db, now(chraime.id)), isTrue);
+      // RE-PIN (v98, Run 071/072 P6): its own stamp MOVES too (was isTrue) —
+      // a recipe holding a reference line hashes its sections' yields
+      // (`section_servings`, beside their titles); stale either way.
+      expect(nutritionStampCurrent(db, now(chraime.id)), isFalse);
       expect(fresh(chraime.id), isFalse, reason: 'its routed Tabil changed');
       expect(fresh(_tabil), isFalse, reason: "the section's servings");
       expect(bulkScopeIds(db, BulkScope.stale), [_tabil, chraime.id]);

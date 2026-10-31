@@ -1128,6 +1128,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'stepPrintsWalked': 17344,
     'memo:stepAmountGrams': 400,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
+    'skinScans': 399,
     'allSentences': 1,
   },
   'B1a-QUIET': {
@@ -1155,6 +1158,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'stepPrints': 13593,
     'stepPrintsWalked': 13593,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
+    'skinScans': 400,
     'allSentences': 1,
   },
   'B5-TRUE': {
@@ -1181,6 +1187,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:liftsVegetables': 1,
     'memo:smooth': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
+    'skinScans': 400,
     'allSentences': 1,
     'memo:namingAll': 1,
     'memo:named': 390,
@@ -1216,6 +1225,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:reservedWhole': 1,
     'memo:discards': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text (`skinScans`; uncounted before).
+    'skinScans': 1,
     'allSentences': 1,
   },
   'B5-AMOUNTLESS': {
@@ -1239,6 +1251,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:stepAmountsAt': 400,
     'memo:labelScope': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
+    // skin sentences, once per index and item text (`skinScans`; uncounted before).
+    'skinScans': 1,
     'allSentences': 1,
   },
 };

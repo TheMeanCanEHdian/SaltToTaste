@@ -224,7 +224,11 @@ void main() {
       // 1e4cd3fb…; M95 adds no hash term — a record tuple, a figure and a
       // flag string — the version alone: the base engine with 92 gives this
       // literal).
-      '3223266e3a7369e0c47c82767ee665a49811225bd902fe13ec7e5a1fa54398ef',
+      // RE-PIN (v98, the Run 071/072 fixes): matcherVersion 92 unchanged (was
+      // 3223266e…; v98 adds two hash terms — P1 every line's `prep`, which
+      // alone gives this literal, and P6 the sections' yields of a recipe
+      // holding a reference line, none here — no rule moves).
+      'a80d8680ea8f6b71ef535311a7c823ae642f50eb42238b4529052074cf485e72',
     );
   });
 
