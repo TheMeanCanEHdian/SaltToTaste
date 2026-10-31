@@ -5317,7 +5317,13 @@ tip): sw5 31,757, sw6 37,444, sw7 1,875, sw8 56,943 combos and sw8r (the v96
 calls 0; settled 268 (sw8r 21), a second pass moves 0. Deploy note:
 matcherVersion stays 92, but the two hash terms change every recipe's stamp
 (P1's `prep` is on every line) — every stamp stales once on deploy and the
-stale sweep re-stamps on identical rows (the replay: 0 rows move, 0 requests).
+stale sweep re-stamps on identical rows (the replay: 0 rows move, 0 requests). DEPLOYED 2026-10-31
+19:42 (04d3123): stale 1,196 of 1,198 recipes + 144 sections — the two recipes
+with no ingredient line (best-baked-potatoes, latin-flan) hash no line term and
+keep their v97 stamp; sweep job 67 done 1,196 / failed 0 in 21 s; the live
+digest 763,842.58 unchanged, 0 rows differing from the v97 / v98 set, the live
+buckets == v97_bucket.out, the caches 1,139 / 1,914 / 34,217 unchanged (0
+requests).
 
 **Matcher v97 (batch M95; matcherVersion 92 — the fries' uptake from 2709458:
 a fried potato keeps FNDDS 2709458's read 15 g oil per 119.89 g raw potato,
