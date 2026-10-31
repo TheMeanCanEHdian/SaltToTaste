@@ -296,7 +296,7 @@ void main() {
   // minutes.", is the first defatting sentence (step 5, sentence 4). The
   // thighs line (|3, named in S4's "legs and thighs") deducts in every case.
   group('the line-order gate, gate by gate', skip: skipIfNoCorpus, () {
-    final turkey = loadCorpusRecipe(_braised);
+    late final turkey = loadCorpusRecipe(_braised);
     Recipe unnamed() => _rewrite(
       loadCorpusRecipe(_braised),
       3,

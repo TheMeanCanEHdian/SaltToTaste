@@ -289,7 +289,7 @@ void main() {
   // weighs it, [lineGrams]): 1 tablespoon = 13.41 g, ¼ cup = 53.65 g (M82's
   // 0.907 g/mL).
   group('clauses (2) and (3) on pizza|12', skip: skipIfNoCorpus, () {
-    final pizza = loadCorpusRecipe(_pizza);
+    late final pizza = loadCorpusRecipe(_pizza);
 
     test(
       'the real steps: 6 tablespoons, 80.47 g — step 8\'s "adding 1 '

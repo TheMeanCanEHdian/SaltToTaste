@@ -485,7 +485,7 @@ void main() {
   // aside). Clocks (fix87, two runs each, base → tree): TRUE 609 / 542 →
   // 634 / 523 ms, QUIET 518 / 486 → 476 / 464 ms — each under the backstop.
   group('RULE C, the Parmesan rank-as at the caps', skip: skipIfNoCorpus, () {
-    final base = loadCorpusRecipe(_kale);
+    late final base = loadCorpusRecipe(_kale);
     final shapes = {
       'M85-TRUE': (
         '1 ounce Parmesan cheese, grated (½ cup)',

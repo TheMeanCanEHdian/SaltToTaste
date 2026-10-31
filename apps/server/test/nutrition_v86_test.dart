@@ -547,7 +547,7 @@ void main() {
   // 209 / 177 ms, QUIET 768 / 748 → 801 / 766 ms — each under the
   // backstop.
   group('RULE C, the marrow guard at the caps', skip: skipIfNoCorpus, () {
-    final base = loadCorpusRecipe(_potAuFeu);
+    late final base = loadCorpusRecipe(_potAuFeu);
     final shapes = {
       'E2b-TRUE': ('1½ pounds marrow bones', 169800, 0),
       'E2b-QUIET': (

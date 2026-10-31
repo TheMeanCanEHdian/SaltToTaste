@@ -530,7 +530,7 @@ void main() {
   group('B1a — the per-serving arm, gate by gate', skip: skipIfNoCorpus, () {
     const sentence =
         'Serve cold, drizzling each portion with about 1 teaspoon olive oil';
-    final gazpacho = loadCorpusRecipe(_gazpacho);
+    late final gazpacho = loadCorpusRecipe(_gazpacho);
 
     Future<(String, String?)?> read(Recipe r) async {
       final line = nutritionLines(r)[10];
@@ -784,7 +784,7 @@ void main() {
   // word "green" ("scallions" normalizes to "green onions") is first named
   // in step 3's "scallion greens", after the strain.
   group('B5 — the own-word fallback, gate by gate', skip: skipIfNoCorpus, () {
-    final turkey = loadCorpusRecipe(_turkey);
+    late final turkey = loadCorpusRecipe(_turkey);
 
     DiscardedMedium? medium(Recipe r, int position) {
       final line = nutritionLines(r)[position];
