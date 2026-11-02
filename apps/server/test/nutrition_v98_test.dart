@@ -110,10 +110,14 @@ Recipe _withLine(
 }
 
 void main() {
-  test('matcherVersion 92 — v98 bumps nothing (no corpus row moves; the two '
-      'hash terms stale every stamp once)', () {
-    expect(matcherVersion, 92);
-  });
+  test(
+    'matcherVersion 93 — v98 bumped nothing (it kept 92: no corpus row moves; the two '
+    'hash terms stale every stamp once)',
+    () {
+      // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
+      expect(matcherVersion, 93);
+    },
+  );
 
   // P1 (MED; Sonnet S3 / S7 / S9, Opus O5): v84 C1b reads the structured
   // `prep` ([lineGrams]' `_crustsRemoved.hasMatch(line.prep ?? '')`), which

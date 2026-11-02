@@ -21287,6 +21287,27 @@ const _Fndds _friesFried = (
   r: '119.89',
 );
 
+/// v99 (batch M96; read at live step L53, .claude/diag/2026-11-02/
+/// live53_raw/2709712.json): FNDDS 2709712 "Sweet potato fries, from
+/// fresh" lists, per 100 g of fries, 100 g 99997340 "Sweet potato, cooked,
+/// as ingredient", 10 g "Vegetable oil, NFS" and 0.4 g salt (its profile is
+/// those inputs ÷ 110.4 g: carbohydrate 18.05 / 1.104 = its hit's 16.35).
+/// The cooked input is brought to raw by CARBOHYDRATE (P3's uncoated
+/// convention, the [_friesFried] form) on two cached hits: FNDDS 2710794
+/// "Sweet potato, cooked, as ingredient" (18.05) over SR 168482 "Sweet
+/// potato, raw, unprepared" (20.1; the record the corpus line lands on): r
+/// = 100 × 18.05 / 20.1 = 89.80 g raw; 10 / 89.80 = 11.14 % (was 12.51 %,
+/// the potato's record read as a stand-in). Not built: the no-tracer form
+/// (10 g per 100 g, 10.0 %) and a baked pair on SR 168483 (not cached).
+const _Fndds _sweetFries = (
+  id: 2709712,
+  description: 'Sweet potato fries, from fresh',
+  food: 'sweet potatoes',
+  b: '0',
+  o: '10',
+  r: '89.80',
+);
+
 /// R-e: FNDDS 2707408 "Falafel" lists one cup of oil, the frying medium
 /// (41.2 g fat per 100 g), never an uptake — P3's balance with the
 /// carbohydrate tracer on this record: 21.64 % (protein 13.99).
@@ -21710,7 +21731,7 @@ _FriedClass? _friedClassOf(
   final potato = RegExp(r'\bpotato(?:es)?\b|\bfries\b');
   return switch (words) {
     _ when words.contains('sweet potato') => (
-      figure: _readFig('12.51', _friesFried, standIn: true),
+      figure: _readFig('11.14', _sweetFries),
       name: 'sweet potatoes',
       word: potato,
       meat: false,
@@ -21729,6 +21750,13 @@ _FriedClass? _friedClassOf(
       word: RegExp(r'\bplantains?\b'),
       meat: false,
     ),
+    // v99 (M96, L53): FNDDS 2710048 "Fried eggplant" is BREADED (per
+    // 100.5 g: 50 g 99995000 breading or batter, 38 g 99997540 "Eggplant,
+    // cooked, as ingredient", 12 g oil, 0.5 g salt) — not the bare fried
+    // eggplant, so not read; the potato's record stands in by cooking
+    // method. Not built: FNDDS 2709930 "Eggplant, cooked, fat added" (a
+    // pan-cooked model, 2.92 g fat against 2709929's 0.19) and 2710048's 12
+    // g per its 38 g of eggplant (the breading's uptake on a bare food).
     _ when words.contains('eggplant') => (
       figure: _readFig('12.51', _friesFried, standIn: true),
       name: 'eggplant',
@@ -22046,6 +22074,10 @@ String _uptakeClause(
       ? ' (its baked potato brought to raw by carbohydrate on SR 170030 / '
             '170027 (russet, a stand-in for the generic baked potato) and SR '
             '170033 / Foundation 2346401)'
+      // v99 (M96): the sweet-potato fries' cooked input, one cached pair.
+      : read?.id == _sweetFries.id
+      ? ' (its cooked sweet potato brought to raw by carbohydrate on FNDDS '
+            '2710794 / SR 168482)'
       : '';
   if (batter != null) {
     final u = double.parse(figure.value) * batter.c / batter.k;

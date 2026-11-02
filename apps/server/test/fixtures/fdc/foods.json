@@ -27696,5 +27696,60 @@
     "description": "1 cup"
    }
   ]
+ },
+ "2709712": {
+  "fdc_id": 2709712,
+  "description": "Sweet potato fries, from fresh",
+  "data_type": "Survey (FNDDS)",
+  "nutrients": {
+   "203": 1.49,
+   "204": 9.42,
+   "205": 16.4,
+   "208": 156.0,
+   "269": 5.72,
+   "291": 2.8,
+   "301": 21.0,
+   "303": 0.39,
+   "304": 18.0,
+   "305": 35.0,
+   "306": 459.0,
+   "307": 140.0,
+   "320": 636.0,
+   "323": 1.96,
+   "328": 0.0,
+   "401": 11.9,
+   "404": 0.038,
+   "405": 0.054,
+   "406": 0.388,
+   "415": 0.105,
+   "418": 0.0,
+   "430": 9.3,
+   "432": 9.0,
+   "435": 9.0,
+   "601": 0.0,
+   "606": 1.23,
+   "645": 3.84,
+   "646": 3.49
+  },
+  "portions": [
+   {
+    "gram_weight": 60.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 cup"
+   },
+   {
+    "gram_weight": 90.0,
+    "amount": null,
+    "unit": null,
+    "description": "Quantity not specified"
+   },
+   {
+    "gram_weight": 5.0,
+    "amount": null,
+    "unit": null,
+    "description": "1 fry, any cut"
+   }
+  ]
  }
 }

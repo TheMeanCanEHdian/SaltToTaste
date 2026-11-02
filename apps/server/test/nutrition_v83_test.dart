@@ -909,7 +909,9 @@ void main() {
         // 0384cb5a…; two hash terms — P1 `prep`, which alone gives this
         // literal, and P6 the sections' yields of a recipe holding a
         // reference line, none on this section).
-        '3e0437cafdeb80174305b38e56f25a838002ecde539858c599e5d6813781524f',
+        // RE-PIN (M96 batch, v99): the hash at matcherVersion 93 (was
+        // 3e0437ca…; the version alone — the base engine with 93 gives this literal).
+        '3995bede01b2406d0c00830ea09474f9ae37708c54375c607735c071f5da5453',
       );
     });
   });

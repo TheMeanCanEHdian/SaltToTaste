@@ -441,6 +441,7 @@ const List<_Row> _uptakes = [
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401))",
   ),
   // RE-PIN (M95 batch, v97): was 65.32 g, 587.88 kcal on SR 170698's derived 6.0 % (the v97 replay's row: 2709458's read 12.51 %).
+  // RE-PIN (M96 batch, v99): was 136.19 g, 1,225.71 kcal on 2709458's 12.51 % read as a stand-in (the v99 replay's row: 2709712's own read 11.14 %).
   (
     '0318-thick-cut-sweet-potato-fries.yaml',
     null,
@@ -448,10 +449,10 @@ const List<_Row> _uptakes = [
     '3 cups peanut oil',
     2710187,
     '0.990000',
-    '136.19',
-    '1225.71',
+    '121.27',
+    '1091.43',
     null,
-    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 12.51 % of the raw sweet potatoes' weight — USDA FNDDS 2709458 recipe: 15 g oil per 119.89 g raw potatoes (its baked potato brought to raw by carbohydrate on SR 170030 / 170027 (russet, a stand-in for the generic baked potato) and SR 170033 / Foundation 2346401) (no record for sweet potatoes; read as Potato, french fries, from fresh, fried))",
+    "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 11.14 % of the raw sweet potatoes' weight — USDA FNDDS 2709712 recipe: 10 g oil per 89.80 g raw sweet potatoes (its cooked sweet potato brought to raw by carbohydrate on FNDDS 2710794 / SR 168482))",
   ),
   (
     '0319-crunchy-kettle-potato-chips.yaml',

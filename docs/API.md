@@ -3385,7 +3385,8 @@ beef, steak-frites' rib-eye and the tostadas' pork are not fried in it).
 | O4 potatoes | 12.51 (since matcher v97, M95; 6.0 on SR 170698, derived, before) | FNDDS 2709458 "Potato, french fries, from fresh, fried", read (15 g oil per 119.89 g raw potatoes) |
 | O4c chips (a grated or shredded potato, or steps saying "chips") | 10.9 | SR 19411 "Snacks, potato chips, plain, salted" (FNDDS 2709422's one input), derived |
 | O4p plantains | 5.5 | SR 168200, derived |
-| eggplant, sweet potatoes | 12.51 (since matcher v97; 6.0 on SR 170698 before) | FNDDS 2709458, stand-in |
+| sweet potatoes | 11.14 (since matcher v99, M96; 12.51 on FNDDS 2709458 as a stand-in at v97–v98, 6.0 on SR 170698 before) | FNDDS 2709712 "Sweet potato fries, from fresh", read (10 g oil per 89.80 g raw sweet potatoes) |
+| eggplant | 12.51 (since matcher v97; 6.0 on SR 170698 before) | FNDDS 2709458, stand-in (FNDDS 2710048 "Fried eggplant" is breaded — not read, matcher v99) |
 | O5 battered cauliflower | 30.32 | FNDDS 2710042 |
 | O6 corn tortillas | 13.4 | SR 167525, derived |
 
@@ -3395,8 +3396,10 @@ weight — USDA FNDDS {id} recipe: {o} g oil per {R} g raw {food})`, derived
 cooked input is brought to raw naming its tracer (since matcher v97 the
 fries' ` (its baked potato brought to raw by carbohydrate on SR 170030 /
 170027 (russet, a stand-in for the generic baked potato) and SR 170033 /
-Foundation 2346401)`, after the recipe; the cake doughnut's ` by its
-carbohydrate`), a stand-in adding
+Foundation 2346401)`, after the recipe; since matcher v99 the sweet
+potato's ` (its cooked sweet potato brought to raw by carbohydrate on FNDDS
+2710794 / SR 168482)`; the cake doughnut's ` by its carbohydrate`), a
+stand-in adding
 ` (no record for {food}; read as {record})`, several fried foods joined by
 "; "; the basis `discarded in cooking — only the oil the fried food absorbs
 counted` (with a kept part `only "{part}" and the oil the fried food
@@ -5167,6 +5170,119 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v99 (batch M96; matcherVersion 93 — the sweet-potato fries' uptake
+from FNDDS 2709712: a fried sweet potato reads its own record's 10 g oil per
+89.80 g raw sweet potato, 11.14 %, not the potato's 2709458 as a stand-in,
+12.51 %; FNDDS 2710048 "Fried eggplant" read and rejected — a breaded
+preparation, so the bare fried eggplant keeps its stand-in; 1 row, 1
+recipe's total; the batch brief under the owner's standing authorization
+(2026-10-07) and the Q9 ruling re-affirmed 2026-11-02; zero requests — both
+records fetched at live step L53, 2026-11-02; replayed on snapshot 31
+against the v98 rows, both orders byte-identical, the site reverted alone
+reproducing v98 byte for byte, calls 0).**
+- **The record (`_sweetFries`, engine.dart; the `_friesFried` form).** FNDDS
+  2709712 "Sweet potato fries, from fresh" (cached detail: E 156, P 1.49,
+  F 9.42, C 16.4 per 100 g; its hit in 'sweet potatoes' C 16.35; the cache
+  holds no inputs) — its inputFoods, read at L53 (.claude/diag/2026-11-02/
+  live53_raw/2709712.json), per 100 g of fries: 100 g 99997340 "Sweet
+  potato, cooked, as ingredient", 10 g 82101000 "Vegetable oil, NFS", 0.4 g
+  salt. Its profile is those inputs divided by their 110.4 g sum (a check,
+  not a figure): carbohydrate 18.05 / 1.104 = 16.35 (the hit's), fat (10 g
+  of oil + 0.4 g, the cooked sweet potato's own 204) / 1.104 = 9.42,
+  protein 1.65 / 1.104 = 1.49.
+- **The tracer pair (carbohydrate, 205 — P3's uncoated convention, the v97
+  form).** The cooked input's own record, FNDDS 2710794 "Sweet potato,
+  cooked, as ingredient" (a cached HIT in 'sweet potatoes', no detail:
+  18.05), over SR 168482 "Sweet potato, raw, unprepared" (a cached HIT in
+  'sweet potato raw unprepared', no detail: 20.1 — the record
+  thick-cut-sweet-potato-fries|3 lands on): r = 100 × 18.05 / 20.1 = 89.80 g
+  raw per 100 g of the cooked input (the record's cooked form holds more
+  water than the raw); 10 / 89.80 = 11.14 % (0.111359) of the raw weight,
+  was 12.51 % (the potato's record read as a stand-in). The fries' own
+  carbohydrate (16.4 detail, 16.35 hit) is not the tracer. Not built: the
+  no-tracer form (10 g per 100 g, 10.0 %) and a baked pair on SR 168483 (not
+  cached). The sweet-potato site reads `_readFig('11.14', _sweetFries)`, no
+  stand-in; `_uptakeClause`'s tracer prints " (its cooked sweet potato
+  brought to raw by carbohydrate on FNDDS 2710794 / SR 168482)".
+- **The eggplant (no change; a recorded finding).** FNDDS 2710048 "Fried
+  eggplant" (cached detail: E 218, P 3.66, F 12.8, C 22.3) lists, per
+  100.5 g (live53_raw/2710048.json), 50 g 99995000 "Breading or batter as
+  ingredient in food", 38 g 99997540 "Eggplant, cooked, as ingredient" (FDC
+  2710802, a hit: C 6.32), 12 g oil and 0.5 g salt — a BREADED preparation
+  whose oil rides on 50 g of breading per 38 g of eggplant, not a record of
+  the bare fried eggplant the corpus line is (0053's steps salt it,
+  microwave it dry, fry it bare in oil at 375 degrees and blot it), so it is not read: the eggplant keeps the
+  potato's record by cooking method (`_readFig('12.51', _friesFried,
+  standIn: true)`, "(no record for eggplant; read as Potato, french fries,
+  from fresh, fried)"). Considered and not built: FNDDS 2709930 "Eggplant,
+  cooked, fat added" (a hit: F 2.92 against 2709929 "…, no added fat"'s
+  0.19 — a pan-cooked fat-added model, 2.73 g fat per 100 g cooked) and
+  2710048's 12 g per its 38 g of eggplant (the breading's uptake read on a
+  bare food). crispy-thai-eggplant-salad|10 85.12 g and its Fried Shallots
+  |1 56.00 g unchanged.
+- **Reach (fix99 gate1, the v98 rows of snapshot 31; 1 row, 1 recipe, 0
+  person rows).** thick-cut-sweet-potato-fries|4 "3 cups peanut oil"
+  (2710187, `auto` / `discarded`) 136.19 → 121.27 g, 1,225.71 → 1,091.43
+  kcal (−134.28): 11.14 % × |3's 1,088.62 g raw sweet potato (the shipped
+  arithmetic multiplies the PRINTED figure, as every read figure does — 10 /
+  89.80 unrounded would give 121.23 g). One fryer, no joined fat (M83's B4
+  split does not apply). The recipe 2,377.94 → 2,243.66 kcal, per serving
+  (4) 594.49 → 560.92 (status partial unchanged — its baking soda weighs
+  nothing). ROW column 3,530,342.62 → 3,530,208.34 = −134.28; recipe energy
+  3,381,251.77 → 3,381,117.49 = −134.28. Sections, holds, notes, buckets and
+  calls identical; staleAfter 0, sectionsStale 0; a recompute writes
+  nothing. The basis: "discarded in cooking — only the oil the fried food
+  absorbs counted · approximation (frying oil absorbed: 11.14 % of the raw
+  sweet potatoes' weight — USDA FNDDS 2709712 recipe: 10 g oil per 89.80 g
+  raw sweet potatoes (its cooked sweet potato brought to raw by carbohydrate
+  on FNDDS 2710794 / SR 168482))" — no stand-in suffix.
+Attribution: the site put back alone (matcherVersion 93 and the clause kept)
+gives v98's rows, recipes, sections, calls, notes and buckets byte for byte;
+the figure alone (11.14 on the old record) moves the same row's grams and
+energy and the recipe byte for byte as the rule; the record and clause alone
+(at 12.51) the basis only; 0 unattributed.
+Calibration (reported, never fitted; calib.py, rescore2's loaders, v98_recs
+against the replay): thick-cut-sweet-potato-fries is in no recipe-level
+calibration set; it is audit 3's LINE sample L129 (final_3.tsv: hand 65 g,
+the auditors' 60 / 70) — 136.19 → 121.27 g, +109.52 → +86.57 % (toward).
+Every set's median and mean unchanged (audit 6 3.23 % / 10.51; audit 5 5.20
+/ 9.94; audit 4 12.61 / 13.05; audit 3 8.19 / 8.39; audit 2 2.17 / 11.81;
+audits 2–5 6.95 / 10.80); the eggplant salad's a5 R05 +50.79 % and a2 R02
++58.11 % (AWAY since v97) unchanged.
+Person path: no hunk touches nutrition_handlers.dart, `derivedFor`,
+`applyDecisionToOthers` or `decisionRecordOf` (a record tuple, a figure and
+a flag string), so GATE-P was not run.
+Pins: nutrition_v99_test (8 tests — matcherVersion 93; the engine's own
+figure through `uptakeFigureForTest` on the real rows' records: the sweet
+potato 11.14, 2709712, 10 / 89.80 exactly and printed as its own o / r, no
+stand-in, not the no-tracer 0.10; the eggplant 12.51, 2709458, 15 / 119.89,
+a stand-in — the converse; the potato unchanged; the tracer pair from the
+fixtures' hits → 89.80 = the engine's r, the 16.35 / 9.42 identity, the
+detail's 16.4; the row on the fixtures equal to the replay (record,
+`auto`, no hold, `discarded`, 121.27 g, 1,091.43 kcal, the basis verbatim,
+no 2709458, no stand-in) and = 11.14 % × |3's grams; the eggplant row and
+basis and the Fried Shallots oil unchanged; the two totals (560.92 = the
+replay's; the eggplant salad's 690.77, the fixtures' standing +0.15); the
+GET basis; a second compute writes nothing). Each mutant killed by a value
+pin (snapshot copy, anchor count 1, cmp restore): the figure back to 12.51
+(136.19 g), r 100 (the no-tracer form: 0.10), the stand-in flag put back on
+the sweet potato, the eggplant's dropped, the eggplant read on 2709712, the
+salt read as oil (10.4 g), the tracer clause dropped or printed on every
+read figure, matcherVersion 92. The existing suite re-pinned as equalities
+(RE-PIN M96): sixteen version literals (v84–v98, seasoning_ci), three
+hashes (seasoning_ci, v47_resolver F2, v83 F5c — the base engine with 93
+gives them), the row in v53 / v60 / v66 / v69 / v97 and its total in v97;
+no numeric bound widened, nothing deleted. The fixtures gain 2709712's
+detail (0 keys changed; the sweep audit's census 552 / 421 → 553 / 422).
+Cost: no new reader — a record tuple, a figure and a flag string; every cap
+shape keeps its counts.
+Deploy note: matcherVersion 93 stales every stamp holding a line term
+(1,196 recipes + 144 sections; the two line-less recipes keep theirs) — run
+the owner's stale sweep after the deploy; 0 requests expected (the
+orchestrator's L53 seeded both details into the live cache — not checked
+here: the live DB is never opened); one recipe's stored total moves (no
+users).
 
 **Matcher v98 (the dual-fleet Run 071/072 fixes over the prep51 chain v83–v97;
 matcherVersion 92 unchanged — no corpus row moves: the replay of snapshot 30 is

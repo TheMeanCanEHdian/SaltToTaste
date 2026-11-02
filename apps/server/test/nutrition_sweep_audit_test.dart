@@ -1317,8 +1317,13 @@ void main() {
     // 'black beans' and 'fermented black beans'; carbohydrate 22.04 /
     // 22.0), differing in some digit: compared 551 -> 552, differ 420 ->
     // 421.
-    expect(compared, 552);
-    expect(differ, 421);
+    // RE-PIN (v99, batch M96): its tracer pins recorded from snapshot 31
+    // the detail of FNDDS 2709712 (sweet potato fries from fresh — a hit in
+    // 'sweet potatoes'; carbohydrate 16.4 / 16.35), differing in some digit;
+    // no search recorded (both answers were already in the fixtures):
+    // compared 552 -> 553, differ 421 -> 422.
+    expect(compared, 553);
+    expect(differ, 422);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

@@ -68,6 +68,15 @@ String _basis(String food, {bool standIn = false}) =>
     '$_absorbs · approximation (frying oil absorbed: '
     '${_clause(food, standIn: standIn)})';
 
+/// RE-PIN (M96 batch, v99): thick-cut-sweet-potato-fries|4 reads its own
+/// record, FNDDS 2709712 — was `_basis('sweet potatoes', standIn: true)`
+/// (the v99 replay's row, verbatim).
+const _sweetBasisV99 =
+    '$_absorbs · approximation (frying oil absorbed: 11.14 % of the raw '
+    "sweet potatoes' weight — USDA FNDDS 2709712 recipe: 10 g oil per 89.80 "
+    'g raw sweet potatoes (its cooked sweet potato brought to raw by '
+    'carbohydrate on FNDDS 2710794 / SR 168482))';
+
 /// fish-and-chips|1: the cod's read clause (no tracer — the clause is the
 /// fries' figure's alone) and the chips'.
 final _fishBasis =
@@ -164,14 +173,16 @@ final _reach = [
     _basis('potatoes'),
   ),
   // 65.32 → 136.19 g, 587.88 → 1,225.71 — the sweet-potato stand-in.
+  // RE-PIN (M96 batch, v99): was 136.19 g, 1,225.71 kcal, the stand-in's
+  // basis; the v99 replay's row, 121.27 g, 1,091.43 kcal (11.14 %, 2709712).
   (
     _sweet,
     4,
     '3 cups peanut oil',
     2710187,
-    '136.19',
-    '1225.71',
-    _basis('sweet potatoes', standIn: true),
+    '121.27',
+    '1091.43',
+    _sweetBasisV99,
   ),
   // 40.82 → 85.12 g, 367.38 → 766.08 — the eggplant stand-in.
   (
@@ -220,7 +231,9 @@ const _totals = [
   // nothing); fixtures 423.45 → 544.55 (+121.10).
   (_bravas, 'partial', '544.55'),
   // replay 435.03 → 594.49 (+159.46; partial); the fixtures equal it.
-  (_sweet, 'partial', '594.49'),
+  // RE-PIN (M96 batch, v99): was 594.49; the v99 replay 594.49 → 560.92
+  // (−33.57; 2709712's 11.14 %), the fixtures equal it.
+  (_sweet, 'partial', '560.92'),
   // replay 491.27 → 690.62 (+199.35, 2 servings); fixtures 491.42 → 690.77.
   (_eggplant, 'complete', '690.77'),
 ];
@@ -260,35 +273,58 @@ SaltDatabase _db() {
 }
 
 void main() {
-  test("matcherVersion 92 (v97, batch M95: the fries' uptake)", () {
-    expect(matcherVersion, 92);
-  });
+  test(
+    "matcherVersion 93 (v97 set it to 92, batch M95: the fries' uptake)",
+    () {
+      // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
+      expect(matcherVersion, 93);
+    },
+  );
 
   test("the engine's own figure (`uptakeFigureForTest`, the class "
       "`_friedClassOf` returns on each REAL row's record): FNDDS 2709458, "
       "15 / 119.89 exactly, printed 12.51 (was SR 170698's derived 6.0) — "
-      'the potato, and the sweet-potato and eggplant stand-ins', () {
-    for (final (description, item, standIn) in const [
-      ('Potatoes, russet, without skin, raw', 'russet potatoes', false),
-      ('Potatoes, gold, without skin, raw', 'yukon gold potatoes', false),
+      'the potato, and the sweet-potato and eggplant stand-ins (RE-PIN v99: '
+      'the sweet potato on its own FNDDS 2709712)', () {
+    for (final (description, item, expected, places) in const [
+      (
+        'Potatoes, russet, without skin, raw',
+        'russet potatoes',
+        ('12.51', 2709458, 15 / 119.89, false),
+        '0.1251',
+      ),
+      (
+        'Potatoes, gold, without skin, raw',
+        'yukon gold potatoes',
+        ('12.51', 2709458, 15 / 119.89, false),
+        '0.1251',
+      ),
+      // RE-PIN (M96 batch, v99): was ('12.51', 2709458, 15 / 119.89, true)
+      // and '0.1251' — the potato's record as a stand-in; now its own.
       (
         "Sweet potato, raw, unprepared (Includes foods for USDA's Food "
             'Distribution Program)',
         'sweet potatoes',
-        true,
+        ('11.14', 2709712, 10 / 89.80, false),
+        '0.1114',
       ),
-      ('Eggplant, raw', 'japanese eggplants', true),
+      (
+        'Eggplant, raw',
+        'japanese eggplants',
+        ('12.51', 2709458, 15 / 119.89, true),
+        '0.1251',
+      ),
     ]) {
       final f = uptakeFigureForTest(description, item)!;
       expect(
         (f.value, f.id, f.oilPerRaw, f.standIn),
-        ('12.51', 2709458, 15 / 119.89, standIn),
+        expected,
         reason: item,
       );
       // The printed figure IS the tuple's o / r (a value or an r alone
       // changed fails here).
       expect((f.oilPerRaw! * 100).toStringAsFixed(2), f.value, reason: item);
-      expect(f.oilPerRaw!.toStringAsFixed(4), '0.1251', reason: item);
+      expect(f.oilPerRaw!.toStringAsFixed(4), places, reason: item);
     }
     // The other uncoated classes keep their own figures (the REAL rows'
     // records: platanos-maduros|1 on 2710817, fried-yuca|0 on 169985).
@@ -429,7 +465,7 @@ void main() {
         'grams (B4: 114.91 = 111.60 + 3.31, 141.87 = 136.62 + 5.25; was '
         '53.53 + 1.59 and 65.52 + 2.52 at 6.0 %); fish-and-chips|1 = the '
         "cod's 15.38 % (104.64 g, unchanged) + the chips' 12.51 % (137.89 g, "
-        'was 66.13)', () {
+        'was 66.13) — RE-PIN v99: the sweet potato at its own 11.14 %', () {
       for (final (file, position, grams) in _fried) {
         expect(gramsAt(file, position).toStringAsFixed(2), grams, reason: file);
       }
@@ -452,7 +488,6 @@ void main() {
         (_steakFries, 1, 0),
         (_steakFrites, 9, 7),
         (_bravas, 12, 9),
-        (_sweet, 4, 3),
         (_eggplant, 10, 8),
       ]) {
         expect(
@@ -461,6 +496,12 @@ void main() {
           reason: file,
         );
       }
+      // RE-PIN (M96 batch, v99): (_sweet, 4, 3) was in the loop above at
+      // 12.51 % (136.19 g); it reads FNDDS 2709712's 11.14 % (121.27 g).
+      expect(
+        (g2(gramsAt(_sweet, 4)), g2(gramsAt(_sweet, 3) * 11.14 / 100)),
+        ('121.27', '121.27'),
+      );
       final cod = gramsAt(_fishChips, 9) * 15.38 / 100;
       final fries = gramsAt(_fishChips, 0) * 12.51 / 100;
       expect((g2(cod), g2(fries)), ('104.64', '137.89'));
@@ -522,10 +563,12 @@ void main() {
     });
 
     test('the GET shows the new basis (classic|2, the sweet-potato '
-        'stand-in |4)', () async {
+        'stand-in |4 — RE-PIN v99: its own record)', () async {
       for (final (file, position, basis) in [
         (_classic, 2, _basis('potatoes')),
-        (_sweet, 4, _basis('sweet potatoes', standIn: true)),
+        // RE-PIN (M96 batch, v99): was _basis('sweet potatoes', standIn:
+        // true).
+        (_sweet, 4, _sweetBasisV99),
       ]) {
         final items =
             ((await matchesBody(db, fdc, recipes[file]!))['items']! as List)
