@@ -5277,12 +5277,15 @@ no numeric bound widened, nothing deleted. The fixtures gain 2709712's
 detail (0 keys changed; the sweep audit's census 552 / 421 → 553 / 422).
 Cost: no new reader — a record tuple, a figure and a flag string; every cap
 shape keeps its counts.
-Deploy note: matcherVersion 93 stales every stamp holding a line term
-(1,196 recipes + 144 sections; the two line-less recipes keep theirs) — run
-the owner's stale sweep after the deploy; 0 requests expected (the
-orchestrator's L53 seeded both details into the live cache — not checked
-here: the live DB is never opened); one recipe's stored total moves (no
-users).
+Deploy note: a matcherVersion bump stales EVERY stamp (a version is part of
+every hash — unlike v98's hash-term change, which left the two line-less
+recipes fresh): 1,198 recipes + 144 sections. DEPLOYED 2026-11-02 15:47
+(ebe4b9f; the live server had been stopped by the app on 2026-10-31 20:22 and
+was restarted by the deploy): stale sweep job 68 done 1,198 / failed 0 in
+21 s; the live digest 763,842.58 → 763,809.01 = the one per-serving move
+(594.49 → 560.92, −33.57) exactly; 0 rows differing from the v99 set; the live
+buckets == v99_bucket.out; the caches 1,141 / 1,914 / 34,217 unchanged = 0
+requests (L53's two details were already seeded); no server errors.
 
 **Matcher v98 (the dual-fleet Run 071/072 fixes over the prep51 chain v83–v97;
 matcherVersion 92 unchanged — no corpus row moves: the replay of snapshot 30 is
