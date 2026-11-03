@@ -43,3 +43,11 @@ second pass moves 0, base 3,858 / tip 5,433 combos, 0 / 0, calls 0.
 v98 (the Run 071/072 fixes, 2026-10-31; docs/API.md "Matcher v98"): GATE-P on base bdd0c5e and on v98 (12 shards,
 fresh snapshot-30 copies) — sw5 31,757, sw6 37,444, sw7 1,875, sw8 56,943 and sw8r 5,433 combos, 0 divergent, 0
 refused on both, calls 0; settled 268 (sw8r 21), a second pass moves 0.
+
+v100 (batch M97, 2026-11-02; docs/API.md "Matcher v100"): GATE-P on base e3a4ed2 and on v100 (12 shards, fresh
+snapshot-32 copies, .claude/diag/2026-11-02/snap32.db) — base sw5 31,757, sw6 37,444, sw7 1,875, sw8 56,943, sw8r
+5,433; the tip sw5 31,713, sw6 37,400, sw7 1,872, sw8 56,868, sw8r 5,358 combos; plus sw8s = sw8r.dart with its
+`_v96Slugs` = ['spaghetti-and-meatballs'] and the `!= 21` check `!= 1` (the one v100 reach recipe outside the 21;
+not committed — the two-line edit above): base 48, tip 123. 0 divergent, 0 refused, 0 errors, calls 0 on both;
+settled 268 (sw8r 21, sw8s 1), a second pass moves 0. The deltas are exactly broiled-chicken-with-gravy|12's specs
+(the roux guard leaves it no plan row) and spaghetti-and-meatballs|10's +75 (its new shallow-fry plan row).

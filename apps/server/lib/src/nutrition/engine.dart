@@ -4528,8 +4528,13 @@ final RegExp _blendsSmooth = RegExp(
 /// A sentence that skims, separates or pours off the pot's fat (Q17, F4).
 final RegExp _skimsFat = RegExp(
   r'\bskim\w*\b[^.]*\bfat\b|\bfat separator\b|'
-  r'\b(?:pour|spoon|drain)\w* off\b[^.]*\b(?:fat|grease)\b',
+  '$_plainPourOff',
 );
+
+/// [_skimsFat]'s K2 arm: a plain pour-off of fat or grease — v100 (M97
+/// R5) reads it alone ([_poursOffFat]).
+const String _plainPourOff =
+    r'\b(?:pour|spoon|drain)\w* off\b[^.]*\b(?:fat|grease)\b';
 
 /// Whether each sentence of [recipe]'s steps is inside a parenthesis — a
 /// make-ahead note ("(Broth can be refrigerated for up to 3 days. Skim off
@@ -18447,8 +18452,9 @@ String? _gramBasis(
     // v96 (M94): a browning fat the plan sized says so — before a pour-off
     // down to a printed part that names the line but kept it all
     // ([_keptInPanBasis]: 0003's "Pour off all but 1 tablespoon fat").
-    if (m52?.basis == _browningFatBasis) {
-      return _browningFatBasis;
+    // v100 (M97): so does a shallow fry's ([_shallowFryPlan]).
+    if (m52?.basis == _browningFatBasis || m52?.basis == _shallowFryBasis) {
+      return m52!.basis!;
     }
     // v51 (M49 Q19): an oil the steps pour down to a printed part
     // ([_keptInPan]) — never a medium's row (a frying oil keeps its own).
@@ -22269,20 +22275,57 @@ bool _heatsFat(String s) =>
 /// the C4 arm weighs ([_panFatLines]) keeps that arm's entry.
 /// ponytail: the whole recipe (or section) is the pot, as [_fatSkimmed];
 /// a fat heated in another pan or browning no meat before the skim joins
-/// (measured, v96 closer 1: 5 corpus rows — sunday-gravy|20's meatball
-/// skillet, albondigas|2, broiled-chicken-with-gravy|12, hungarian|6,
-/// slow-cooker-beer|3 — RULED ACCEPT by the orchestrator 2026-10-30,
-/// fix96/ruling4.md: the trigger is the design's, each row disclosed in
-/// API.md; a vessel or browning-subject narrowing would be new grammar and
-/// none measured keeps the 15 — verify1 D1).
-Set<int> _browningFatLines(Recipe recipe) =>
+/// (measured, v96 closer 1: 5 corpus rows RULED ACCEPT by the orchestrator
+/// 2026-10-30, fix96/ruling4.md — albondigas|2, hungarian|6 and
+/// slow-cooker-beer|3 stay with that ruling; v100 (M97): sunday-gravy|20's
+/// meatball skillet stays in this TEXT set but its row is the shallow-fry
+/// plan's ([_shallowFryLines], SF-2: [_browningFatPlan] skips it), and
+/// broiled-chicken-with-gravy|12's butter is refused by the roux guard
+/// ([_bindsRoux], RX-1) — 43 lines; a vessel or browning-subject narrowing
+/// would be new grammar and none measured keeps the 15 — verify1 D1).
+/// v100 (M97): the memo also holds [_shallowFryLines] ([_fatLinesOf]).
+Set<int> _browningFatLines(Recipe recipe) => _fatLinesOf(recipe).browning;
+
+/// v100 (batch M97): `memo:browningFat`'s value — the browning lines
+/// ([_browningFatLines]), the shallow-fry lines ([_shallowFryLines]) and
+/// where their pieces stand ([_shallowPieceAt]: the first shallow line's
+/// group start and that line; null with none), one memo (no new family),
+/// each fat line's mentions read ONCE for both scans
+/// (`browningFatLineReads`).
+typedef _FatLines = ({
+  Set<int> browning,
+  Set<int> shallow,
+  (int, int)? pieces,
+});
+
+/// [_browningFatLines] and [_shallowFryLines] of [recipe], once per step
+/// index (`memo:browningFat`).
+_FatLines _fatLinesOf(Recipe recipe) =>
     _stepIndexOf(recipe).memo(#browningFat, () {
       // v96 closer 1: no fat line, no scan (the heads once per Recipe).
       final heads = _headsOf(recipe);
       if (!heads.any(_panFatHeads.contains)) {
-        return const <int>{};
+        return (browning: const <int>{}, shallow: const <int>{}, pieces: null);
       }
       final index = _stepIndexOf(recipe);
+      // Each fat line's mentions once per index, for both scans (RULE C).
+      final read = <int, List<(int, int)>>{};
+      List<(int, int)> mentionsOf(int k) => read[k] ??= () {
+        _count('browningFatLineReads');
+        return _lineMentionsOf(recipe, k);
+      }();
+      final heats = <(int, int), bool>{};
+      bool heated((int, int) m) => heats[m] ??= _heatsFat(index.sentence(m));
+      // v100 (M97 SF-1): the shallow-fry scan runs BEFORE the skim's return
+      // below — a recipe that skims nothing can shallow-fry.
+      final shallow = _shallowFryIn(recipe, index, heads, mentionsOf, heated);
+      final (int, int)? pieces;
+      if (shallow.isEmpty) {
+        pieces = null;
+      } else {
+        final first = shallow.reduce(min);
+        pieces = (_groupOf(recipe, first).$1, first);
+      }
       // Read only once a sentence skims fat (v96 closer 1: a recipe that
       // skims nothing never builds it).
       late final inside = _parenthetical(recipe);
@@ -22302,28 +22345,55 @@ Set<int> _browningFatLines(Recipe recipe) =>
         }
       }
       if (first == null) {
-        return const <int>{};
+        return (browning: const <int>{}, shallow: shallow, pieces: pieces);
       }
-      final heats = <(int, int), bool>{};
+      final roux = <(int, int), bool>{};
       final lines = <int>{};
       for (final (k, head) in heads.indexed) {
         if (!_panFatHeads.contains(head)) {
           continue;
         }
-        // Each fat line's mentions once per index (RULE C).
-        _count('browningFatLineReads');
-        final mentions = _lineMentionsOf(recipe, k);
+        final mentions = mentionsOf(k);
         if (mentions.isNotEmpty &&
             mentions.every(
               (m) =>
                   _before(m, first!) &&
-                  (heats[m] ??= _heatsFat(index.sentence(m))),
+                  heated(m) &&
+                  // v100 (M97 RX-1): a fat a roux binds stays in the dish.
+                  !(roux[m] ??= _bindsRoux(index, m)),
             )) {
           lines.add(k);
         }
       }
-      return lines;
+      return (browning: lines, shallow: shallow, pieces: pieces);
     });
+
+/// v100 (batch M97 RX-1, the ROUX GUARD; M97 design_v2 §2, pA's tight form):
+/// whether the sentence of mention [m] or the NEXT sentence of its step adds
+/// flour to the fat ([_rouxFlour]) — broiled-chicken-with-gravy's butter
+/// (1076 S3.1 "Melt butter in now-empty saucepan over medium heat." → S3.2
+/// "Add flour and cook, stirring constantly, until mixture is deep golden
+/// brown"): the fat a roux binds is in the gravy served, so no browning
+/// line — the engine's whole row. A native find before the regex; O(1)
+/// sentences a mention. ponytail: the window is the mention and the next
+/// sentence — flour stirred in later in the step (RX-2: best-beef-stew|4,
+/// irish-stew|1 …) is deferred (D3), its rows stay the browning plan's.
+bool _bindsRoux(_StepIndex index, (int, int) m) {
+  bool binds(String s) =>
+      (s.contains('flour') || s.contains('roux')) && _rouxFlour.hasMatch(s);
+  final step = index.sentences[m.$1];
+  return binds(step[m.$2]) || (m.$2 + 1 < step.length && binds(step[m.$2 + 1]));
+}
+
+/// [_bindsRoux]'s sentence: an add / stir / whisk / sprinkle of (an amount
+/// of) flour — never "the flour mixture" (a batter's or a dough's: 0012's
+/// "add the frozen butter to the flour mixture") — "flour over", or a
+/// "roux". Every run bounded: linear per sentence.
+final RegExp _rouxFlour = RegExp(
+  r'\b(?:add|stir in|whisk in|sprinkle)\w* (?:in )?(?:the )?(?:remaining )?'
+  '(?:$_amountRun\\s*(?:teaspoons?|tablespoons?|cups?) )?'
+  r'(?:all-purpose )?flour\b(?! mixture)|\bflour over\b|\broux\b',
+);
 
 /// [_browningFatLines], for the v96 pins.
 @visibleForTesting
@@ -22331,9 +22401,11 @@ Set<int> browningFatLinesOf(Recipe recipe) => _browningFatLines(recipe);
 
 /// Whether line [i] of [recipe] is one [_browningFatLines] names — text
 /// only, the gate of the readers beside [_m52Plan] ([_m52RowOf],
-/// [_unplannedOf], [_m52Key], [_gramBasis]); the plan decides.
+/// [_unplannedOf], [_m52Key], [_gramBasis]); the plan decides. v100 (M97):
+/// or one [_shallowFryLines] names — every reader of the gate inherits it.
 bool _browningFatAt(Recipe recipe, int i) =>
-    _browningFatLines(recipe).contains(i);
+    _browningFatLines(recipe).contains(i) ||
+    _shallowFryLines(recipe).contains(i);
 
 /// The record families a browned food is counted on ([_browningFatPlan]):
 /// [_meatRecords] and the other meats a braise browns (pD d2_optc's set —
@@ -22384,8 +22456,14 @@ Map<int, _M52Row> _browningFatPlan(
   }
   final name = _m52FoodName(browned.description!);
   final lines = nutritionLines(recipe);
+  final shallow = _shallowFryLines(recipe);
   final plan = <int, _M52Row>{};
   for (final k in browning) {
+    // v100 (M97 SF-2): a line the shallow-fry plan owns is none of this
+    // plan's ([_shallowFryPlan] — its pieces left the fat).
+    if (shallow.contains(k)) {
+      continue;
+    }
     final r = at[k];
     final medium = _mediumAt(recipe, k);
     if (!_m52Engine(r) ||
@@ -22436,6 +22514,580 @@ Map<int, _M52Row> _browningFatPlan(
   }
   return plan;
 }
+
+/// v100 (batch M97 SF-1, the uncoated SHALLOW-FRY reader; M97 design_v2
+/// §2, planner pA §1 — under the standing authorization and the owner's
+/// 2026-11-02 "go ahead with the shallow-fry reader"): the fat lines of
+/// [recipe] whose pieces fry in ample fat and are lifted out of it, the fat
+/// left in the pan — sunday-gravy|20's "½ cup olive oil" (0351 S3: "heat
+/// the oil in a large nonstick skillet …", "Add the meatballs and cook …",
+/// "Transfer the meatballs to a paper towel–lined plate to drain
+/// briefly", the skillet never used again) and spaghetti-and-meatballs|10's
+/// "Vegetable oil, for pan-frying" (0357 S2: "… and discard the oil left in
+/// the skillet"). A fat line k ([_panFatHeads]) when ALL hold:
+/// - R2 (its line term first, on the parsed amounts): [_couldZero] — ¼ cup
+///   or more, or a [_labelledFrying] label with no amount (the owner's Q2
+///   (b), RULED by the orchestrator: [_shallowFries]' `amounts.isNotEmpty`
+///   term is not read — an amount-less line has no whole to cap at);
+/// - R0 no other arm owns it: no medium ([_mediumAt]) and no C4 pan fat
+///   ([_panFatAt]);
+/// - R1 its own mentions ([_lineMentionsOf]) are non-empty and each heats
+///   it ([_heatsFat]); h = the first;
+/// - R2 h's sentence heats no smaller amount ([_heatsLittle]);
+/// - R4 the first lift-out after h ([_liftsPiecesOut]) stands in h's step
+///   or the next and names a piece; R3 every food added from h's heat
+///   clause to it is that piece ([_piecesIn]); R5 the fat is not reused
+///   after it ([_panReusedAfter]).
+/// Text only, inside `memo:browningFat` ([_fatLinesOf]); every sentence
+/// reader once per index (RULE C): the lift-outs once (binary search per
+/// line), R3 and R5 once per heat sentence, R5's pan events in one
+/// backward pass per fry vessel.
+/// ponytail: one fry vessel per line (a word: "pan" ↔ "skillet"; two
+/// skillets read as one — refused, conservative); R5 reads pan events,
+/// never the dish (R3 is what refuses a pot whose liquid is served).
+Set<int> _shallowFryIn(
+  Recipe recipe,
+  _StepIndex index,
+  List<String?> heads,
+  List<(int, int)> Function(int k) mentionsOf,
+  bool Function((int, int) m) heated,
+) {
+  final lines = nutritionLines(recipe);
+  final shallow = <int>{};
+  // R2 and R3–R5 once per heat sentence (and head: R2's print names it).
+  final little = <((int, int), String), bool>{};
+  final lifted = <(int, int), bool>{};
+  _ShallowSteps? steps;
+  for (final (k, head) in heads.indexed) {
+    if (head == null ||
+        !_panFatHeads.contains(head) ||
+        !_couldZero(lines[k]) ||
+        _mediumAt(recipe, k) != null ||
+        _panFatAt(recipe, k)) {
+      continue;
+    }
+    final mentions = mentionsOf(k);
+    if (mentions.isEmpty || !mentions.every(heated)) {
+      continue;
+    }
+    final h = mentions.first;
+    if (little[(h, head)] ??= _heatsLittle(index.sentence(h), head)) {
+      continue;
+    }
+    if (lifted[h] ??= (steps ??= _ShallowSteps(index)).admits(h)) {
+      shallow.add(k);
+    }
+  }
+  return shallow;
+}
+
+/// [_shallowFryLines], for the v100 pins.
+@visibleForTesting
+Set<int> shallowFryLinesOf(Recipe recipe) => _shallowFryLines(recipe);
+
+/// v100 (M97 SF-1): the lines [_shallowFryIn] names, once per step index.
+Set<int> _shallowFryLines(Recipe recipe) => _fatLinesOf(recipe).shallow;
+
+/// v100 (M97 SF-1 R2): whether heat sentence [s] heats less than a quarter
+/// cup of [head] as written — [_heatsTheOil]'s amount ("Heat 2 tablespoons
+/// of the oil", 0466 daube's |4), or a print of the shipped [_stepAmount]
+/// whose words name the head ("Add 2 tablespoons of the vegetable oil to a
+/// 12-inch skillet and heat over high heat", 0043 S2.0: the word order
+/// [_heatsTheOil] cannot read). [_stepPrintsOf]'s index is not read: it
+/// files only an AMOUNT-LESS line's head, and 0043's oil line has one.
+bool _heatsLittle(String s, String head) {
+  bool little(String amount) =>
+      (volumeMlOf(parseIngredientLine('$amount oil').amounts) ??
+          _quarterCupMl) <
+      _quarterCupMl;
+  if (_heatsTheOil.firstMatch(s)?[1] case final written? when little(written)) {
+    return true;
+  }
+  final forms = _formsOf(head);
+  return _stepAmount
+      .allMatches(s)
+      .any(
+        (m) =>
+            m[3]!.split(' ').any(forms.contains) &&
+            little('${m[1]!.trim()} ${m[2]}'),
+      );
+}
+
+/// v100 (M97 SF-1): what [_shallowFryIn] reads of a step index past R2,
+/// built on its first line: every sentence by one ordinal, the lift-outs
+/// ([_liftsPiecesOut]) once, each lift-out's batch run, and R5's verdicts
+/// per fry vessel.
+class _ShallowSteps {
+  _ShallowSteps(this.index) : all = index.allSentences {
+    var n = 0;
+    for (final s in index.sentences) {
+      starts.add(n);
+      n += s.length;
+    }
+  }
+
+  final _StepIndex index;
+  final List<String> all;
+
+  /// The ordinal of each step's first sentence.
+  final List<int> starts = [];
+
+  /// The lift-outs, in order: the sentence, where its verb starts, the
+  /// piece it names (null: none — "transfer to plate", a mixture).
+  late final List<({int at, int verb, String? piece})> lifts = [
+    for (final (o, s) in all.indexed)
+      if (_liftsPiecesOut(s) case final l?)
+        (at: o, verb: l.verb, piece: l.piece),
+  ];
+
+  int stepOf(int o) => _firstAfter(starts, o, (n) => n, strict: true) - 1;
+
+  /// Each sentence's batch run end: a lift-out's run is it and the batch
+  /// sentences after it in its step — a lift-out, a "repeat with", or an
+  /// add / fry / brown sentence a later lift-out of the step follows.
+  late final List<int> runEnd = () {
+    final end = List<int>.filled(all.length, 0);
+    final lift = {for (final l in lifts) l.at};
+    for (final (i, sentences) in index.sentences.indexed) {
+      final first = starts[i];
+      var later = false;
+      var joins = false;
+      for (var o = first + sentences.length - 1; o >= first; o--) {
+        end[o] = joins ? end[o + 1] : o;
+        final s = all[o];
+        joins =
+            lift.contains(o) ||
+            s.contains('repeat with') ||
+            (later && _batchVerb.hasMatch(s));
+        later = later || lift.contains(o);
+      }
+    }
+    return end;
+  }();
+
+  /// R5's verdicts by fry vessel: from each sentence, in a lift-out's run
+  /// or after it, and whether the fry vessel is current — 0 no pan event
+  /// to the end, 1 discarded, 2 reused ([_panReusedAfter]).
+  final Map<String?, ({Uint8List run, Uint8List after})> _verdicts = {};
+
+  /// Each sentence's pan facts, read once ([_panFactsOf]).
+  late final List<_PanFacts> facts = [for (final s in all) _panFactsOf(s)];
+
+  /// R3 + R4 + R5 for the line whose heat sentence is [h].
+  bool admits((int, int) h) {
+    final o = starts[h.$1] + h.$2;
+    final n = _firstAfter(lifts, o, (l) => l.at, strict: true);
+    // R4: the first lift-out after h, in h's step or the next, a piece.
+    if (n == lifts.length) {
+      return false;
+    }
+    final lift = lifts[n];
+    final piece = lift.piece;
+    if (piece == null || stepOf(lift.at) > h.$1 + 1) {
+      return false;
+    }
+    return _piecesIn(this, o, lift.at, lift.verb, piece) &&
+        _panReusedAfter(this, lift.at, _fryVesselOf(this, h)) != 2;
+  }
+}
+
+/// v100 (M97 SF-1 R3): every food added to the pan from heat sentence [o]'s
+/// heat clause to the lift-out ([lift], its verb at [verb]) is [piece] —
+/// the first is, none other joins ("Add the meatballs and cook until well
+/// browned", 0351 S3.1); a fat line's own fat aside ([_fryFatObject]); none
+/// added refuses. Cioppino's "Add onions …" before its halibut leaves
+/// (0108): the food stays in the fat.
+bool _piecesIn(_ShallowSteps steps, int o, int lift, int verb, String piece) {
+  final stem = piece.length > 3 && piece.endsWith('s')
+      ? piece.substring(0, piece.length - 1)
+      : piece;
+  var added = false;
+  for (var x = o; x <= lift; x++) {
+    var s = steps.all[x];
+    if (x == lift) {
+      s = s.substring(0, verb);
+    }
+    if (x == o) {
+      final heat = _panOil.firstMatch(s);
+      s = heat == null ? '' : s.substring(heat.end);
+    }
+    for (final m in _addsFood.allMatches(s)) {
+      final rest = s.substring(m.end).trimLeft();
+      final cut = rest.indexOf(RegExp('[,;:]'));
+      final what = cut < 0 ? rest : rest.substring(0, cut);
+      if (_fryFatObject.hasMatch(what)) {
+        continue;
+      }
+      if (!what.contains(stem) && !_pieceWords.hasMatch(what)) {
+        return false;
+      }
+      added = true;
+    }
+  }
+  return added;
+}
+
+/// v100 (M97 SF-1 R5, NEW): the first pan event from lift-out [lift] (its
+/// sentence included) — 1 discarded ([_Fat.discards], [_pansWiped], a
+/// plain pour-off of fat [_poursOffFat]: admitted), 2 reused
+/// ([_pourOffAllButFat], "now-empty", [_panReused], or — after the run — a
+/// cooking sentence ([_cooksInPan]) while the fry [vessel] is current:
+/// refused), 0 none to the end (admitted). A sentence naming the fry
+/// vessel makes it current; one naming another, "a/an/another <vessel>",
+/// "the sauce / the liquid", "boiling water" or "from the oven" switches
+/// away (0351 S3.3–S3.5: no event in the skillet). One backward pass per
+/// vessel and index (counted `memo:panVerdict`).
+int _panReusedAfter(_ShallowSteps steps, int lift, String? vessel) {
+  final v = steps._verdicts[vessel] ??= () {
+    _count('memo:panVerdict');
+    final n = steps.all.length;
+    final run = Uint8List(2 * n + 2);
+    final after = Uint8List(2 * n + 2);
+    for (var o = n - 1; o >= 0; o--) {
+      final f = steps.facts[o];
+      for (final current in const [0, 1]) {
+        final now = f.named.isNotEmpty
+            ? (vessel == null || f.named.contains(vessel) ? 1 : 0)
+            : f.away
+            ? 0
+            : current;
+        final event = f.nowEmpty || (now == 1 && f.reused)
+            ? 2
+            : now == 1 && f.discarded
+            ? 1
+            : 0;
+        final tail = event == 0 && now == 1 && f.cooks ? 2 : event;
+        after[2 * o + current] = tail != 0 ? tail : after[2 * o + 2 + now];
+        run[2 * o + current] = event != 0
+            ? event
+            : o < steps.runEnd[o]
+            ? run[2 * o + 2 + now]
+            : after[2 * o + 2 + now];
+      }
+    }
+    return (run: run, after: after);
+  }();
+  return v.run[2 * lift + 1];
+}
+
+/// The fry vessel of heat sentence [h]: the first vessel word of it or of
+/// the nearest sentence before it in its step ("pan" read as "skillet");
+/// null when none — then any vessel a later sentence names is current.
+String? _fryVesselOf(_ShallowSteps steps, (int, int) h) {
+  final sentences = steps.index.sentences[h.$1];
+  for (var j = h.$2; j >= 0; j--) {
+    if (_vesselWord.firstMatch(sentences[j]) case final m?) {
+      return m[0] == 'pan' ? 'skillet' : m[0];
+    }
+  }
+  return null;
+}
+
+/// One sentence's pan facts ([_panReusedAfter]): the vessels it names (not
+/// an "a/an/another" one; "pan" as "skillet"), whether it switches away,
+/// says "now-empty", reuses the fat by name, discards it, or cooks.
+typedef _PanFacts = ({
+  Set<String> named,
+  bool away,
+  bool nowEmpty,
+  bool reused,
+  bool discarded,
+  bool cooks,
+});
+
+_PanFacts _panFactsOf(String s) {
+  final another = {for (final m in _anotherVessel.allMatches(s)) m.end};
+  final named = <String>{};
+  final away = another.isNotEmpty || _awayFromPan.hasMatch(s);
+  for (final m in _vesselWord.allMatches(s)) {
+    if (!another.contains(m.end)) {
+      named.add(m[0] == 'pan' ? 'skillet' : m[0]!);
+    }
+  }
+  return (
+    named: named,
+    away: away,
+    nowEmpty: s.contains('now-empty') || s.contains('now empty'),
+    reused: _pourOffAllButFat.hasMatch(s) || _panReused.hasMatch(s),
+    discarded:
+        _fats.values.any((f) => f.discards.hasMatch(s)) ||
+        _pansWiped.hasMatch(s) ||
+        ((s.contains('fat') || s.contains('grease')) &&
+            _poursOffFat.hasMatch(s)),
+    cooks: _cooksInPan.hasMatch(s),
+  );
+}
+
+/// v100 (M97 SF-1 R4, NEW — v50's [_liftsOut] is the marinade's): a
+/// sentence moving pieces out of the fat — "transfer / remove / move / lift
+/// … to a plate, platter, (wire) rack, baking sheet, cutting / carving
+/// board, paper towels", "using a slotted spoon, transfer …", "drain … on
+/// paper towels" — where its verb starts and the piece it names (null when
+/// none: "transfer to plate", "the onion mixture"). Null when no lift-out.
+/// A native find first; every run bounded (linear per sentence).
+({int verb, String? piece})? _liftsPiecesOut(String s) {
+  if (!s.contains('transfer') &&
+      !s.contains('mov') &&
+      !s.contains('lift') &&
+      !s.contains('drain')) {
+    return null;
+  }
+  String? pieceOf(Match? o) =>
+      o == null || _notAPiece.contains(o[1]) || o[2] == 'mixture' ? null : o[1];
+  final verbs = _liftVerb.allMatches(s).toList();
+  for (final (i, v) in verbs.indexed) {
+    final segment = s.substring(
+      v.end,
+      i + 1 < verbs.length ? verbs[i + 1].start : s.length,
+    );
+    if (_liftTo.hasMatch(segment) ||
+        (v[0]!.startsWith('transfer') && s.contains('slotted spoon'))) {
+      return (verb: v.start, piece: pieceOf(_liftObject.firstMatch(segment)));
+    }
+  }
+  if (_drainsOnTowels.firstMatch(s) case final d?) {
+    return (
+      verb: d.start,
+      piece: d[1] == null || _notAPiece.contains(d[1]) ? null : d[1],
+    );
+  }
+  return null;
+}
+
+final RegExp _liftVerb = RegExp(
+  r'\b(?:transfer(?:s|red|ring)?|remov(?:e|es|ed|ing)|mov(?:e|es|ed|ing)|'
+  r'lift(?:s|ed|ing)?)\b',
+);
+final RegExp _liftObject = RegExp(
+  '^ (?:(?:the|half|of|all|each|both|first|second|batch|remaining|browned|'
+  'seared|fried|cooked) ){0,5}([a-z-]+)(?: ([a-z-]+))?',
+);
+final RegExp _liftTo = RegExp(
+  r'\bto (?:a |an |the )?(?:[\w–-]+,? ){0,4}?(?:plate|platter|wire rack|'
+  r'rack|baking sheet|cutting board|carving board|paper towels?)\b',
+);
+final RegExp _drainsOnTowels = RegExp(
+  r'\bdrain\w* (?:(?:the|briefly|them|it) )?(?:([a-z-]+) )?on paper towels?\b',
+);
+const Set<String> _notAPiece = {
+  'to',
+  'it',
+  'them',
+  'mixture',
+  'contents',
+  'from',
+  'with',
+  'into',
+  'onto',
+  'and',
+  'on',
+  'pan',
+  'skillet',
+  'pot',
+  'saucepan',
+  'wok',
+  'dutch',
+  'sheet',
+  'plate',
+  'platter',
+  'bowl',
+  'everything',
+};
+
+/// [_piecesIn]'s add verbs, a food's fat ("the remaining 2 tablespoons
+/// oil"), and the batch words a piece goes by ("half of the scallops").
+final RegExp _addsFood = RegExp(
+  r'\b(?:adds?|added|adding|place[sd]?|placing|lay|lays|laid|arrange[sd]?|'
+  r'put|puts|drop|drops|dropped|sprinkle[sd]?)\b|\b(?:stir|pour) in\b',
+);
+final RegExp _fryFatObject = RegExp(
+  '^(?:the )?(?:remaining )?'
+  '(?:$_amountRun\\s*(?:teaspoons?|tablespoons?|cups?) )?'
+  r'(?:of )?(?:the )?(?:[a-z-]+ )?(?:oil|butter|fat|shortening|lard)\b',
+);
+final RegExp _pieceWords = RegExp(r'^(?:the )?(?:half|batch|pieces?|meat)\b');
+
+/// [_ShallowSteps.runEnd]'s batch verbs.
+final RegExp _batchVerb = RegExp(
+  r'\b(?:add|fry|cook|brown|turn|flip|place|drop)\w*\b',
+);
+
+/// R5's vessels: a vessel word; one an article introduces ("in a large
+/// pot"); the dish or another heat ("the sauce", "boiling water").
+final RegExp _vesselWord = RegExp(
+  r'\b(?:skillet|dutch oven|saucepan|pan|pot|wok|griddle)\b',
+);
+final RegExp _anotherVessel = RegExp(
+  r'\b(?:a|an|another|second|clean) (?:[\w–-]+ ){0,3}?'
+  r'(?:skillet|dutch oven|saucepan|pan|pot|wok|griddle)\b',
+);
+final RegExp _awayFromPan = RegExp(
+  r'\bthe (?:sauce|liquid)\b|\bboiling water\b|\bfrom the oven\b',
+);
+
+/// R5's named reuse of the fat (pA §1): "leaving fat in skillet", a
+/// deglaze, "scrape up … browned bits", fond, "to / into / over the fat",
+/// "reserve … fat", a pan sauce.
+final RegExp _panReused = RegExp(
+  r'\bleav\w* (?:the |any )?(?:rendered )?(?:fat|oil|drippings|grease) in\b|'
+  r'\bdeglaz|\bscrap\w* up\b|\bbrowned bits\b|\bfond\b|'
+  r'\b(?:to|into|over) the (?:rendered |hot |remaining )?'
+  r'(?:fat|oil|drippings|grease)\b|'
+  r'\breserve\w*\b[^.;]{0,40}?\b(?:fat|oil|drippings|grease)\b|\bpan sauce\b',
+);
+
+/// R5's plain pour-off of fat ([_skimsFat]'s K2 arm).
+final RegExp _poursOffFat = RegExp(_plainPourOff);
+
+/// R5's cooking sentence: its verb first (after a short lead-in, "reduce
+/// the heat to medium, add …", "meanwhile, add …").
+final RegExp _cooksInPan = RegExp(
+  r'^(?:\(?(?:[a-z-]+ ){0,2}[a-z-]+, )?'
+  r'(?:add|stir|return|cook|reduce|increase|pour|whisk|melt|heat|bring|place)\b',
+);
+
+/// The ingredient group of [recipe] holding position [i]: [start, end).
+(int, int) _groupOf(Recipe recipe, int i) {
+  var start = 0;
+  for (final g in recipe.ingredients) {
+    final end = start + g.items.length;
+    if (i < end) {
+      return (start, end);
+    }
+    start = end;
+  }
+  return (start, start);
+}
+
+/// v100 (M97, design_v2 §2 "The figure", C2-1): the shallow fry's pieces —
+/// the rows ([_m52Counted]) of the FIRST shallow line's ingredient group
+/// from its start to that line, never a fat line ([_panFatHeads]): the
+/// shipped M61 raw-mix form ([_m52Plan]'s product block), one base per
+/// recipe, the same on every compute (a fat line's `discarded` row never
+/// enters it). sunday-gravy: |10–|19 but the uncounted salt |15, 736.23 g.
+/// ponytail: a second fry in another group shares this base — no corpus row.
+List<IngredientMatchRow> _shallowPiecesOf(
+  Recipe recipe,
+  Map<int, IngredientMatchRow> at,
+) => [
+  for (final i in at.keys.toList()..sort())
+    if (_shallowPieceAt(recipe, i) && _m52Counted(at[i]!)) at[i]!,
+];
+
+/// Whether position [i] of [recipe] is one [_shallowPiecesOf] may read
+/// (O(1): where they stand is the memo's, [_FatLines]).
+bool _shallowPieceAt(Recipe recipe, int i) {
+  final pieces = _fatLinesOf(recipe).pieces;
+  return pieces != null &&
+      i >= pieces.$1 &&
+      i < pieces.$2 &&
+      !_panFatHeads.contains(_headsOf(recipe)[i]);
+}
+
+/// v100 (M97 SF-1, "The figure"): [_m52Plan]'s shallow-fry entries
+/// ([_shallowFryLines]) — the pieces keep [_browningFatShare] (FNDDS
+/// 2705972's sauté film, a STAND-IN by cooking method: the owner's Q1 (a),
+/// RULED by the orchestrator — L54 read no plain uncoated meatball record)
+/// of their raw grams ([_shallowPiecesOf]) as FAT, U, summed once; U split
+/// over the lines in the shipped M52 per-pan form — each line its share by
+/// its whole, min(whole, share ÷ its lipid); an amount-less line (no
+/// whole) takes U ÷ its lipid when it is the one shallow line, equal shares
+/// beside others (no corpus recipe holds two). The same admission and
+/// weighing as [_browningFatPlan] (engine rows, unheld, not auto below the
+/// gate; [engineOutcome] on [lineGrams], never the stored grams; the
+/// lipid of `nutrientSiblings[fdcId] ?? fdcId`); a line left whole, or no
+/// counted piece (every piece skipped), is no entry: the engine's row.
+Map<int, _M52Row> _shallowFryPlan(
+  SaltDatabase db,
+  Recipe recipe,
+  Map<int, IngredientMatchRow> at,
+  FdcFood? Function(int fdcId, IngredientLine line) food,
+) {
+  final shallow = _shallowFryLines(recipe);
+  if (shallow.isEmpty) {
+    return const {};
+  }
+  final uptake =
+      _browningFatShare *
+      _shallowPiecesOf(recipe, at).fold<double>(0, (n, r) => n + r.grams!);
+  if (uptake <= 0) {
+    return const {};
+  }
+  final lines = nutritionLines(recipe);
+  final pans = <({int at, double? whole, double lipid})>[];
+  for (final k in shallow.toList()..sort()) {
+    final r = at[k];
+    if (!_m52Engine(r) ||
+        r!.hold != null ||
+        (r.status == 'auto' && belowConfidenceGate(r.confidence))) {
+      continue;
+    }
+    final record = food(r.fdcId!, lines[k]);
+    if (record == null) {
+      continue;
+    }
+    final whole = lines[k].amounts.isEmpty
+        ? null
+        : engineOutcome(
+            recipe,
+            lines[k],
+            record,
+            lineGrams(db, lines[k], record, recipe: recipe),
+          ).grams;
+    final lipid =
+        food(
+          nutrientSiblings[r.fdcId] ?? r.fdcId!,
+          lines[k],
+        )?.nutrientsPer100g['204'] ??
+        0;
+    if (lipid <= 0 || (lines[k].amounts.isNotEmpty && (whole ?? 0) <= 0)) {
+      continue;
+    }
+    pans.add((at: k, whole: whole, lipid: lipid));
+  }
+  final sized = pans.every((p) => p.whole != null);
+  final oil = pans.fold<double>(0, (n, p) => n + (p.whole ?? 0));
+  final heads = _headsOf(recipe);
+  final plan = <int, _M52Row>{};
+  for (final p in pans) {
+    final grams =
+        (sized ? uptake * p.whole! / oil : uptake / pans.length) *
+        100 /
+        p.lipid;
+    if (p.whole != null && grams >= p.whole!) {
+      continue;
+    }
+    plan[p.at] = (
+      grams: double.parse(grams.toStringAsFixed(2)),
+      flag: _shallowFryFlag(butter: heads[p.at] == 'butter'),
+      kept: 0,
+      coat: false,
+      noNetUptake: false,
+      dip: false,
+      held: false,
+      cut: false,
+      basis: _shallowFryBasis,
+    );
+  }
+  return plan;
+}
+
+/// v100 (M97): the basis of a row [_shallowFryPlan] sizes.
+const String _shallowFryBasis =
+    'shallow-fried and lifted out — only the oil the fried pieces keep '
+    'counted';
+
+/// v100 (M97, design_v2 §2 BASIS / FLAG; the food word FIXED — the plan
+/// reads a group mix, no record to name): the flag of a shallow-fry row,
+/// the stand-in said; a butter line says it is weighed by its own fat.
+String _shallowFryFlag({required bool butter}) =>
+    'approximation (shallow-fry uptake: '
+    '${(_browningFatShare * 100).toStringAsFixed(2)} g fat per 100 g of the '
+    'raw fried pieces — USDA FNDDS ${_breastSauteed.id} recipe: '
+    '${_breastSauteed.o} g oil per ${_breastSauteed.r} g raw '
+    '${_breastSauteed.food} (a stand-in by cooking method: the lifted-out '
+    'pieces keep a film, the rest of the oil stays in the pan)'
+    '${butter ? '; a butter line weighed by its own fat' : ''})';
 
 /// One row M52 counts ([_m52Plan]), `discarded` as a medium's kept part
 /// is: its `grams`, the `flag` its basis carries, the part `kept` outside
@@ -22566,8 +23218,12 @@ Map<int, _M52Row> _m52Plan(
   // ([_browningFatPlan]) — merged first, so a row the C4 arm weighs below
   // keeps that arm's entry (the C4 exclusion).
   final browning = _browningFatPlan(db, recipe, at, food);
+  // v100 (M97 SF-2): the shallow-fry entries ([_shallowFryPlan]) merged
+  // FIRST — the browning plan skips their lines, so that exclusion is what
+  // keeps them (a later spread wins).
+  final shallow = _shallowFryPlan(db, recipe, at, food);
   if (coats.isEmpty && batter.isEmpty && oils.isEmpty) {
-    return {...browning, ...solids};
+    return {...shallow, ...browning, ...solids};
   }
   bool counted(IngredientMatchRow r) => _m52Counted(r);
   bool engine(IngredientMatchRow? r) => _m52Engine(r);
@@ -22602,7 +23258,7 @@ Map<int, _M52Row> _m52Plan(
                     _thinPiece(recipe, lines[coated.position])
                 ? _CoatShape.c4
                 : null);
-  final plan = <int, _M52Row>{...browning, ...solids};
+  final plan = <int, _M52Row>{...shallow, ...browning, ...solids};
   // M58 W's batter parts' carbohydrate at their WHOLE grams (the line's, as
   // the dredge takes them): the plan writes those rows `discarded`, so D
   // ([batterOf]) reads them here — never the stored row — on every path.
@@ -23035,26 +23691,13 @@ Map<int, _M52Row> _m52Plan(
       fried.add((kind: kind, grams: r.grams!, at: r.position));
     }
   }
-  // The ingredient group holding position [i]: [start, end).
-  (int, int) groupOf(int i) {
-    var start = 0;
-    for (final g in recipe.ingredients) {
-      final end = start + g.items.length;
-      if (i < end) {
-        return (start, end);
-      }
-      start = end;
-    }
-    return (start, start);
-  }
-
   // v59 (M61, Q12): no counted line is the fried food (O1c's chicken is
   // one) — a PRODUCT a frying sentence names is ([_friedProductOf]), its
   // raw mix the counted rows of the oil line's ingredient group before it
   // (Q12 ii: water carries no record and drops out; a sauce or a glaze
   // group never joins).
   if (fried.isEmpty) {
-    final (start, _) = groupOf(fryers.first);
+    final (start, _) = _groupOf(recipe, fryers.first);
     // v66 (M67 A2, Q9): a dough the steps roll to a sheet and cut counts
     // only the cut share ([_cutShareOf]) — each row the plan weighs at s ×
     // its WHOLE line, never its stored grams (the plan writes those: closer
@@ -23151,7 +23794,7 @@ Map<int, _M52Row> _m52Plan(
     if (read?.id != _cauliflowerFried.id) {
       return null;
     }
-    final (start, end) = groupOf(f.at);
+    final (start, end) = _groupOf(recipe, f.at);
     var c = 0.0;
     for (final r in at.values) {
       if (r.position < start || r.position >= end || r.position == f.at) {
@@ -23603,6 +24246,17 @@ String _m52Key(
       ' browned ${browned?.position} ${browned?.grams} ${browned?.description}',
     );
   }
+  // v100 (M97, pC C6): the shallow-fry plan's pieces ([_shallowFryPlan])
+  // — every counted row of the first shallow line's group before it, by
+  // its grams (the browned food above and the fryer form's "fried" rows
+  // name only meats and fried classes, never the bread, buttermilk, cheese
+  // or yolk of a meatball mix).
+  if (_shallowFryLines(recipe).isNotEmpty) {
+    key.write(' pieces');
+    for (final r in _shallowPiecesOf(recipe, at)) {
+      key.write(' ${r.position}:${r.grams}');
+    }
+  }
   // v75 (M78): a C4 sauté's pan-fat line is read on its line, record and
   // hold only (as a dip's) — only beside a coated meat ([_panFatLines]).
   // Its medium bit is read nowhere in the plan: a pan line has no
@@ -23723,7 +24377,9 @@ bool _m52KeysAlike(
           (_brownedRecords.any(row.description!.startsWith) ||
               // v67 (M69 R2): a coated vegetable is the coated food too.
               _coatVegetables.any(row.description!.startsWith) ||
-              _dredgeHeads.contains(_headsOf(recipe)[row.position]))) &&
+              _dredgeHeads.contains(_headsOf(recipe)[row.position]) ||
+              // v100 (M97): a shallow fry's piece ([_m52Key]'s ` pieces`).
+              _shallowPieceAt(recipe, row.position))) &&
       _m52RowKey(row, dip: dip, offB: false) ==
           _m52RowKey(confirmed, dip: dip, offB: false);
 }

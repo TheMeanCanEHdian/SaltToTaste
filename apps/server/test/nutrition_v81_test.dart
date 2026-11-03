@@ -3173,10 +3173,17 @@ const Map<String, Map<String, int?>> _onionCounts = {
   'recompute': {
     'memo:coatLineSentences': 1,
     'memo:named': 9,
-    'memo:reservedUse': null,
-    'memo:fryVerbAt': null,
+    // RE-PIN (M97 batch, v100): reservedUse / fryVerbAt / oilOwners null →
+    // 1 each — the recompute's plan builds memo:browningFat, whose NEW
+    // shallow-fry scan (before the skim's return) reads R0's `_mediumAt`
+    // of each ample fat line (`discardedMediumOf`: its owners, reserved use
+    // and first frying verb, each once per index) — 0315's "6 tablespoons
+    // vegetable oil" passes the ¼-cup line gate; with no skim sentence the
+    // memo returned before any medium read.
+    'memo:reservedUse': 1,
+    'memo:fryVerbAt': 1,
     'memo:bundles': null,
-    'memo:oilOwners': null,
+    'memo:oilOwners': 1,
     'memo:setAsideLine': 3,
     'memo:foodNaming': 1,
   },

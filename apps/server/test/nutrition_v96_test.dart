@@ -29,7 +29,9 @@
 // design's Q3 Part B AND 7 rows beyond them — D1, RULED ACCEPT BY THE
 // ORCHESTRATOR 2026-10-30 (fix96/ruling4.md: the trigger is the design's; no
 // measured narrowing keeps the 15): their pins here are the replay's figures,
-// tagged "D1 RULED".
+// tagged "D1 RULED". RE-PIN (M97 batch, v100): 5 of them stay — the gravy's
+// |20 is the shallow-fry plan's (re-pinned in nutrition_v100_test, P1) and
+// broiled-chicken-with-gravy|12 is refused by the roux guard (`_unmoved`).
 // Every whole-recipe figure is a fresh compute on the recorded fixtures
 // (FixtureProvider); the replay's in each comment. Never the network. Every
 // corpus line and step is real; STATED synthesized (named at each): a real
@@ -282,19 +284,11 @@ final _the15 = [
 /// D1 RULED (verify1 D1, the orchestrator's ACCEPT 2026-10-30): the rows the
 /// brief's trigger admits beyond the 15, at the replay's figures.
 final _beyond = [
-  // 112.00 → 10.13 g, 1,008.00 → 91.17: S4.0 heats it in the MEATBALLS'
-  // nonstick skillet before S4.3's skim of the sauce (another pan); the
-  // ribs' 666.50 g (per line: |0 keeps its own 10.13 too).
-  (
-    _gravy,
-    20,
-    '½ cup olive oil',
-    2710186,
-    '112.00',
-    '10.13',
-    '91.17',
-    _browning('pork'),
-  ),
+  // RE-PIN (M97 batch, v100): sunday-gravy|20 "½ cup olive oil" (112.00 →
+  // 10.13 g here at v96) left this list — S3.0 heats it in the MEATBALLS'
+  // nonstick skillet, S3.2 lifts them out and the skillet is never used
+  // again: the shallow-fry plan's row, 11.19 g 100.71 kcal on the pieces'
+  // raw 736.23 g (nutrition_v100_test P1; replay 10.13 → 11.19).
   // 26.82 → 5.17, 237.12 → 45.70: S2.0 the sauce's saucepan; T S5.2.
   (
     _albondigas,
@@ -306,18 +300,8 @@ final _beyond = [
     '45.70',
     _browning('beef', evoo: true),
   ),
-  // 28.36 → 20.68, 203.35 → 148.28: S4.1 the gravy's roux; T S5.2 "Spoon
-  // off fat and discard" (the skillet's drippings in a bowl).
-  (
-    _broiled,
-    12,
-    '2 tablespoons unsalted butter',
-    173430,
-    '28.36',
-    '20.68',
-    '148.28',
-    _browning('chicken', butter: true),
-  ),
+  // RE-PIN (M97 batch, v100): broiled-chicken-with-gravy|12 (28.36 → 20.68
+  // g here at v96) moved to `_unmoved` — the roux guard (RX-1) refuses it.
   // 28.00 → 24.12, 252.00 → 217.08: S2.0 the onions' sweat; T S4.0 skim.
   (
     _hungarian,
@@ -399,6 +383,18 @@ const _unmoved = [
   (_classic, 0, '1 tablespoon vegetable oil', '14.00', 'portion', true),
   // A C4 row (`_panFatLines`): admitted by the text, the C4 arm's 23.14 g.
   (_saltimbocca, 5, '4 tablespoons olive oil', '23.14', 'discarded', true),
+  // RE-PIN (M97 batch, v100): was in `_beyond` (20.68 g `discarded`, D1
+  // RULED) — S3.1 "Melt butter in now-empty saucepan over medium heat." →
+  // S3.2 "Add flour and cook …": the roux guard (RX-1) refuses it, the
+  // engine's whole row (= v95; replay 20.68 → 28.36, 148.28 → 203.35).
+  (
+    _broiled,
+    12,
+    '2 tablespoons unsalted butter',
+    '28.36',
+    'density',
+    false,
+  ),
 ];
 
 /// (file, status, per serving) after the settled compute — the v95 → v96
@@ -423,7 +419,9 @@ const _totals = [
   // replay 444.28 → 430.70 (-13.58).
   (_maple, 'partial', '430.70'),
   // replay 1024.04 → 889.33 (-134.71); fixtures 1024.12 → 889.41.
-  (_gravy, 'complete', '889.41'),
+  // RE-PIN (M97 batch, v100): |20 the shallow plan's 11.19 g — replay 889.33
+  // → 890.52 (+1.19); fixtures 889.41 → 890.60.
+  (_gravy, 'complete', '890.60'),
   // replay 1341.15 → 1315.68 (-25.47); fixtures 1341.14 → 1315.67, partial (the replay complete).
   (_bouillabaisse, 'partial', '1315.67'),
   // replay 844.03 → 838.75 (-5.28); fixtures 844.08 → 838.79.
@@ -443,7 +441,9 @@ const _totals = [
   // replay 767.89 → 767.25 (-0.64); fixtures 767.91 → 767.27.
   (_bestStew, 'complete', '767.27'),
   // replay 700.46 → 686.70 (-13.76).
-  (_broiled, 'complete', '686.70'),
+  // RE-PIN (M97 batch, v100): |12 back to the engine's 28.36 g (the roux
+  // guard) — replay 686.70 → 700.46 (+13.76).
+  (_broiled, 'complete', '700.46'),
   // replay 331.38 → 329.97 (-1.41); fixtures 331.67 → 330.25.
   (_teriyaki2, 'complete', '330.25'),
   // replay 653.74 → 647.92 (-5.82).
@@ -508,10 +508,11 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 }
 
 void main() {
-  test('matcherVersion 93 (v96 set it to 91, batch M94: the browning fat)', () {
+  test('matcherVersion 94 (v96 set it to 91, batch M94: the browning fat)', () {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
-    expect(matcherVersion, 93);
+    // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
+    expect(matcherVersion, 94);
   });
 
   test("the share from the figures the flag prints (2705972's inputFoods: "
@@ -611,9 +612,12 @@ void main() {
       },
     );
 
-    test('the trigger on the REAL steps: every row of the 15 and the 7 '
-        'beyond is a line `browningFatLinesOf` names; the two K-1 negatives '
-        'and the sauce butter are not; a capped line and a C4 line are', () {
+    // RE-PIN (M97 batch, v100): "the 7 beyond" → 5; broiled|12 is not
+    // (the roux guard).
+    test('the trigger on the REAL steps: every row of the 15 and the 5 '
+        'beyond is a line `browningFatLinesOf` names; the two K-1 negatives, '
+        'the sauce butter and the roux-bound gravy butter are not; a capped '
+        'line and a C4 line are', () {
       for (final (file, position, raw, _, _, _, _, _) in [
         ..._the15,
         ..._beyond,
@@ -666,7 +670,9 @@ void main() {
       }
     });
 
-    test('D1 RULED (verify1 D1, ACCEPT 2026-10-30): the 7 rows beyond the '
+    // RE-PIN (M97 batch, v100): "the 7 rows" → 5 (gravy|20 is the shallow
+    // plan's, broiled|12 the roux guard's).
+    test('D1 RULED (verify1 D1, ACCEPT 2026-10-30): the 5 rows beyond the '
         "15 the brief's trigger admits — the replay's figures", () {
       for (final (file, position, raw, fdcId, whole, grams, kcal, basis)
           in _beyond) {
@@ -695,12 +701,15 @@ void main() {
       }
     });
 
+    // RE-PIN (M97 batch, v100): + broiled-chicken-with-gravy|12, the
+    // roux-bound butter (RX-1), back at the engine's 28.36 g `density`.
     test('rows the arm leaves as they were (the v95 rows): the K-1 negatives '
         'skillet-roasted|2 84.00 g and brick|2 32.53 g, the sauce butter '
         'steak-au-poivre|0 56.72 g, two admitted lines the rule leaves whole '
         '(steak-au-poivre|7, classic-chicken-noodle-soup|0 — no entry, '
-        'closer 1, verify1 D4) and the C4 row saltimbocca|5 at its own '
-        "arm's 23.14 g", () {
+        'closer 1, verify1 D4), the C4 row saltimbocca|5 at its own '
+        "arm's 23.14 g and the roux-bound broiled-chicken-with-gravy|12 at "
+        '28.36 g', () {
       for (final (file, position, _, grams, source, _) in _unmoved) {
         final recipe = recipes[file]!;
         final row = rowIn(recipe.id, position);
@@ -730,19 +739,25 @@ void main() {
       );
     });
 
+    // RE-PIN (M97 batch, v100): the gravy's |20 left the browning plan (the
+    // shallow-fry reader's, 11.19 g); |0 keeps the ribs' 10.13 g.
     test('per line (closer 1, verify1 D3): two admitted lines of one recipe '
         'each keep their OWN min(whole, share × raw ÷ lipid) — '
-        "sunday-gravy|0 and |20 (D1 RULED) each 10.13 g on the ribs' "
-        '666.50 g; slow-cooker-beer|3 butter 27.93 g while its |2 oil (4.53 g '
-        'its printed kept part) is capped on its own fat and unplanned', () {
+        "sunday-gravy|0 10.13 g on the ribs' 666.50 g (|20, D1 RULED at v96, "
+        "is the shallow-fry plan's 11.19 g since v100); slow-cooker-beer|3 "
+        'butter 27.93 g while its |2 oil (4.53 g its printed kept part) is '
+        'capped on its own fat and unplanned', () {
       final gravy = recipes[_gravy]!;
       final ribs = db
           .ingredientMatchesFor(gravy.id)
           .where((r) => r.description!.startsWith('Pork, fresh, backribs'))
           .single;
       expect(ribs.grams?.toStringAsFixed(2), '666.50');
-      for (final p in [0, 20]) {
-        expect(rowIn(gravy.id, p).grams?.toStringAsFixed(2), '10.13');
+      // RE-PIN (M97 batch, v100): |20 is the shallow-fry plan's — 11.19 g
+      // on the pieces' raw 736.23 g (nutrition_v100_test P1; replay 10.13 →
+      // 11.19), no longer a second film on the ribs; |0 keeps its 10.13.
+      for (final (p, grams) in const [(0, '10.13'), (20, '11.19')]) {
+        expect(rowIn(gravy.id, p).grams?.toStringAsFixed(2), grams);
       }
       // 0.015195 × 666.50 g of fat on a 100 % oil: 10.13 g.
       expect(

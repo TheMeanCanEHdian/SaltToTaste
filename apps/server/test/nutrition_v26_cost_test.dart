@@ -2763,9 +2763,14 @@ void review71() {
             reason: step,
           );
         }
+        // RE-PIN (M97 batch, v100): USED's recompute read none (0) — it now
+        // finds the prints once per index too: the recompute's plan builds
+        // memo:browningFat, whose NEW shallow-fry scan reads R0's
+        // `_mediumAt` of the ample "½ cup vegetable oil" lines
+        // (`discardedMediumOf` → `memo:reservedUse`) before any mention.
         expect(
           seen['recompute']!['memo:reservedUse'] ?? 0,
-          shape == 'USED' ? 0 : seen['recompute']!['indexes'],
+          seen['recompute']!['indexes'],
         );
         expect(seen['fresh']!['memo:reservedUse'] ?? 0, 0);
         // Each oil line's row: 386 copies and the real line, counted whole

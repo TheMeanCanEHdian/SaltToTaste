@@ -2551,6 +2551,12 @@ void costShapes() {
       // sentence once per owners derivation (none where no sentence
       // reserves the frying oil); an UNHEATED or QUIET recompute reads no
       // owner (the oil row's plan form is the compute's).
+      // RE-PIN (M97 batch, v100): an UNHEATED or QUIET recompute now reads
+      // the owners once per index too (and UNHEATED the heat's last sentence
+      // once) — the recompute's plan builds memo:browningFat, whose NEW
+      // shallow-fry scan reads R0's `_mediumAt` of 0523's ample oil lines
+      // (`discardedMediumOf` → the owners) before any mention; the counts
+      // are the compute's.
       expect(seen, {
         'compute': {
           'indexes': 1,
@@ -2562,9 +2568,11 @@ void costShapes() {
           'memo:oilOwners': 1,
           'lastMatching': name == 'RESERVE QUIET' ? null : 1,
         },
-        'recompute': name == 'RESERVE HEATED'
-            ? {'indexes': 1, 'memo:oilOwners': 1, 'lastMatching': 1}
-            : {'indexes': 1, 'memo:oilOwners': null, 'lastMatching': null},
+        'recompute': {
+          'indexes': 1,
+          'memo:oilOwners': 1,
+          'lastMatching': name == 'RESERVE QUIET' ? null : 1,
+        },
       });
     }, timeout: const Timeout(Duration(minutes: 5)));
   }

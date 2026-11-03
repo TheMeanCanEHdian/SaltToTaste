@@ -5171,6 +5171,394 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v100 (batch M97; matcherVersion 94 — the uncoated shallow-fry reader
+(the lifted-out pieces' uptake, the FNDDS 2705972 sauté film as a stand-in by
+cooking method) + the roux guard; three corpus rows; the M97 design_v2 under
+the owner's standing authorization (2026-10-07) and the owner's 2026-11-02 "go
+ahead with the shallow-fry reader"; zero requests — live step L54 was the
+orchestrator's, 2026-11-02, 4 requests; replayed on snapshot 32 against the v99
+rows, both orders byte-identical, each rule reverted alone reproducing exactly
+the other's rows, calls 0).**
+- **L54 (Branch B: no plain uncoated meatball record).** The 'meatballs'
+  search (25 hits, now cached) names none: meatless (2707472, 169067), a soup
+  (2707123), sandwiches (2706945, 170708, 170709), a commercial frozen product
+  (171638), sauced or breaded dishes (2706580, 2706467, 2706384, 2706395),
+  frozen meals, meat loaves. READ AND REJECTED: FNDDS 2706395 "Meatballs,
+  Puerto Rican style" (its detail now cached; its inputFoods only in
+  .claude/diag/2026-11-02/live54_raw/2706395.json): 453.6 g raw ground beef,
+  113.4 g raw ham, 50 g egg, 31.25 g all-purpose flour (¼ cup — a dredge /
+  binder), 110 g onions, 257 g tomato sauce, 28 g white bread, 56 g vegetable
+  oil (¼ cup), 1.65 g nutmeg, 6 g salt (225 kcal, P 14.3, F 15.3, C 6.9, water
+  60.4 per 100 g) — its oil is shared between the fry and the tomato-onion
+  sauce the dish is served in, and the flour coats: not an uptake record. FNDDS
+  2706467 "Meatballs, NS as to type of meat, with sauce" (raw JSON only,
+  live54_raw/raw_2706467.json; no cache row): 340.2 g ground beef, 50 g egg,
+  122 g prepared beef broth, 6 g salt (186 kcal, P 18.0, F 12.0) — no oil
+  input and no meatball sub-code. So no new `_Fndds` constant: Q1 RULED (a) by
+  the orchestrator under the standing authorization — the shipped
+  `_browningFatShare` (FNDDS 2705972 "Chicken breast, sauteed, skin not
+  eaten": 2 g oil per 131.62 g raw breast, 1.52 %) on the pieces' RAW MIX,
+  flagged a stand-in by cooking method; Q2 RULED (b) — an amount-less "for
+  pan-frying" line is admitted (no whole to cap at; the reader's figure is
+  the pieces' uptake, never the oil's mass). crispy-potato-latkes|5 stays
+  DEFERRED (D5).
+- **SF-1 — the trigger (`_shallowFryLines`, text only, inside memo
+  `#browningFat`; `shallowFryLinesOf` for the pins).** A fat line (`_panFatHeads`:
+  oil, shortening, lard, butter) is a shallow-fry line when, in this order:
+  R2's line term `_couldZero` (¼ cup or more in either unit family, or a "for
+  (pan-/deep-)frying" label — no `amounts.isNotEmpty` term: Q2 (b)); R0 no
+  other arm owns it (no medium, `_mediumAt`; no C4 pan fat, `_panFatAt`); R1
+  its own mentions are non-empty and every one heats it (`_heatsFat`), h = the
+  first; R2 h's sentence heats no smaller written amount — `_heatsTheOil`'s
+  amount, or a print of the shipped `_stepAmount` in h's sentence whose words
+  name the head below ¼ cup (pan-seared-scallops…|5: "Add 2 tablespoons of the
+  vegetable oil to a 12-inch skillet and heat …" — `_stepPrintsOf`'s index
+  files only amount-less lines' heads, so h's one sentence is read with the
+  same regex, once per sentence and head); R4 the first lift-out after h
+  (`_liftsPiecesOut`: "transfer / remove / move / lift … to a plate, platter,
+  (wire) rack, baking sheet, cutting / carving board, paper towels", "using a
+  slotted spoon … transfer", "drain … on paper towels") stands in h's step or
+  the next and names a piece (not "transfer to plate", not "<noun>
+  mixture"); R3 every food added from h's heat clause to the lift-out is that
+  piece (or "half / batch / pieces / the meat"; a fat aside) — cioppino|0's
+  "Add onions …" refuses; R5 (`_panReusedAfter`) the first pan event from the
+  lift-out (its batch run: a further lift-out, "repeat with", a batch's add /
+  fry) decides — discarded (`_Fat.discards`, `_pansWiped`, a plain pour-off
+  of fat, `_skimsFat`'s K2 arm) or none to the end admit; "now-empty",
+  `_pourOffAllButFat`, "leaving fat in", a deglaze, "scrape up … browned
+  bits", fond, "to / into / over the fat", "reserve … fat", a pan sauce, or —
+  after the run — a cooking sentence (add / stir / return / cook / reduce /
+  increase / pour / whisk / melt / heat / bring / place) while the fry's
+  vessel is current refuse. The vessel is the first vessel word of h's
+  sentence (or before it in its step; "pan" read as "skillet"); a sentence
+  naming it makes it current, one naming another vessel, "a / an / another
+  <vessel>", "the sauce / the liquid", "boiling water" or "from the oven"
+  switches away. A cooking sentence that names the fry vessel counts as
+  reuse too (pA's census form). R4's every-mention clause is not built (pA
+  §10: equivalent under the line gate). The corpus admits exactly two lines:
+  sunday-gravy|20 (S3.0 "heat the oil in a large nonstick skillet …", S3.1
+  "Add the meatballs …", S3.2 "Transfer the meatballs to a paper towel–lined
+  plate to drain briefly."; S3.3–S3.5 the sauce and the pot: the skillet
+  never used again) and spaghetti-and-meatballs|10 (S2.0 "Pour the vegetable
+  oil into a 12-inch skillet …", S2.2 "Add the meatballs …", S2.3 "Transfer
+  the meatballs to a paper towel–lined plate and discard the oil left in the
+  skillet."). Census of the 1,342 fat lines (first refusing rule): the line
+  gate 764, R1 407, R0 52, R2 20, R4 87, R3 9, R5 1, admitted 2.
+- **The figure, P and the split (`_shallowFryPlan`, beside
+  `_browningFatPlan`).** P = the counted rows (`_m52Counted`) of the FIRST
+  shallow line's ingredient group from its start to that line, never a fat
+  line (`_shallowPiecesOf`; the shipped M61 raw-mix form — one base per
+  recipe, the same on every compute); U = `_browningFatShare` × P, summed
+  once; U split over the plan's shallow lines in the M52 per-pan form — each
+  its share by its whole, min(whole, share ÷ its lipid); an amount-less line
+  takes U ÷ its lipid when it is the one shallow line (equal shares beside
+  others: no corpus recipe holds two). The admission and weighing are
+  `_browningFatPlan`'s (engine rows, unheld, not auto below the gate;
+  `engineOutcome` on `lineGrams`; the lipid of `nutrientSiblings[fdcId] ??
+  fdcId`); a line left whole or no counted piece (every piece skipped) is no
+  entry — the engine's row. sunday-gravy: |10–|19 but the uncounted |15 salt,
+  736.23 g → 0.015195 × 736.23 = 11.19 g; spaghetti: |0–|9, 659.41 g → 10.02
+  g (the printed 1.52 gives the same cents).
+- **The flag (the food word fixed: the plan reads a group mix, no record).**
+  "shallow-fried and lifted out — only the oil the fried pieces keep counted
+  · approximation (shallow-fry uptake: 1.52 g fat per 100 g of the raw fried
+  pieces — USDA FNDDS 2705972 recipe: 2 g oil per 131.62 g raw chicken breast
+  (a stand-in by cooking method: the lifted-out pieces keep a film, the rest
+  of the oil stays in the pan))" (a butter line adds "; a butter line weighed
+  by its own fat"); `discardedBasis()` returns the plan row's basis as for a
+  browning row. No hold, no new GET field.
+- **SF-2 — precedence.** `_browningFatPlan` skips a shallow line, and both
+  `_m52Plan` merges take the shallow entries FIRST (`{...shallow, ...browning,
+  ...solids}`), so the skip is what keeps them; C4 and every medium arm beat
+  the reader (R0). One row changes hands: sunday-gravy|20 (it stays in the
+  browning TEXT set; the ribs' film is counted once, on |0 — the v96
+  "|0 and |20" disclosure retires). The gate `_browningFatAt` is widened once to
+  the union, so `_unplannedOf`, `derivedFor`'s Confirm arm, `_m52RowOf`,
+  `_m52Key`, `_m52KeysAlike` and `_m52OnConfirm` read a shallow line as a
+  browning one. The key: a NEW ` pieces` term (each piece row's position and
+  grams, both key forms) and a NEW `_m52KeysAlike` refusal for a counted
+  piece row.
+- **RX-1 — the roux guard (`_bindsRoux`, inside `_browningFatLines`' every
+  mention).** A mention whose sentence, or the NEXT sentence of its step,
+  adds flour to the fat (a native find, then pA's tight form: "add / stir in /
+  whisk in / sprinkle (an amount of) flour", never "the flour mixture";
+  "flour over"; "roux") is no browning line — the fat a roux binds is in the
+  gravy. One row: broiled-chicken-with-gravy|12 (S3.1 "Melt butter in
+  now-empty saucepan over medium heat." → S3.2 "Add flour and cook …"); the
+  browning text set is 43 lines. The window stays the mention and the next
+  sentence (irish-stew|1 20.39 g stands; RX-2 deferred, D3).
+- **Reach (fix100 tip1, the v99 rows of snapshot 32; 3 rows, 3 recipes, 0
+  person / section / status / hold rows).**
+
+| row | v99 → v100 | kcal (ROW) | per serving | rule |
+|---|---|---|---|---|
+| pasta-with-hearty-italian-meat-sauce-sunday-gravy\|20 "½ cup olive oil" (2710186) | 10.13 g `discarded` (the ribs' browning film) → 11.19 g `discarded` (shallow) | 91.17 → 100.71 (+9.54) | 889.33 → 890.52 (8; +9.52) | SF-1 |
+| broiled-chicken-with-gravy\|12 "2 tablespoons unsalted butter" (173430) | 20.68 g `discarded` → 28.36 g `density` "2 tablespoon ≈ 30 mL" (= v95) | 148.28 → 203.35 (+55.07) | 686.70 → 700.46 (4; +55.04) | RX-1 |
+| spaghetti-and-meatballs\|10 "Vegetable oil, for pan-frying" (2710180) | 0.00 g `unmeasured` → 10.02 g `discarded` | 0.00 → 90.18 (+90.18) | 862.32 → 884.87 (4; +90.20) | SF-1 (Q2 b) |
+
+  ROW column 3,530,208.34 → 3,530,363.13 (+154.79); recipe energy
+  3,381,117.49 → 3,381,272.25 (+154.76 — the design's +154.80 adds 55.07 / 4
+  to the ROUNDED 686.70; the cent is rounding: broiled's stored batch total
+  moves 2,746.78 → 2,801.85, exactly +55.07, and 2,746.78 / 4 = 686.695
+  prints 686.70 while 2,801.85 / 4 = 700.4625 prints 700.46; its 25.06 kcal
+  gap to Σ rows (2,771.84 / 2,826.91) is the same at-the-totals deduction on
+  both trees, the replay's KCAL CHECK lines). Under Q2 (a) the spaghetti row
+  would stand: +64.61 / +64.56. Sections, holds, notes (17), buckets and calls
+  (0) identical; staleAfter 0, sectionsStale 0; a recompute writes nothing.
+  Attribution: SF-1/SF-2 reverted alone → broiled|12 alone; RX-1 reverted
+  alone → gravy|20 + spaghetti|10 alone; 0 unattributed.
+- **Negatives (byte-equal on the replay; the refusing rule).**
+  pan-seared-scallops…|5 56.00 `portion` (R2's print), steak-tacos|11 28.00
+  (the line gate), cioppino|0 56.00 (R3), braised-halibut-with-leeks-and-
+  mustard|2 85.08 `density` (R5), creole-style-shrimp-and-sausage-gumbo|3
+  112.00 (R4), stir-fried-portobellos…|8 56.00 (R1),
+  thick-cut-sweet-potato-fries|4 121.27 `discarded` (R0, a frying oil),
+  sunday-gravy|0 10.13 and albondigas-en-chipotle|2 5.17 (browning, kept),
+  irish-stew-with-carrots-and-turnips|1 20.39 (the roux window),
+  italian-style-turkey-meatballs|14 40.23 (the line gate), best-crab-cakes|14
+  56.00 (R0, C4), bulalo…|0 16.82 (R0, partial use), corn-fritters|8 (held)
+  and southern-corn-fritters|1 4.53 (R0, ambiguous medium),
+  chicken-saltimbocca|5 23.14 (R0, C4), daube-provencal|4 24.12 (R2,
+  "heat 2 tablespoons of the oil"),
+  slow-roasted-chicken-parts-with-shallot-garlic-pan-sauce|7 56.72 `density`
+  (R4: its lift-out "Transfer sheet to upper rack …" moves the sheet) and
+  skillet-roasted-broccoli|2 70.00 `portion` (R4: "Transfer to platter"
+  names no piece) — R4's "names a piece" clause alone refuses these two;
+  smothered-pork-chops|2 414.03 `density` (its broth) and
+  simplified-cassoulet-with-pork-and-kielbasa|8 81.93 `weight` (its bacon) —
+  the reader's head gate alone refuses these two (neither head a pan fat, yet
+  each line's mentions heat it and the bacon is lifted out: dropped, 260.26
+  and 25.11 g `discarded`); the RX-2 rows best-beef-stew|4 27.57,
+  chicken-bouillabaisse|2 15.30 (the line gate) stand.
+- **Calibration (reported, never fitted).** No reached recipe is in a
+  recipe-level set; the line samples of these recipes are other lines; every
+  set's median and mean unchanged (audit 6 3.23 % / 10.51, audit 5 5.20 /
+  9.94, audit 4 12.61 / 13.05, audit 3 8.19 / 8.39, audit 2 2.17 / 11.81,
+  audits 2–5 6.95 / 10.80).
+- **GATE-P** (the widened gate reaches `derivedFor`'s Confirm arm,
+  `_unplannedOf` and `_m52OnConfirm`; `_m52Key` / `_m52KeysAlike` change):
+  sw5 + sw6 + sw7 + sw8 + sw8r on base e3a4ed2 and on v100 (run.sh, 12 shards,
+  fresh snapshot-32 copies) and sw8s (sw8r with `planned()` =
+  spaghetti-and-meatballs, outside sw8r's 21): base sw5 31,757, sw6 37,444,
+  sw7 1,875, sw8 56,943, sw8r 5,433, sw8s 48; the tip sw5 31,713, sw6 37,400,
+  sw7 1,872, sw8 56,868, sw8r 5,358, sw8s 123 combos; 0 divergent, 0 refused,
+  0 errors, calls 0 on both; settled 268 (sw8r 21, sw8s 1), a second pass
+  moves 0. The combo deltas are exactly broiled|12's specs (c / p / cp / pc /
+  s / t / u 12: −44, −44, −3, −75, −75 — the roux guard leaves it no plan row)
+  and spaghetti|10's +75 (its plan row is new).
+- **Pins** (nutrition_v100_test, 21 tests): matcherVersion 94; sunday-gravy|20
+  11.19 g / 100.71 kcal with the basis and flag verbatim, its pieces |10–|19
+  (736.23 g), |0's 10.13; spaghetti|10 10.02 g / 90.18 (659.41 g);
+  broiled|12 28.36 g `density`; the negatives byte-equal, value first
+  (scallops|5, steak-tacos|11, cioppino|0, chicken-and-dumplings|3 — R3's
+  value pin, braised-halibut|2, gumbo|3, portobellos|8,
+  garlicky-roasted-shrimp|3 — R1's value pin, sweet-potato-fries|4,
+  gravy|0, irish|1, slow-roasted-chicken-parts|7 and
+  skillet-roasted-broccoli|2 — R4's piece clause's value pins,
+  smothered-pork-chops|2 and simplified-cassoulet|8 — the head gate's, with
+  0118's deli-ham line computed first for cassoulet's cooked-bacon part, a
+  cached search hit); STATED
+  synthesized (the real 0351, real sentences only): R4's window (S3 split
+  into three steps) and R5's named reuse (0351's own S1.3 "Add the crushed
+  tomatoes and broth, scraping up any browned bits." after S3.2) each return
+  |20 to the browning film; R5's and R2's sub-gates and the basis arm, each
+  the real 0351 with S3 changed (real sentences, but for two reworded heat
+  sentences and one retyped real line, named in the test): S1.3 after S3.3's
+  "Remove the sauce from the oven …" (away: |20 11.19); 0017's "Return soup
+  to now-empty pot …", 0458's "Simmer, scraping up any browned bits, …" and
+  0351's S1.2 "Stir in the garlic and cook …" after the lift-out, and S3.0
+  reworded "heat 2 tablespoons more of the olive oil" (each 10.13, the
+  browning film); |0 retyped as steak-tacos' "2 tablespoons vegetable oil",
+  S3.0 "heat the olive oil" and 1189's "Pour out all but 1 tablespoon fat
+  from pot." after S3.3 (|20 11.19 with the shallow basis); (closer2) the
+  sub-gates no corpus row moves, each a real recipe with one step changed
+  (real sentences carried in, a few words reworded, named in the test): on
+  1076, 0162's one-sentence "heat the butter …; add the flour", 0107's "…
+  to the roux" and 0223's "Sprinkle the flour over …" (reworded "2
+  tablespoons of the flour") bind (|12 28.36 g), 0435's "Stir in flour
+  mixture" binds nothing (20.68 g); on 0351 after the lift-out, 0070's
+  "Wipe out skillet with paper towels." or 0142's "Pour off and discard fat
+  in skillet." before S1.2's cooking sentence, and a second batch (0000's
+  "Add meatballs and cook …" then S3.2 again) leave |20 11.19, 0332's "Pour
+  off all but 1 tablespoon fat from skillet." returns it to 10.13; S3.2 read
+  as a slotted-spoon transfer (0165's, the piece "meatballs") or "Drain the
+  meatballs on paper towels." (11.19), as "the meatball mixture" or
+  0360's "Add meatballs to sauce …" + 0180's "Transfer to a plate and set
+  aside." (10.13); S3.0 read as 0121's "Place breasts, …, in oil and place
+  skillet over medium heat.", 0310's "Return the skillet to high heat; add
+  the oil and heat …" or 0685's "Heat the oil, garlic, and ¼ teaspoon red
+  pepper flakes …", S3.1 as 0008's "Add half of the beef …" (11.19), S3.1
+  deleted (10.13); |20 retyped with 0472 quesadillas' "vegetable oil for
+  brushing the tortillas" (`auto` 0.39, below the gate) under "heat the
+  vegetable oil" — shallow, unweighed: the engine's 112.00 g `portion`;
+  every piece of 0351's group 1 skipped through the PUT (|20 the engine's
+  112.00 g `portion`, a compute after writes nothing) and 1076's butter line
+  carried into the group's start (no piece: |21 11.19); (closer3) on 0351,
+  S3 split after S3.1 (the lift-out a step after the heat) and 0421's "Add
+  the remaining 2 tablespoons oil to the skillet and repeat with …" after
+  the lift-out (11.19), S3.0's skillet read "pan" with 0310's "Return the
+  skillet to high heat; …" after the lift-out, and 0013's "Off heat, stir in
+  brandy." after it (10.13); |20 retyped "½ cup olive oil plus 2 tablespoons
+  unsalted butter" (held `second_food`: shallow, unweighed — the engine's
+  112.00 g `portion`, the hold kept) and 0095's "4 tablespoons (½ stick)
+  unsalted butter" under "heat the butter" (13.79 g, the flag's butter
+  clause); on 1076, 0476's "Add the remaining 2 cups flour …" binds (|12
+  28.36 g); (closer4) ONE table — the alternatives closer4's HAND-LISTED screen
+  (fix100/closer4.md: 111 one-word mutants of 13 families) left alive — 116
+  rows, each the real 0351 |20 or 1076 |12 with one sentence edit (54 carry a
+  real corpus sentence in unchanged, asserted in its recipe; the other 62 STATED
+  synthesized at the row, 8 of them a real sentence with one word changed): R2's
+  ¼-cup boundary and unread-volume fallback; R3's add forms, batch words, plural
+  stem and lift-verb cut; R4's lift verbs and native find, `_liftObject`'s
+  fillers, `_liftTo`'s destinations and `_notAPiece`'s words; R5's fry-vessel
+  back-scan and null-vessel term, its vessel words, introducers, away terms,
+  named-reuse terms, "now empty", cooking verbs and the run's batch verbs;
+  RX-1's "stir in", "whisk in" and "all-purpose" (each 11.19 / 10.13, or 28.36 /
+  20.68 on 1076); (closer5) the table extended by 108 rows (224 in all; 24 carry
+  a real corpus sentence, 84 STATED synthesized at the row): verify5's 44
+  measured survivors' inputs (41 rows — `_panReused`'s "leav… in", "to / into /
+  over the …" and "reserve …" words and fillers and its {0,40} run,
+  `_fryFatObject`'s fillers, amount run, units and fat words, `_piecesIn`'s cut
+  set, `_drainsOnTowels`' fillers and "towel", `admits`' strict lift-out,
+  `_rouxFlour`'s "in" and units; 1086's "Leave oil in skillet …", 0422's "… over
+  the fat …", 0316's "… into the hot oil.", 0143's and 0163's "Reserve … fat",
+  0071 / 0689 / 1124 / 1122 / 0277 / 0913 / 0958 / 1131's fat adds and 0206's "…
+  add the remaining 6 tablespoons flour …" carried in) and the mechanical
+  screen's 72 survivors' (67 rows: `_liftVerb`'s suffixed forms, `_liftObject`'s
+  five-filler run, hyphen and comma forms, `_liftTo`'s articles, en dash,
+  hyphen, comma and "paper towel", `_drainsOnTowels`' bare, hyphenated and
+  "draining" forms, `_addsFood`'s "placed" / "places" / "arranged" / "arranges"
+  / "sprinkled" / "sprinkles" / "adds", `_anotherVessel`'s six other vessels
+  (S3.0's fry vessel renamed), its three-word run and en dash, `_cooksInPan`'s
+  three-word, hyphenated and parenthesized lead-ins, `_poursOffFat`'s "spoon" /
+  "drain" / "grease" / "pouring", `_panReused`'s "reserved", 40-character run,
+  period and semicolon, `_fryFatObject`'s and `_rouxFlour`'s no-break space,
+  singular and plural units, "adding flour", `_pieceWords`' "piece" and three of
+  `_liftsPiecesOut`'s object terms); the plan terms' value pins on STATED
+  recipes — the FIRST shallow line's group (A21: a two-fry `capped` 0351, 3.45 g
+  on each oil line; the mutant `reduce(max)` 3.88 g), an amount line weighed to
+  nothing is no entry (A23: |20 retyped "1 bottle olive oil, for pan-frying"
+  keeps the engine's row, grams null; the mutant 11.19 g `discarded`),
+  `_groupOf`'s bound (PL_groupOf: group 1 split before |20, P empty — the
+  engine's 112.00 g `portion`; the mutant 11.19 g) and the equal shares beside
+  an amount-less line (PL_splitU: 0357's "Vegetable oil, for pan-frying" for
+  both oil lines, 3.45 g each; the mutant 6.89 g); the table compares every row
+  and lists the flipped ones; the medium lines R0 refuses (text); the three
+  totals; a third compute and a recompute write nothing; the key (|11 halved
+  keys apart); a typed |17 then a Confirm of |20 (7.74 g stored == derived ==
+  GET), a skip of |17 (4.29 g, a compute after writes nothing); the cap shapes.
+  Each mutant killed by a value pin (snapshot copy, anchor count 1, cmp
+  restore): the reader off, the browning skip dropped, P from the recipe start,
+  P = the meat rows (7.75), the roux guard off (20.68), the R2 print term off
+  (scallops 10.34), the line gate dropped (steak-tacos 11.38), R3 dropped
+  (chicken-and-dumplings 25.07), R5 dropped and R4's window dropped (the
+  synthesized variants, 11.19), R1 dropped (garlicky-roasted-shrimp 5.55), the
+  roux window widened to the step (irish 42.00), the key term dropped, P per
+  line with fat lines (the TRUE shape's second compute 0.02 → 1.71 g),
+  `amounts.isNotEmpty` restored (spaghetti 0.00 `unmeasured`), matcherVersion
+  93; and (closer1) R4's piece clause off (slow-roasted|7 39.86 g, broccoli|2
+  8.62 g `discarded`), R5's away term off (10.13), its now-empty, named-reuse
+  and cooking terms and R2's `_heatsTheOil` amount each off (11.19), the
+  `discardedBasis()` arm narrowed to the browning basis ("1 tablespoon kept (the
+  steps pour off the rest)"); and (closer2) RX-1's own-sentence, "roux", "flour
+  over" and "(?! mixture)" terms (20.68 / 28.36), R5's wipe and plain pour-off
+  terms, its batch run (each 10.13) and its kept-part pour-off read as reuse
+  (11.19), R4's slotted-spoon and drain forms (10.13) and its "<noun> mixture"
+  and `_notAPiece` refusals (11.19), R3's heat-clause cut, fat aside and batch
+  words (10.13) and its "none added" refusal (11.19), R2's print-names-the-head
+  term (10.13), the plan's below-gate refusal (11.19 on the 0.39 row), its
+  no-uptake return (0.00 g `discarded`) and P's fat-head exclusion (11.62); and
+  (closer3) R4's window narrowed to the heat's step and the "repeat with" join
+  off (10.13), the "pan" → "skillet" fold and `_cooksInPan`'s lead-in off
+  (11.19), the plan's unheld term off (11.19 `discarded`, the hold lost), the
+  flag's butter clause off (the flag without it) and RX-1's amount run off
+  (20.68); and (closer4) the head gate dropped (smothered|2 260.26 g
+  `discarded`) and each table row's one-word mutant — 119: verify4's 18 measured
+  survivors and the 101 that hand-listed screen left alive on the round-3 file
+  (the remove / move / lift rows also kill the native find's "mov" and "lift"
+  terms, the whisk row "whisk in" alone) — each giving its row's other value;
+  R5's per-vessel pass rebuilt per line killed by COUNT (`memo:panVerdict` 399
+  on the TRUE shape, its bound 7, pinned 1); and (closer5) verify5's 44
+  survivors, each killed by value by its own row, and THE MECHANICAL SCREEN
+  (fix100/c5/screen.tsv, enumerated by script, not by hand): every alternation
+  branch, optional item (present and absent), star run, bounded run (n → n − 1),
+  character-class member and lookahead of the new regexes — `_rouxFlour`,
+  `_liftVerb`, `_liftObject`, `_liftTo`, `_drainsOnTowels`, `_addsFood`,
+  `_fryFatObject`, `_pieceWords`, `_batchVerb`, `_vesselWord`, `_anotherVessel`,
+  `_awayFromPan`, `_panReused`, `_cooksInPan`, R5's `_poursOffFat`
+  (`_plainPourOff`) and `_piecesIn`'s cut set — each of `_notAPiece`'s 22 words,
+  and 38 code terms (`_bindsRoux`' finds and window, the "now empty" forms,
+  `_liftsPiecesOut`'s finds and object terms, `_heatsLittle`'s terms, the plan's
+  FIRST line, whole-≤0 term, splits, P's bounds and fat-head exclusion,
+  `_groupOf`'s bound, six head-gate terms; `_pourOffAllButFat` is shipped, not
+  new): 344 mutants (two re-spelled — an optional capture group kept and made
+  impossible, its reader's index intact) — 217 killed by a pin of the round-5
+  file (R0's medium term by the text pin; its C4 term only by the TRUE shape's
+  exact counts — both carried STATED EQUIVALENT by value below), 55 by verify5's
+  rows, 72 by closer5's, 0 equivalent; on the final file all 344 and the 44 are
+  killed; and (closer6, the orchestrator) verify6's 7 surviving code-term
+  mutants of the new arms — R1's every-mention clause and FIRST mention, R3's
+  heat-clause null branch, R5's discard `now == 1` and the run's `later` carry,
+  the plan's sibling lipid read and its `sized` guard (none corpus-reaching: the
+  text census the same, one shallow line per corpus recipe) — each killed by
+  value by its own row (8 rows, 232 in all, each STATED synthesized at the row:
+  0095's real butter line at |20 mentioned twice, a "repeat with" heat naming no
+  pan oil, 0142's real pour-off with skillet → pot then 0310's real reheat, two
+  batch sentences between two lift-outs, |20 retyped "½ cup extra-virgin olive
+  oil" read through its sibling 171413, a two-fry recipe with one amount-less
+  pan — whose `sized` mutant throws on `whole!`). STATED EQUIVALENT: R0's medium term by value (its four corpus admits
+  keep the fryer block's entry, written after the merge — killed by the text
+  pin); the `_m52KeysAlike` piece refusal (a confirm passes it the confirmed
+  line's own row — a fat or a coat part, never a piece — on every corpus
+  recipe); P re-summed per piece (no counter reads a row sum); C4 precedence
+  (its two ample lines are R2-refused too); '1.52' vs 0.015195; the per-pan
+  split on the corpus (one shallow line per corpus recipe; closer5: pinned by
+  value on the stated two-fry recipes). The suite re-pinned as equalities
+  (RE-PIN M97): seventeen version literals, three hashes, v96's `_beyond`
+  (gravy|20 to this file, broiled|12 to `_unmoved`, "7 rows" → 5), its per-line
+  and totals (890.60, 700.46), v69's two totals (0351 890.60, 0357 884.71); four
+  cost pins (below). The fixtures gain three searches from snapshot 32
+  ('watercress or arugula', 'low-sodium chicken or vegetable broth', 'anise
+  seeds'; the sweep audit's census unchanged).
+- **Cost (RULE C).** One memo (`#browningFat`, its value now the browning and
+  shallow sets and the pieces' range); each fat line's mentions read once for
+  both scans (`browningFatLineReads`); the reader's order — the line gate on
+  the parsed amounts, then R0, then the mentions — so a recipe with no ample
+  fat line reads no medium or mention; the lift-outs found once per index
+  (binary search per line), the batch runs in one backward pass, R5's pan
+  events in one backward pass per fry vessel (counted `memo:panVerdict`,
+  bounded 7 a request — the six vessel words with "pan" read as "skillet",
+  and none: 1 on the TRUE and PIECES compute, GET and recompute, none on
+  QUIET, whose lines R4 refuses first), R2 / R3–R5 once per heat
+  sentence. New cap shapes (sunday-gravy's real |17 + 399 × its real "½ cup
+  olive oil" under 120 × 10,000-character steps of its real S3: TRUE, QUIET
+  without the transfer sentence; PIECES, 399 × |17 then |20) count-pinned
+  exactly. The 23 exact maps holding `'memo:browningFat': 1` and v84's
+  `_capShapes` are unchanged on the tip (none gains `memo:panVerdict`: R5 is
+  reached only behind R1–R4); four recompute pins re-pinned with
+  their counts — the recompute's plan now builds the shallow scan, whose R0
+  reads `_mediumAt` of each ample fat line once per index: v81 ONION
+  (`memo:reservedUse`, `memo:fryVerbAt`, `memo:oilOwners` null → 1), v82
+  RESERVE UNHEATED (`memo:oilOwners`, `lastMatching` null → 1) and RESERVE
+  QUIET (`memo:oilOwners` null → 1), v26 R2 RESERVED OIL USED
+  (`memo:reservedUse` 0 → 1).
+- **Not built — one line each.** D1 batter fritters (corn-fritters|8,
+  southern-corn-fritters|1: M52's coated class); D2 the T0 sear class (no
+  amount gate; scallops|5) — an owner question after an engine census; D3
+  RX-2, flour later in the step (best-beef-stew|4, chicken-bouillabaisse|2,
+  daube-provencal|4, irish-stew|1, ROW +587.15); D4 sunday-gravy|0's browned
+  base ribs + sausages (10.13 → 17.02 g); D5 crispy-potato-latkes|5 (an M52
+  amount-less-medium arm); D6 per-class uncoated figures (vegetable, fish,
+  bare meat). Closed: X1 the five v96 beyond rows stay the browning plan's;
+  X2 the |0 / |20 doubling (closed by SF-1 + SF-2); X3 SR "pan-fried" fat
+  balances (the cut's own rendered fat); X4 a new `DiscardedMedium` / an
+  exclusion-only arm; X5 new hash terms (none).
+- **Deploy note.** matcherVersion 94 stales EVERY stamp: 1,198 recipes + 144
+  sections, 0 requests expected (L54's rows are already seeded in the live
+  cache); `dart_frog build` first. The live digest moves by exactly the three
+  per-serving moves: +1.19 (sunday-gravy), +13.76 (broiled), +22.55
+  (spaghetti); live rows == the v100 replay, buckets == v100_bucket.out.
+
 **Matcher v99 (batch M96; matcherVersion 93 — the sweet-potato fries' uptake
 from FNDDS 2709712: a fried sweet potato reads its own record's 10 g oil per
 89.80 g raw sweet potato, 11.14 %, not the potato's 2709458 as a stand-in,
@@ -5649,9 +6037,11 @@ recipe holds per gram of the raw browned food, capped at the line.
   never run over the corpus; the trigger built is the design's, two of the
   seven are true joins the hand pass missed, and no measured vessel or
   browning-subject narrowing keeps the 15 — fix96/ruling4.md): sunday-gravy|20 112.00 → 10.13 (the meatballs'
-  skillet, another pan), albondigas-en-chipotle|2 26.82 → 5.17 (the sauce's
-  saucepan), broiled-chicken-with-gravy|12 butter 28.36 → 20.68 (the gravy's
-  roux), hungarian-beef-stew|6 28.00 → 24.12 (an onion sweat),
+  skillet, another pan) [retired by v100: the shallow-fry reader's 11.19 g —
+  the ribs' film no longer counted on |0 AND |20], albondigas-en-chipotle|2
+  26.82 → 5.17 (the sauce's saucepan), broiled-chicken-with-gravy|12 butter
+  28.36 → 20.68 (the gravy's roux) [retired by v100: the roux guard returns it
+  to 28.36], hungarian-beef-stew|6 28.00 → 24.12 (an onion sweat),
   chicken-teriyaki(1178)|6 9.07 → 8.44, best-beef-stew|4 28.00 → 27.57,
   slow-cooker-beer-braised-short-ribs|3 butter 28.36 → 27.93 — ROW
   −1,210.86. ROW column 3,528,295.08 → 3,525,644.75 = −2,650.33; recipe energy
@@ -5716,7 +6106,8 @@ capped line and the C4 row named); the 15 rows and the 7 beyond on the
 fixtures equal the replay (record, grams, energy, basis, below the whole);
 the unmoved rows (the negatives, steak-au-poivre|0 / |7,
 classic-chicken-noodle-soup|0 at `portion`, saltimbocca|5 at the C4 arm's
-23.14 g); per line (sunday-gravy |0 and |20 10.13 g each; slow-cooker-beer
+23.14 g); per line (sunday-gravy |0 and |20 10.13 g each [|20 retired by
+v100: the shallow-fry plan's 11.19 g]; slow-cooker-beer
 |3 27.93 g, |2 unplanned); STATED synthesized (a real recipe less one real
 sentence, named): a K1 skim and a K2 plain pour-off each a recipe's only
 trigger, a "pour off all but N" and bulalo's "pour off and reserve oil" no

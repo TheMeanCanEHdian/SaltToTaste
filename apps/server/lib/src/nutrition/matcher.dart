@@ -149,7 +149,9 @@ const Map<String, String> _synonyms = {
 /// v93: matcher v99 (batch M96) — the sweet-potato fries' uptake from FNDDS
 /// 2709712 (10 g oil per 89.80 g raw sweet potato, 11.14 %; was the
 /// potato's 12.51 % as a stand-in); FNDDS 2710048 (breaded) not read.
-const int matcherVersion = 93;
+/// v94: matcher v100 (batch M97) — the uncoated shallow-fry reader (the
+/// lifted-out pieces' film, FNDDS 2705972 as a stand-in) + the roux guard.
+const int matcherVersion = 94;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

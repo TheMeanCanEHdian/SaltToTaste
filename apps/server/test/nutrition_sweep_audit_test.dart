@@ -1322,6 +1322,11 @@ void main() {
     // 'sweet potatoes'; carbohydrate 16.4 / 16.35), differing in some digit;
     // no search recorded (both answers were already in the fixtures):
     // compared 552 -> 553, differ 421 -> 422.
+    // v100 (batch M97): its negative pins recorded from snapshot 32 three
+    // searches — 'watercress or arugula' (0043), 'low-sodium chicken or
+    // vegetable broth' (0546) and 'anise seeds' (0280 garlicky-roasted-
+    // shrimp, P10′'s recipe) — no detail: compared 553 and differ 422
+    // unchanged (measured).
     expect(compared, 553);
     expect(differ, 422);
   });

@@ -233,6 +233,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // v96 (M94): each fat line's mentions read once per index by the
     // browning-fat reader (`memo:browningFat`).
     'browningFatLineReads': lines,
+    // v100 (M97 SF-1 R5, closer4 — verify4 D8): the shallow-fry reader's
+    // pan-event pass, once per fry vessel and index — the vessels
+    // `_vesselWord` names ("pan" read as "skillet": six) and none.
+    'memo:panVerdict': 7,
     // v71 (M71 R-H1, pF R2): a line's scope, once per group heading and
     // once for every step.
     'memo:labelScope': r.ingredients.length + 1,

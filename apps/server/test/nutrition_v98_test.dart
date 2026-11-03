@@ -111,11 +111,12 @@ Recipe _withLine(
 
 void main() {
   test(
-    'matcherVersion 93 — v98 bumped nothing (it kept 92: no corpus row moves; the two '
+    'matcherVersion 94 — v98 bumped nothing (it kept 92: no corpus row moves; the two '
     'hash terms stale every stamp once)',
     () {
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
-      expect(matcherVersion, 93);
+      // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
+      expect(matcherVersion, 94);
     },
   );
 
