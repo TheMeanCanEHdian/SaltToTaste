@@ -291,7 +291,7 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 94 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 95 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
@@ -304,7 +304,8 @@ void main() {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-    expect(matcherVersion, 94);
+    // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+    expect(matcherVersion, 95);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "

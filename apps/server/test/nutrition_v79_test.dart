@@ -158,7 +158,8 @@ const _reach = [
     '128.80',
     '1/3 cup ≈ 79 mL',
   ),
-  // "(optional)" — counted: M75's `_optionalLine` reads reference lines only.
+  // "(optional)" — counted: `servedWithMarked` reads reference lines only
+  // (v101 U16: was misnamed `_optionalLine`).
   (
     _gingerbread,
     22,

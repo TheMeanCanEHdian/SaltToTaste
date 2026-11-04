@@ -88,7 +88,7 @@ Map<String, Object?>? referenceChildJson(
   }
   final childId =
       row.childRecipeId ?? (state == 'not_routed' ? found().childId : null);
-  final child = childId == null ? null : nutritionRecipeOf(db, childId)?.recipe;
+  final child = childId == null ? null : childRecipeOf(db, childId, memo);
   // The section the child is (v44): its stored key, else the prose section
   // a not-routed row names (no child id: nothing to count).
   final sectionKey = switch ((childId, state)) {

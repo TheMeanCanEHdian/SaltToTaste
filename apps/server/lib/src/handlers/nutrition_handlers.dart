@@ -258,6 +258,17 @@ Future<Map<String, Object?>> matchesBody(
     final child = row == null
         ? null
         : referenceChildJson(db, recipe, position, line, row, memo);
+    final decides = row == null || child != null
+        ? null
+        : decisionRecordOf(
+            recipe,
+            weighed,
+            row.fdcId,
+            db: db,
+            description: row.description,
+            gramSource: row.gramSource,
+            food: onRow?.food,
+          );
     final reach = itemKey.isEmpty
         ? const <IngredientMatchRow>[]
         : [
@@ -272,17 +283,18 @@ Future<Map<String, Object?>> matchesBody(
                         // ([decisionRecordOf]) — a canned bean the v49 twin
                         // move put on the solids-and-liquids record decides
                         // the can bought (chana-masala|11 offered 6, wrote 1).
-                        fdcId: row == null
-                            ? null
-                            : decisionRecordOf(
-                                recipe,
-                                weighed,
-                                row.fdcId,
-                                db: db,
-                                description: row.description,
-                                gramSource: row.gramSource,
-                                food: onRow?.food,
-                              ),
+                        fdcId: decides,
+                        // v101 (U1): a decision kept as picked reaches as
+                        // the PUT's apply does ([pickedMoveSource]).
+                        asPicked:
+                            row != null &&
+                            pickedMoveSource(
+                              db,
+                              recipe,
+                              weighed,
+                              row.fdcId,
+                              decides,
+                            ),
                         memo: reads,
                       )
                     : child['state'] == 'routed'
@@ -928,6 +940,10 @@ Future<AppliedToOthers?> applyMatchOverride(
           food: storedFood,
         )
       : row.fdcId;
+  // v101 (Run 073/074 U1): a pick (or Confirm) of a record this line's
+  // own moves move AWAY from, no inverse fired, is kept as picked.
+  final asPicked =
+      decidedFood && pickedMoveSource(db, recipe, weighed, row.fdcId, skinOnId);
   final skinOn = skinOnId == null || skinOnId == row.fdcId
       ? null
       : knownFood(db, skinOnId, line: weighed) ??
@@ -1018,6 +1034,7 @@ Future<AppliedToOthers?> applyMatchOverride(
       description: skinOn?.description ?? row.description,
       dataType: skinOn?.dataType ?? row.dataType,
       decidedBy: decidedBy,
+      asPicked: asPicked,
     );
   }
   // In progress until the totals below are written (v29, migration 017),
@@ -1095,6 +1112,7 @@ Future<AppliedToOthers?> applyMatchOverride(
     decided: food,
     excluding: (recipeId: recipe.id, position: position),
     alsoCompleted: parentsDone,
+    asPicked: asPicked,
   );
 }
 

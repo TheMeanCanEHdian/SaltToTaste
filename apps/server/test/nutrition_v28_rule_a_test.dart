@@ -851,10 +851,11 @@ void main() {
         // Malformed JSON never fails a write (it indexes nothing).
         db.fdcSearchCachePut('broken', '{not json');
         same();
-        // The upgrade: 016's (and 017's, 018's) objects dropped, back to 15,
-        // reopened.
+        // The upgrade: 016's (and 017's, 018's, 021's) objects dropped, back
+        // to 15, reopened.
         db.dispose();
         raw
+          ..execute('ALTER TABLE ingredient_decisions DROP COLUMN as_picked')
           ..execute('ALTER TABLE ingredient_matches DROP COLUMN parts')
           ..execute('ALTER TABLE ingredient_matches DROP COLUMN child_stamp')
           ..execute('ALTER TABLE ingredient_matches DROP COLUMN child_share')

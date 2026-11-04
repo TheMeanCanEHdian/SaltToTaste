@@ -322,7 +322,8 @@ double? Function(String? childServings) shareReaderOf(
       final quantity = parseQuantity(amount.quantity);
       if (unit != null && quantity != null && yieldQuantity != null) {
         final share = quantity * unit / (yieldQuantity * table[yieldUnit]!);
-        return share > 0 ? share : null;
+        // v101 (Run 074 critic, U6): a 0 yield divides to Infinity.
+        return share.isFinite && share > 0 ? share : null;
       }
     }
     return null;

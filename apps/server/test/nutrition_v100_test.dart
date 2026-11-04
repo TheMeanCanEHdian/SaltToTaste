@@ -333,10 +333,14 @@ SaltDatabase _db() {
 }
 
 void main() {
-  test('P18: matcherVersion 94 (v100, batch M97: the shallow-fry reader and '
-      'the roux guard)', () {
-    expect(matcherVersion, 94);
-  });
+  test(
+    'P18: matcherVersion 95 (v100 set it to 94, batch M97: the shallow-fry reader and '
+    'the roux guard)',
+    () {
+      // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+      expect(matcherVersion, 95);
+    },
+  );
 
   group('matcher v100 (batch M97)', skip: skipIfNoCorpus, () {
     late SaltDatabase db;
@@ -4821,6 +4825,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:parenthetical': 1,
   },
   'TRUE GET': {
+    // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
+    // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+    // record.
+    'carriedReads': 2,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -4946,6 +4954,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:parenthetical': 1,
   },
   'QUIET GET': {
+    // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
+    // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+    // record.
+    'carriedReads': 2,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -5067,6 +5079,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:parenthetical': 1,
   },
   'PIECES GET': {
+    // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
+    // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+    // record.
+    'carriedReads': 2,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,

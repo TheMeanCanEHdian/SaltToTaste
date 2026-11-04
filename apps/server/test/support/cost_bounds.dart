@@ -343,6 +343,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v98 (Run 071/072 P8): `skinDiscarded`'s scan of the skin sentences,
       // once per index and item text.
       'skinScans',
+      // v101 (Run 073 S4, U4): `skinKeptPart`'s scan, once per index and
+      // item text.
+      'memo:skinKeptPart',
+      'skinKeptScans',
     ])
       perText: 3 * texts,
     'mentions': mentions,
@@ -394,6 +398,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // with v74's step indexes (the recompute 1). Before the memo a compute
     // read a routed line six times (isReferenceIn 3, the resolver's own list
     // 3) and a GET up to five (1 and 4) — over the four this bound once said.
+    // v101 (Run 073 S6, U9): the note's named library titles, once per
+    // recipe instance and resolver memo — at most one per line a path reads
+    // (each line may hand its own copy) and one per index.
+    'memo:noteTitles': lines + 2,
     'memo:yieldMarks': lines,
     'memo:yieldShareReaders': lines,
     'yieldServingsReads':

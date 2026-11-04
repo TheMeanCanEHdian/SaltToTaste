@@ -105,6 +105,9 @@ const Map<int, String> _capabilityByVersion = {
       'idx_matches_host / idx_nutrition_host / idx_layout_host: the three '
       "tables indexed on 019's host_id (matcher v47, F9) — the cascade and "
       'the dead-section drop SEARCH, never SCAN; no row changes',
+  21:
+      'ingredient_decisions.as_picked: a decision kept as picked (matcher '
+      'v101, Run 073/074 U1) — 0 on every existing decision',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry

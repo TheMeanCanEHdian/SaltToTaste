@@ -1,4 +1,4 @@
-import 'package:salt_shared/src/model/recipe.dart' show Serves;
+import 'package:salt_shared/src/model/recipe.dart' show Amount, Measure, Serves;
 import 'package:salt_shared/src/util/servings_parser.dart';
 import 'package:test/test.dart';
 
@@ -309,6 +309,25 @@ void main() {
         reason: 'these state no servings but parsed to a serves count',
       );
     }, skip: skipIfNoCorpus);
+  });
+
+  // v101 (Run 074 critic 1, U6): a 0 yield reads no share — the division
+  // gave +Infinity, which every route caller tests against null only.
+  // STATED synthesized (a negative path the corpus cannot hold): 0139's
+  // real line "1 cup Spicy Mayonnaise (recipe follows)" against its
+  // "Spicy Mayonnaise" yield MAKES ABOUT 1 CUP edited to 0 CUPS.
+  test('parseShare: a 0 yield reads no share (base: Infinity)', () {
+    const amounts = [
+      Amount(
+        measure: Measure.volume,
+        quantity: '1',
+        unit: 'cup',
+        primary: true,
+      ),
+    ];
+    const raw = '1 cup Spicy Mayonnaise (recipe follows)';
+    expect(parseShare(raw, amounts, 'MAKES ABOUT 1 CUP'), 1.0);
+    expect(parseShare(raw, amounts, 'MAKES ABOUT 0 CUPS'), isNull);
   });
 
   // v41: the units a share of a child may be written in besides `recipe`.

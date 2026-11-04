@@ -163,14 +163,15 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    "matcherVersion 94 (v94 set it to 89, batch M92: three recipes' totals move)",
+    "matcherVersion 95 (v94 set it to 89, batch M92: three recipes' totals move)",
     () {
       // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
       // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
       // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
       // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-      expect(matcherVersion, 94);
+      // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+      expect(matcherVersion, 95);
     },
   );
 
@@ -598,6 +599,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'TRUE GET': {
+    // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
+    // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+    // record.
+    'carriedReads': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -685,6 +690,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'QUIET GET': {
+    // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
+    // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+    // record.
+    'carriedReads': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,

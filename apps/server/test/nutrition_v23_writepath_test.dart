@@ -50,10 +50,12 @@ const quarter = '¼ cup extra-virgin olive oil';
 /// marker; every version: before 015 — no stored totals — and 016 — no
 /// row retry count, no search-cache food index or its triggers — and 017 —
 /// no in-progress marker, no no-record index — and 018 — no composite
-/// row columns, `parts` first: its CHECK reads `child_recipe_id`), with
-/// [seqs] as recipe_layout's per-recipe seqs at 12.
+/// row columns, `parts` first: its CHECK reads `child_recipe_id` — and 021
+/// — no decision `as_picked`, v101), with [seqs] as recipe_layout's
+/// per-recipe seqs at 12.
 void downgrade(String path, int version, {Map<String, int> seqs = const {}}) {
   final raw = sqlite3.open(path)
+    ..execute('ALTER TABLE ingredient_decisions DROP COLUMN as_picked')
     ..execute('ALTER TABLE ingredient_matches DROP COLUMN parts')
     ..execute('ALTER TABLE ingredient_matches DROP COLUMN child_stamp')
     ..execute('ALTER TABLE ingredient_matches DROP COLUMN child_share')

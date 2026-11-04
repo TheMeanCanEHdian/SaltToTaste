@@ -14,10 +14,11 @@ gitignored; a key-stripped, session-free copy of the live DB — never the live 
 - `gate.sh <gate-dir> <snapshot.db> <prev-prefix>` — the per-batch gate: fresh copies, main and
   `--reverse-parents`, `cmp` main == rev, `cmp` every TSV and the buckets against the reference set
   `<prev-prefix>_{rows,recs,sections,calls,notes}.tsv` + `_bucket.out`, then the attribution.
-  The simplification series' reference = the v82 set (`.claude/diag/2026-10-09/v82_*`, made on
-  snapshot 29); every refactor batch must reproduce it byte for byte.
+  The reference = the previous batch's set on its replay snapshot (the simplification series' was the v82
+  set, `.claude/diag/2026-10-09/v82_*` on snapshot 29; at v101 it is v100's, `v100_*` on snapshot 32): a
+  refactor batch reproduces it byte for byte, a matcher batch differs on exactly its stated rows.
 - `digest.sh <gate-dir> [live-db]` — after a deploy: live buckets == replay buckets and the kcal digest.
-- `person_sweeps/` — sw3–sw10, the only proof of the person paths (Confirm / pick / skip / typed grams
+- `person_sweeps/` — sw3–sw11, the only proof of the person paths (Confirm / pick / skip / typed grams
   through the real PUT); see its README for each sweep's spec and base / tip figures.
 
 Conventions: one heavy run at a time; a gate run writes a full log and the reviewer greps it; the

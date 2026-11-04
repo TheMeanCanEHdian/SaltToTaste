@@ -3832,7 +3832,10 @@ void main() {
       isZeroNutrientFlavouring('ground lapsang souchong tea leaves'),
       isTrue,
     );
-    expect(isZeroNutrientFlavouring('makrut lime leaf'), isFalse);
+    // RE-PIN (fix101 batch, v101, Run 073 S3 / U8): was isFalse — the
+    // singular is listed too (a person's "1 makrut lime leaf" fell through
+    // to the FDC ranking); the tea's singular stays unlisted (no ruling).
+    expect(isZeroNutrientFlavouring('makrut lime leaf'), isTrue);
     expect(
       isZeroNutrientFlavouring('ground lapsang souchong tea leaf'),
       isFalse,

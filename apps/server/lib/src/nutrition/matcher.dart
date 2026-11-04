@@ -151,7 +151,10 @@ const Map<String, String> _synonyms = {
 /// potato's 12.51 % as a stand-in); FNDDS 2710048 (breaded) not read.
 /// v94: matcher v100 (batch M97) — the uncoated shallow-fry reader (the
 /// lifted-out pieces' film, FNDDS 2705972 as a stand-in) + the roux guard.
-const int matcherVersion = 94;
+/// v95: matcher v101 (batch fix101) — the Run 073/074 fixes: a pick of a
+/// move source kept as picked (migration 021), the 'used' basis naming every
+/// printing step (nasi-goreng|9's text), two hash terms, the subsection caps.
+const int matcherVersion = 95;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -587,6 +590,11 @@ const Set<String> _zeroNutrientFlavourings = {
   // v71 (M73, pD C3): 0615's smoking tea, sprinkled under the rack and
   // never eaten (step 2) — the liquid-smoke precedent.
   'ground lapsang souchong tea leaves',
+  // v101 (Run 073 S3, U8): each number of the two keys above — this set
+  // does not singularize, so a person's "2 vanilla beans" / "1 makrut lime
+  // leaf" fell through to the FDC ranking.
+  'vanilla beans',
+  'makrut lime leaf',
 };
 
 /// v37 (Z14): whether [raw] is the tail of the line above that the corpus

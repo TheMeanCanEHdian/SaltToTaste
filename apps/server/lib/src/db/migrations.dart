@@ -622,6 +622,18 @@ SELECT recipe_id, seq, lines FROM recipe_layout
     'CREATE INDEX idx_nutrition_host ON recipe_nutrition(host_id)',
     'CREATE INDEX idx_layout_host ON recipe_layout(host_id)',
   ],
+  // 021 — matcher v101 (Run 073/074 U1): a decision kept AS PICKED — a
+  // person's pick of a record the line's own moves move away from (R2's
+  // lean-only, the 0" flat under a step-printed trim, a cured record on a
+  // fresh line) is carried as itself, never re-moved on its line's un-skip
+  // or on another line (engine `pickedMoveSource`). 0 on every existing
+  // decision: carried by the v82 rule as before.
+  [
+    '''
+ALTER TABLE ingredient_decisions
+  ADD COLUMN as_picked INTEGER NOT NULL DEFAULT 0
+''',
+  ],
 ];
 
 /// Migration 019's `host_id`: the recipe a row's `recipe_id` belongs to —

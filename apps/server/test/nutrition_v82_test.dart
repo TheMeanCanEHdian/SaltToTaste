@@ -2204,8 +2204,12 @@ void carries() {
       pick: 168743,
     );
     expect(decision, 168743);
+    // RE-PIN (fix101 batch, v101, Run 073/074 U1): '0091|0' was 173128 —
+    // 0224|0's line depth moves 168743 (`_carriedIdOf`), so the pick is a
+    // move SOURCE kept as picked (migration 021 `as_picked`) and carried as
+    // itself on every line: 0091's step-printed trim no longer re-moves it.
     expect(rows, {
-      '0091|0': 173128,
+      '0091|0': 168743,
       '0224|0': 168743,
       '0090|6': 168743,
       '0223|0': 168743,
@@ -2788,7 +2792,10 @@ void costShapes() {
       },
       'GET': {
         'indexes': 1,
-        'carriedReads': null,
+        // RE-PIN (fix101 batch, v101, U1): was null — the offer's as-picked
+        // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+        // record (the 391 identical pork roast rows read once).
+        'carriedReads': 7,
         'leanOnlyReads': 1,
         // RE-PIN (M94 batch, v96): was 801 — + 2: the browning-fat plan
         // weighs 0239's admitted |7 oil (its record and its lipid record; the

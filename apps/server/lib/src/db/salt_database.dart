@@ -1076,13 +1076,14 @@ class SaltDatabase {
   IngredientDecisionRow? decisionFor(String itemKey) {
     final rows = _prepared(
       'SELECT item_key, item, fdc_id, description, data_type, decided_by, '
-      'decided_at FROM ingredient_decisions WHERE item_key = ?',
+      'decided_at, as_picked FROM ingredient_decisions WHERE item_key = ?',
     ).select([itemKey]);
     return rows.isEmpty ? null : IngredientDecisionRow.fromRow(rows.first);
   }
 
   /// Records a person's food decision for an ingredient — the newest write
   /// wins, whoever made it. [item] is the parsed text the key came from.
+  /// [asPicked] (migration 021): carried as itself, no line's moves.
   void putDecision({
     required String itemKey,
     required String item,
@@ -1090,14 +1091,16 @@ class SaltDatabase {
     required String? description,
     required String? dataType,
     required int? decidedBy,
+    bool asPicked = false,
   }) {
     _prepared(
       'INSERT INTO ingredient_decisions (item_key, item, fdc_id, description, '
-      'data_type, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, ?, ?) '
+      'data_type, decided_by, decided_at, as_picked) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(item_key) DO UPDATE SET item = excluded.item, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, decided_by = excluded.decided_by, '
-      'decided_at = excluded.decided_at',
+      'decided_at = excluded.decided_at, as_picked = excluded.as_picked',
     ).execute([
       itemKey,
       item,
@@ -1106,6 +1109,7 @@ class SaltDatabase {
       dataType,
       decidedBy,
       _utcNowIso(),
+      if (asPicked) 1 else 0,
     ]);
   }
 
@@ -1120,7 +1124,8 @@ class SaltDatabase {
   List<IngredientDecisionRow> allDecisions() {
     final rows = _prepared(
       'SELECT item_key, item, fdc_id, description, data_type, decided_by, '
-      'decided_at FROM ingredient_decisions ORDER BY decided_at, item_key',
+      'decided_at, as_picked FROM ingredient_decisions '
+      'ORDER BY decided_at, item_key',
     ).select();
     return [for (final row in rows) IngredientDecisionRow.fromRow(row)];
   }
@@ -1145,7 +1150,8 @@ class SaltDatabase {
   void insertDecision(IngredientDecisionRow row) {
     _prepared(
       'INSERT INTO ingredient_decisions (item_key, item, fdc_id, description, '
-      'data_type, decided_by, decided_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'data_type, decided_by, decided_at, as_picked) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     ).execute([
       row.itemKey,
       row.item,
@@ -1154,6 +1160,7 @@ class SaltDatabase {
       row.dataType,
       row.decidedBy,
       row.decidedAt,
+      if (row.asPicked) 1 else 0,
     ]);
   }
 
@@ -3400,6 +3407,7 @@ class IngredientDecisionRow {
     required this.dataType,
     required this.decidedBy,
     required this.decidedAt,
+    this.asPicked = false,
   });
 
   /// Decodes a selected row.
@@ -3411,7 +3419,13 @@ class IngredientDecisionRow {
     dataType: row['data_type'] as String?,
     decidedBy: row['decided_by'] as int?,
     decidedAt: row['decided_at'] as String,
+    asPicked: row['as_picked'] == 1,
   );
+
+  /// v101 (migration 021, Run 073/074 U1): a person's pick of a record its
+  /// line's own moves move away from, carried as itself (the engine's
+  /// `pickedMoveSource`).
+  final bool asPicked;
 
   /// The decision key (`itemKeyFor` of [item]).
   final String itemKey;

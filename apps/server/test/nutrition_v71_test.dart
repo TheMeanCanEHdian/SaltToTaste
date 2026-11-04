@@ -410,7 +410,8 @@ const List<_Row> _reach = [
     'auto',
     null,
     '462.00',
-    "only 1 teaspoon + 1 teaspoon + 3 tablespoons of it used (from step 3) — the rest counted as 0 g · approximate (the steps use 1 teaspoon + 1 teaspoon + 3 tablespoons of the reserved oil; the rest is not used here — the fried aromatics' oil not counted)",
+    // RE-PIN (fix101 batch, v101, Run 074 O1 / U13): was '… of it used (from step 3) …' — the 3 tablespoons print is step 4's.
+    "only 1 teaspoon + 1 teaspoon + 3 tablespoons of it used (from steps 3, 4) — the rest counted as 0 g · approximate (the steps use 1 teaspoon + 1 teaspoon + 3 tablespoons of the reserved oil; the rest is not used here — the fried aromatics' oil not counted)",
   ),
   // v70: 0.00 g, 0.00 kcal; no amount on the line — counted as 0 g
   // RE-PIN (M90 batch, v89, sugar): was 39.21 g (the v89 replay's row).

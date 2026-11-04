@@ -170,7 +170,7 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 94 (v86 set it to 81, batch M84: rows move)', () {
+  test('matcherVersion 95 (v86 set it to 81, batch M84: rows move)', () {
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
@@ -184,7 +184,8 @@ void main() {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-    expect(matcherVersion, 94);
+    // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+    expect(matcherVersion, 95);
   });
 
   group('matcher v86 (batch M84) — whole recipes', skip: skipIfNoCorpus, () {
@@ -646,6 +647,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:browningFat': 1,
   },
   'E2b-QUIET': {
+    // RE-PIN (fix101 batch, v101, Run 073 S4 / U4): + `skinKeptPart`'s scan,
+    // once per index and item (memoised and counted; uncounted before).
+    'memo:skinKeptPart': 1,
+    'skinKeptScans': 1,
     'indexes': 1,
     'allSentences': 1,
     'lower': 1,

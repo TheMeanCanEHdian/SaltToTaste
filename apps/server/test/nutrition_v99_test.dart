@@ -96,11 +96,12 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    "matcherVersion 94 (v99 set it to 93, batch M96: the sweet-potato fries' "
+    "matcherVersion 95 (v99 set it to 93, batch M96: the sweet-potato fries' "
     'uptake)',
     () {
       // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-      expect(matcherVersion, 94);
+      // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+      expect(matcherVersion, 95);
     },
   );
 

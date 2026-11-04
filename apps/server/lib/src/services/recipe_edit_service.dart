@@ -443,7 +443,14 @@ void _validateRecipe(Recipe recipe) {
   // recipe's own caps — nutrition computes each titled one as a recipe of
   // its own (a section), whose cost the caps bound; only the 2 MB body
   // bounded them before.
+  // v101 (Run 073/074 U2): and its text fields under the recipe's own caps
+  // for the same fields — the readers loop over them per line.
   for (final subsection in recipe.subsections) {
+    _checkLength('subsections.title', subsection.title, 250);
+    _checkLength('subsections.kind', subsection.kind, 120);
+    _checkLength('subsections.servings', subsection.servings, 200);
+    _checkLength('subsections.prep_notes', subsection.prepNotes, _maxTextField);
+    _checkLength('subsections.body', subsection.body, _maxTextField);
     _checkIngredients(subsection.ingredients ?? const []);
     _checkSteps(subsection.steps ?? const []);
   }

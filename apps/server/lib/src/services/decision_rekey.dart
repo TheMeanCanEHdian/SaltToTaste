@@ -171,6 +171,7 @@ int rekeyDecisions(SaltDatabase db) {
         dataType: row.dataType,
         decidedBy: row.decidedBy,
         decidedAt: row.decidedAt,
+        asPicked: row.asPicked,
       ),
     );
     changed += 1;

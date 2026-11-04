@@ -111,12 +111,13 @@ Recipe _withLine(
 
 void main() {
   test(
-    'matcherVersion 94 — v98 bumped nothing (it kept 92: no corpus row moves; the two '
+    'matcherVersion 95 — v98 bumped nothing (it kept 92: no corpus row moves; the two '
     'hash terms stale every stamp once)',
     () {
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
       // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-      expect(matcherVersion, 94);
+      // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+      expect(matcherVersion, 95);
     },
   );
 
@@ -1278,7 +1279,10 @@ const Map<String, Map<String, int>> _skinCounts = {
   },
   'GET': {
     'leanOnlyReads': 1,
-    'carriedReads': 1,
+    // RE-PIN (fix101 batch, v101, U1): was 1 — + the GET offer's as-picked
+    // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+    // record.
+    'carriedReads': 2,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,

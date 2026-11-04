@@ -2803,8 +2803,13 @@ void review71() {
         // within 2 % of the measured (MANY 922,897, BELOW 883,810).
         final each = shape == 'MANY' ? '1/10000 teaspoon' : '1 teaspoon';
         final named = '${List.filled(8, each).join(' + ')} + … ($hits in all)';
+        // RE-PIN (fix101 batch, v101, U13): was '(from step 1)' — the basis
+        // names every printing step, 8 of them and the count (23 in BELOW,
+        // every step in MANY); the basis 407 / 509 characters before.
+        final steps =
+            'steps 1, 2, 3, 4, 5, 6, 7, 8, … (${shape == 'MANY' ? capSteps : 23} in all)';
         final basis =
-            'only $named of it used (from step 1) — the rest counted as 0 g '
+            'only $named of it used (from $steps) — the rest counted as 0 g '
             '· approximate (the steps use $named of the reserved oil; the '
             "rest is not used here — the fried aromatics' oil not counted)";
         final items = (body['items']! as List).cast<Map<String, Object?>>();
@@ -2815,7 +2820,7 @@ void review71() {
           },
           {basis},
         );
-        expect(basis.length, shape == 'MANY' ? 509 : 407);
+        expect(basis.length, shape == 'MANY' ? 509 + 38 : 407 + 37);
         expect(
           jsonEncode(body).length,
           lessThanOrEqualTo((shape == 'MANY' ? 922897 : 883810) * 1.02),
@@ -2840,6 +2845,10 @@ void review71() {
         'fat separator', 'defatted', 'strain off the fat', 'strain', 'off',
         'the', '.', '1.5', 'x', ',', '\n', 'scum',
       ];
+      // v101 (U7): the atoms hold no negation ('not', "n't", 'without',
+      // 'no need to'), so the fuzz EXCLUDES the negated pieces the gate now
+      // refuses — the design's regex stays the reference on every other
+      // piece; the negation is pinned in nutrition_v101_test.
       var hits = 0;
       var misses = 0;
       for (var seed = 0; seed < 30000; seed++) {

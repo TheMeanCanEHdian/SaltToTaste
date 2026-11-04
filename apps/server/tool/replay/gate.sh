@@ -1,7 +1,8 @@
 #!/bin/zsh
 # The series gate replay: usage gate.sh <gate-dir> <snapshot.db> <prev-prefix>
 #   <prev-prefix> names the reference TSVs <prev-prefix>_{rows,recs,sections,notes}.tsv
-#   (the v82 set: .claude/diag/2026-10-09/v82). Fresh snapshot copies, rp43 main and
+#   (the previous batch's set on its snapshot — v100 on snapshot 32 at v101:
+#   .claude/diag/2026-10-09/v100). Fresh snapshot copies, rp43 main and
 #   --reverse-parents, cmp main == rev, cmp against the reference, attribution, buckets.
 set -eu; setopt null_glob
 R=${0:A:h:h:h:h:h}; T=$R/apps/server/tool/replay; G=$1; SNAP=$2; PREV=$3; PK=$R/.dart_tool/package_config.json

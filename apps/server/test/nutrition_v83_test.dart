@@ -693,7 +693,14 @@ void main() {
           'Flip chicken over and press on breastbone to flatten.',
           171052,
           (0, 0),
-          [capCounts(1, 22320, 199800), capCounts(1, 22320, 199800)],
+          // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked read
+          // (`pickedMoveSource` → `_carriedIdOf`), once per line text and
+          // record (`carriedReads` 1 on the first GET — the second reads the
+          // carry's memo on the db; the TRUE shape's GETs read it before).
+          [
+            {...capCounts(1, 22320, 199800), 'carriedReads': 1},
+            capCounts(1, 22320, 199800),
+          ],
         ),
       ]) {
         test(
@@ -913,7 +920,10 @@ void main() {
         // 3e0437ca…; the version alone — the base engine with 93 gives this literal).
         // RE-PIN (M97 batch, v100): the hash at matcherVersion 94 (was
         // 3995bede…; the version alone — the base engine with 94 gives this literal).
-        'fddf4ebcc20a7e128e6c8d842ea5abbdc08cb37737e25b53a9b6aeb8c5a698bb',
+        // RE-PIN (fix101 batch, v101): the hash at matcherVersion 95 (was
+        // fddf4ebc…; the version alone — base 30c1f83 with 95 gives this
+        // literal).
+        'ba41a98058dfe5321d92fee87495f879012ce96be9a8d285f67957d8198c727e',
       );
     });
   });

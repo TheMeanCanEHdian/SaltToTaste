@@ -848,7 +848,15 @@ void main() {
       await applyMatchOverride(db, provider, r, 0, {'fdc_id': 2709170});
       await applyMatchOverride(db, provider, r, 0, {'skipped': true});
       await applyMatchOverride(db, provider, r, 0, {'skipped': false});
-      expect((rowAt(db, 0).status, rowAt(db, 0).fdcId), ('auto', 2709170));
+      // RE-PIN (fix101 batch, v101, Run 073 S2 / U1's stated limit — the
+      // second-food rule row likewise): was ('auto', 2709170) — the pick kept
+      // `auto`, which the next compute moved to the rule's 168156 (stored !=
+      // compute while fresh). An un-skip of a decided key is now the
+      // compute's own row; a person keeps 2709170 by picking or confirming
+      // the row (`overridden` survives the compute).
+      expect((rowAt(db, 0).status, rowAt(db, 0).fdcId), ('auto', 168156));
+      await matchAndCompute(db, provider, r);
+      expect((rowAt(db, 0).status, rowAt(db, 0).fdcId), ('auto', 168156));
     });
 
     // RE-PIN (M47 batch, v49 Q11): Cioppino's (0108) mussels read AH-102

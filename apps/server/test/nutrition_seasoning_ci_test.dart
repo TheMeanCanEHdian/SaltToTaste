@@ -96,7 +96,8 @@ void main() {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-    expect(matcherVersion, 94); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+    expect(matcherVersion, 95); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -237,7 +238,10 @@ void main() {
       // RE-PIN (M97 batch, v100): the hash at matcherVersion 94 (was
       // 77aad168…; M97 adds no hash term — the version alone: the base
       // engine with 94 gives this literal).
-      '28dfb97e9b6e22653b11f9f29f9a6877b806d47cf85e580628278c0aa03bee7f',
+      // RE-PIN (fix101 batch, v101): the hash at matcherVersion 95 (was
+      // 28dfb97e…; no v101 hash term reaches this recipe — the version
+      // alone: base 30c1f83 with only the bump gives this literal).
+      'a6d727a64d55ebccc8966168c998afd4284de300570ddbf86df5f1b3e58ba0ce',
     );
   });
 

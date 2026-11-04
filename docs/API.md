@@ -5171,6 +5171,202 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v101 (batch fix101; matcherVersion 95 — the fixes of dual-fleet
+review Run 073/074 over v70–v82 at the tip 30c1f83, union U1–U16
+(.claude/diag/2026-11-03/review073/union_Q.md); ONE corpus row moves, in its
+basis text only (nasi-goreng|9, U13); migration 021; zero requests — replayed
+on snapshot 32 against the v100 rows: rows differ on that one line, recs,
+sections, calls, notes and the buckets byte-identical, both orders
+identical, calls 0; the rulings the orchestrator's under the owner's standing
+authorization (2026-10-07)).**
+- **U1 — a person's pick of a move SOURCE is kept as picked (migration 021
+  `ingredient_decisions.as_picked INTEGER NOT NULL DEFAULT 0`).** A pick of a
+  record the line's own moves move AWAY from (R2's lean-only 169566 on 0082's
+  chuck-eye → 168661; the 0" flat 168743 on 0091's brisket → the step-printed
+  173128; a cured record on a fresh line) was stored as the value a Confirm of
+  the MOVED row stores, so the carry (`carriedFoodOf` → `_carriedIdOf`)
+  re-applied the moves: an un-skip kept the pick `auto` with no carry and the
+  next compute moved it (stored ≠ compute while the recipe read fresh: 0082
+  +730.29 kcal, 0091 569.74 → 620.74 kcal/serving), and the pick reached
+  every other line as the moved record, apply_to_all too (0426|0 on 168661).
+  Now: at decision time (the PUT's pick or Confirm, `decisionRecordOf`'s
+  caller) `as_picked` = no inverse fired (the record decided IS the record
+  picked) AND the line's own moves would move it (`pickedMoveSource`). Such a
+  decision is carried as itself — `carriedFoodOf(asPicked:)` applies no move:
+  on the deciding line's un-skip and next compute, on every other line
+  (identical lines, apply_to_all's `applyDecisionToOthers`, the offer's
+  `decisionReach` — whose `_leftOnItsRecord` exclusion it skips, so the
+  offer stays the write). A Confirm of a MOVED row (the inverse fires: the
+  record bought) stores `as_picked` 0 and moves again on each line's own text
+  (v82 closer 2, unchanged). The un-skip of a DECIDED key is now the
+  compute's own derivation: `_decidedLineRow` (`_decidedFood` →
+  `carriedFoodOf` → `_siblingGone` → `gramsFor` → `_skinOffFood` → the row)
+  is ONE function the compute's decided branch and `unskippedRow` call, after
+  the line's RULE rows (`_lineRuleRow`: a section's own main-recipe part, a
+  zero-nutrient flavouring, a continuation, nothing searchable, water, a
+  seasoning to taste, equipment — likewise ONE function both read, so a
+  decided 'kosher salt' leaves 0264|1 'Kosher salt' the seasoning rule row
+  on its un-skip, as the compute writes it; closer 1, verify1 D1), the
+  second-food rule (`_ruleRowFor`) and under the compute's reference
+  gate; a non-decided un-skip keeps its path. **Stated limit:** the flag
+  covers `_carriedIdOf`'s LINE-TEXT moves (fresh-over-cured, R2, the trim
+  depth and its step-printed arm). The per-recipe STEP moves of the grams
+  path (skin / shell / can — `_skinOffFood`, v39 Y3 / v83 F3) apply to a
+  carried decision as to any engine row; a person wanting the skin-on record
+  on a skin-off line keeps it by picking or confirming the row
+  (`overridden` survives the compute) — its un-skip re-derives, now equal to
+  the compute (no longer a silent divergence). The second-food rule row
+  (0324|1) likewise.
+- **U2 — a subsection's text fields under the recipe's caps.**
+  `_validateRecipe`'s subsection loop: title 250, kind 120, servings 200,
+  prep_notes and body 50,000 (`'subsections.<field>' must be at most N
+  characters.`, a 422) — through `validateRecipeDocument`, so the importer
+  and the library scan refuse too (B13). The readers loop over them per line
+  (`namesOwnSection`'s `_refNorm` of every title, `parseServings`'
+  `_tokenTrim` — quadratic on a long non-alphanumeric run, 16 s at 40,000
+  characters from the SECTION nutrition GET's `basisKindOf`); at 200 it is
+  nothing, so no regex changes. Census: every corpus subsection passes (the
+  largest: title 76, kind 9, servings 70, prep notes 1,067, body 906).
+- **U3 — `section_lines`.** `ingredientsHashOf` hashes, under `references`,
+  whether each own section LISTS lines — only where one lists none, so every
+  other recipe hashes as before (1176's hash = base 30c1f83's with the
+  matcher term alone, pinned). Beside a standing reference line a section
+  gaining (or losing) its lines flipped an unmarked line's route with no
+  term moving (0521 + 0523's marked line: fresh through every stale sweep,
+  580.26 kcal/serving served, 697.16 computed); both directions now stale
+  the parent by hash, and the FIRST stale sweep selects it.
+- **U4 — `skinKeptPart` once per index and item** (`skinKeptScans`, memo
+  `skinKeptPart`; v98 P8's other half): a part-less skin sentence (0706's
+  "remove skin and fibrous threads from squash …") trips every line, and each
+  line's grams rescanned every sentence — compute 16,508 ms, recompute 16,715
+  at the caps (831 / 742 without the sentence); now 730 / 726, one scan a
+  path.
+- **U5 — a routed SECTION child read off the request's host**
+  (`childRecipeOf`: `memo.hostRecipe` + `sectionOf`) in `referenceChildJson`,
+  `compositeFlagOf` and the basis (`_gramBasis`, given the request's memo)
+  — the matches GET decoded the whole host per routed line (401 decodes; 22,030 ms at 24 sections × 400 lines, 1.57 MB); now 1
+  decode, 1,040 ms (`hostDecodes`, pinned). The GET JSON byte-identical on
+  0521, 0139 and 1176 (the cache stamps aside).
+- **U6 — a 0 yield reads no share.** `shareReaderOf` returns a share only
+  when finite and > 0: "MAKES ABOUT 0 CUPS" divided to +Infinity, the parent
+  compute threw after writing Infinity grams, the GET 500'd, the sweep
+  counted it failed. Now the line is `not_routed` `no_share`.
+- **U7 — a negated skim never defats.** `defatsSentence` skips a period-free
+  piece holding 'not skim', "n't skim" (either apostrophe), 'without
+  skimming' or 'no need to skim' (substring tests, linear): 0492's "(do not
+  skim the fat from the liquid)" no longer passes the braised pairs' gate.
+  The v72 fuzz keeps the design regex as its reference (its atoms hold no
+  negation: the negated pieces are excluded from it).
+- **U8 — both numbers of two zero-nutrient keys:** 'vanilla beans' and
+  'makrut lime leaf' join `_zeroNutrientFlavourings` (the explicit list kept).
+- **U9 — the note's named titles once per recipe instance**
+  (`_noteTitlesOf`, memo `noteTitles` keyed by the library title map's
+  identity): `noteNamedTitles` / `similarTitles` renormalised the whole note
+  and scanned every library title per reference line, inside the hash
+  (1,663 ms a hash at 20 lines and a 48 k note; 88 ms now).
+- **U10 / U11 — pins only:** each `_hedges` / `_multiplies` arm on its real
+  lines (0289|3, 0215|1, 0264|1, 0337 trapanese|0, 0692 smashed|1, 0169|0,
+  0243|7); R-E5's 'contents' / 'press on the solids' / 'discard the solids',
+  the trim's '¼ inch', the pan's 'pour off any fat' on stated rewrites of
+  0172 S5, 0091 S1, 0421 S4.
+- **U12 — `host_groups`.** A SECTION holding a "<amount> reserved
+  <mixture>" line hashes its host's group headings (`_mainRecipePartNote`
+  reads them): renaming 0591's 'SPICE RUB' stales 'Mustard Glaze' (its
+  siblings hash as before).
+- **U13 — the 'used' basis names every printing step** in R-H1's form, at
+  most 8 named: nasi-goreng|9 "… of it used (from steps 3, 4)" (was "from
+  step 3"; the 3 tablespoons print is step 4's) — the ONE row; grams 51.33,
+  record, source, status and kcal unchanged.
+- **U14 — the onion-ring premise (wording only; the record stays — the
+  owner's G5).** FNDDS 2710042 "Fried cauliflower" is the only FNDDS
+  single-vegetable record whose coat is ONE separable "breading or batter"
+  input over the vegetable (50 g per 38 g cooked; live55_raw). Two records
+  read and REJECTED as the onion-ring stand-in: FNDDS 2710065 "Vegetable
+  tempura" (read at L50, live62_raw): a wet batter — flour 312.5 g, egg yolk
+  51 g, water 474 g, oil 212.2 g — over EIGHT raw vegetables of 99.338 g each
+  (onions 99.3 g of 794.7 g): a tempura batter, not a crumb coat; FNDDS
+  2710050 "Eggplant parmesan casserole" (live61_raw): a casserole, read for
+  the eggplant in its own arm. The rows' flag ('no record for onions; read as
+  Fried cauliflower') stays true: no crumb-coated onion-ring record exists.
+- **U15 — the own-section yield within 1e-4** (`_yieldTailOf`):
+  `share == 1.0` refused an equal amount in a sibling unit (the tables
+  drift: '4 cups' vs MAKES 1 QUART 0.9999989, '3 teaspoons' vs MAKES 1
+  TABLESPOON 0.9999973); the drift is ≤ 2.7e-6, the smallest printed step ⅛.
+  No corpus unmarked line sits within 1e-4 of 1 but not at it (the replay
+  byte-identical).
+- **U16 — docs** (this file: the v76 count, the v72 fried-rice sentence, the
+  v78 saltimbocca and crust figures, the v71 sugar, the v79 symbol; the
+  replay and person-sweep READMEs and gate.sh's header).
+- **Pins** (apps/server/test/nutrition_v101_test.dart, 28 tests; the
+  salt_shared pin in servings_parser_test): each rule above by value on real
+  corpus lines (the stated synthesized edits named at each), U1 through the
+  real PUT (`applyMatchOverride`) with every PUT under a provider answering
+  nothing (0 calls); RE-PINs nutrition_v71_test / nutrition_v72_test
+  (nasi-goreng|9's text) and nutrition_v26_cost_test (the R2 cap shapes'
+  basis — "steps 1, 2, …, 8, … (n in all)"; its length equality +37 / +38;
+  the GET-body bound unchanged). Mutants, each killed by a value pin: the
+  flag's read in `carriedFoodOf`, `pickedMoveSource`'s no-inverse term, the
+  un-skip's decided branch, its rule-row read, its reference gate (the
+  carried-decision term dropped: 0598|3 "1 recipe Basic Spice Rub for Pork
+  Chops (recipe follows) or 2 teaspoons pepper" with a decision on its key
+  carried to 170931 — a STATED synthesized decision, inserted as the
+  compute's gate 2 describes — un-skips to the routed child row 31.1 g, the
+  compute to 170931 4.6 g; the pin holds 170931 4.6 g both), the matches offer's
+  `asPicked` (forced false: 0082|0's offer reaches 0426|0, 1 line, = the
+  apply), migration 021's default, each of the five caps,
+  `section_lines`, `host_groups`, the isFinite guard, the negation guard,
+  both set entries, the U4 / U9 memo keys (U4's item: a whole bird and a
+  breast line on one recipe read null / 'wings' in either order — a STATED
+  synthesized 0637; U9's title map: one instance of 0029's real note on its
+  line 'vegetable broth' through memos over an empty library, one holding
+  0035 Vegetable Broth Base, the empty one again — [], [0035], []), `childRecipeOf`'s memo read, the
+  tolerance, the steps list, each U10 / U11 arm.
+- **Cost (RULE C).** New counted families: `skinKeptScans` +
+  `memo:skinKeptPart` (per text), `memo:noteTitles` (lines + 2), and the
+  global `hostDecodes`. The cap shapes, the counts pinned exactly: U2 60 ×
+  250-character titles × 400 lines (hash, compute, GET, recompute bounded);
+  a 200-character section yield through the section nutrition GET; U4 1 scan
+  a path; U5 1 host decode a GET at 24 sections × 400 reference lines; U9
+  400 reference lines × a 50,000-character note × 1,200 library titles — the
+  hash 39,268 → 96 ms, compute 118,102 → 171, GET 237,123 → 388, recompute
+  39,207 → 103 (base 30c1f83 → v101; the GET's residual was `recipeReach`
+  decoding the reached recipe per line — a fresh instance per line missing
+  the per-instance memo — now through the request memo, `childRecipeOf`).
+- **GATE-P** (apps/server/tool/replay/person_sweeps, 12 shards, fresh
+  snapshot-32 copies, base 30c1f83 and v101): sw5 31,713, sw6 37,400, sw7
+  1,872, sw8 56,868, sw8r 5,358, sw9 130, sw10 156 combos — 0 divergent, 0
+  refused, calls 0 on both. sw11 (committed: the Run 073 Sonnet fleet's
+  pick-ANOTHER sweep, adapted — move-source picks, the apply_to_all twins,
+  order D, 363 settled recipes, 39,760 combos), classed by its
+  sw11_classify.py: base 1,274 touched-line ('other') divergences in 139
+  recipes (0082|0 169566 → 168661, 0091|0 168743 → 173128, 0426|0 …) →
+  v101 6, none of U1's class: all order B and all present at base —
+  0002|o2|7 / 0002|c2|7 (170000 kept vs 790646 computed), 0466|c4|5 /
+  0466|o4|5 (172469 vs 173430), 1105|o5|10 / 1105|c5|10 (746775 vs 173468):
+  the food pick first, then a plan-row pick on a SAME-KEY line re-decides
+  the key and the touched row keeps the earlier pick until the next compute
+  (the shared-key class; 6 + 999 + 192 = the 1,197 divergent). Its other
+  classes are stated, not this batch's:
+  `inherit` (999 at v101, 1,005 at base) — a pick decides its KEY, whose other
+  lines take it at the next compute (a later pick on another line of the key
+  re-decides it); `calls`-only (192 / 126) — a pick of a move source no cache
+  holds the detail of asks FDC once, the decided un-skip as the compute does.
+  **The sw11 gate as ruled (the owner gate, after verify1–4 each stated the
+  brief's "0 divergent at the tip" unmet as written):** no divergence at the
+  tip that the base lacks — the tip's 1,197 tags ⊂ the base's 2,405, 0 new —
+  and 0 of U1's class; the sweep's 14,070 refusals (combos whose pick-ANOTHER
+  verb finds no other cached candidate) are the same on both sides. The
+  `inherit` class is a stored ≠ compute divergence of its own — the recipe's
+  OTHER lines of a picked key, the stamp reading fresh — present at the base,
+  outside this review's union: recorded as the next person-path batch.
+- **Migration 021** adds `ingredient_decisions.as_picked` (0 on every
+  existing decision: carried by the v82 rule as before); the decision re-key
+  (`rekeyDecisions`) carries it.
+- **Deploy:** `dart_frog build` (a plain restart serves stale code); the
+  version bump stales every stamp (1,198 + 144) — a stale sweep re-derives
+  them with no request; the live rows then equal the v101 replay (one basis
+  text moved).
+
 **Matcher v100 (batch M97; matcherVersion 94 — the uncoated shallow-fry reader
 (the lifted-out pieces' uptake, the FNDDS 2705972 sauté film as a stand-in by
 cooking method) + the roux guard; three corpus rows; the M97 design_v2 under
@@ -8236,7 +8432,7 @@ hash where a step carries one. 4 rows: ultimate-grilled-pizza|4 "Vegetable oil" 
 2 "Add 1 tablespoon oil and salt to dough …"), |11 "Sugar" 2.00 g (SAUCE,
 step 3 "… ½ teaspoon salt, and ½ teaspoon sugar"; step 3's "Season with
 additional salt and sugar to taste" is another sentence), shrimp-pad-thai|3
-"Sugar" 39.21 g (steps 2, 4, 5; the ¼ teaspoon goes into a drained radish
+"Sugar" 39.21 g (38.71 g since v93 — v101 U16; steps 2, 4, 5; the ¼ teaspoon goes into a drained radish
 soak — 1.00 g counted, a gap), quick-cooked-tough-greens|4 "Red pepper
 flakes" 0.45 g: +286.08 kcal. Not read: pizza|12 (its PIZZA steps print
 "Pour ¼ cup oil onto center of rimmed baking sheet." and "Drizzle top of 1
@@ -8253,7 +8449,7 @@ out of reach by construction. An amount-less line whose steps print a volume FET
 detail as a typed line would (the prints decide `gramsFor`'s fetch — never
 a cache's luck: computed alone in a fresh library, 0685's pepper flakes,
 0398's oil and 0554's sugar weigh 0.45 / 14.00 / 39.21 g, the same as in the
-replay; the follow-up verifier's D1).
+replay (the sugar 38.71 g since v93 — v101 U16); the follow-up verifier's D1).
 
 (2, pC R-E5) **"Strain … Press the solids … Discard the vegetables."**
 `_strainAt` gains an arm beside its "discard … solids" next sentence: a
@@ -8487,7 +8683,9 @@ fried-rice-with-shrimp-pork-and-shiitakes|9 "5 cups cold cooked white rice,
 rice line, the rice sections. The only other corpus line with the item is
 0521's own variation "Fried Rice with Peas and Bean Sprouts" (no line routes
 it; never computed). Not linked to the recipe's Basic White Rice: that
-section prints no cooked yield.
+section prints no cooked yield. [Superseded at v90/v91 (v101 U16): the row
+routes to its own "Basic White Rice", which prints MAKES ABOUT 5 CUPS —
+402.20 g, 1,486.68 kcal; 2708408 holds no row.]
 
 (2, pA R3) **Cassava pared at AH-102 item 496.** `produceYields[169985]`
 (`peeled`, 0.74) and the record set `_paredAsBought` {169985}: a line on the
@@ -8865,7 +9063,9 @@ simple-grill-roasted-turkey|0's turkey ("Gravy for Simple Grill-Roasted
 Turkey", MAKES 6 CUPS) and fried-rice-with-shrimp-pork-and-shiitakes|10's
 "1 cup bean sprouts" ("Fried Rice with Peas and Bean Sprouts", SERVES 4 TO
 6) would read their sections; neither reads a share of the yield. The
-corpus has exactly one such line: caramelized-onion-pear-and-bacon-tart|6
+corpus had exactly one such line at v76 (two since v91's two-word tail: also
+fried-rice-with-shrimp-pork-and-shiitakes|9 → its "Basic White Rice", 402.20 g
+— v101 U16): caramelized-onion-pear-and-bacon-tart|6
 "1 pound pizza dough" (below the gate on FNDDS 2708008 *Dessert pizza*,
 0.465, 0 kcal) → its own "Classic Pizza Dough" (MAKES 1 POUND; the prep
 note: "you can use our Classic Pizza Dough (recipe follows), if
@@ -9026,7 +9226,7 @@ record's breading does not describe one — the line counted whole as
 printed; the part left in the dish is not deducted)` ("nut" for a `Nuts,`
 record). Before v78 such a layer stayed held `coating`. Reach: one row —
 parmesan-crusted-chicken-cutlets|3, held → 184.27 g on 325036 (+775.78
-kcal; ¼ cup grated 14.175 g + 6 ounces 170.097 g), the recipe partial →
+kcal — on SR 170848, 722.34 kcal, since v87; v101 U16; ¼ cup grated 14.175 g + 6 ounces 170.097 g), the recipe partial →
 complete. **The pan fat in fat grams (Q7 (c), pC R-E4, F12 — a stand-in on
 the owner's Q4 (b) record):** under C4 (a thin piece's sautéed dusting), a
 step that pours off the fat with no kept part written (`\bpour off (?:the
@@ -9056,7 +9256,8 @@ rule the fryer pass applies) is never a pan line — on the corpus 0042|7,
 so a pan line's medium bit is read nowhere and M52's plan key reads it on
 its line, record and hold only. A person's Confirm of a pan line is the
 plan's grams, as a confirmed coat's is (saltimbocca|5 stays 9.92 g
-`discarded` on the row and the GET); a pan row the plan stops covering —
+`discarded` on the row and the GET — 23.14 g since v95's 3.71 % share, v101
+U16); a pan row the plan stops covering —
 the only coated food skipped — returns to its whole line at the recompute
 (parmesan-crusted|6 18.14 g, meunière|3 / |4 28.00 / 28.36 g). Reach: 6
 rows in 4 recipes —
@@ -9132,7 +9333,8 @@ Price Chopper — 40, 40, 50 g), named in the basis (`approximate
 is not read at the ⅓-cup label (41 g; that option B would be +8.05 kcal).
 Reach: carrot-ginger-soup|2 ¼ cup 30.00 g / 96.60 kcal, cranberry-chutney…|9
 ⅓ cup 40.00 / 128.80, gingerbread-layer-cake|22 ¼ cup (optional — counted;
-`_optionalLine` reads reference lines only) 30.00 / 96.60,
+`servedWithMarked` reads reference lines only — v101 U16: was misnamed
+`_optionalLine`) 30.00 / 96.60,
 triple-berry-slab-pie…|3 ½ cup 60.00 / 193.20 (each was 169231, below the
 gate, 0 kcal); +515.20; the four recipes partial → complete (136.91 →
 153.01, 428.70 → 471.63, 723.55 → 731.60, 458.11 → 468.84 per serving).
@@ -9270,7 +9472,11 @@ only restaurant products — no raw-ring recipe — so engine
 from the largest counted onion row a coating sentence names (0315 S2
 "dredge each onion ring in the flour"), only where no meat is coated and
 only at C2; `_coatFigure`'s onion arm reads FNDDS 2710042 "Fried
-cauliflower", the only USDA coated vegetable with a separable coat: 50 g
+cauliflower" — v101 (U14) corrected: the only FNDDS single-vegetable record
+whose coat is ONE separable "breading or batter" input over the vegetable (50
+g per 38 g cooked); FNDDS 2710065 "Vegetable tempura" (a wet batter over eight
+raw vegetables) and 2710050 (a casserole, the eggplant arm's) are not crumb
+coats (the v101 section) — 50 g
 breading × `_breadingCarbPerGram` 0.40 (every shipped k's) per 39.58 g raw
 cauliflower = **50.53** g carbohydrate per 100 g of raw onion (pB's 50.66
 read 0.401 — the planner's C13). The flag names the stand-in by its read
