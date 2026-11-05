@@ -265,9 +265,28 @@ void main() {
             'confirmed': true,
           });
         }
+        // RE-PIN (M98 batch, v102): the first Confirm settles the twin
+        // (i + 1) to the row the compute's decided branch writes for it —
+        // the zero-nutrient flavouring rule row (`confirmed`, no food, 0 g
+        // `unmeasured`; 78e9aad's next compute wrote the same) — so the
+        // second Confirm confirms that rule row, and the edited compute
+        // writes it back at its own new position (i).
+        final settledTwin = d.rowOf(db, r, i + 1);
+        expect(isEngineRuleRow(settledTwin), isTrue);
         final edited = d.unstrained0129(withoutFirstLine(r));
         await d.editAndCompute(db, provider, edited);
-        for (final p in [i - 1, i]) {
+        expect(d.shape(d.rowOf(db, edited, i)), (
+          'confirmed',
+          null,
+          0.0,
+          GramSource.unmeasured.name,
+          null,
+        ));
+        expect(
+          d.rowOf(db, edited, i).description,
+          settledTwin.description,
+        );
+        for (final p in [i - 1]) {
           final fresh = await d.freshConfirm(
             edited,
             p,

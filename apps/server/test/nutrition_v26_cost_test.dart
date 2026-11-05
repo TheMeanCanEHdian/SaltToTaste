@@ -438,6 +438,19 @@ void main() {
           'raw': nutritionLines(r)[i].raw,
           ...b,
         };
+        // v102 (M98 R1): the PUT settles its own recipe — on 'salt' and
+        // 'water' every other line is the decided key's (399 siblings): a
+        // row count, never a clock (base: 0, the compute settled them).
+        int settledOn173468() => db
+            .ingredientMatchesFor(r.id)
+            .where(
+              (m) =>
+                  m.position != 0 &&
+                  m.fdcId == 173468 &&
+                  m.status == 'auto' &&
+                  m.confidence == 1,
+            )
+            .length;
         await path('compute', () => matchAndCompute(db, provider, stored()));
         await path('GET', () => matchesBody(db, provider, stored()));
         await path(
@@ -452,6 +465,9 @@ void main() {
             }),
           ),
         );
+        if (shape == 'salt' || shape == 'water') {
+          expect(settledOn173468(), 399, reason: '$shape PUT pick');
+        }
         await path(
           'PUT confirm',
           () => applyMatchOverride(
@@ -464,7 +480,23 @@ void main() {
             }),
           ),
         );
+        if (shape == 'salt' || shape == 'water') {
+          expect(settledOn173468(), 399, reason: '$shape PUT confirm');
+        }
         await path('GET decided', () => matchesBody(db, provider, stored()));
+        // RE-PIN (M98 batch, v102): the PUT settles its own recipe, so an
+        // apply of the decided food reaches no own line. The cap recipe
+        // saved again under a second id (computed on the decision 173468,
+        // uncounted) and the apply re-deciding the key on 746775 keep the
+        // step at the caps: the PUT's own settle of the 398 siblings plus
+        // the apply over the twin's 400 lines (base: the own 399).
+        final twin = r.copyWith(id: '${r.id}-twin');
+        wp.saveRecipe(db, twin);
+        await matchAndCompute(
+          db,
+          provider,
+          db.recipeByIdOrSlug(twin.id)!.recipe,
+        );
         await path(
           'apply-to-all',
           () => applyMatchOverride(
@@ -473,7 +505,7 @@ void main() {
             stored(),
             1,
             body(1, {
-              'fdc_id': 173468,
+              'fdc_id': 746775,
               'apply_to_all': true,
             }),
           ),

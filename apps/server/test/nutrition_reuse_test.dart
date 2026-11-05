@@ -432,22 +432,39 @@ void main() {
       },
     );
 
-    test("the same recipe's other line of the item is reached too", () async {
+    // RE-PIN (M98 batch, v102): the pick itself settles the same recipe's
+    // other line of the item ([settleKeyInRecipe]) — the apply no longer
+    // reaches it (it was "reached too" by the apply, `>= 1`, until v101;
+    // design_v2 §2.8 P8b). Exact: no earlier test of this shared-state
+    // group touches table salt, so the bundt cake's one undecided line is
+    // the whole reach.
+    test("the same recipe's other line of the item is settled by the pick "
+        'itself', () async {
       final salts = positionsOf(caramel, 'table salt');
       expect(salts, hasLength(2), reason: 'the caramel cake salts twice');
       final first = rowAt(caramel, salts[0]);
       expect(first.status, 'auto');
       final alt = await otherFoodFor(caramel, 'table salt', {first.fdcId!});
 
-      // Re-picked, the count includes the sibling: one recipe (the same one).
+      // Re-picked: the sibling takes the decision in the PUT; the count is
+      // the bundt cake alone.
       await put(caramel, salts[0], {'fdc_id': alt});
-      expect(await othersOf(caramel, salts[0]), greaterThanOrEqualTo(1));
+      final settled = rowAt(caramel, salts[1]);
+      expect(
+        (settled.fdcId, settled.status, settled.confidence),
+        (alt, 'auto', 1.0),
+      );
+      expect(await othersOf(caramel, salts[0]), 1);
 
       final applied = await put(caramel, salts[0], {
         'fdc_id': alt,
         'apply_to_all': true,
       });
-      expect(applied!.lines, greaterThanOrEqualTo(1));
+      expect(
+        applied,
+        appliedIs(recipes: 1, lines: 1, failed: 0, completed: 0),
+      );
+      expect(rowOf(bundt, 'table salt').fdcId, alt);
       final sibling = rowAt(caramel, salts[1]);
       expect(sibling.fdcId, alt);
       expect(sibling.status, 'auto');

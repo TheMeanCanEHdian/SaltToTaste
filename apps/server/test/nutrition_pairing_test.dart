@@ -371,10 +371,20 @@ void main() {
       final v0 = version([oilHalf, oilQuarter]);
       save(v0);
       await matchAndCompute(db, provider, v0);
+      final quarter = db
+          .ingredientMatchesFor(v0.id)
+          .singleWhere((r) => r.position == 1);
       await applyMatchOverride(db, provider, v0, 0, {
         'fdc_id': 173468,
         'grams': 5,
       });
+      // RE-PIN (M98 batch, v102): the pick settles its own recipe — the
+      // ¼ cup takes 173468 in the PUT and leaves the reach (0). STATED
+      // synthesized: its engine row written back (the state an own line
+      // the settle could not write leaves — a FOOD failure), so the offer's
+      // two exclusion terms keep a row to read.
+      expect(await othersOf(v0, oilHalf), 0);
+      db.upsertIngredientMatch(quarter, layoutSeq: db.layoutSeqOf(v0.id));
       expect(await othersOf(v0, oilHalf), 1);
       return v0;
     }

@@ -622,16 +622,24 @@ void main() {
           'raw': oil,
           'fdc_id': 173468,
         });
+        // RE-PIN (M98 batch, v102): the pick settles its own recipe, so
+        // the edited line's row is written by the PUT itself, under the
+        // "¾ cup" text — the offer and the receipt both 0 (were 1 / 1).
+        final settled = db.ingredientMatchesFor(v1.id)[1];
+        expect(
+          (settled.raw, settled.fdcId, settled.confidence),
+          (threeQuarters, 173468, 1.0),
+        );
         final offer =
             ((await matchesBody(db, provider, v1))['items']! as List).first
                 as Map<String, Object?>;
-        expect((offer['others'], offer['others_lines']), (1, 1));
+        expect((offer['others'], offer['others_lines']), (0, 0));
         final applied = await applyMatchOverride(db, provider, v1, 0, {
           'raw': oil,
           'confirmed': true,
           'apply_to_all': true,
         });
-        expect((applied!.recipes, applied.lines, applied.moved), (1, 1, 0));
+        expect((applied!.recipes, applied.lines, applied.moved), (0, 0, 0));
         final edited = db.ingredientMatchesFor(v1.id)[1];
         expect((edited.raw, edited.fdcId), (threeQuarters, 173468));
       });

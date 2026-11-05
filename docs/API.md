@@ -372,7 +372,11 @@ convert, but it never promises what a confirm may not count — so a line
 held for a food with no record (`food_gone`, `food_unavailable`: only a
 pick or a skip finishes it, by the hold's action table, below) is 0 even
 with grams typed, and counts as short in its group and in `finishable`
-(v28, Run 058 O8, Sonnet critics 1 and 3). A group item
+(v28, Run 058 O8, Sonnet critics 1 and 3). v102 (M98): a decision PUT
+settles its own recipe's other undecided lines of the key, so a line whose
+remaining open lines are its own same-key siblings may finish its recipe
+while `finishes` reads 0 — an under-promise the rule allows (on snapshot 32
+no flagged line has a flagged same-key sibling). A group item
 overrides it with the group's count (below). Every `finishes` count (both
 modes, and `finishable`) reads the STORED match rows: for a recipe edited
 since its last compute (`stale` on its nutrition — derived, never stored) a
@@ -2477,7 +2481,8 @@ held again only by a LINE hold: `discarded_medium`, `starter_discard`,
 line clears one), and an engine row whose line the
 second-food rule counts moves to the rule's record with the rule's grams,
 as a compute writes it. A
-decision reaching the line by `apply_to_all` or inheritance clears a FOOD
+decision reaching the line by `apply_to_all`, inheritance or (v102) the
+deciding PUT settling its own recipe's other lines of the key clears a FOOD
 hold (`no_nutrients`, `dried_for_fresh`, `cured_for_fresh`, `borderline`,
 `unnamed_food`) too, never a LINE hold (`discarded_medium`,
 `starter_discard`, `coating`, `partial_pour_away`, `ambiguous_medium`, `second_food`,
@@ -5170,6 +5175,154 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v102 (batch M98; matcherVersion 95, unchanged — a food decision
+settles its own recipe; the spec .claude/diag/2026-11-04/m98/design/design_v2.md
+§2; a write-path batch: zero requests, no migration, no hash term, NO corpus
+row moves — replayed on snapshot 32 against the v101 set: rows, recs,
+sections, calls, notes and the buckets byte-identical, both orders, calls 0;
+the rulings the orchestrator's under the owner's standing authorization
+(2026-10-07)).**
+- **R1 — the deciding PUT settles its own recipe.** A PUT that stores a key's
+  decision (a pick, or a Confirm of a food) wrote the touched row and one
+  plain totals write: the recipe's OTHER undecided lines of the key kept
+  their pre-decision rows under a fresh stamp, and the next compute moved
+  them (sw11 at v101: 999 `inherit` + 6 `other` divergences; snapshot 32
+  holds 543 such (recipe, key) groups, 1,124 rows in 242 recipe ids). Now, after the touched write and BEFORE the
+  one totals write, `settleKeyInRecipe` writes every other line of the
+  recipe whose key is the decided key and whose stored row is undecided
+  (`auto`, `unmatched`, an engine rule row) exactly as the compute's decided
+  branch writes it: `decidedKeyRowFor` — `unskippedRow`'s decided-key arm
+  MOVED, one function both call (the reference gate, the line's rule row,
+  the second-food rule, then `_decidedLineRow`; a reference line whose
+  carried decision is unusable takes its reference row) — under the
+  compute's provider rule (a held `food_unavailable` row derives from the
+  caches alone), through the compute's own guarded write
+  (`upsertIngredientMatchIfUndecided` under the PUT's layout). The compute is
+  not changed. By status: a person's row (`confirmed`, `overridden`,
+  `skipped`) is never touched; an engine rule row is written back as the
+  rule row; a reference line without a carried food alternative takes its
+  reference row; a second-food rule line its rule's record; a plain line
+  the decided food at confidence 1, FOOD holds cleared; a LINE-held line
+  (`discarded_medium`, `coating`, …) the decided food with its hold KEPT; a
+  line with no stored row, or where the decision is unusable (its food or
+  nutrient record gone), is left (the compute searches). The verbs: a pick
+  or a Confirm (with or without typed grams — the touched row keeps them)
+  settles; typed grams alone, a skip or un-skip, a refused hold, a routed
+  line's recipe decision settle nothing; with `apply_to_all` the own recipe
+  is settled first, then the apply reaches the other recipes. A later pick
+  or Confirm on another line of a settled key settles again, so a Confirm of
+  a settled sibling confirms the decided food (0002: pick |7 170000, then
+  Confirm |2 → |2 `confirmed` 170000).
+- **The failure arms are the compute's catch, in its order.** (1) a held
+  row's cache miss (`cacheOnly`, any scope): the row stays, marked derived
+  for these inputs (`markDerivedIfUnchanged`, as the compute marks it), not
+  flagged, the pass goes on; (2) a suspended detail and (5) any other FOOD
+  failure: the line is left and the totals are stamped waiting on USDA
+  (`unavailable`), the pass goes on; (3/4) a GLOBAL failure: the settle
+  stops, the totals stamped waiting; the decision and the touched row stand.
+  A guarded write refused while the layout is unmoved (a person's write on
+  that line during the awaits) leaves that line and goes on; a moved layout
+  stops the settle (the compute rewrites; never a 409 after a stored
+  decision). The one stated inequality (L5): a FOOD failure on an
+  `unmatched`-without-note or food-less sibling — the compute writes its
+  `engineUnavailableNote` row, the settle keeps the stored row; both read
+  stale and the sweep writes the compute's row (0 such rows on snapshot 32).
+- **R2 — an un-skip whose decided-key derivation FDC cannot serve reads
+  stale.** `unskippedRow` swallowed the FOOD failure and returned the row
+  with no grams under a fresh stamp (0002|7 cold: fresh, E 3101.66, the next
+  compute asked again); its new `onUnavailable` callback stamps the PUT's
+  totals `unavailable` (`underived`). The row returned is unchanged; a
+  GLOBAL failure still throws.
+- **Receipts.** The settled siblings leave the reach, so an own-recipe-only
+  key offers nothing (`others` 0 / `others_lines` 0, was 1 / 1) and
+  `applied` counts OTHER recipes only (0002 + 0002-hearty: 2 lines / 1
+  recipe, was 3 / 2); an own sibling the settle could not write is still
+  counted. The queue's `finishes` may under-promise a line whose remaining
+  open lines are its own same-key siblings (allowed; 0 such lines on the
+  snapshot).
+- **What it leaves (stated limits).** L1 (DEFER) the cross-recipe carry: a
+  decision without `apply_to_all` leaves every OTHER recipe id on its old row
+  under a fresh stamp until its next compute — 'table salt' alone sits on 558
+  undecided rows in 481 recipe ids; a section is its own recipe id, so the
+  host↔section twin is here too (105 (host, key) pairs in 54 hosts share an
+  undecided key with one of their own sections). L2 (DEFER) `apply_to_all`
+  leaves other recipes' LINE-held rows its reach skips (16
+  `discarded_medium` + 1 `coating` undecided table-salt rows on the
+  snapshot). L3 (CLOSE) the v101 grams-path limit:
+  the settle IS the compute's derivation. L4 (DEFER) sw5–sw11's `state()`
+  omits confidence and freshness — the uncommitted sw11c / sw8c below
+  measure them once. L5 (STATED) above.
+- **GATE-P** (apps/server/tool/replay/person_sweeps, 12 shards, fresh
+  snapshot-32 copies, base 78e9aad and v102): sw5 31,713, sw6 37,400, sw7
+  1,872, sw8 56,868, sw8r 5,358, sw9 130, sw10 156 (bare and typed) — 0
+  divergent, 0 refused, calls 0 on both (a settle arm unequal to the
+  compute would show here: every repeated-key decision PUT now settles).
+  sw11 (39,760 combos, 14,070 refused, 0 errors on both): base = the v101
+  census byte for byte (1,197: `inherit` 999, `other` 6, `energy-only`
+  192); v102 200, all `energy-only` — the base's 192 plus the 8
+  0249|o2|0 tags, rows equal to the compute, `calls` > 0 (a pick of a
+  record no cache holds asks once, as the compute does); `inherit` 0,
+  `other` 0, the tip's tags ⊂ the base's. The uncommitted sw11c / sw8c
+  (`state()` with each row's confidence and the recipe's freshness — L4):
+  sw11c base 1,373 divergent (1,215 of them fresh after the PUTs), v102 the
+  same 200 tags as sw11, every one STALE after its PUTs; sw8c base 1,648
+  (every one a confidence-only diff, the Confirm class sw8 cannot see), v102
+  0.
+- **Pins** (apps/server/test/nutrition_v102_test.dart, 29 tests, every one
+  run on 78e9aad first: 5 green on both by design — the person rows left
+  alone, the rule row — and the direct-call arms absent there): each verb
+  and status through the real PUT on real corpus recipes (0002, 0249, 0351,
+  0402, 1105, 0510, 0358, 0072, 0767) with a full NoNet compute changing
+  nothing; the failure arms and the race as STATED synthesized negative
+  paths (a real row held, a deleted cache row, a provider failing one real
+  record or writing a person's skip during its await). RE-PINs, each exact:
+  nutrition_reuse_test ("the same recipe's other line of the item is settled
+  by the pick itself"), nutrition_writepath_test E3 (0405's edited "¾ cup"
+  line written by the pick: offer and receipt 1 / 1 → 0 / 0),
+  nutrition_pairing_test S19 (its setup's ¼ cup settled; its engine row
+  written back, stated), nutrition_v26_rule_a_test I1 twins (the twin
+  settled to the flavouring rule row the compute writes) and
+  nutrition_v26_cost_test (the apply-to-all cap step over a second recipe;
+  'salt' / 'water' 399 settled rows). Mutants, each killed by a value pin: the
+  settle removed, after the totals, as the apply's reach, keeping the
+  sibling's confidence, unguarded, only with `apply_to_all`, on
+  `_decidedLineRow` directly, on the caller's Recipe, without the cacheOnly
+  mirror, after the apply, without its `unavailable`, without arm 1 or its
+  mark, a refusal that stops; R2's callback dropped; the `failed` shape's
+  RULE A note-row disjunct dropped (a held `unmatched`
+  [engineUnavailableNote] sibling then asks the PUT's provider where the
+  compute reads `cacheOnly`) and a NULL-derivation sibling stopping the pass
+  (every later sibling then keeps its pre-decision row under the fresh
+  stamp) — both STATED synthesized (snapshot 32 holds 0 `food_unavailable`
+  rows and 0 decisions, so no sibling's own derivation is null there;
+  the null stood in by a provider answering "no such food" once). Two call-site
+  arguments are reads: the `unavailable` one (no fixture PUT fails a
+  sibling's record alone) and the `derivedSeq` one, which only arm 1
+  reads (pinned by the direct call; through the PUT a held sibling's
+  cache-only miss needs a record the touched pick did not resolve;
+  snapshot 32 holds 0 `food_unavailable` rows). Two reference-row
+  fallbacks are reads, unpinned since v101 (measured: each mutated out
+  leaves every un-skip test file and this batch's green) — `unskippedRow`'s
+  FOOD catch keeping a routed line's reference row, and `decidedKeyRowFor`'s
+  trailing reference row after a NULL derivation, which the settle now also
+  writes through. Both reach only a routed reference line whose key carries
+  a person's decision that this line cannot use; snapshot 32 holds 0
+  decisions and 0 routed rows sharing a key within their recipe (4 routed
+  rows on 3 keys share one with an unrouted line elsewhere). Not
+  equivalent: the mutant leaves the generic or stored row where the compute
+  writes `referenceRowFor`.
+- **Cost (RULE C).** One derivation per sibling — the compute's own chain on
+  the request's step index, one `ResolverMemo`, the rows and keys read once,
+  no reach, no new counted family; at the caps (400 lines × 120 steps of
+  10,000 characters) no per-index family moved, the per-line ones are the
+  compute's (e.g. `lineMentions` 2 → 800 on 'salt'), 'salt' / 'water' settle
+  399 siblings in the PUT (pinned by row count); the apply-to-all cap step
+  is rebuilt over a second recipe (its own siblings are settled first). A
+  decision PUT asks at most one request per distinct record the touched row
+  and its settled siblings land on (1105|10: 1).
+- **Deploy:** `dart_frog build` + restart; NO stale sweep (no stamp moves);
+  the live rows equal the v101 replay.
 
 **Matcher v101 (batch fix101; matcherVersion 95 — the fixes of dual-fleet
 review Run 073/074 over v70–v82 at the tip 30c1f83, union U1–U16
@@ -10127,7 +10280,10 @@ the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
 wanting a bare name strips parentheticals, as the app does; null when the
 line has none), `others`: how many recipes hold an undecided line
 with the same ingredient (keys are singular and accent-folded, so "onion"
-and "onions" are one; the same recipe's other lines count; a line the
+and "onions" are one; the same recipe's other lines count until a decision
+on the key lands in this recipe — v102 (M98): a decision PUT settles them,
+so after it they count only where the decision could not settle them, a
+FOOD failure or a decision unusable on that line; a line the
 engine holds now is left out, read from its recipe as stored — each reached
 line once per stored version of its recipe, kept across requests by the
 recipe's content hash, so a GET runs no detector for a recipe unchanged
@@ -10237,7 +10393,9 @@ normalized text, e.g. `without salt butter`) has a `confirmed` or
 `overridden` food on any other line — another recipe's, or the same
 recipe's — inherits that food — the most recent decision wins — with grams
 from its own amounts, at confidence 1 and still `auto` (a decision made on
-the line itself still wins). `skipped` does not travel: it is a call about
+the line itself still wins). The same recipe's lines no longer wait for a
+compute (v102, M98): the decision's own PUT writes them, as the compute
+would. `skipped` does not travel: it is a call about
 one recipe's line, not about the item.
 
 ### `PUT /api/v1/recipes/{idOrSlug}/nutrition/matches/{pos}` (admin, full scope)
@@ -10334,7 +10492,9 @@ A food decided here — a pick (`fdc_id`), or `confirmed: true` on a line that
 has a food — becomes the INGREDIENT's decision, library-wide: it is stored in
 its own row keyed by the ingredient (not by this recipe or this line), so
 every other recipe's line of that ingredient inherits it at its next compute
-as `auto` at confidence 1, and it survives this recipe being edited or
+as `auto` at confidence 1 (this recipe's own lines of it take it in this
+write — v102, M98: every undecided one, as the compute's decided branch
+writes it, before the totals), and it survives this recipe being edited or
 deleted. A grams-only edit decides the amount, not the food, and records no
 ingredient decision; neither does `skipped`. The newest decision wins.
 Ingredient keys are singular ("onion" and "onions" are one ingredient) and
@@ -10743,10 +10903,13 @@ there) and `failed_lines` (its recipe failed;
 `failed` counts those recipes): `completed` counts
 the reached recipes whose stored status turned `complete` with this apply
 (not a reached recipe that was complete already — a different-food pick
-reaches counted lines). The decided line's OWN recipe can be among them:
-the apply reaches the same recipe's other lines of the ingredient, and when
-they were its last open ones it completes during the apply (a pick on one of
-Cranberry Pecan Muffins' two pecan lines reaches the other). The app's
+reaches counted lines). The decided line's OWN recipe is settled by the
+PUT itself (v102, M98): its other undecided lines of the ingredient take the
+decision before its totals and the apply, so it completes in the PUT's own
+totals, not in `completed` (a pick on one of Cranberry Pecan Muffins' two
+pecan lines settles the other in the PUT); only an own line the decision
+could not settle (a FOOD failure, or a decision unusable there) is still
+reached and counted. The app's
 apply offer promises only the OTHER recipes of the group's
 `finishes_recipes` (less the line's own), so a receipt may complete MORE
 than the offer promised — an extra id is a bonus, never an error — and

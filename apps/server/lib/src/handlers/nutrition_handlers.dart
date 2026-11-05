@@ -375,6 +375,8 @@ Future<Map<String, Object?>> matchesBody(
       ],
       // How many OTHER recipes hold an undecided line with this item — what
       // an apply-to-all from here would reach — and how many lines that is.
+      // The own recipe only through a line its decision PUT could not
+      // settle (v102, M98: a FOOD failure, or a decision unusable there).
       'others': {for (final other in reach) other.recipeId}.length,
       'others_lines': reach.length,
       // The words FDC is asked for this line's candidates (after the
@@ -739,6 +741,9 @@ Future<AppliedToOthers?> applyMatchOverride(
   final heldRecipeLine = recipeLineHolds.contains(row.hold);
   // Set only by the branches that PUT a food on the row in this request.
   var decidedFood = false;
+  // v102 (M98 R2): an un-skip whose decided-key derivation FDC could not
+  // serve — the totals below read it underived.
+  var unskipFailed = false;
   if (skipped == true) {
     row = row.copyWith(status: 'skipped');
   } else if (skipped == false) {
@@ -747,7 +752,14 @@ Future<AppliedToOthers?> applyMatchOverride(
     // low-confidence match the line had would hide it from the review queue
     // as resolved (review B7) — only grams a person typed come back as
     // their counted row.
-    row = await unskippedRow(db, provider, recipe, position, row);
+    row = await unskippedRow(
+      db,
+      provider,
+      recipe,
+      position,
+      row,
+      onUnavailable: () => unskipFailed = true,
+    );
   } else if (child != null) {
     // A person's recipe (v41): the child at the share typed, else the
     // line's own share of it; derived below ([derivedFor]'s child arm).
@@ -1060,17 +1072,33 @@ Future<AppliedToOthers?> applyMatchOverride(
     if (!wrote) {
       throw LineMovedException(position);
     }
+    // v102 (M98 R1): the decision settles this recipe's other undecided
+    // lines of its key, as the compute writes them, before the one totals
+    // write ([settleKeyInRecipe]; the stored recipe as re-read above).
+    final settled = decidedFood && itemKey.isNotEmpty
+        ? await settleKeyInRecipe(
+            db,
+            provider,
+            recipe,
+            position: position,
+            itemKey: itemKey,
+            seq: seq,
+            derivedSeq: derivedKeyOf(seq, derivedOn),
+          )
+        : (foods: const <int>{}, unavailable: false);
     // A plain recompute: the stamp stays what it was; freshness reads the
     // row ([nutritionIsFresh]). Only THIS line's food and its nutrient
-    // record are resolved if no cache holds them (v29, Run 059 S13: at
-    // most two requests); another row whose food no cache holds stays
-    // underived.
+    // record — and the settled lines', which their derivation resolved —
+    // are resolved if no cache holds them (v29, Run 059 S13: at most two
+    // requests); another row whose food no cache holds stays underived. A
+    // settle or un-skip FDC could not serve stamps them waiting on USDA.
     await recomputeTotalsResolving(
       db,
       provider,
       recipe,
-      only: foodsOf(stored.fdcId),
+      only: {...foodsOf(stored.fdcId), ...settled.foods},
       hashed: (recipe: hashedRecipe, hash: derivedOn),
+      unavailable: settled.unavailable || unskipFailed,
       ending: marked,
     );
     ended = true;

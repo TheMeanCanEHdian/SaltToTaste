@@ -19971,6 +19971,162 @@ Future<({IngredientMatchRow row, FdcFood food})?> _decidedLineRow(
   return (row: carriedRow, food: food);
 }
 
+/// v102 (M98): the row the compute writes for [line] (position [position]
+/// of [recipe]) when its key is DECIDED — the reference gate, the line's
+/// rule row ([_lineRuleRow]), the second-food rule ([_ruleRowFor]), then
+/// the decision ([_decidedLineRow]); a reference line whose carried
+/// decision is unusable here takes its reference row. Moved out of
+/// [unskippedRow] (v101 U1) so the un-skip and the PUT's settle
+/// ([settleKeyInRecipe]) read this ONE derivation. Null when the key is
+/// undecided (a reference line still takes its reference row) or the
+/// decision is unusable on a plain line (the compute searches). A provider
+/// failure is thrown: each caller takes its own arm.
+Future<IngredientMatchRow?> decidedKeyRowFor(
+  SaltDatabase db,
+  NutritionProvider provider,
+  Recipe recipe,
+  int position,
+  IngredientLine line, {
+  required ResolverMemo memo,
+}) async {
+  final uncounted = subRecipeRowFor(recipe, position, line);
+  // v101 (Run 073/074 U1): a line whose key a person DECIDED is the row the
+  // compute writes for it — the second-food rule first, then the decision
+  // ([_decidedLineRow], the compute's own derivation) — never a pick kept
+  // `auto` that the next compute moves (0091|0: 168743 kept, 173128
+  // computed; stored != compute with the recipe fresh). Gated as the
+  // compute gates it: a reference line only where a decision is carried
+  // to its food alternative.
+  final prior = db.decisionFor(lineKeyOf(line));
+  final decidedKey = prior?.fdcId != null;
+  if (uncounted != null && !(decidedKey && foodAlternativeOf(line) != null)) {
+    // v41: the composite row the compute writes ([referenceRowFor]).
+    return referenceRowFor(db, recipe, position, line, memo);
+  }
+  if (!decidedKey) {
+    return null;
+  }
+  // v101 closer 1 (D1): the compute's rule rows come ahead of the key's
+  // decision ([_lineRuleRow]) — a decided 'kosher salt' leaves 0264|1
+  // 'Kosher salt' the seasoning rule row, as the compute writes it.
+  final eaten = weighedLine(recipe, line);
+  if (_lineRuleRow(
+        db,
+        recipe,
+        position,
+        line,
+        eaten,
+        normalizeItem(lineItemOf(eaten)),
+        lineKeyOf(line),
+      )
+      case final rule?) {
+    return rule;
+  }
+  if (await _ruleRowFor(db, provider, recipe, position, line)
+      case final byRule?) {
+    return byRule.row;
+  }
+  if (await _decidedLineRow(db, provider, recipe, position, line, prior!)
+      case final decided?) {
+    return decided.row;
+  }
+  if (uncounted != null) {
+    // A carried decision this line could not use: the reference row.
+    return referenceRowFor(db, recipe, position, line, memo);
+  }
+  return null;
+}
+
+/// v102 (M98 R1): a PUT that stores [itemKey]'s decision settles its OWN
+/// recipe — every other line of [recipe] of that key whose stored row is
+/// undecided ([isDecidedRow]) is written as the compute's decided branch
+/// writes it ([decidedKeyRowFor] under the compute's `lineProvider` rule:
+/// a held `food_unavailable` row of the `failed` shape derives from the
+/// caches alone, [cacheOnly]), guarded as the compute's `write` is
+/// ([SaltDatabase.upsertIngredientMatchIfUndecided] under [seq]) — never
+/// after the PUT's totals (sw11: 999 + 6 stored rows the next compute
+/// moved, the recipe fresh). The failure arms are the compute's catch, in
+/// its order: a held row's cache miss marks it derived for [derivedSeq]
+/// and goes on; a suspended detail or a FOOD failure leaves the line and
+/// reads the totals `unavailable`; a GLOBAL one stops, `unavailable`. A
+/// write refused under an unmoved layout (a person's write on that line
+/// during the awaits) is left and the pass goes on; a moved layout stops
+/// it (the compute rewrites). `foods` = the written rows' foods and their
+/// nutrient records ([foodsOf]) for the totals to resolve.
+Future<({Set<int> foods, bool unavailable})> settleKeyInRecipe(
+  SaltDatabase db,
+  NutritionProvider provider,
+  Recipe recipe, {
+  required int position,
+  required String itemKey,
+  required int seq,
+  required String derivedSeq,
+}) async {
+  final memo = ResolverMemo(db);
+  final stored = {
+    for (final row in db.ingredientMatchesFor(recipe.id)) row.position: row,
+  };
+  final foods = <int>{};
+  var unavailable = false;
+  for (final (at, line) in nutritionLines(recipe).indexed) {
+    final row = stored[at];
+    if (at == position ||
+        row == null ||
+        isDecidedRow(row) ||
+        lineKeyOf(line) != itemKey) {
+      continue;
+    }
+    // The compute's `failed` shape and its `lineProvider` (no `all` scope).
+    final failed =
+        (row.status == 'unmatched' &&
+                row.description == engineUnavailableNote &&
+                row.raw == line.raw) ||
+            (row.status == 'auto' && row.fdcId != null)
+        ? row.copyWith(position: at, itemKey: itemKey)
+        : null;
+    final lineProvider = failed?.hold == foodUnavailableHold
+        ? cacheOnly
+        : provider;
+    try {
+      final next = await decidedKeyRowFor(
+        db,
+        lineProvider,
+        recipe,
+        at,
+        line,
+        memo: memo,
+      );
+      if (next == null) {
+        continue;
+      }
+      if (db.upsertIngredientMatchIfUndecided(next, layoutSeq: seq)) {
+        foods.addAll(foodsOf(next.fdcId));
+      } else if (db.layoutSeqOf(recipe.id) != seq) {
+        break;
+      }
+    } on NutritionProviderException catch (error) {
+      if (identical(lineProvider, cacheOnly)) {
+        // Arm 1: the hold stands, derived for these inputs.
+        if (failed!.derivedSeq != derivedSeq) {
+          db.markDerivedIfUnchanged(
+            failed,
+            derivedSeq: derivedSeq,
+            layoutSeq: seq,
+            keepRetryCount: true,
+          );
+        }
+        continue;
+      }
+      unavailable = true;
+      // Arms 3–4: a GLOBAL failure stops; arms 2 and 5 leave the line.
+      if (error.scope == FailureScope.global) {
+        break;
+      }
+    }
+  }
+  return (foods: foods, unavailable: unavailable);
+}
+
 /// The row an un-skip returns [row] — position [position] of [recipe] — to:
 /// automatic triage, as a compute writes it. The sub-recipe rule gates it
 /// ([subRecipeRowFor]) and the line is weighed as every path weighs it
@@ -19996,8 +20152,9 @@ Future<IngredientMatchRow> unskippedRow(
   NutritionProvider provider,
   Recipe recipe,
   int position,
-  IngredientMatchRow row,
-) async {
+  IngredientMatchRow row, {
+  void Function()? onUnavailable,
+}) async {
   // Grams a person typed are their row: an un-skip gives it back counted,
   // with no hold — `overridden`, as a grams edit makes an `auto` row (Run
   // 049: a held medium's typed grams came back on an `auto` row, held out
@@ -20010,56 +20167,24 @@ Future<IngredientMatchRow> unskippedRow(
     return row.copyWith(status: 'overridden', clearHold: true);
   }
   final line = nutritionLines(recipe)[position];
-  final uncounted = subRecipeRowFor(recipe, position, line);
-  // v101 (Run 073/074 U1): a line whose key a person DECIDED is the row the
-  // compute writes for it — the second-food rule first, then the decision
-  // ([_decidedLineRow], the compute's own derivation) — never a pick kept
-  // `auto` that the next compute moves (0091|0: 168743 kept, 173128
-  // computed; stored != compute with the recipe fresh). Gated as the
-  // compute gates it: a reference line only where a decision is carried
-  // to its food alternative.
-  final prior = db.decisionFor(lineKeyOf(line));
-  final decidedKey = prior?.fdcId != null;
-  if (uncounted != null && !(decidedKey && foodAlternativeOf(line) != null)) {
-    // v41: the composite row the compute writes ([referenceRowFor]).
-    return referenceRowFor(db, recipe, position, line, ResolverMemo(db));
-  }
-  if (decidedKey) {
-    // v101 closer 1 (D1): the compute's rule rows come ahead of the key's
-    // decision ([_lineRuleRow]) — a decided 'kosher salt' leaves 0264|1
-    // 'Kosher salt' the seasoning rule row, as the compute writes it.
-    final eaten = weighedLine(recipe, line);
-    if (_lineRuleRow(
-          db,
-          recipe,
-          position,
-          line,
-          eaten,
-          normalizeItem(lineItemOf(eaten)),
-          lineKeyOf(line),
-        )
-        case final rule?) {
-      return rule;
+  final memo = ResolverMemo(db);
+  try {
+    if (await decidedKeyRowFor(db, provider, recipe, position, line, memo: memo)
+        case final decided?) {
+      return decided;
     }
-    try {
-      if (await _ruleRowFor(db, provider, recipe, position, line)
-          case final byRule?) {
-        return byRule.row;
-      }
-      if (await _decidedLineRow(db, provider, recipe, position, line, prior!)
-          case final decided?) {
-        return decided.row;
-      }
-    } on NutritionProviderException catch (error) {
-      // A food FDC cannot serve now (RULE A): the stored row as before —
-      // the compute holds it in its own pass. A global failure is thrown.
-      if (error.scope != FailureScope.food) {
-        rethrow;
-      }
+  } on NutritionProviderException catch (error) {
+    // A food FDC cannot serve now (RULE A): the stored row as before —
+    // the compute holds it in its own pass. A global failure is thrown.
+    if (error.scope != FailureScope.food) {
+      rethrow;
     }
-    if (uncounted != null) {
+    // v102 (M98 R2): the totals read it underived — the PUT stamps them
+    // waiting on USDA, as the next compute (which asks again) reads them.
+    onUnavailable?.call();
+    if (subRecipeRowFor(recipe, position, line) != null) {
       // A carried decision this line could not use: the reference row.
-      return referenceRowFor(db, recipe, position, line, ResolverMemo(db));
+      return referenceRowFor(db, recipe, position, line, memo);
     }
   }
   final eaten = weighedLine(recipe, line);
@@ -20831,8 +20956,10 @@ Future<List<String>> _completedBy(
 /// promised; the receipt reconciles against it), `completedRecipes` their
 /// ids. A reached recipe that was complete already (a different-food pick
 /// reaches counted lines) is not counted: it was finished before. The
-/// decided line's own recipe CAN be counted: its other lines of the item
-/// are reached, and when they were its last open ones it completes here.
+/// decided line's own recipe is settled by its PUT first (v102, M98:
+/// [settleKeyInRecipe]), so it completes in the PUT's totals; it is
+/// reached here only through an own line the settle could not write (a
+/// FOOD failure, or a decision unusable on that line).
 /// v47 (F3, Run 062 O3 / Run 061 S5): RECIPES only, never a section key —
 /// a reached section line counts its HOST in `recipes`, and what it
 /// completes is the parents routed to the section, recomputed in this
