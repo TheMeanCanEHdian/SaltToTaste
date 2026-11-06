@@ -274,8 +274,10 @@ void u3() {
       '0158-classic-roast-stuffed-turkey.yaml',
       3,
       '2 Granny Smith apples, peeled, cored, and cut into ½-inch cubes (about 2 cups)',
-      353.80,
-      '2 cup ≈ 473 mL · approximate (ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups, × 0.78 edible (AH-102 item 17))',
+      // RE-PIN (fix104 batch, v104, U2: the cubed cup — the brown-betty
+      // print 1½ lb × 0.78 / 4 cups): was 353.80 and the shredded label.
+      265.35,
+      '2 cup ≈ 473 mL · approximate (ATK: 1½ pounds Granny Smith apples, peeled, cored, cut into ½-inch cubes = 4 cups, × 0.78 edible (AH-102 item 17))',
     ),
     // RE-PIN (an equality on the v102 figure): the weight path, unchanged.
     (
@@ -360,7 +362,9 @@ void u4() {
     await matchAndCompute(db, fault, r, retryUnavailable: true);
     final m = db.nutritionFor(r.id)!;
     expect((m.matchedCount, m.totalCount), (13, 13));
-    expect(m.caloriesPerServing, closeTo(464.1, 0.05));
+    // RE-PIN (fix104 batch, v104 U13): within the stored figure's 0.01
+    // (the test's own run stores 464.1; was closeTo(464.1, 0.05)).
+    expect(m.caloriesPerServing, closeTo(464.1, 0.01));
     expect(d.rowOf(db, r, 0).grams, closeTo(170.166, 0.001));
   });
 }

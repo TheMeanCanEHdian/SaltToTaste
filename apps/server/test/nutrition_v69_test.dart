@@ -5489,7 +5489,10 @@ void main() {
       // RE-PIN (fix103 batch, v103, U3: the stuffing's apples at the edible
       // cup, 453.59 → 353.80 g; the replay 1,257.01 → 1,251.73): was
       // '1257.01'.
-      expect(totalsOf(_stuffedTurkey).$2, '1251.73');
+      // RE-PIN (fix104 batch, v104, U2: the stuffing's apples at the cubed
+      // cup, 353.80 → 265.35 g; the replay 1,251.73 → 1,247.04): was
+      // '1251.73'.
+      expect(totalsOf(_stuffedTurkey).$2, '1247.04');
     });
 
     test("2: a host-only edit of the bird's printed weight (12–14 → 16–18 lb) "
@@ -5771,7 +5774,8 @@ void main() {
           // stuffing's 1750342 apples): was '1259.95'.
           // RE-PIN (fix103 batch, v103, U3: the stuffing's apples at the
           // edible cup): was '1257.01'.
-          '1251.73',
+          // RE-PIN (fix104 batch, v104, U2: the cubed cup): was '1251.73'.
+          '1247.04',
         ), // replay complete 1221.89 → complete 1258.02
         (
           // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).

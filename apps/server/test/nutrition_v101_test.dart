@@ -476,8 +476,11 @@ void hashes() {
 // RE-PIN (fix103 batch, v103): matcherVersion 96 and U2's `servings` term
 // for every recipe (was b7d51339…) — base 63e4315 with the bump and U2's
 // term gives this literal.
+// RE-PIN (fix104 batch, v104): matcherVersion 97 and U8's `routes` term
+// (was b6e8c416…; the bump alone gives 20aeb87b…) — the fix104 tree gives
+// this literal.
 const _kibbehHash =
-    'b6e8c4168485bfb12b35f58caa0eab70d9e916e8f5e00b5f0dbcf8bd9a1c428d';
+    '54550d5fb2430b48ad599780aebccca0904ab63dfa0a7ff44e6d85ce9cab0735';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person

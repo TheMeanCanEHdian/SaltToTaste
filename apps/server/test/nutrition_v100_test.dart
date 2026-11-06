@@ -334,12 +334,13 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    'P18: matcherVersion 96 (v100 set it to 94, batch M97: the shallow-fry reader and '
+    'P18: matcherVersion 97 (v100 set it to 94, batch M97: the shallow-fry reader and '
     'the roux guard)',
     () {
       // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
       // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
-      expect(matcherVersion, 96);
+      // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
+      expect(matcherVersion, 97);
     },
   );
 

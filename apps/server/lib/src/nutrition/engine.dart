@@ -4535,6 +4535,11 @@ final RegExp _skimsFat = RegExp(
   '$_plainPourOff',
 );
 
+/// Whether sentence [s] skims fat ([_skimsFat]) and does not forbid the
+/// skim ([_negatesSkim]: 0492's "(do not skim the fat from the liquid)") —
+/// v104 U5: the one guard both readers ([_fatSkimmed], [_fatLinesOf]) read.
+bool _skimsFatIn(String s) => !_negatesSkim(s) && _skimsFat.hasMatch(s);
+
 /// [_skimsFat]'s K2 arm: a plain pour-off of fat or grease — v100 (M97
 /// R5) reads it alone ([_poursOffFat]).
 const String _plainPourOff =
@@ -4573,7 +4578,7 @@ bool _fatSkimmed(Recipe recipe) => _stepIndexOf(recipe).memo(#fatSkimmed, () {
   final inside = _parenthetical(recipe);
   for (final (i, sentences) in index.sentences.indexed) {
     for (final (j, s) in sentences.indexed) {
-      if (!inside[i][j] && _skimsFat.hasMatch(s)) {
+      if (!inside[i][j] && _skimsFatIn(s)) {
         return true;
       }
     }
@@ -8392,6 +8397,9 @@ class ResolverMemo {
 
   final Map<String, Recipe?> _hosts = {};
 
+  /// [_madeFromRecipe] per child id (v104 U10).
+  final Map<String, bool> _madeFrom = {};
+
   /// The section keys holding a stamp: the CHILD sections a fix sheet may
   /// list from another host (v44, S14 a; N4: the child set as stored — "a
   /// section key with a `recipe_nutrition` row", one statement per memo, so
@@ -8698,7 +8706,9 @@ bool _ownSectionNames(
 /// served-with marker ([servedWithMarked]) → `servedWith` (the 0 g rule
 /// row, counted accounted by [recomputeTotals]); else rule WB, the order
 /// above reaching a child with lines that is not nested → `routed` at
-/// share 1.0, one whole batch ([wbFlag]); anything else stays `noAmount`.
+/// share 1.0, one whole batch ([wbFlag]); anything else stays `noAmount`
+/// — but a line that writes its own share ([writesShare]) and reads none
+/// stays `noShare` (v104 U4).
 /// Rule PV, every line: an answer naming a section with no ingredient
 /// lines routes to its base ([_proseBase]) when one shares a title word.
 ReferenceResolution resolveReference(
@@ -8719,9 +8729,12 @@ ReferenceResolution resolveReference(
     found = _proseBase(recipe, line, memo, prose) ?? found;
   }
   // D7's shipped title rule answers `servedWith` in the order itself.
+  // v104 U4 (closer 1, D1): a line that writes its own share ("(0 recipe")
+  // and reads none keeps `noShare` — the share the person must set.
   return amountless &&
           found.kind != ReferenceKind.servedWith &&
-          (found.kind != ReferenceKind.routed || found.variation != null)
+          (found.kind != ReferenceKind.routed || found.variation != null) &&
+          !(found.kind == ReferenceKind.noShare && writesShare(line.raw))
       ? const ReferenceResolution(ReferenceKind.noAmount)
       : found;
 }
@@ -8840,7 +8853,7 @@ _ProseChoice? _proseChoice(
     return null;
   }
   final child = hostScore >= bestScore ? host : sectionRecipeOf(host, best!);
-  return _madeFromRecipe(child)
+  return _madeFromRecipe(child, memo)
       ? null
       : (
           child: child,
@@ -8888,7 +8901,13 @@ ReferenceResolution _resolveInOrder(
   if (own.length == 1 || exactOwn.length == 1) {
     final title = own.length == 1 ? own.single : exactOwn.single;
     final key = sectionKeyOf(recipe.id, title);
-    return _childTail(recipe, line, sectionOf(recipe, key)!, section: title);
+    return _childTail(
+      recipe,
+      line,
+      sectionOf(recipe, key)!,
+      memo,
+      section: title,
+    );
   }
   final titles = memo.titles;
   final named = noteNamedTitles(recipe, item, memo);
@@ -8925,7 +8944,14 @@ ReferenceResolution _resolveInOrder(
       if (section == null) {
         return const ReferenceResolution(ReferenceKind.held, missing: true);
       }
-      return _childTail(recipe, line, section, section: title, host: host);
+      return _childTail(
+        recipe,
+        line,
+        section,
+        memo,
+        section: title,
+        host: host,
+      );
     }
     final similar = similarTitles(recipe, item, memo);
     final sectionsAlike = [
@@ -8970,7 +8996,7 @@ ReferenceResolution _resolveInOrder(
   if (found == null) {
     return const ReferenceResolution(ReferenceKind.held, missing: true);
   }
-  return _childTail(recipe, line, found, named: named.length);
+  return _childTail(recipe, line, found, memo, named: named.length);
 }
 
 /// The share of [child] at which the resolver routes [recipe]'s reference
@@ -8984,7 +9010,9 @@ ReferenceResolution _resolveInOrder(
 /// WB's whole batch, 1.0, for a line with no amount of a child with lines —
 /// never one a served-with marker reads (rule SW: [resolveReference]
 /// answers `servedWith` before any route, so the route never reads it
-/// there). Null: no share reads (`noShare`; the PUT asks for one).
+/// there) and never one that writes its own share (v104 U4: "(0 recipe"
+/// reads no share, [writesShare]). Null: no share reads (`noShare`; the PUT
+/// asks for one).
 double? routeShareOf(Recipe recipe, IngredientLine line, Recipe child) =>
     parseShare(line.raw, line.amounts, child.servings) ??
     (hostOf(child.id) != child.id &&
@@ -8995,6 +9023,7 @@ double? routeShareOf(Recipe recipe, IngredientLine line, Recipe child) =>
         ? 1.0
         : null) ??
     (line.amounts.isEmpty &&
+            !writesShare(line.raw) &&
             nutritionLines(child).isNotEmpty &&
             !servedWithMarked(recipe, line)
         ? 1.0
@@ -9017,7 +9046,8 @@ double? routeShareOf(Recipe recipe, IngredientLine line, Recipe child) =>
 ReferenceResolution _childTail(
   Recipe recipe,
   IngredientLine line,
-  Recipe child, {
+  Recipe child,
+  ResolverMemo memo, {
   int named = 0,
   String? section,
   String? host,
@@ -9032,7 +9062,7 @@ ReferenceResolution _childTail(
       noIngredients: true,
     );
   }
-  if (_madeFromRecipe(child)) {
+  if (_madeFromRecipe(child, memo)) {
     return ReferenceResolution(
       ReferenceKind.nested,
       childId: child.id,
@@ -9051,8 +9081,21 @@ ReferenceResolution _childTail(
 
 /// Whether [child] is made from a recipe — a line of it reads a sub-recipe
 /// ([isReferenceIn]): the resolver's `nested` test ([_childTail]).
-bool _madeFromRecipe(Recipe child) =>
-    nutritionLines(child).any((l) => isReferenceIn(child, l));
+///
+/// v104 (Run 077/078 O5 + S5, U10; RULE C): once per child a request
+/// ([ResolverMemo]: one bool per child id) — every resolve of a routed
+/// line rescanned the child's lines (1,600 calls = 9.9 s of a 10.2 s
+/// matches GET at the caps); [madeFromScans] counts the scans.
+bool _madeFromRecipe(Recipe child, ResolverMemo memo) =>
+    memo._madeFrom.putIfAbsent(child.id, () {
+      madeFromScans++;
+      return nutritionLines(child).any((l) => isReferenceIn(child, l));
+    });
+
+/// How many children [_madeFromRecipe] scanned since reset — what the U10
+/// cap pins count, never a clock.
+@visibleForTesting
+int madeFromScans = 0;
 
 /// The library titles [recipe]'s prep note names for the reference [item],
 /// in the note's order (design_v3 §2.2 item 2): only a note that says
@@ -13147,7 +13190,16 @@ String? _mainRecipePartNote(
     return null;
   }
   final mixture = normalized.substring('reserved '.length);
-  final host = nutritionRecipeOf(db, hostOf(recipe.id))?.recipe;
+  // v104 (Run 078 O1, U9; RULE C): the host once per index, the sibling
+  // [hostWeighedGiblets]' form — never a whole-document decode per line
+  // (403 decodes, 3.48 s at the 400-line cap on 0591's real line).
+  final index = _stepIndexOf(recipe);
+  final host = index.memo(
+    ('host', hostOf(recipe.id)),
+    () =>
+        _sectionHosts[recipe] ??
+        nutritionRecipeOf(db, hostOf(recipe.id))?.recipe,
+  );
   return host != null &&
           host.ingredients.any(
             (group) => normalizeItem(group.group ?? '') == mixture,
@@ -14200,7 +14252,11 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
   final references = lines.any((line) => isReferenceIn(recipe, line));
   final prose = references
       ? _proseReadsOf(recipe, memo)
-      : (sections: const <String>[], bases: const <String?>[]);
+      : (
+          sections: const <String>[],
+          bases: const <String?>[],
+          routes: const <String, List<int>>{},
+        );
   final payload = jsonEncode({
     'matcher': matcherVersion,
     'title': recipe.title,
@@ -14248,6 +14304,13 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
       // prose section ([_proseReadsOf]) — only where one is read, so every
       // other recipe hashes as before.
       if (prose.bases.isNotEmpty) 'prose_bases': prose.bases,
+      // v104 (Run 077 S4, U8): the RESOLVED identity of each reference line
+      // — the child and section it routes to, or its unresolved / ambiguous
+      // outcome — read in the same pass of the resolver ([_proseReadsOf]):
+      // a library recipe gaining a same-titled host (pumpkin-pie|0 routed
+      // → choose_recipe) or a held title (buffalo-wings|13 held → routed)
+      // moved the route with no other term moving.
+      'routes': prose.routes,
     },
     // v70 (Run 063 F7): the ingredient GROUPS — each heading and its line
     // count — which M52's plan (the fried-product, cut-dough and batter
@@ -14408,19 +14471,33 @@ List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) =>
 /// the base ([_proseTail], `proseShares`): the share is the line's — its
 /// text and amounts against the base's yield, which no stamp ties to a
 /// line PV leaves unrouted — the residual, count-pinned.
-({List<String> sections, List<String?> bases}) _proseReadsOf(
+({List<String> sections, List<String?> bases, Map<String, List<int>> routes})
+_proseReadsOf(
   Recipe recipe,
   ResolverMemo memo,
 ) {
   final sections = <String>[];
   final bases = <String?>[];
+  final routes = <String, List<int>>{};
   final choices = <String, _ProseChoice?>{};
   for (final (i, line) in nutritionLines(recipe).indexed) {
     if (subRecipeRowFor(recipe, i, line) == null ||
         (line.amounts.isEmpty && servedWithMarked(recipe, line))) {
       continue;
     }
-    switch (_resolveInOrder(memo.db, recipe, line, memo)) {
+    final resolved = _resolveInOrder(memo.db, recipe, line, memo);
+    // v104 U8: each reference line's resolved identity ([ingredientsHashOf]).
+    // Each identity once, with the lines it answers (RULE C: a 400-line cap
+    // of one reference hashes one identity, not 400 copies of it).
+    routes
+        .putIfAbsent(
+          '${resolved.kind.name}|${resolved.childId}|'
+          '${resolved.section?.host}|${resolved.section?.title}|'
+          '${resolved.named}|${resolved.missing}',
+          () => [],
+        )
+        .add(i);
+    switch (resolved) {
       case ReferenceResolution(noIngredients: true, section: final at?):
         final key = sectionKeyOf(at.host, at.title);
         sections.add(key);
@@ -14445,7 +14522,7 @@ List<String> proseSectionsReadBy(Recipe recipe, ResolverMemo memo) =>
       default:
     }
   }
-  return (sections: sections, bases: bases);
+  return (sections: sections, bases: bases, routes: routes);
 }
 
 /// Whether [recipe]'s stored totals ([row], else read) are FRESH: stamped
@@ -15274,12 +15351,18 @@ Future<NutritionProviderException?> _computePass(
         // these inputs as a decided row's re-read hold is (v36, verifier
         // D2: a held kept row is keyed by `derived_seq`, so an edit never
         // leaves it underived and a cache gain re-opens it).
-        if (failed!.derivedSeq != derivedKey && fresh()) {
+        // v104 U6: and held on the part STILL uncached — the first may have
+        // landed while the other has not, and [SaltDatabase.unholdOn] reads
+        // only the stamped one.
+        final heldOn = _heldOnOf(db, failed!);
+        if ((failed.derivedSeq != derivedKey || failed.heldOn != heldOn) &&
+            fresh()) {
           db.markDerivedIfUnchanged(
             failed,
             derivedSeq: derivedKey,
             layoutSeq: seq,
             keepRetryCount: true,
+            heldOn: (id: heldOn),
           );
         }
         continue;
@@ -19688,15 +19771,21 @@ Map<String, int> _decidedByRaw(Iterable<IngredientMatchRow> rows) {
 /// [applyDecisionToOthers] writes: [SaltDatabase.undecidedMatchesForItemKey]
 /// (a different food at any score, [fdcId] only below [lowConfidence] or
 /// held by a food hold, never a line-held row; with no [fdcId] every
-/// undecided row) less every row a line hold would hold once it took the
-/// food: a line that names a second food ([namesSecondFood]) — its rule
-/// counts it on its own record, or it is held `second_food` whatever food
-/// the key gives it — shellfish bought in the shell ([boughtInShell], held
-/// `in_shell` on any food), and a line that is a held medium, matched or
-/// not, read from its recipe now ([_heldMediumNow]: an unmatched salt bath
-/// or pot salt, a dredge on a stale recipe whose row has no hold yet; a
+/// undecided row) — the rows the compute's decided arm moves (v104 U7,
+/// measured by person sweep sw12 on snapshot 32: shellfish bought in the
+/// shell and the M52 plan rows take the decided record at the next
+/// compute, `in_shell` kept, the coat re-split, so both are reached and
+/// written as the compute writes them) — less a line that names a second
+/// food ([namesSecondFood]: its rule counts it on its own record, or it is
+/// held `second_food` whatever food the key gives it), a shell line the
+/// decision does not move (no food decided, already on the decided record,
+/// or weighed and put back on its own record by the shell move — a decision
+/// on the bought record of [_shellRecords]), and a line that is a held
+/// medium, matched or not, read from its recipe now ([_heldMediumNow]: an
+/// unmatched salt bath or pot salt, a dredge on a stale recipe whose row
+/// has no hold yet — never an M52 plan row, `discarded` with no hold; a
 /// brine and its sugar are zeroed, never held — R3). No decision on the key
-/// moves either
+/// moves those
 /// (checkpoint 5 review: the offer counted 43 rule rows and the apply
 /// landed 0; an unmatched second-food line was reported applied).
 List<IngredientMatchRow> decisionReach(
@@ -19717,14 +19806,29 @@ List<IngredientMatchRow> decisionReach(
       for (final row in _reachRows(db, itemKey, excluding, fdcId))
         if (!reads._textOut.putIfAbsent(
               row.raw,
-              () => namesSecondFood(row.raw) || boughtInShell(row.raw),
+              () => namesSecondFood(row.raw),
             ) &&
+            // v104 U7: shellfish bought in the shell is reached when the
+            // decided record moves it (the compute lands it, `in_shell`
+            // kept) — never with no food decided, on its own record (it
+            // stays held as it is), or a weighed line the shell move puts
+            // back on its own record (a decision on the bought record of
+            // [_shellRecords]).
+            !(boughtInShell(row.raw) &&
+                (fdcId == null ||
+                    row.fdcId == fdcId ||
+                    (_shellRecords[fdcId] == row.fdcId &&
+                        row.gramSource == GramSource.weight.name))) &&
             // v82 (F10): a row the decision's moves leave on its record —
             // none for a decision kept as picked (v101 U1: no move).
             !(fdcId != null &&
                 !asPicked &&
                 _leftOnItsRecord(db, row, fdcId, reads)) &&
-            !_heldMediumNow(db, row, reads))
+            // v104 U7: an M52 plan row (a coat or frying oil the plan
+            // counted, `discarded`, no hold) is no held medium — the
+            // compute's decided arm lands the food on it (sw12).
+            !(_heldMediumNow(db, row, reads) &&
+                row.gramSource != GramSource.discarded.name))
           row,
     ],
   );
@@ -20919,7 +21023,8 @@ IngredientMatchRow _childRowOf(
   required bool sameAmount,
   required ResolverMemo children,
 }) {
-  final child = nutritionRecipeOf(db, placed.childRecipeId!)?.recipe;
+  // v104 U10: through the request memo — never a decode per decided row.
+  final child = childRecipeOf(db, placed.childRecipeId!, children);
   if (child == null) {
     return placed.copyWith(
       hold: chooseRecipeHold,
@@ -20930,7 +21035,7 @@ IngredientMatchRow _childRowOf(
     );
   }
   final stored = children.childNutrition(child.id);
-  if (nutritionLines(child).any((l) => isReferenceIn(child, l))) {
+  if (_madeFromRecipe(child, children)) {
     return placed.copyWith(
       hold: nestedRecipeHold,
       grams: 0,
@@ -20975,12 +21080,13 @@ Future<List<String>> recomputeParentsOf(
   String key,
 ) async {
   final completed = <String>[];
+  // v104 U10: one request memo — the child decoded and scanned once.
+  final memo = ResolverMemo(db);
   for (final id in db.recipesReadingChildren([key])) {
-    final parent = hostOf(id) == id ? nutritionRecipeOf(db, id)?.recipe : null;
+    final parent = hostOf(id) == id ? childRecipeOf(db, id, memo) : null;
     if (parent == null) {
       continue;
     }
-    final memo = ResolverMemo(db);
     final lines = nutritionLines(parent);
     final seq = db.layoutSeqOf(id);
     final before = db.nutritionFor(id)?.status;
@@ -21125,6 +21231,7 @@ applyDecisionToOthers(
   bool asPicked = false,
 }) async {
   var food = decided;
+  final resolver = ResolverMemo(db);
   final byRecipe = <String, List<IngredientMatchRow>>{};
   for (final target in decisionReach(
     db,
@@ -21370,11 +21477,32 @@ applyDecisionToOthers(
           unweighed = true;
           continue;
         }
-        if (row.hold != null) {
-          // A LINE hold now (a decided food answers every food hold): the
-          // recipe changed since the reach (a steps edit made the line a
-          // dredge) — left for its compute, never written or counted as
-          // reached (Run 053 Opus critic 3).
+        // A LINE hold (a decided food answers every food hold: shellfish
+        // bought in the shell, a coat the plan counts) is written as the
+        // compute's decided arm writes it ([decidedKeyRowFor] — v104 U7,
+        // sw12: the compute lands the decision there, `in_shell` kept, the
+        // coat re-split by the totals' plan below); a line that is no
+        // longer the key's decided line (Run 053 Opus critic 3) is left
+        // for its compute.
+        final IngredientMatchRow? written;
+        try {
+          written = row.hold == null
+              ? row
+              : await decidedKeyRowFor(
+                  db,
+                  provider,
+                  found.recipe,
+                  at,
+                  line,
+                  memo: resolver,
+                );
+        } on NutritionProviderException catch (error) {
+          _log.info('apply-to-all target ${entry.key}#$at unavailable: $error');
+          unavailable += 1;
+          unweighed = true;
+          continue;
+        }
+        if (written == null) {
           moved += 1;
           continue;
         }
@@ -21404,7 +21532,7 @@ applyDecisionToOthers(
         }
         // Guarded at the statement: only an undecided row is replaced (a
         // person's decision during the awaits stands).
-        if (!db.upsertIngredientMatchIfUndecided(row, layoutSeq: seq)) {
+        if (!db.upsertIngredientMatchIfUndecided(written, layoutSeq: seq)) {
           decidedMeanwhile += 1;
           continue;
         }
@@ -22866,7 +22994,7 @@ _FatLines _fatLinesOf(Recipe recipe) =>
         for (final (j, s) in sentences.indexed) {
           // Every [_skimsFat] arm names fat or grease (a native find).
           if ((s.contains('fat') || s.contains('grease')) &&
-              _skimsFat.hasMatch(s) &&
+              _skimsFatIn(s) &&
               !inside[i][j] &&
               !((s.contains(' but ') || s.contains(' except ')) &&
                   _pourOffAllButFat.hasMatch(s))) {
@@ -22929,6 +23057,10 @@ final RegExp _rouxFlour = RegExp(
 /// [_browningFatLines], for the v96 pins.
 @visibleForTesting
 Set<int> browningFatLinesOf(Recipe recipe) => _browningFatLines(recipe);
+
+/// [_fatSkimmed], for the v104 U5 pin.
+@visibleForTesting
+bool fatSkimmedOf(Recipe recipe) => _fatSkimmed(recipe);
 
 /// Whether line [i] of [recipe] is one [_browningFatLines] names — text
 /// only, the gate of the readers beside [_m52Plan] ([_m52RowOf],

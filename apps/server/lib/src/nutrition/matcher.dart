@@ -158,7 +158,12 @@ const Map<String, String> _synonyms = {
 /// cup at v43 Y8's edible yield (176.9 g, was the gross 226.8 g; two rows),
 /// one share predicate, every recipe's yield hashed, the hold's other record
 /// (migration 022).
-const int matcherVersion = 96;
+/// v97: matcher v104 (batch fix104) — the Run 077/078 fixes: the strawberries
+/// cup at AH-102 item 2473's edible yield (133.24 g, was the gross 141.75 g;
+/// one row), the cubed Granny Smith cup (132.68 g, the brown-betty print; the
+/// stuffing section's row and its host's routed line), the reach of a
+/// decision = the compute's, each reference line's resolved identity hashed.
+const int matcherVersion = 97;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

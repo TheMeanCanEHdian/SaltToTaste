@@ -119,7 +119,7 @@ Future<(String, String?)?> _weigh(Recipe r, int position) async {
 }
 
 void main() {
-  test('matcherVersion 96 (v92 set it to 87, batch M89: one row moves)', () {
+  test('matcherVersion 97 (v92 set it to 87, batch M89: one row moves)', () {
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
@@ -129,7 +129,8 @@ void main() {
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
     // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
-    expect(matcherVersion, 96);
+    // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
+    expect(matcherVersion, 97);
   });
 
   group('clause (1): the counted repeat on real sentences', skip: skipIfNoCorpus, () {

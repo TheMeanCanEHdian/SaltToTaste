@@ -810,7 +810,10 @@ void main() {
       expect(_inPanel(find.text('search result · 2')), findsOneWidget);
       await _tap(t, _inPanel(find.text(_gemelliTitle)));
       expect(_primaries, findsOneWidget);
-      await _tap(t, _inPanel(find.text('Use this recipe · 1 recipe')));
+      // RE-PIN (fix104 batch, v104 U18): a search result carries no share —
+      // the field empty, the button names no figure (was 'Use this recipe ·
+      // 1 recipe', the held child's share); the PUT is the same.
+      await _tap(t, _inPanel(find.text('Use this recipe')));
       expect(routes.puts, [
         {'raw': _tartRaw, 'child': _gemelli},
       ]);

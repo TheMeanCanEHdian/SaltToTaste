@@ -932,7 +932,9 @@ void main() {
         // RE-PIN (fix103 batch, v103): the hash at matcherVersion 96 (was
         // ba41a980…; the version alone — a section hashed `servings` already:
         // base 63e4315 with 96 gives this literal).
-        '1322ff0e1af97298703e173de9f7e440909d6ffa089ccb643089caff6850094a',
+        // RE-PIN (fix104 batch, v104): matcherVersion 97 alone (was
+        // 1322ff0e…; U8's `routes` term does not reach this section).
+        '22db5f9e8d1444ee4caa3c727621c99e80d1f7fa052b8066e235c22ab8c8b7d3',
       );
     });
   });

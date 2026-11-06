@@ -254,12 +254,14 @@ final RegExp _yieldMeasure = RegExp(
 /// bound) and the unit, singular ("MAKES ABOUT 1½ CUPS" → 1.5 cup); null
 /// when the yield names none ("MAKES ENOUGH FOR ONE 9-INCH PIE") — the
 /// units a share of the child may be written in besides `recipe` (v41).
+/// Null too for a quantity that is not finite and above 0 ("MAKES 0 CUPS":
+/// a share over it divides to Infinity — v104 U3, the [validShare] shape).
 ({double quantity, String unit})? yieldMeasureOf(String? servings) {
   final match = _yieldMeasure.firstMatch(servings?.toUpperCase() ?? '');
   final quantity = match == null
       ? null
       : parseQuantity(match.group(2) ?? match.group(1)!);
-  return quantity == null
+  return quantity == null || !quantity.isFinite || quantity <= 0
       ? null
       : (
           quantity: quantity,
@@ -279,6 +281,12 @@ final RegExp _recipeShare = RegExp('\\(\\s*($_num)\\s+recipes?\\b');
 /// ("1 cup" of "MAKES ENOUGH FOR 4 PIZZAS", a count of "SERVES 4").
 double? parseShare(String raw, List<Amount> amounts, String? childServings) =>
     shareReaderOf(raw, amounts)(childServings);
+
+/// Whether [raw] writes its own share — the "(½ recipe" [parseShare]'s
+/// written arm reads, valid or not (v104 U4: an out-of-range written share
+/// is no share, never the whole batch of an amount-less line).
+bool writesShare(String raw) =>
+    raw.contains('recipe') && _recipeShare.hasMatch(raw);
 
 /// A child share every reader may store (v103 U1): finite, above 0, at
 /// most 100 recipes — the match-override PUT's own bound, spelled once. The

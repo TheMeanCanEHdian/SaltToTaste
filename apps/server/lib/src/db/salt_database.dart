@@ -1890,21 +1890,27 @@ class SaltDatabase {
   ///
   /// [keepRetryCount]: a held row re-read from the caches and still held
   /// (v29, Run 059 S2) keeps its `retry_count`; a derivation resets it.
+  /// [heldOn] (v104 U6): such a row re-stamps the record it is held on —
+  /// once one part is cached the hold names the OTHER ([unholdOn]).
   bool markDerivedIfUnchanged(
     IngredientMatchRow over, {
     required String derivedSeq,
     required int layoutSeq,
     bool keepRetryCount = false,
+    ({int? id})? heldOn,
   }) => _atLayout(over.recipeId, layoutSeq, () {
     // ONE guarded single-row UPDATE (Run 058 S12): written only while the
     // row is still [over] ([sameMatchRow]'s fields, in the statement).
     _prepared(
       'UPDATE ingredient_matches SET derived_seq = ?, '
-      'retry_count = CASE WHEN ? THEN retry_count ELSE 0 END '
+      'retry_count = CASE WHEN ? THEN retry_count ELSE 0 END, '
+      'held_on = CASE WHEN ? THEN ? ELSE held_on END '
       '$_sameRowSql',
     ).execute([
       derivedSeq,
       if (keepRetryCount) 1 else 0,
+      if (heldOn != null) 1 else 0,
+      heldOn?.id,
       ..._sameRowBinds(over),
     ]);
     return _db.updatedRows > 0;
@@ -2337,9 +2343,12 @@ class SaltDatabase {
   /// `food_unavailable`: [noRecordHolds]) — its own food, or since v103
   /// (U5, migration 022) the record it is `held_on` — loses its
   /// derivation, so its recipe reads stale and the next compute re-reads
-  /// the hold from the caches (no request). One UPDATE per cache write,
-  /// each OR arm served by its partial index (017's on `fdc_id`, 022's on
-  /// `held_on`); nothing changes when no such row exists.
+  /// the hold from the caches (no request). One UPDATE per cache write;
+  /// EXPLAIN QUERY PLAN (v104 U6, a snapshot-32 copy at user_version 22):
+  /// `SCAN ingredient_matches USING INDEX ingredient_matches_held_on` — the
+  /// OR is served by a scan of 022's partial index (the held rows only; its
+  /// WHERE is the hold filter), not a search per arm (017's index on
+  /// `fdc_id` serves neither); nothing changes when no such row exists.
   void unholdOn(Iterable<int> fdcIds) {
     final ids = fdcIds.toSet();
     if (ids.isEmpty) {

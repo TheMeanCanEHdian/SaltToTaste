@@ -749,8 +749,13 @@ class _MatchRowState extends State<_MatchRow> {
     final m = widget.match;
     final busy = widget.busy;
     final routed = child.state == 'routed';
+    // v104 (Run 078 O9, U19): on a SECTION's own routed line no Change
+    // opens the panel that carries Confirm and Skip (v103 U11), so the bar
+    // draws them whenever the table offers them.
+    final section = cubit.section != null;
+    final barDecides = (!routed || section) && !_fixOpen;
     return _ActionBar([
-      if (offers(m, HoldDecision.recipe, section: cubit.section != null))
+      if (offers(m, HoldDecision.recipe, section: section))
         _Action(
           icon: _fixOpen
               ? FLucideIcons.x
@@ -765,15 +770,15 @@ class _MatchRowState extends State<_MatchRow> {
           primary: !routed && !_fixOpen,
           onPressed: busy ? null : () => setState(() => _fixOpen = !_fixOpen),
         ),
-      if (!routed && !_fixOpen && offers(m, HoldDecision.confirm))
+      if (barDecides && offers(m, HoldDecision.confirm, section: section))
         _Action(
           icon: FLucideIcons.check,
-          label: 'Confirm (poured away)',
+          label: routed ? 'Confirm' : 'Confirm (poured away)',
           onPressed: busy
               ? null
               : () => cubit.override(m.position, raw: m.raw, confirmed: true),
         ),
-      if (!routed && !_fixOpen && offers(m, HoldDecision.skip))
+      if (barDecides && offers(m, HoldDecision.skip, section: section))
         _Action(
           icon: FLucideIcons.ban,
           label: 'Skip',

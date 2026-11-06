@@ -490,9 +490,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     7,
     '1 quart strawberries, hulled and halved lengthwise (about 4 cups)',
     2346409,
-    '566.99',
+    // RE-PIN (fix104 batch, v104, U1: the cup at AH-102 item 2473's edible
+    // yield, 141.75 → 133.24 g): was '566.99' and the label without the
+    // yield.
+    '532.97',
     'counted',
-    '1 quart ≈ 946 mL · approximate (ATK: 8 cups strawberries = 40 ounces)',
+    '1 quart ≈ 946 mL · approximate (ATK: 8 cups strawberries = 40 ounces, × 0.94 edible (AH-102 item 2473))',
   ),
   (
     '0044-mediterranean-chopped-salad.yaml',

@@ -328,9 +328,13 @@ const List<(String, double)> _densities = [
   // Soup). Red lentils sit on 174284, whose own cup portion sizes them.
   ('lentil', 7 * 28.3495 / 236.588),
   // "8 cups (40 ounces) strawberries, hulled" (Strawberry Shortcakes; "4
-  // cups (20 ounces)" and "6 cups (30 ounces)" agree). The plural only: a
-  // 'strawberry' key would outrank 'jam' in "strawberry jam".
-  ('strawberries', 40 * 28.3495 / (8 * 236.588)),
+  // cups (20 ounces)" and "6 cups (30 ounces)" agree). The 40 ounces is the
+  // PURCHASE weight the engine nets on the same print's line, so the cup is
+  // the print at the edible yield (AH-102 item 2473, strawberries good
+  // quality → flesh 94 %, × 0.94) = 0.5632 g/mL, 133.24 g/cup (v104 U1; was
+  // the gross 141.75 g/cup — the v103 U3 Granny Smith class). The plural
+  // only: a 'strawberry' key would outrank 'jam' in "strawberry jam".
+  ('strawberries', 40 * 28.3495 * 0.94 / (8 * 236.588)),
   // "12 ounces cherry or grape tomatoes (about 2½ cups)" (Pasta with Pesto
   // alla Trapanese).
   ('grape tomato', 12 * 28.3495 / (2.5 * 236.588)),
@@ -406,7 +410,10 @@ const Map<String, (String? label, bool recordFirst)> _approximateDensities = {
   // v37 (Z5, Z6, Z11, Z15).
   'pearl onion': ('ATK: 8 ounces frozen pearl onions ≈ 2 cups', true),
   'lentil': ('ATK: 1 cup lentils = 7 ounces', true),
-  'strawberries': ('ATK: 8 cups strawberries = 40 ounces', true),
+  'strawberries': (
+    'ATK: 8 cups strawberries = 40 ounces, × 0.94 edible (AH-102 item 2473)',
+    true,
+  ),
   'grape tomato': ('ATK: 12 ounces cherry or grape tomatoes ≈ 2½ cups', true),
   'cooked boneless turkey or chicken meat': (
     'ATK: 6 ounces cooked chicken, torn = 1 cup',
@@ -478,6 +485,18 @@ const Map<String, (double, String)> _printedHardCheese = {
 };
 const Set<String> _printedHardCheeseKeys = {'parmesan', 'pecorino'};
 final RegExp _hardCheeseForm = RegExp(r'\b(grated|shredded)\b');
+
+/// A Granny Smith cup by its form, the [_hardCheeseForm] shape (v104 U2): a
+/// cut word on the line selects the corpus's CUBED cup — "1½ pounds Granny
+/// Smith apples (about 3 large), peeled, cored, and cut into ½-inch cubes
+/// (about 4 cups)" (Skillet Apple Brown Betty) at v43 Y8's edible yield
+/// (AH-102 item 17, × 0.78) = 132.68 g/cup; any other line keeps the
+/// shredded bundt print's 176.9 g ('granny smith apple' in [_densities]).
+const double _cubedGrannySmith = 1.5 * 453.592 * 0.78 / (4 * 236.588);
+const String _cubedGrannySmithLabel =
+    'ATK: 1½ pounds Granny Smith apples, peeled, cored, cut into ½-inch '
+    'cubes = 4 cups, × 0.78 edible (AH-102 item 17)';
+final RegExp _cutForm = RegExp(r'\b(cubes?|cubed|dice|diced|pieces)\b');
 
 /// Piece weights (grams each) for common counted items, keyed by tokens.
 /// A key's weight is PER counted unit as the recipe counts it — for items
@@ -4411,6 +4430,9 @@ GramResolution? _resolveGrams({
               ?.group(1)
         : null;
     final printed = form == null ? null : _printedHardCheese[form];
+    final cubedApple =
+        entry?.$1 == 'granny smith apple' &&
+        _cutForm.hasMatch((words ?? raw ?? normalizedItem).toLowerCase());
     if (volumeFood != null && printed == null) {
       final perUnit = _portionGramsPerUnit(volumeFood, unit);
       if (perUnit != null) {
@@ -4447,6 +4469,8 @@ GramResolution? _resolveGrams({
                           volumeFood!,
                         )))
         ? null
+        : cubedApple
+        ? _cubedGrannySmith
         : entry?.$2;
     if (density != null) {
       // The corpus prints shredded Parmesan only: shredded Pecorino weighs
@@ -4457,6 +4481,8 @@ GramResolution? _resolveGrams({
           ? 'shredded Parmesan density'
           : printed != null
           ? null
+          : cubedApple
+          ? _cubedGrannySmithLabel
           : _approximateDensities[entry?.$1]?.$1;
       return GramResolution(
         grams: quantity * ml * density,

@@ -221,6 +221,9 @@ Future<Map<String, Object?>> matchesBody(
         // One M52 plan per request (v60 closer 3, verify3 D1): a GET
         // writes no row.
         m52Memo: memo,
+        // v104 U10: and one child decode and scan per request (a decided
+        // composite row's [derivedFor] child arm).
+        references: memo,
       );
       row = carried ? d.row : withDerived(decided, d.row);
       note = d.note;

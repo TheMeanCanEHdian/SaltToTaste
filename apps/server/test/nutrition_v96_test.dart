@@ -508,13 +508,14 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 }
 
 void main() {
-  test('matcherVersion 96 (v96 set it to 91, batch M94: the browning fat)', () {
+  test('matcherVersion 97 (v96 set it to 91, batch M94: the browning fat)', () {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
     // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
-    expect(matcherVersion, 96);
+    // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
+    expect(matcherVersion, 97);
   });
 
   test("the share from the figures the flag prints (2705972's inputFoods: "

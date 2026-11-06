@@ -80,19 +80,36 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
   bool get _marinade => widget.match.hold == 'discarded_recipe';
 
   /// Back to the line's share — of [staged] when a candidate other than the
-  /// current child is staged and the server sent its share (v103 U12: the
-  /// share the PUT will store), else the line's share of the current child
-  /// (a search result carries none: a `recipe`-unit line's share is the
-  /// line's own).
+  /// current child is staged: the share the server sent for it (v103 U12:
+  /// the share the PUT will store), else NONE (v104 U18: a search result,
+  /// or a candidate whose share the route cannot read — the field empty,
+  /// the button names no figure, the PUT sends no share: the server derives
+  /// it, or answers 422 'set the share', which the panel shows); with
+  /// nothing staged, the line's share of the current child ([_shareOf]).
   void _reset([RecipeCandidate? staged]) {
     _setting = true;
     _share.text = _marinade
         ? ''
-        : staged?.shareText ?? widget.match.child?.shareText ?? '';
+        : staged != null
+        ? staged.shareText ?? ''
+        : _shareOf(widget.match.child);
     _setting = false;
     _last = _share.text;
     _unit = 'recipe';
     _dirty = false;
+  }
+
+  /// The current child's share as the field prefills it: its share_text —
+  /// or, when that does not parse (the '<0.01' floor `shareText` prints),
+  /// the numeric `share` at four places (v104 U20: the field must read
+  /// back as a share, or a unit toggle leaves Save disabled).
+  static String _shareOf(RecipeRef? child) {
+    final text = child?.shareText;
+    final share = child?.share;
+    if (text == null || parseQuantity(text) != null || share == null) {
+      return text ?? '';
+    }
+    return share.toStringAsFixed(4).replaceFirst(RegExp(r'\.?0+$'), '');
   }
 
   void _onChanged() {

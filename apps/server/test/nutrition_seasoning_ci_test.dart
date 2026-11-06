@@ -98,7 +98,8 @@ void main() {
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
     // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
-    expect(matcherVersion, 96); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
+    expect(matcherVersion, 97); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -246,7 +247,10 @@ void main() {
       // a6d727a6…; U2 hashes every recipe's `servings` — base 63e4315 with
       // the bump alone gives 5468d35b…, with the bump and U2's term this
       // literal).
-      'b1ace3e036a0541493deb04abaedf1fe458d626ce70322ff52c44cceea975c42',
+      // RE-PIN (fix104 batch, v104): matcherVersion 97 alone (was
+      // b1ace3e0…; U8's `routes` term does not reach this recipe — the
+      // tree with the term dropped gives the same literal).
+      '85e8f40444a8999b2073e579adfbfd64d2fd56504dea5b860a358211b5018d59',
     );
   });
 

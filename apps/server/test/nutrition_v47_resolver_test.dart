@@ -427,7 +427,9 @@ void main() {
           // RE-PIN (fix103 batch, v103): matcherVersion 96 and U2's `servings`
           // term for every recipe (was 6eba444c…) — base 63e4315 with the bump
           // and U2's term gives this literal.
-          '369273daa1e8e252463e3a3830e80adbd74b2347f9207e3bc0a0809b6cd60d64',
+          // RE-PIN (fix104 batch, v104): matcherVersion 97 and U8's `routes`
+          // term (was 369273da…; the bump alone gives b5ebf75c…).
+          '8b0dc1c8f763ab131680a005aee1abefdc5c8deb095b8b52bf4008b2548b910b',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

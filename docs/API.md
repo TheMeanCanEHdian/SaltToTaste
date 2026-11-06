@@ -1341,7 +1341,9 @@ line; every `match` gains three keys, emitted on every row:
   reference as the line writes it ("Rustic Tart Dough"); `slug`/`title`/
   `yield_text` the child's (the no-share child's too); `share` the share of
   the child the line counts, `share_text` its copy ("1", "⅔", "1½", else
-  two places); `yield_units` the units a share may be typed in (`[{unit:
+  two places; a share below 0.01 reads "<0.01" — v103 U18's floor, which
+  the app prefills as the numeric `share` at four places, v104 U20);
+  `yield_units` the units a share may be typed in (`[{unit:
   "recipe", per_recipe: 1}]`, plus the child's MAKES measure, e.g. `{unit:
   "cup", per_recipe: 1.5}`); `kcal` the child's batch energy × the share
   (routed only), `kcal_per_serving` that ÷ the parent's serving basis;
@@ -3289,7 +3291,10 @@ reads a CONDIMENTS one), and, for a line with no amount and no served-with
 marker, the child whose lines decide WB against `no_amount` (a section or
 library recipe listing none, or one made from a recipe; the 0 g rule row
 ties no stamp): that child gaining or losing those lines stales the parent
-at once, and one stale sweep settles it (no library hash moves). After v52 no library line reads `no_amount` or
+at once, and one stale sweep settles it (since v104 U8 the parent's hash
+also folds each reference line's RESOLVED identity — the child and section
+it routes to, or its held / ambiguous outcome — so a library recipe gaining a
+same-titled host or a held title stales the parent too). After v52 no library line reads `no_amount` or
 `no_ingredients` (both stay valid wire reasons). Replay (rp43 + bucket_v12
 on fresh copies of snapshot 21, main and `--reverse-parents` identical):
 calls 0, sections 143; vs v51 exactly 5 main rows differ (3 WB, 2 PV) and
@@ -5183,6 +5188,185 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v104 (batch fix104; matcherVersion 96 → 97 — the fixes of dual-fleet
+review Run 077/078 over v98–v103, union U1–U25, the spec
+.claude/diag/2026-11-06/review077/union_R.md, the rulings in fix104/brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07); no
+migration; ONE corpus movement — two cup densities' state: three rows (the
+strawberries cup, the stuffed turkey's cubed Granny Smith line and its host's
+routed line); replayed on snapshot 32 against the v103 set).**
+- **U1 — the strawberries cup at the edible yield.** `_densities`
+  'strawberries' = 40 × 28.3495 × 0.94 / (8 × 236.588) = 0.5632 g/mL (133.24
+  g/cup): "8 cups (40 ounces) strawberries, hulled" (Strawberry Shortcakes)
+  prints the PURCHASE weight the engine nets on that print's own line (AH-102
+  item 2473, strawberries good quality → flesh 94 %,
+  .claude/diag/2026-10-06/ah102_produce_meat.md); was the gross 141.75 g/cup
+  (the v103 U3 class). The basis: "… · approximate (ATK: 8 cups strawberries
+  = 40 ounces, × 0.94 edible (AH-102 item 2473))". The row:
+  strawberries-and-grapes-with-balsamic-and-red-wine-reduction|7 "1 quart
+  strawberries, hulled and halved lengthwise (about 4 cups)" 566.99 → 532.97 g
+  (946.35 mL × 0.5632), 185.21 → 174.10 kcal; the recipe 1,123.90 → 1,089.90
+  g, 125.27 → 123.41 kcal/serving. Census of every density entry citing a
+  printed weight: pearl onion (frozen / frozen), lentil (dry / dry), grape
+  tomato (whole / whole), cooked chicken (torn / torn), tapioca starch and the
+  M82 / M90 flour, sugar, cornstarch and cornmeal prints — weight and volume in
+  the same state; only 'strawberries' shared the defect.
+- **U2 — the cubed Granny Smith cup.** A cut word on the line (cube, cubes,
+  cubed, dice, diced, pieces — `_cutForm`, the `_hardCheeseForm` shape)
+  selects the corpus's cubed cup: "1½ pounds Granny Smith apples (about 3
+  large), peeled, cored, and cut into ½-inch cubes (about 4 cups)" (Skillet
+  Apple Brown Betty) at v43 Y8's edible yield, 1.5 × 453.592 × 0.78 / (4 ×
+  236.588) = 0.5608 g/mL (132.68 g/cup); any other line keeps the shredded
+  bundt print's 176.9 g. The basis names the print ("… cut into ½-inch cubes =
+  4 cups, × 0.78 edible (AH-102 item 17)"). Census of the 16 Granny Smith
+  rows: two read the density — the stuffing section's |3 (cubes: moves) and
+  classic-strawberry-jam|2 (shredded: unchanged); three are counted, eleven
+  weighed. The rows: classic-roast-stuffed-turkey's stuffing section|3 "2
+  Granny Smith apples, peeled, cored, and cut into ½-inch cubes (about 2
+  cups)" 353.80 → 265.35 g (473.18 mL × 0.5608), 187.37 → 140.52 kcal; the
+  section 2,988.70 g / 5,385.38 kcal → 2,900.30 / 5,338.54 (its ten rows at 2
+  places sum to 2,900.28, stored at 0.1), and with it the host's routed line
+  |7 "1 recipe Bread Stuffing …" 2,988.70 → 2,900.30 g (its basis "…: 2900 g,
+  5,339 kcal"); the recipe 8,825.20 → 8,736.80 g, 1,251.73 → 1,247.04
+  kcal/serving.
+- **U3 — a zero yield names no measure.** `yieldMeasureOf` returns null
+  unless the quantity is finite and above 0 (the `validShare` shape): "MAKES 0
+  CUPS" offered `{unit: cup, per_recipe: 0}` and the app's share divided to
+  Infinity (a dead Save). The GET's `yield_units` omit the unit.
+- **U4 — an amount-less line writing its own share never reads the whole
+  batch.** `routeShareOf`'s rule-WB arm fires only on a line that writes no
+  share (`writesShare`: `parseShare`'s own written "(N recipe" match, no
+  second grammar) — "Sauce Base (0 recipe; recipe follows)" with no amount
+  routed at 1.0; it is now the sub-recipe rule row, `not_routed` `no_share`
+  (`resolveReference` keeps `noShare` for a line that writes its own share,
+  never v52's amount-less `no_amount`): the share the person must set. The
+  corpus writes only "(½ recipe" / "(1/2 recipe" (6 lines): reach 0.
+- **U5 — a negated skim is no skim for the fat readers.** `_skimsFatIn` (the
+  `_negatesSkim` guard before `_skimsFat`) is read by `_fatSkimmed` and
+  `_fatLinesOf`: 0492's "(do not skim the fat from the liquid)" reads false.
+  Reach 0 (0492 has no fat line; no other step negates a skim).
+- **U6 — the hold follows the part still uncached.** The compute's cache-only
+  arm re-stamps `held_on` (`markDerivedIfUnchanged`'s `heldOn`, the same
+  guarded UPDATE) when `_heldOnOf` names another part: once 168322 is cached
+  and 172345 is not, 0040|5 is held on 172345, so its arrival re-opens the
+  row (base: held on the cached part, fresh at 78.12 kcal, 8 of 9) — also
+  when only `held_on` is stale under a current `derived_seq` (pinned on a
+  STATED raw UPDATE of `held_on` onto the cached part). The
+  `unholdOn` comment states EXPLAIN QUERY PLAN on a snapshot-32 copy at
+  user_version 22: `SCAN ingredient_matches USING INDEX
+  ingredient_matches_held_on`.
+- **U7 — a decision reaches the rows the compute's decided arm moves.**
+  Measured first by person sweep sw12 (snapshot 32, NoNet; every key holding
+  a shell-bought or an M52 plan row, each distinct food decided on itself and
+  on another cached candidate): at the base 14 rows stood ≠ the next compute
+  under a fresh stamp — 3 shell rows (paella-on-the-grill|14 → 171977:
+  cioppino|11 and linguine-allo-scoglio|3 174214 68.00 → 171977 453.59 g
+  `in_shell`; crispy-salt-and-pepper-shrimp|0 → 2684443: garlicky-shrimp|2),
+  6 M52 plan rows (chicken-katsu|0 → 174924: nut-crusted-chicken-breasts|5
+  27.65 → 30.44 g) and 5 coat partners the plan re-splits (nut-crusted|2
+  66.85 → 73.60 g). `decisionReach` no longer excludes shellfish bought in
+  the shell (except a weighed shell line a decision on the BOUGHT record of
+  `_shellRecords` puts back on its own record: nothing moves) nor an M52 plan
+  row (`discarded`, no hold) as a held medium; every other held medium stays
+  out. The apply writes a target whose row carries a LINE hold as
+  `decidedKeyRowFor` (v102) writes it — `in_shell` kept — and the totals'
+  plan re-splits the coat. sw12 at the tip: 0 in those classes. Reported, not
+  this batch's (base == tip): 47 LINE-HELD rows (discarded_medium,
+  partial_pour_away, coating, ambiguous_medium — salt, sugar, oil, garlic,
+  milk, onion) the reach's query never selects while the next compute lands
+  the decided food on them, hold kept; 5 pie parents routed to a reached
+  dough (the deferred cross-recipe carry).
+- **U8 — each reference line's resolved identity is hashed.** The `routes`
+  term (under `references`): every reference line's resolution — kind,
+  child, section host and title, `named`, `missing` — read in the pass of
+  the resolver the hash already makes (`_proseReadsOf`), each identity once
+  with its line indices. A library recipe gaining a same-titled host
+  (pumpkin-pie|0 routed → `choose_recipe`) or a held reference's title
+  (buffalo-wings|13 held → routed) stales the parent.
+- **U9 — a section's host once per index** for its "reserved <mixture>"
+  note (`memo:host`, the `hostWeighedGiblets` form): 403 → 4 decodes at the
+  400-line cap.
+- **U10 — the child once per request.** `_madeFromRecipe` memoised per child
+  id on the `ResolverMemo` (`madeFromScans`); `_childRowOf` and
+  `recomputeParentsOf` on `childRecipeOf` under one memo per call; the
+  matches GET hands its memo to `derivedFor` (a decided composite row built a
+  memo per row). `recomputeParentsOf` over 0972's single-crust section and
+  its three real parents (quiche-lorraine, pumpkin-pie, pecan-pie): (host
+  decodes, scans) 10 / 4 — the loop 4 / 1 + each parent's own totals
+  recompute 2 / 1; a memo per parent reads 12 / 6.
+- **U11–U17 — pins.** Every reachable `_birdWords` entry (18; the 10 part
+  words are answered by `_skinPart` first — equivalent, stated); the
+  `_yieldTailOf` tolerance (a 0.909 yield is no whole); the v103 U4 kcal
+  within 0.01; the continuation rule row by value (0559 bun-cha|3); the
+  un-skip's `held_on`; the six v98 P4 guards (word counts, batch tails).
+- **U18 — a staged candidate with no share_text** (every search result; a
+  library candidate whose route reads none): the share field empty, the
+  button "Use this recipe" with no figure, the PUT without a share (the
+  server derives it or answers 422 "set the share", which the panel shows).
+- **U19 — a section's own routed line draws Confirm and Skip** when the
+  action table offers them (no Change opens the panel that carried them).
+- **U20 — the '<0.01' floor**: named in the `share_text` contract above; the
+  app prefills the numeric `share` at four places when `share_text` does not
+  parse.
+- **U21 / U22 — the proof kit.** gate.sh chains its five main == rev cmps
+  (the echo prints only when all five agree); sw11_classify.py classes a
+  rows-equal divergence by its reason (`calls-only` vs `real`): GATE-P
+  requires real 0, inherit 0, other 0, the tip's tags ⊂ the base's.
+- **U23–U25 — docs**: the v103 U3 totals are grams; the v103 deploy note
+  counts the stuffing section's own row; nutrition_v101_test.dart has 32
+  tests.
+- **The reach of the rows.** Corpus: exactly the three rows above (the
+  replay); U3–U6 and U8–U17 move no corpus row (person edits, the caps, a
+  library addition, a cache state). Person paths: U7 (sw12), U6 / U16 (a
+  kept row's hold), U18–U20 (the review UI).
+- **Pins** (apps/server/test/nutrition_v104_test.dart, 21 tests; the
+  salt_shared pin in servings_parser_test; apps/app/test/nutrition_v104_test.dart,
+  6): each rule by value on real corpus lines on the fixtures, every STATED
+  synthesized input named in its comment (U3's zero yield, U4's out-of-range
+  shares, U6 / U16's cache deletions and fault, U7's cached decided record,
+  U8's two library additions, U9 / U10's caps, U11's 18 sentences, U12's 5½
+  cups, U17's six step texts, the app goldens' injected share_text / share).
+  RE-PINs, equalities with a RE-PIN comment: matcherVersion 97 (18 files);
+  the hash literals (seasoning_ci and v83 F5c the bump alone; v47 F2 and v101
+  1176 the bump and `routes`); v37 the strawberries row; v51 / v69 / v103 the
+  stuffed turkey (2,900.30 g, 1,247.04 kcal/serving, the stuffing |3 265.35
+  g); v103 U4 within 0.01 (U13); the app's library-search pick label
+  ("Use this recipe", U18). Mutants (each on a snapshot copy, anchor count 1,
+  restored by copy + cmp): every guard and arm above killed by a value pin;
+  stated survivors — the 10 part-word `_birdWords` deletions (`_skinPart`
+  answers first) and `recomputeParentsOf`'s parent read through
+  `nutritionRecipeOf` (each parent read once per call either way); U10's
+  `_childRowOf` nested scan restored unmemoised is killed by the
+  `recomputeParentsOf` count pin (scans 4 → 3).
+- **Cost** (base 9836d4e vs v104): U8's hash at the cap (0987's line 0
+  ×400 over 0972, median µs/hash of 15 × 10 calls, three runs) 11,561 /
+  11,751 / 11,760 → 11,614 / 12,030 / 11,840 (+1.2 % mean; one identity per
+  distinct route — a list per line measured +5–8 %); U9 403 → 4 host decodes
+  at 400 reserved lines; U10 at the caps (GET / compute / recompute):
+  undecided 2 / 2 / 2 decodes and 1 / 1 / 1 scans (base: 1,600 / 1,200 / 400
+  scans, the GET 10.2 s), decided 1 / 2 / 2 decodes and 1 / 1 / 1 scans
+  (base 401 / 402 decodes); each under the 10 s backstop. U7 runs
+  `_heldMediumNow` first, so the reach's detector counts are base's.
+- **Gate** (fix104 on 9836d4e; fresh copies of snapshot 32 md5 ffd1cf26…,
+  main and `--reverse-parents` cmp-identical): rows differ from v103_rows.tsv
+  on exactly the three lines (columns 7, 12, 17; one section row, 0 person
+  rows), recs on the two recipes (columns 3, 10), sections on the stuffing;
+  calls (0) and notes byte-identical; buckets byte-identical; staleAfter 0.
+  Suites: server +3,171 ~4 (base +3,150 ~4 + the 21), salt_shared +223
+  (+222 + 1), app +669 (+663 + 6, the corpus set); analyze ×3 clean.
+  GATE-P on snapshot 32: sw5 31,713, sw6 37,400, sw7 1,872, sw8 56,868, sw8r
+  5,358, sw9 130, sw10 156 — 0 divergent, 0 refused, calls 0 (v103's
+  figures); sw11 39,760 combos, 200 divergent on base and tip, all
+  `calls-only` (real 0, inherit 0, other 0), the (tag, reason) lists
+  identical; sw12 base 14 → 0 in the U7 classes.
+- **Deploy note**: no migration; the version bump AND U8's `routes` term
+  stale every stamp (one stale sweep, 0 requests expected); the digest moves
+  by the two recipes' per-serving deltas (classic-roast-stuffed-turkey
+  1,251.73 → 1,247.04, strawberries-and-grapes-with-balsamic-and-red-wine-reduction
+  125.27 → 123.41) AND the stuffing section's own row (5,385.38 → 5,338.54
+  batch kcal); the Flutter bundle rebuilt into apps/server/public at deploy
+  (U26, the orchestrator's — v103's app half ships with it).
+
 **Matcher v103 (batch fix103; matcherVersion 95 → 96 — the fixes of dual-fleet
 review Run 075/076 over v30–v43, union U1–U24, the spec
 .claude/diag/2026-11-05/review075/union_P.md, the rulings in fix103/brief.md
@@ -5218,12 +5402,12 @@ the v102 set).**
   (ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups, × 0.78
   edible (AH-102 item 17))". The rows: classic-strawberry-jam|2 "1¼ cups peeled
   and shredded Granny Smith apple" 283.49 → 221.13 g (1.25 × 236.588 ×
-  0.7477; the recipe 2,157.10 → 2,094.70 kcal, 686.14 → 677.88 /serving);
+  0.7477; the recipe 2,157.10 → 2,094.70 g, 686.14 → 677.88 kcal/serving);
   classic-roast-stuffed-turkey's stuffing section|3 "2 Granny Smith apples, …
   (about 2 cups)" 453.59 → 353.80 g (the section 3,088.50 g / 5,438.23 kcal →
   2,988.70 / 5,385.38), and with it the host's routed line |7 "1 recipe Bread
   Stuffing …" 3,088.50 → 2,988.70 g (its basis "…: 2989 g, 5,385 kcal"; the
-  recipe 8,925.00 → 8,825.20 kcal, 1,257.01 → 1,251.73 /serving).
+  recipe 8,925.00 → 8,825.20 g, 1,257.01 → 1,251.73 kcal/serving).
 - **U4 — the un-skip of a kept row whose food no cache holds** returns the row
   the compute writes for it: held `food_unavailable`, no grams, its food and
   retry count kept, and v102 R2's hook reads the PUT's totals underived (the
@@ -5342,7 +5526,9 @@ the v102 set).**
 - **Deploy note**: migration 022 at boot; the version bump AND U2's term stale
   every stamp (one stale sweep, 0 requests expected); the digest moves by the
   two recipes' per-serving deltas (classic-roast-stuffed-turkey 1,257.01 →
-  1,251.73, classic-strawberry-jam 686.14 → 677.88).
+  1,251.73, classic-strawberry-jam 686.14 → 677.88) AND the stuffing
+  section's own row, which carries its batch kcal (v104 U24: the live move
+  was −66.39, 9836d4e).
 
 **Matcher v102 (batch M98; matcherVersion 95, unchanged — a food decision
 settles its own recipe; the spec .claude/diag/2026-11-04/m98/design/design_v2.md
@@ -5618,7 +5804,7 @@ authorization (2026-10-07)).**
 - **U16 — docs** (this file: the v76 count, the v72 fried-rice sentence, the
   v78 saltimbocca and crust figures, the v71 sugar, the v79 symbol; the
   replay and person-sweep READMEs and gate.sh's header).
-- **Pins** (apps/server/test/nutrition_v101_test.dart, 28 tests; the
+- **Pins** (apps/server/test/nutrition_v101_test.dart, 32 tests by `dart test` (v104 U25; was "28"); the
   salt_shared pin in servings_parser_test): each rule above by value on real
   corpus lines (the stated synthesized edits named at each), U1 through the
   real PUT (`applyMatchOverride`) with every PUT under a provider answering

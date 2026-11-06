@@ -12,13 +12,13 @@ gitignored; a key-stripped, session-free copy of the live DB — never the live 
 - `bucket_v12.sql` — the status / hold / source buckets (`sqlite3 <replay-copy> < bucket_v12.sql`).
 - `attr.py` — attributes a rows/recs diff to recipes and reports new / gone keys.
 - `gate.sh <gate-dir> <snapshot.db> <prev-prefix>` — the per-batch gate: fresh copies, main and
-  `--reverse-parents`, `cmp` main == rev, `cmp` every TSV and the buckets against the reference set
+  `--reverse-parents`, `cmp` main == rev (the five cmps chained with `&&`: the echo prints only when all five agree — v104 U21), `cmp` every TSV and the buckets against the reference set
   `<prev-prefix>_{rows,recs,sections,calls,notes}.tsv` + `_bucket.out`, then the attribution.
   The reference = the previous batch's set on its replay snapshot (the simplification series' was the v82
-  set, `.claude/diag/2026-10-09/v82_*` on snapshot 29; at v101 it is v100's, `v100_*` on snapshot 32): a
+  set, `.claude/diag/2026-10-09/v82_*` on snapshot 29; at v104 it is v103's, `v103_*` on snapshot 32): a
   refactor batch reproduces it byte for byte, a matcher batch differs on exactly its stated rows.
 - `digest.sh <gate-dir> [live-db]` — after a deploy: live buckets == replay buckets and the kcal digest.
-- `person_sweeps/` — sw3–sw11, the only proof of the person paths (Confirm / pick / skip / typed grams
+- `person_sweeps/` — sw3–sw12, the only proof of the person paths (Confirm / pick / skip / typed grams
   through the real PUT); see its README for each sweep's spec and base / tip figures.
 
 Conventions: one heavy run at a time; a gate run writes a full log and the reviewer greps it; the

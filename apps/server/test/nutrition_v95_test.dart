@@ -193,7 +193,7 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    'matcherVersion 96 (v95 set it to 90, batch M93: six rows, four totals)',
+    'matcherVersion 97 (v95 set it to 90, batch M93: six rows, four totals)',
     () {
       // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
       // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
@@ -201,7 +201,8 @@ void main() {
       // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
       // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
       // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
-      expect(matcherVersion, 96);
+      // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
+      expect(matcherVersion, 97);
     },
   );
 

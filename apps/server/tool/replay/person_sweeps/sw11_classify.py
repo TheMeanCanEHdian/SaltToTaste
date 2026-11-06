@@ -1,8 +1,11 @@
 # sw11's divergence classes (the Run 073 Sonnet fleet's classify.py, v101 adds 'err' and the per-verb split):
 # usage: python3 sw11_classify.py <workdir>  (reads <workdir>/settled.db and sw_*.tsv)
 # 'inherit' = only OTHER lines of a picked key differ (the decision reaches them at the next compute);
-# 'other' = a touched line differs (U1's class); 'energy-only' = no row differs (here: `calls` > 0 — a pick
-# of a move source whose detail no cache holds asks FDC once); 'err' = the sweep step threw.
+# 'other' = a touched line differs (U1's class); with no PUT-vs-CMP row differing, the DIV line's REASON
+# field (sw11.dart: recompute / compute / get / calls) decides (v104 U22): 'calls-only' = the reason is
+# `calls` alone (the NoNet artefact — a pick of a move source whose detail no cache holds asks FDC once);
+# 'real' = any get / recompute / compute reason (an E-only stored-vs-compute move, GET != STO, REC != PUT
+# included) — GATE-P requires real 0, inherit 0, other 0; 'err' = the sweep step threw.
 import glob, sqlite3, sys, collections
 w = sys.argv[1]
 db = sqlite3.connect(w + '/settled.db')
@@ -19,6 +22,7 @@ for f in glob.glob(w + '/sw_*.tsv'):
         if not l.startswith('DIV'):
             continue
         tag = l.split('\t')[1]
+        reasons = set(l.split('\t')[2].split(','))
         rid, spec, fp, verb, order = tag.split('|')
         fp = int(fp)
         put = lines[i + 1].split('PUT  ')[1].split(' ')
@@ -36,7 +40,11 @@ for f in glob.glob(w + '/sw_*.tsv'):
         if len(put) != len(cmp_):
             cls['len'] += 1; other.append((tag, 'len')); continue
         if not dp:
-            cls['energy-only'] += 1; other.append((tag, 'E', put[-1], cmp_[-1])); continue
+            if reasons == {'calls'}:
+                cls['calls-only'] += 1
+            else:
+                cls['real'] += 1; other.append((tag, 'real:' + ','.join(sorted(reasons)), put[-1], cmp_[-1]))
+            continue
         if any(keys.get((rid, p)) in pk and p not in picked for p in dp):
             cls['inherit'] += 1
         else:

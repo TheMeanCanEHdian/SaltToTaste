@@ -343,6 +343,16 @@ void main() {
     ));
   });
 
+  // v104 U3: a yield measure whose quantity is not finite and above 0 reads
+  // as none (the validShare shape). STATED synthesized: no corpus yield
+  // prints 0 — the nearest real print is 0867/0609's "MAKES ABOUT 2 CUPS",
+  // the control.
+  test('yieldMeasureOf: a zero yield names no measure (v104 U3)', () {
+    expect(yieldMeasureOf('MAKES 0 CUPS'), isNull);
+    expect(yieldMeasureOf('MAKES ABOUT 0 CUPS'), isNull);
+    expect(yieldMeasureOf('MAKES ABOUT 2 CUPS'), (quantity: 2.0, unit: 'cup'));
+  });
+
   // v103 U1: every arm of shareReaderOf reads the one validity predicate
   // (validShare — the PUT's (0, 100] bound). Real corpus forms: 0184 Herb
   // Sauce line 3 "¼ cup Sauce Base (½ recipe; recipe follows)" → ½ and
