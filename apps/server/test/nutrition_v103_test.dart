@@ -1036,13 +1036,16 @@ void u17() {
   // kept "into a bowl" / "reserve remaining fat" (no "aside") — no rendering
   // lost: no parts; the real step splits the row.
   group('U17 _baconVeto', () {
-    final real = loadCorpusRecipe(
+    // `late`: a skipped group's body still runs at declaration time (the
+    // loader), so a corpus read here must wait for the first test (CI has
+    // no corpus; bdd0c5e).
+    late final real = loadCorpusRecipe(
       '0040-wilted-spinach-salad-with-warm-bacon-dressing.yaml',
     );
-    final line = nutritionLines(real)[5];
+    late final line = nutritionLines(real)[5];
     const pour =
         'Pour off all but 3 tablespoons of the bacon fat left in the pan.';
-    final row = IngredientMatchRow(
+    late final row = IngredientMatchRow(
       recipeId: real.id,
       position: 5,
       raw: line.raw,
