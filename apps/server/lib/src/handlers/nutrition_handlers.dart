@@ -610,7 +610,7 @@ Future<AppliedToOthers?> applyMatchOverride(
   if (share != null && child == null) {
     throw const ValidationException(shareWithoutChildMessage);
   }
-  if (share != null && (share is! num || share <= 0 || share > 100)) {
+  if (share != null && (share is! num || !validShare(share.toDouble()))) {
     throw const ValidationException(badShareMessage);
   }
   // v44 (P3 §4): one level is read — a section's own line is never made
@@ -677,7 +677,11 @@ Future<AppliedToOthers?> applyMatchOverride(
   // The action table: a routed row (it carries a child) reads
   // [routedActions] (v41, F3), every refusal says what the line accepts.
   bool refuses(IngredientMatchRow row) => !judged.every(
-    holdActionsOf(row.hold, routed: row.childRecipeId != null).accepts.contains,
+    holdActionsOf(
+      row.hold,
+      routed: row.childRecipeId != null,
+      section: hostOf(recipe.id) != recipe.id,
+    ).accepts.contains,
   );
   void gate(IngredientMatchRow row) {
     if (refuses(row)) {

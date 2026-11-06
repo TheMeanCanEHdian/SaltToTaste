@@ -108,6 +108,10 @@ const Map<int, String> _capabilityByVersion = {
   21:
       'ingredient_decisions.as_picked: a decision kept as picked (matcher '
       'v101, Run 073/074 U1) — 0 on every existing decision',
+  22:
+      'ingredient_matches.held_on + its partial index: the record a FOOD '
+      "hold waits on when not the row's own (matcher v103, Run 076 U5) — "
+      'NULL on every existing row',
 };
 
 /// Mirror of migration 009: rows captured from the current engine carry
@@ -148,6 +152,9 @@ const int _hostIdVersion = 19;
 
 /// Mirror of migration 020: the three tables indexed on `host_id`.
 const int _hostIndexVersion = 20;
+
+/// Migration 022 added `ingredient_matches.held_on` (matcher v103, U5).
+const int _heldOnVersion = 22;
 
 /// The columns migration 018 adds to `ingredient_matches`.
 const Set<String> _compositeColumns = {
@@ -657,7 +664,9 @@ _Seed _seed(
     // (see [_captureNutritionRows]) — the rows a v5+ deployment really holds.
     for (final table in _nutritionTables.keys) {
       _replay(raw, table, [
-        for (final row in nutritionRows[table]!)
+        for (final row in nutritionRows[table]!.map(
+          (r) => version < _heldOnVersion ? ({...r}..remove('held_on')) : r,
+        ))
           if (table == 'recipe_nutrition' && version < _totalsVersion)
             {
               for (final entry in row.entries)

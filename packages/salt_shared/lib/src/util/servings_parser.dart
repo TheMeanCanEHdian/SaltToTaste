@@ -280,6 +280,12 @@ final RegExp _recipeShare = RegExp('\\(\\s*($_num)\\s+recipes?\\b');
 double? parseShare(String raw, List<Amount> amounts, String? childServings) =>
     shareReaderOf(raw, amounts)(childServings);
 
+/// A child share every reader may store (v103 U1): finite, above 0, at
+/// most 100 recipes — the match-override PUT's own bound, spelled once. The
+/// three arms of [shareReaderOf] and the PUT read this one predicate; a
+/// share outside it reads as no share (the row is `not_routed` `no_share`).
+bool validShare(double? s) => s != null && s.isFinite && s > 0 && s <= 100;
+
 /// [parseShare] for ONE line read against many children (v73 closer 3, M76
 /// verify3 D1 — RULE C: the server tests a line against every own section's
 /// yield): the line's own reads — its written "(½ recipe" over [raw], a
@@ -294,12 +300,12 @@ double? Function(String? childServings) shareReaderOf(
   final written = raw.contains('recipe') ? _recipeShare.firstMatch(raw) : null;
   if (written != null) {
     final share = parseQuantity(written.group(1)!);
-    return (_) => share;
+    return (_) => validShare(share) ? share : null;
   }
   for (final amount in amounts) {
     if (amount.unit == 'recipe' || amount.unit == 'recipes') {
       final share = parseQuantity(amount.quantity);
-      return (_) => share;
+      return (_) => validShare(share) ? share : null;
     }
   }
   return (childServings) {
@@ -322,8 +328,9 @@ double? Function(String? childServings) shareReaderOf(
       final quantity = parseQuantity(amount.quantity);
       if (unit != null && quantity != null && yieldQuantity != null) {
         final share = quantity * unit / (yieldQuantity * table[yieldUnit]!);
-        // v101 (Run 074 critic, U6): a 0 yield divides to Infinity.
-        return share.isFinite && share > 0 ? share : null;
+        // v101 (Run 074 critic, U6): a 0 yield divides to Infinity;
+        // v103 U1: every arm reads the one predicate.
+        return validShare(share) ? share : null;
       }
     }
     return null;

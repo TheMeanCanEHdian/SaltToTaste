@@ -634,6 +634,19 @@ ALTER TABLE ingredient_decisions
   ADD COLUMN as_picked INTEGER NOT NULL DEFAULT 0
 ''',
   ],
+  // 022 — matcher v103 (Run 076 O2, U5): the record whose absence holds a
+  // row `food_unavailable` / `food_gone` when it is not the row's own
+  // `fdc_id` (a v41 part — the rendered bacon's 168322 on row food 168277),
+  // so a cache gaining it re-opens the row (`unholdOn` matches `fdc_id` OR
+  // `held_on`). NULL by default and on every existing row; its partial
+  // index serves the OR's second arm as 017's serves the first.
+  [
+    'ALTER TABLE ingredient_matches ADD COLUMN held_on INTEGER',
+    '''
+CREATE INDEX ingredient_matches_held_on ON ingredient_matches (held_on)
+  WHERE hold IN ('food_gone', 'food_unavailable')
+''',
+  ],
 ];
 
 /// Migration 019's `host_id`: the recipe a row's `recipe_id` belongs to —

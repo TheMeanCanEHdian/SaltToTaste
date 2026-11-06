@@ -420,7 +420,8 @@ requests, 2026-10-05; snapshot 17), each enabled only on the plan's own
 condition. A whole bird or pieces on 171447 whose recipe discards the
 skin moves to SR 171052 (`_skinlessRecords`), read at its own
 ready-to-cook yield 197 g a pound — the whole bird unflagged, pieces
-flagged (grams: 5 lines). Clams bought in the shell by weight rank as SR
+flagged (grams: 5 lines; since v43 pieces read the AH-102 pieces figure,
+since v48 a range at its midpoint — tandoori-chicken|9 823.16 g). Clams bought in the shell by weight rank as SR
 174214 and read its "lb (with shell)" shell yield, counted, no longer
 held `in_shell` (6 lines). Not enabled, with the answer FDC gave
 (docs/API.md): the breast share (171077 publishes no half breast), the
@@ -472,7 +473,7 @@ leeks' white and light green parts 1412 · 44, savoy by head cabbage
 440 · 93 (savoy is not printed), cauliflower 499 · 92, butternut
 2459 · 84, zucchini 2446 · 93, summer squash 2444 · 95, strawberries
 2473 · 94); never a count read, a
-trailing prepared weight or "peels reserved" (104 lines). Scallions
+trailing prepared weight or "peels reserved" (103 lines). Scallions
 (Y9): a counted scallion's "white parts only" × 0.37 (1575), "green
 parts only" × 0.59 (derived, 1573/1575), of the whole scallion with
 rootlets (6 lines). Meats (Y10, `ah102Meats`): spareribs 1925 · 58,

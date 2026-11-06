@@ -42,6 +42,7 @@ void main() {
     lines: 41,
     child: null,
     share: null,
+    childSection: null,
     recipe: false,
   );
 
@@ -75,6 +76,7 @@ void main() {
                 lines: others,
                 child: null,
                 share: null,
+                childSection: null,
                 recipe: false,
               ),
               applied: null,
@@ -129,6 +131,7 @@ void main() {
                 lines: lines,
                 child: null,
                 share: null,
+                childSection: null,
                 recipe: false,
               ),
               applied: null,

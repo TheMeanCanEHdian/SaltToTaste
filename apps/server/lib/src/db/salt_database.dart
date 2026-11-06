@@ -1384,7 +1384,7 @@ class SaltDatabase {
       'SELECT im.recipe_id, im.position, im.raw, im.fdc_id, im.description, '
       'im.data_type, im.confidence, im.grams, im.gram_source, im.status, '
       'im.updated_at, im.item_key, im.hold, im.child_recipe_id, '
-      'im.child_share, im.child_stamp, im.parts, im.host_id, '
+      'im.child_share, im.child_stamp, im.parts, im.held_on, im.host_id, '
       'r.slug AS review_slug, r.title AS review_title, '
       '$_reviewBucketCase AS bucket '
       'FROM ingredient_matches im JOIN recipes r ON r.id = im.host_id '
@@ -1701,7 +1701,7 @@ class SaltDatabase {
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
       'item_key, hold, updated_at, derived_seq, $_compositeColumns) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
@@ -1729,6 +1729,7 @@ class SaltDatabase {
       row.childShare,
       row.childStamp,
       row.parts,
+      row.heldOn,
       if (keepRetryCount) 1 else 0,
     ]);
   }
@@ -1768,7 +1769,7 @@ class SaltDatabase {
       'INSERT INTO ingredient_matches (recipe_id, position, raw, fdc_id, '
       'description, data_type, confidence, grams, gram_source, status, '
       'item_key, hold, updated_at, derived_seq, $_compositeColumns) '
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) '
       'ON CONFLICT(recipe_id, position) DO UPDATE SET raw = excluded.raw, '
       'fdc_id = excluded.fdc_id, description = excluded.description, '
       'data_type = excluded.data_type, confidence = excluded.confidence, '
@@ -1800,6 +1801,7 @@ class SaltDatabase {
       row.childShare,
       row.childStamp,
       row.parts,
+      row.heldOn,
       ...engineRuleNotes,
     ]);
     return _db.updatedRows > 0;
@@ -1840,16 +1842,18 @@ class SaltDatabase {
     return rows.isEmpty ? null : IngredientMatchRow.fromRow(rows.first);
   }
 
-  /// The composite row's four columns (migration 018), in the order every
+  /// The composite row's four columns (migration 018) and `held_on`
+  /// (migration 022), in the order every
   /// explicit column list and both upserts bind them.
   static const String _compositeColumns =
-      'child_recipe_id, child_share, child_stamp, parts';
+      'child_recipe_id, child_share, child_stamp, parts, held_on';
 
   /// The upserts' DO UPDATE of [_compositeColumns].
   static const String _compositeUpdate =
       'child_recipe_id = excluded.child_recipe_id, '
       'child_share = excluded.child_share, '
-      'child_stamp = excluded.child_stamp, parts = excluded.parts';
+      'child_stamp = excluded.child_stamp, parts = excluded.parts, '
+      'held_on = excluded.held_on';
 
   /// [sameMatchRow] as an SQL guard over the row at `recipe_id = ? AND
   /// position = ?`, its binds [_sameRowBinds] — ONE statement checks and
@@ -2330,20 +2334,23 @@ class SaltDatabase {
 
   /// RULE A (v29, Run 059 O1/S1/S6): a cache now holds [fdcIds] — every row
   /// held for having no record of one of them (`food_gone`,
-  /// `food_unavailable`: [noRecordHolds]) loses its derivation, so its
-  /// recipe reads stale and the next compute re-reads the hold from the
-  /// caches (no request). One indexed UPDATE (migration 017's partial
-  /// index) per cache write; nothing changes when no such row exists.
+  /// `food_unavailable`: [noRecordHolds]) — its own food, or since v103
+  /// (U5, migration 022) the record it is `held_on` — loses its
+  /// derivation, so its recipe reads stale and the next compute re-reads
+  /// the hold from the caches (no request). One UPDATE per cache write,
+  /// each OR arm served by its partial index (017's on `fdc_id`, 022's on
+  /// `held_on`); nothing changes when no such row exists.
   void unholdOn(Iterable<int> fdcIds) {
     final ids = fdcIds.toSet();
     if (ids.isEmpty) {
       return;
     }
+    final marks = List.filled(ids.length, '?').join(', ');
     _db.execute(
       'UPDATE ingredient_matches SET derived_seq = NULL '
       'WHERE hold IN ($noRecordHoldsSql) AND derived_seq IS NOT NULL '
-      'AND fdc_id IN (${List.filled(ids.length, '?').join(', ')})',
-      ids.toList(),
+      'AND (fdc_id IN ($marks) OR held_on IN ($marks))',
+      [...ids, ...ids],
     );
   }
 
@@ -3510,6 +3517,7 @@ class IngredientMatchRow {
     this.childShare,
     this.childStamp,
     this.parts,
+    this.heldOn,
   });
 
   /// Decodes a database row.
@@ -3532,6 +3540,7 @@ class IngredientMatchRow {
     childShare: (row['child_share'] as num?)?.toDouble(),
     childStamp: row['child_stamp'] as String?,
     parts: row['parts'] as String?,
+    heldOn: row['held_on'] as int?,
   );
 
   /// Recipe the line belongs to.
@@ -3603,6 +3612,11 @@ class IngredientMatchRow {
   /// with a child (the column's CHECK).
   final String? parts;
 
+  /// The record whose absence holds the row ([noRecordHolds]) when it is
+  /// not [fdcId] — a part of [parts] (migration 022, v103 U5): a cache
+  /// gaining it re-opens the row ([SaltDatabase.unholdOn]).
+  final int? heldOn;
+
   /// Copy with changed fields (explicit clears for the nullables).
   IngredientMatchRow copyWith({
     int? position,
@@ -3629,6 +3643,7 @@ class IngredientMatchRow {
     bool clearChild = false,
     String? parts,
     bool clearParts = false,
+    int? heldOn,
   }) => IngredientMatchRow(
     recipeId: recipeId,
     position: position ?? this.position,
@@ -3651,6 +3666,8 @@ class IngredientMatchRow {
         ? null
         : (childStamp ?? this.childStamp),
     parts: clearParts ? null : (parts ?? this.parts),
+    // Cleared with the hold it explains (migration 022).
+    heldOn: clearHold ? null : (heldOn ?? this.heldOn),
   );
 }
 

@@ -99,17 +99,25 @@ String zeroReason(IngredientMatch m) => m.gramSource == 'discarded'
 /// v28; Run 058 O7/S13: the sheet offered Confirm and Confirm as-is on a
 /// `food_gone` row the server then refused). Every button below reads it,
 /// as the server's PUT gate and the queue's `finishes` SQL do.
-bool offers(IngredientMatch m, HoldDecision decision) =>
-    offeredOn(m).contains(decision);
+///
+/// [section]: [m] is a SECTION's own line (a section cubit) — its routed row
+/// offers no `recipe` there (v103 U11: the PUT refuses every `child`).
+bool offers(IngredientMatch m, HoldDecision decision, {bool section = false}) =>
+    offeredOn(m, section: section).contains(decision);
 
 /// The decisions offered on [m]'s line: its hold's table row — a routed
 /// reference row's is [routedActions] (v41: confirm, another recipe, skip)
 /// — and on a reference line the engine does not route, a skip alone (A3
 /// a: the PUT refuses a food or a recipe on it).
-Set<HoldDecision> offeredOn(IngredientMatch m) => switch (m.child?.state) {
-  'not_routed' => const {HoldDecision.skip},
-  final state => holdActionsOf(m.hold, routed: state == 'routed').offers,
-};
+Set<HoldDecision> offeredOn(IngredientMatch m, {bool section = false}) =>
+    switch (m.child?.state) {
+      'not_routed' => const {HoldDecision.skip},
+      final state => holdActionsOf(
+        m.hold,
+        routed: state == 'routed',
+        section: section,
+      ).offers,
+    };
 
 /// Whether nothing on a line held [hold] can count its food — a food USDA
 /// no longer serves or will not serve now (`food_gone`,

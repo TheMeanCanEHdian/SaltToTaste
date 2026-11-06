@@ -154,7 +154,11 @@ const Map<String, String> _synonyms = {
 /// v95: matcher v101 (batch fix101) — the Run 073/074 fixes: a pick of a
 /// move source kept as picked (migration 021), the 'used' basis naming every
 /// printing step (nasi-goreng|9's text), two hash terms, the subsection caps.
-const int matcherVersion = 95;
+/// v96: matcher v103 (batch fix103) — the Run 075/076 fixes: the Granny Smith
+/// cup at v43 Y8's edible yield (176.9 g, was the gross 226.8 g; two rows),
+/// one share predicate, every recipe's yield hashed, the hold's other record
+/// (migration 022).
+const int matcherVersion = 96;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -563,7 +567,10 @@ bool isWaterLike(String normalizedItem) =>
 /// it reaches the 14 library lines the planners listed (liquid smoke ×5 —
 /// one more, Indoor Pulled Chicken's, is held as a poured-away medium and
 /// stays held — red and green food coloring, Ball Pickle Crisp, Angostura
-/// bitters, vanilla bean ×5) and nothing else (census, snapshot 15). FDC
+/// bitters, vanilla bean ×5) and nothing else (census, snapshot 15); since
+/// v64 and v73 18 library lines over the set's 9 members the corpus prints
+/// (+ the gel food dye, the makrut lime leaves ×2, the Lapsang tea; the
+/// v101 numbers 'vanilla beans' and 'makrut lime leaf' reach none). FDC
 /// has no record of any of them; each sat on a wrong one ("Pectin,
 /// liquid", "Soup, bean", "Cheese ball").
 bool isZeroNutrientFlavouring(String normalizedItem) =>

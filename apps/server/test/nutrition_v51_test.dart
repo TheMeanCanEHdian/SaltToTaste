@@ -88,12 +88,16 @@ _rows = [
     7,
     '1 recipe Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions (recipe follows)',
     null,
-    '3088.50',
+    // RE-PIN (fix103 batch, v103, U3: the stuffing's "(about 2 cups)" Granny
+    // Smith at the edible cup, 453.59 → 353.80 g): was 3088.50.
+    '2988.70',
     null,
     null,
     // RE-PIN (M86 batch, v90, 958: the stuffing's 1750342 Granny Smith apples,
     // the replay 5,465.05 → 5,438.23): was 5,465 kcal.
-    'from the recipe Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions: 3089 g, 5,438 kcal',
+    // RE-PIN (fix103 batch, v103, U3: the same apples at the edible cup): was
+    // '3089 g, 5,438 kcal'.
+    'from the recipe Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions: 2989 g, 5,385 kcal',
     null,
   ),
   // Yield + slice: 6 × 28 = 168 raw → 55.44 + 25.80

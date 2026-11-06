@@ -1180,6 +1180,25 @@ void main() {
         '/api/v1/recipes/$panna/nutrition',
         headers: harness.auth(adminSession),
       );
+
+      // --- matcher v103 (U12): each candidate's own share on the wire ---
+      // Two real corpus recipes (test/fixtures/contract-recipes/v103.json):
+      // Grill-Roasted Beer Can Chicken's "3 tablespoons Spice Rub (recipe
+      // follows)" routes to its own Spice Rub (MAKES 1 CUP, 0.19); the other
+      // section "Basic Spice Rub for Pork Chops" (MAKES ¼ CUP) carries ¾ —
+      // the share a pick of it stores.
+      final v103 = recipesOf('v103');
+      await post('0598-grilled-pork-chops.yaml', from: v103);
+      final beerCan = await post(
+        '0640-grill-roasted-beer-can-chicken.yaml',
+        from: v103,
+      );
+      await harness.capture(
+        'nutrition_matches_staged_share',
+        'GET',
+        '/api/v1/recipes/$beerCan/nutrition/matches',
+        headers: harness.auth(adminSession),
+      );
     });
 
     tearDownAll(harness.stop);

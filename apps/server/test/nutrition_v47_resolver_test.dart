@@ -424,7 +424,10 @@ void main() {
           // RE-PIN (fix101 batch, v101): matcherVersion 95 (was f45afb74…;
           // the version alone — base 30c1f83 with 95 gives this literal:
           // neither v101 hash term reaches this recipe).
-          '6eba444c43a6805c6166c124a0a63b535cc0fe5cbd4c61defa43fcdc52a23e79',
+          // RE-PIN (fix103 batch, v103): matcherVersion 96 and U2's `servings`
+          // term for every recipe (was 6eba444c…) — base 63e4315 with the bump
+          // and U2's term gives this literal.
+          '369273daa1e8e252463e3a3830e80adbd74b2347f9207e3bc0a0809b6cd60d64',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

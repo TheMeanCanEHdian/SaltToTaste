@@ -83,6 +83,7 @@ const List<String> corpusFreeContractGoldenNames = [
   'nutrition_served_with',
   'nutrition_matches_wb',
   'nutrition_wb',
+  'nutrition_matches_staged_share',
 ];
 
 /// Goldens that genuinely need the ATK corpus: a real v1 import source (with

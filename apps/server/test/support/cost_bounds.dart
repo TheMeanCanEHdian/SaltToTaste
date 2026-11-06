@@ -378,6 +378,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     'memo:drainedLater': sentences,
     'memo:parted': 2 * sentences,
     'memo:sugarBeside': sentences,
+    // v103 (Run 075 S5, U7): a skin sentence's facts (`_skinFactsOf`), once
+    // per index and skin sentence — never per item.
+    'skinSentenceFacts': sentences,
     // Each group of each kind once per detector family (6 read them).
     'memo:firstOwn': 6 * 3 * (mentions + 1),
     'mentionVisits': 6 * mentions + 2 * lines,

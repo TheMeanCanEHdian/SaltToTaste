@@ -22,7 +22,8 @@ import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes, holdActionsOf;
 /// line a save had put there).
 ///
 /// [child] and [share] are a recipe pick on a reference line (v41): the
-/// resend carries them as the pick did. [recipe] is a recipe decision — a
+/// resend carries them as the pick did — and [childSection], the picked
+/// section of [child] (v44; v103 U9: the resend sends it in the body). [recipe] is a recipe decision — a
 /// pick with [child], or a Confirm on a routed row (whose resend carries no
 /// child: the server picks the recipe twin by the row) — so the strip reads
 /// the recipe wording.
@@ -37,6 +38,7 @@ typedef ApplyOffer = ({
   int lines,
   String? child,
   double? share,
+  String? childSection,
   bool recipe,
 });
 
@@ -178,6 +180,7 @@ ApplyOffer? offerOnReload(ApplyOffer offer, List<IngredientMatch> matches) {
     lines: offer.lines,
     child: offer.child,
     share: offer.share,
+    childSection: offer.childSection,
     recipe: offer.recipe,
   );
 }
@@ -561,6 +564,7 @@ class NutritionCubit extends Cubit<NutritionState> {
             lines: row.othersLines,
             child: child,
             share: share,
+            childSection: childSection,
             recipe: child != null || row.child?.state == 'routed',
           )
         : null;
@@ -661,6 +665,7 @@ class NutritionCubit extends Cubit<NutritionState> {
         grams: offer.grams,
         confirmed: offer.confirmed ? true : null,
         child: offer.child,
+        childSection: offer.childSection,
         share: offer.share,
         applyToAll: true,
         section: section,

@@ -339,8 +339,13 @@ const List<(String, double)> _densities = [
   // denser. Keyed on the one line it sizes.
   ('cooked boneless turkey or chicken meat', 6 * 28.3495 / 236.588),
   // "1½ pounds Granny Smith apples, peeled, cored, and shredded (3 cups)"
-  // (Cider-Glazed Apple Bundt Cake): a purchase weight, peel and core in.
-  ('granny smith apple', 1.5 * 453.592 / (3 * 236.588)),
+  // (Cider-Glazed Apple Bundt Cake): the 1½ lb is the PURCHASE weight, the
+  // 3 cups the peeled, cored flesh — so the cup is the print at v43 Y8's
+  // edible yield (AH-102 item 17, × 0.78: the ruling the engine applies to
+  // the same print on the bundt line, 530.70 g) = 0.7477 g/mL, 176.9 g/cup
+  // (v103 U3; was the gross 226.8 g/cup — USDA's apple, raw, chopped is
+  // 125 g/cup).
+  ('granny smith apple', 1.5 * 453.592 * 0.78 / (3 * 236.588)),
   // Z11, flagged: jarred roasted red peppers on FDC 168559 "Pimento,
   // canned" 'cup' 192 g — item-keyed, as 2258590 carries fresh peppers too.
   ('roasted red pepper', 192 / 236.588),
@@ -408,7 +413,8 @@ const Map<String, (String? label, bool recordFirst)> _approximateDensities = {
     true,
   ),
   'granny smith apple': (
-    'ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups',
+    'ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups, '
+        '× 0.78 edible (AH-102 item 17)',
     true,
   ),
   'roasted red pepper': ('pimento density, FDC 168559 cup 192 g', true),

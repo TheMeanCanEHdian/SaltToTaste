@@ -100,9 +100,12 @@ double? _parseQuantity(String text) {
 
 /// A share of a child recipe as the copy writes it (v41): whole numbers
 /// bare ("1", "2"), a fraction by its vulgar character, mixed or not ("⅔",
-/// "1½") when one lies within 1e-3, else two decimals ("0.38"). One rule for
+/// "1½") when one lies within 1e-3, else two decimals ("0.38"); a positive
+/// share below 0.005 prints "<0.01" (never "0" for a counted row). One rule for
 /// the server's `share_text` and any client echo.
 String shareText(double share) {
+  // v103 U18: a positive share that would print "0" or "0.00" floors here.
+  if (share > 0 && share < 0.005) return '<0.01';
   final whole = share.floor();
   final rest = share - whole;
   if (rest < 1e-3) {

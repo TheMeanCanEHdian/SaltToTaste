@@ -196,7 +196,10 @@ void main() {
             [
               table,
               for (final column in row.keys)
-                if (column != 'host_id') '$column=${row[column]}',
+                // RE-PIN (fix103 batch, v103): migration 022's `held_on` (U5)
+                // is NULL on every existing row — pinned below, not dumped.
+                if (column != 'host_id' && column != 'held_on')
+                  '$column=${row[column]}',
             ].join('|'),
       ];
       final before = sqlite3.open(path);
@@ -216,6 +219,15 @@ void main() {
       );
       expect(dump(after), rows);
       expect(after.select('PRAGMA foreign_key_check'), isEmpty);
+      expect(
+        after
+            .select(
+              'SELECT count(*) AS n FROM ingredient_matches '
+              'WHERE held_on IS NOT NULL',
+            )
+            .first['n'],
+        0,
+      );
       // Every main row's host is itself.
       expect(
         after

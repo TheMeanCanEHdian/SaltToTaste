@@ -504,6 +504,8 @@ class _CollapsibleGroupState extends State<_CollapsibleGroup> {
 /// reason.
 String? notRoutedNote(String? reason) => switch (reason) {
   'section' => 'Its section has no totals yet — not counted',
+  // v103 U13: a section line naming its own host (v47).
+  'self' => 'It names its own recipe — not counted',
   'served_with' => 'Served with this recipe, not made from it — not counted',
   'no_amount' => 'No amount on the line — not counted',
   'no_share' => 'No share the yield can read — not counted',
@@ -748,7 +750,7 @@ class _MatchRowState extends State<_MatchRow> {
     final busy = widget.busy;
     final routed = child.state == 'routed';
     return _ActionBar([
-      if (offers(m, HoldDecision.recipe))
+      if (offers(m, HoldDecision.recipe, section: cubit.section != null))
         _Action(
           icon: _fixOpen
               ? FLucideIcons.x

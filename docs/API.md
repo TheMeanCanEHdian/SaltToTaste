@@ -1363,7 +1363,11 @@ line; every `match` gains three keys, emitted on every row:
   `state` and `pickable`, and `other_section` lists child sections only —
   above); a library candidate is `pickable` when it has stored
   totals (`kcal` = its batch energy, `kcal_per_serving` × the line's share
-  of it ÷ the basis). An empty group is omitted (the app draws its empty
+  of it ÷ the basis). Since matcher v103 (U12) every candidate carries
+  `share_text` — the line's share of THAT candidate in the `share_text` form
+  (the share a pick of it with no typed share stores; null where its yield
+  reads none) — and each library candidate's document is read once per
+  request (U10). An empty group is omitted (the app draws its empty
   text). The library's title and section index is read at most once per
   request.
 - `parts` — a rendered row's two records (R2), `[{fdc_id, description,
@@ -1602,7 +1606,10 @@ density) and 0.8 g an inch of orange or lemon peel strip (ATK's "10
 orange-peel strip figure, extended to lemon"), only on the ginger-root or
 peel record and only for a piece or strip count: `"1 piece × 4 inch × 8 g
 per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1
-tablespoon)"`; since matcher v37 galangal by the same figure, ATK's own
+tablespoon)"`; since matcher v37 galangal by the same figure (since M71 the
+only galangal line, guay-tiew-tom-yum-goong|5, is a strained aromatic, 0 g
+"strained out and discarded" — the figure below reaches no corpus row; v103
+docs, Run 075 S14), ATK's own
 substitute ("If galangal is unavailable, substitute fresh ginger", Guay
 Tiew Tom Yum Goong), on the ginger-root record it ranks as (flagged
 below): `"1 piece × 2 inch × 8 g per inch · approximate (ginger's figure
@@ -5175,6 +5182,167 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v103 (batch fix103; matcherVersion 95 → 96 — the fixes of dual-fleet
+review Run 075/076 over v30–v43, union U1–U24, the spec
+.claude/diag/2026-11-05/review075/union_P.md, the rulings in fix103/brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07);
+migration 022; ONE corpus movement — the Granny Smith cup, two apple rows and
+the stuffed turkey's route onto its stuffing; replayed on snapshot 32 against
+the v102 set).**
+- **U1 — one share predicate.** `validShare(s)` (salt_shared, beside
+  `shareReaderOf`): finite, above 0, at most 100 — the match-override PUT's
+  own bound, spelled once. All three arms of `shareReaderOf` (a written "(N
+  recipe", a `recipe` amount, the yield division) return a share only when it
+  holds, else none (the row is `not_routed` `no_share` and the PUT asks for
+  one); the PUT's check calls the same predicate (its message unchanged).
+  Before: "(0 recipe" wrote child_share 0.0 and the INSERT threw CHECK 275 (the
+  recipe never computed, a sweep failed it every pass); "(500000 recipes"
+  counted 500,000 children, fresh. No corpus line writes 0 or more than 100.
+- **U2 — every recipe's yield is hashed.** `ingredientsHashOf`'s `servings`
+  term is unconditional (v44: a section's; now a MAIN library child's too, read
+  by its parents' shares through `routeShareOf`): a yield edit stales the
+  child, its recompute moves `computed_at`, and `childStampUnderivedSql`
+  restales every parent. Before: 0472's MAKES edit left 0471 serving a 1/3
+  share (918.3 kcal/serving) as fresh; now the parent recomputes at 1/6
+  (878.52). STATED CONSEQUENCE: every recipe's hash changes once — with the
+  version bump every stamp is stale after the deploy (one stale sweep, 0
+  requests).
+- **U3 — the Granny Smith cup at the edible yield.** `_densities`
+  'granny smith apple' = 1.5 lb × 453.592 × 0.78 / 3 cups × 236.588 = 0.7477
+  g/mL (176.9 g/cup): the print "1½ pounds Granny Smith apples, peeled, cored,
+  and shredded (3 cups)" is a PURCHASE weight over the flesh's volume, and v43
+  Y8 already reads the same print as edible (× 0.78, AH-102 item 17) on
+  cider-glazed-apple-bundt-cake|12 (530.70 g, unchanged). Was 226.8 g/cup
+  (USDA's apple, raw, chopped: 125 g/cup). The basis: "… ≈ … mL · approximate
+  (ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups, × 0.78
+  edible (AH-102 item 17))". The rows: classic-strawberry-jam|2 "1¼ cups peeled
+  and shredded Granny Smith apple" 283.49 → 221.13 g (1.25 × 236.588 ×
+  0.7477; the recipe 2,157.10 → 2,094.70 kcal, 686.14 → 677.88 /serving);
+  classic-roast-stuffed-turkey's stuffing section|3 "2 Granny Smith apples, …
+  (about 2 cups)" 453.59 → 353.80 g (the section 3,088.50 g / 5,438.23 kcal →
+  2,988.70 / 5,385.38), and with it the host's routed line |7 "1 recipe Bread
+  Stuffing …" 3,088.50 → 2,988.70 g (its basis "…: 2989 g, 5,385 kcal"; the
+  recipe 8,925.00 → 8,825.20 kcal, 1,257.01 → 1,251.73 /serving).
+- **U4 — the un-skip of a kept row whose food no cache holds** returns the row
+  the compute writes for it: held `food_unavailable`, no grams, its food and
+  retry count kept, and v102 R2's hook reads the PUT's totals underived (the
+  `all` scope asks again). Reached when no cache knows the food at all, or —
+  S3's own case — when it is known only as a search hit whose detail (the one
+  the compute would fetch for a volume or count line) no cache holds: the
+  compute's own cache-only read (`gramsFor` on `cacheOnly`) throws. Before:
+  `auto`, no grams, no hold, fresh (0857|0: 12/13, 362.43 kcal/serving vs the
+  compute's 13/13, 464.1). A rule row as before (Run 047).
+- **U5 — the hold on another record (migration 022).**
+  `ingredient_matches.held_on` (INTEGER, NULL on every existing row, its own
+  partial index beside 017's): the record a `food_unavailable` / `food_gone`
+  hold waits on when it is not the row's own food — the first of a two-part
+  row's parts no cache holds (`_resolveParts`' own test), written at the
+  compute's one held write and at U4's un-skip, cleared with the hold.
+  `unholdOn` re-opens rows whose `fdc_id` OR `held_on` a cache just gained.
+  Before: 0040's rendered bacon (row food 168277, parts 168322 + 172345) held
+  on 168322 stayed fresh at 78.12 kcal/serving after 0118's compute cached
+  168322; now the row's derivation drops, the recipe reads stale, and a
+  cache-only compute restores 274.36 with 0 requests. Not covered (stated): a
+  failing candidate's detail (the failure carries no id; no corpus path).
+- **U6 — `_baconN` bounded** `{1,12}` (as `_amountRun`; no corpus text holds
+  a digit run of more than 4): `_baconExtra`'s `(N) to (N)` was quadratic on a
+  digit run in the unwindowed step (2.36 s per 10,000-character step, ~281 s
+  at the 120-step cap in one engineOutcome pass, base 63e4315) → 681 ms for
+  the whole cap shape.
+- **U7 — the skin sentences' facts once per sentence.** `_skinFactsOf`
+  (the `#skinSentences` memo): per skin sentence its part, whether it takes
+  the skin off, the part it leaves the skin on, and (U14) whether it takes it
+  from another food; the recipe-wide veto once; `skinDiscarded` and
+  `skinKeptPart` read the facts — no regex in an item's scan
+  (`skinSentenceFacts` = the skin sentences, once per index). 400 distinct
+  lines × 1,200 skin sentences: base 170.7 s (the fleet; 20 lines 7,870 ms)
+  → compute 1,965 ms, GET 1,820 ms.
+- **U8 — the matches GET's reach memoised.** `recipeReach`'s walk is kept
+  per (item key, child) in the request's `ResolverMemo` (each reached row's
+  share and default-route read once), a caller's exclusion filtering the
+  memoised list; `_resolveInOrder` reads the child through `childRecipeOf`;
+  `hostDecodes` counts every whole-document decode. 400 × 0977's "1 recipe
+  double-crust pie dough" (snapshot 32): GET 19,708 → 757 ms (1 / 100 / 200
+  lines 56 / 1,501 / 5,212 → 55 / 259 / 429 ms), the same rows reached; on
+  the fixtures 5 decodes (the four doughs and the recipe). The GET's JSON on
+  0977, 0521, 0151 and 0640 is byte-identical but for U12's `share_text`.
+- **U9 — the apply-to-all resend carries the picked section** (`ApplyOffer.
+  childSection`, sent as the body `section`).
+- **U10 — `referenceChildJson` reads each library candidate through the
+  request memo** (one decode per distinct candidate: 135 for the 136 chicken
+  titles a 400-line note names; base ~53,600, the fleet's 112 s GET with U8).
+- **U11 — the section bit in the ONE action table.**
+  `holdActionsOf(hold, routed:, section:)`: on a section's own line a routed
+  row offers and accepts skip and confirm only (the PUT refuses every
+  `child` there); the app passes the cubit's section — no Change, search
+  results unpickable, no share field.
+- **U12 — each candidate's `share_text`** (the share a pick of it stores, the
+  shipped `shareText` form) on the matches GET; the fix panel fills the field
+  and the "Use this recipe" button from the STAGED candidate's share
+  (grill-roasted-beer-can-chicken|3: Spice Rub 0.19, "Basic Spice Rub for Pork
+  Chops" ¾ — before, the button promised 0.19 and the server stored ¾).
+- **U13 — `self`** reads "it names its own recipe" on the label and the sheet
+  (v47's Boston Cream Doughnuts shape).
+- **U14 — a skin sentence about another food trips nothing.** A part-less
+  skin-off sentence whose words after "from (the)" (up to three, the gap ≤ 80
+  characters; the corpus's widest in a tripping sentence 21) name no bird
+  word (chicken, turkey, duck, hen, poultry, breast, thigh, leg, wing,
+  drumstick, piece, half, quarter, meat and plurals) trips nothing; no "from"
+  object trips as before. Corpus census (every line of the 1,198 recipes and
+  their sections): exactly 0272 Pan-Roasted Halibut Steaks, 0488 Enchiladas
+  Verdes and 0706 Roasted Butternut Squash stop tripping (no poultry line —
+  no row moves); 0002, 0637 ('wings'), Chicken Provençal, Barbecued Pulled
+  Chicken and 1098 unchanged.
+- **U15–U17 — pins** for the seven `ah102Parts` figures through the real PUT
+  (items 585, 590, 2592, 2595–2597) and the eight unpinned arms (`_baconVeto`
+  ×2, `_setsOutTheCoat`'s shallow dish, `_skinKept`'s lay … back,
+  `_keepsBeanLiquid`'s with their liquid, `_otherPartUsed`, the small tomato
+  91 g, the cardamom pod 0.2 g) and v36 E4's parts-arm copy.
+- **U18 — `shareText` floors**: a positive share below 0.005 prints "<0.01"
+  (no v102 row's share is below 0.125).
+- **U19–U24 — docs**: the v40 pieces paragraph, the v39 turkey-parts table
+  row, the galangal passage, MATCHER_HISTORY's 103 lines, the flavouring
+  class's 18 lines, `_dredge`'s examples.
+- **The replay** (apps/server/tool/replay/gate.sh on fresh snapshot-32 copies,
+  main == `--reverse-parents`): rows.tsv differs from v102's on exactly three
+  lines — the two apple rows and the stuffed turkey's routed |7 (its grams are
+  the stuffing section's batch) — in grams, kcal and basis only (columns 7,
+  12, 17; record, source, status equal); recs on those two recipes, sections
+  on the stuffing section; calls (0), notes and the buckets byte-identical;
+  0 person rows; migration 022 at boot (user_version 22, 0 rows `held_on`).
+- **GATE-P** (person_sweeps, 12 shards, fresh snapshot-32 copies, base
+  63e4315 vs v103): sw5 31,713, sw6 37,400, sw7 1,872, sw8 56,868, sw8r 5,358, sw9 130, sw10 156 (bare
+  and typed) on both: 0 divergent, 0 refused, calls 0; settled 268 (sw8r 21, sw9
+  128), a second pass moves 0. sw11 (39,760 combos, 14,070 refused on both):
+  200 divergent on both, all energy-only (sw11_classify.py), inherit 0, other
+  0, err 0 — the tip's tags identical to the base's (tip ⊂ base).
+- **Pins**: apps/server/test/nutrition_v103_test.dart (34 tests: U1 ×3, U2,
+  U3 ×3, U4, U5 ×3 with migration 022 (the third: a skip clears hold and
+  held_on), U6, U7 and U10 at the caps, U8 ×2 (the caps and the reach memo
+  keyed per child), U14 ×2,
+  U15 ×7, U16, U17 ×8); salt_shared servings_parser_test (U1's arms and the
+  predicate), quantity_test (U18), hold_actions_test (U11);
+  apps/app/test/nutrition_v103_test.dart (U11 ×5 — the table, the fix
+  panel on a section and on the host, the review sheet's Change on a section
+  and on the host — U12, U13) and
+  nutrition_cubit_apply_test (U9); the contract golden
+  nutrition_matches_staged_share (0598 + 0640). Re-pins (equalities, RE-PIN
+  comments) where a rule moves a pinned figure: the version (18), four hash
+  literals, U2's main-yield and serves-gate pins, U3's three figures, U4's
+  older-build un-skip, U5's migration counts, U7's exact count maps, U12's
+  candidate map, U14's SKIN-KEPT shape sentence. Suites: server +3150 ~4 (the base on the main checkout +3114 ~4
+  — the snapshot-19 test runs there — plus the 34 v103 tests, the new
+  golden's comparison and migration 022's populated-upgrade case);
+  salt_shared +222; app +663.
+- **Cost** (RULE C at the caps, base 63e4315 → v103): U6 ~281 s → 0.68 s;
+  U7 170.7 s → 1.97 s (compute) / 1.82 s (GET); U8 19.7 s → 0.76 s; U10 the
+  fleet's 112 s → 0.93 s; each count pinned (`memo:baconKept` 1,
+  `skinSentenceFacts` 1,200 and `skinScans` 400, `hostDecodes` 5 / ≤ 137).
+- **Deploy note**: migration 022 at boot; the version bump AND U2's term stale
+  every stamp (one stale sweep, 0 requests expected); the digest moves by the
+  two recipes' per-serving deltas (classic-roast-stuffed-turkey 1,257.01 →
+  1,251.73, classic-strawberry-jam 686.14 → 677.88).
 
 **Matcher v102 (batch M98; matcherVersion 95, unchanged — a food decision
 settles its own recipe; the spec .claude/diag/2026-11-04/m98/design/design_v2.md
@@ -9780,7 +9948,7 @@ an FDC portion, flagged `approximate (yield of <class> from FDC <id>)`:
 | a bone-in pork roast (since v43 the picnic 168367 only; the hams 168226 and 169177 read AH-102, below) | 168367 | 0.758 | 167849 Boston butt, 288 of 380 g |
 | ~~a bone-in roast (the pork butt figure)~~ — since v43 the standing rib 168675 reads AH-102 item 238, below | — | ~~0.758~~ | cross-species: no beef refuse is cached |
 | chicken parts (since v43 only a part-less, non-whole line: the AH-102 poultry table below) | 171447 (pieces), 2727566–69, 172378, and the meat-only 2646171, 173619 | 0.608 | 171447 "yield from 1 lb ready-to-cook chicken" 276 g; the Cornish hen's 336 of 567 g (0.593) corroborates |
-| turkey parts (the chicken figure; since v43 the bone-in BREAST 171093 only — deferred, below) | 171093, 171533, 171497, 174518 | 0.608 | no turkey part figure exists |
+| turkey parts (the chicken figure; since v43 the bone-in BREAST 171093 only — deferred, below; closed by matcher v59 — 171093 reads AH-102's derived turkey breast × 0.67, `ah102Records`; the three keyed ids 171533, 171497, 174518 reach 6 v102 rows, each taken first by an AH-102 item (2595, 2596, 2598) or a reserved-for-another-use rule — none reads 0.608; v103 docs, Run 076 O12) | 171093, 171533, 171497, 174518 | 0.608 | no turkey part figure exists |
 | a whole turkey (interim: the chicken figure; since v43 0.6515, below) | 171081 | 0.608 | the live step (2026-10-05) found no bird yield: per ready-to-cook pound the breast 171093 is 146 g, the leg 171493 105 g, the wing 171495 33 g, but FDC has no raw "meat and skin" back or neck — 171096 back and 171086 neck are meat only and publish no share — so the parts (284 g = 0.626) are a partial sum and the interim stays (12 lines) |
 | bony beef, lamb and veal (since v43 without the shank 169441, the rack 172641 and the foreshank 172513: AH-102, below) | 173405, 170827, 174875, 172648 | 0.657 | the median of the four above, (128/196 + 133/201) / 2 |
 | oxtails | 2705843 | 0.564 | the record's own FNDDS "1 oz yields 16 g" (raw with bone → this cooked food) |
@@ -9819,7 +9987,13 @@ whole skin goes — `"from the printed weight × 0.43 edible (USDA
 ready-to-cook yield)"`, Moroccan chicken's 4 pounds 1,104 → 788 g — and PIECES at the same per-pound
 figure, flagged `"… × 0.43 edible (USDA ready-to-cook yield) ·
 approximate (skin discarded; the whole bird's meat-only yield)"` (tandoori
-chicken's 3 pounds 828 → 591 g); a decision from a moved row records
+chicken's 3 pounds 828 → 591 g) — the v40 state: since matcher v43 the
+PIECES read the AH-102 pieces figure (the record decides, Y13) and since
+v48 a printed range reads at its midpoint, so tandoori-chicken|9 is 823.16 g
+"from 3 pound × 0.60 edible · approximate (derived from USDA AH-102 items
+584–586 … pieces …)" and moroccan-chicken-with-olives-and-lemon|8 (3½–4 lb)
+738.75 g "from the printed weight (3½–4 lb, the midpoint) × 0.43 edible (USDA
+ready-to-cook yield)" (v103 docs, Run 075 S11); a decision from a moved row records
 171447. The signal moves five lines (pressure-cooker chicken noodle soup,
 Moroccan chicken, grilled lemon chicken, pollo en mole poblano, tandoori
 chicken). A whole bird whose tripping skin-off sentence also leaves part

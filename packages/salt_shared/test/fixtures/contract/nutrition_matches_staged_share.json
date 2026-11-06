@@ -1,0 +1,391 @@
+{
+  "items": [
+    {
+      "position": 0,
+      "raw": "1 (12-ounce) can beer",
+      "item": "beer",
+      "line_amount": "1 can",
+      "kcal_per_100g": 43.0,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "beer",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 2710616,
+        "description": "Beer",
+        "data_type": "Survey (FNDDS)",
+        "confidence": 0.9900000000000001,
+        "grams": 0.0,
+        "gram_source": "discarded",
+        "gram_basis": "the rest discarded (step 7) — counted as 0 g",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 2710616,
+          "description": "Beer",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.9900000000000001
+        },
+        {
+          "fdc_id": 2710610,
+          "description": "Beer, nonalcoholic",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.89
+        },
+        {
+          "fdc_id": 2710618,
+          "description": "Beer, higher alcohol",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8566666666666667
+        },
+        {
+          "fdc_id": 171616,
+          "description": "Beerwurst, beer salami, pork",
+          "data_type": "SR Legacy",
+          "confidence": 0.8500000000000001
+        },
+        {
+          "fdc_id": 171871,
+          "description": "Beverages, carbonated, root beer",
+          "data_type": "SR Legacy",
+          "confidence": 0.8500000000000001
+        },
+        {
+          "fdc_id": 172011,
+          "description": "Beerwurst, beer salami, pork and beef",
+          "data_type": "SR Legacy",
+          "confidence": 0.8400000000000001
+        },
+        {
+          "fdc_id": 2710617,
+          "description": "Beer, light",
+          "data_type": "Survey (FNDDS)",
+          "confidence": 0.8300000000000001
+        },
+        {
+          "fdc_id": 168746,
+          "description": "Alcoholic beverage, beer, regular, all",
+          "data_type": "SR Legacy",
+          "confidence": 0.8
+        }
+      ]
+    },
+    {
+      "position": 1,
+      "raw": "2 bay leaves",
+      "item": "bay leaves",
+      "line_amount": "2",
+      "kcal_per_100g": 313.0,
+      "portions": [
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tbsp, crumbled",
+          "grams": 1.8,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "tsp, crumbled",
+          "grams": 0.6,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "bay leaf",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 170917,
+        "description": "Spices, bay leaf",
+        "data_type": "SR Legacy",
+        "confidence": 0.8666666666666667,
+        "grams": 0.4,
+        "gram_source": "piece",
+        "gram_basis": "2 × 0.2 g each",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 170917,
+          "description": "Spices, bay leaf",
+          "data_type": "SR Legacy",
+          "confidence": 0.8666666666666667
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "raw": "1 (3½- to 4-pound) whole chicken",
+      "item": "(3 1/2- to 4-pound) whole chicken",
+      "line_amount": "1",
+      "kcal_per_100g": 215.0,
+      "portions": [
+        {
+          "amount": 0.5,
+          "unit": null,
+          "description": "chicken, bone removed",
+          "grams": 460.0,
+          "fill": null
+        },
+        {
+          "amount": 1.0,
+          "unit": null,
+          "description": "unit (yield from 1 lb ready-to-cook chicken)",
+          "grams": 276.0,
+          "fill": null
+        },
+        {
+          "amount": 4.0,
+          "unit": null,
+          "description": "oz",
+          "grams": 113.0,
+          "fill": null
+        }
+      ],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "chicken broilers or fryers meat and skin raw",
+      "candidates_name_ingredient": true,
+      "candidates_cached_at": "<timestamp>",
+      "match": {
+        "fdc_id": 171447,
+        "description": "Chicken, broilers or fryers, meat and skin, raw",
+        "data_type": "SR Legacy",
+        "confidence": 1.0,
+        "grams": 1035.0,
+        "gram_source": "weight",
+        "gram_basis": "from the printed weight (3½–4 lb, the midpoint) × 0.61 edible (USDA ready-to-cook yield)",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": [
+        {
+          "fdc_id": 171447,
+          "description": "Chicken, broilers or fryers, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 1.0
+        },
+        {
+          "fdc_id": 171469,
+          "description": "Chicken, broilers or fryers, back, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 171474,
+          "description": "Chicken, broilers or fryers, breast, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172373,
+          "description": "Chicken, broilers or fryers, drumstick, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172378,
+          "description": "Chicken, broilers or fryers, leg, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172382,
+          "description": "Chicken, broilers or fryers, neck, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172385,
+          "description": "Chicken, broilers or fryers, thigh, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        },
+        {
+          "fdc_id": 172390,
+          "description": "Chicken, broilers or fryers, wing, meat and skin, raw",
+          "data_type": "SR Legacy",
+          "confidence": 0.9914285714285714
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "raw": "3 tablespoons Spice Rub (recipe follows)",
+      "item": "Spice Rub (recipe follows)",
+      "line_amount": "3 tablespoon",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "spice rub",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": null,
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": 20.137568093056284,
+        "gram_source": "recipe",
+        "gram_basis": "from the recipe Spice Rub: 20 g, 50 kcal",
+        "status": "auto",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": {
+          "state": "routed",
+          "reason": null,
+          "name": "Spice Rub",
+          "slug": "grill-roasted-beer-can-chicken",
+          "title": "Spice Rub",
+          "section": "Spice Rub",
+          "host_title": null,
+          "share_text": "0.19",
+          "default": false,
+          "why": "none",
+          "yield_text": "MAKES 1 CUP",
+          "share": 0.18750063401355943,
+          "yield_units": [
+            {
+              "unit": "recipe",
+              "per_recipe": 1
+            },
+            {
+              "unit": "cup",
+              "per_recipe": 1.0
+            }
+          ],
+          "grams": 20.137568093056284,
+          "kcal": 49.74,
+          "kcal_per_serving": 12.44,
+          "status": "complete",
+          "matched_count": 7,
+          "total_count": 7,
+          "kind": "rub",
+          "parent_kind": "recipe",
+          "candidates": [
+            {
+              "group": "own_section",
+              "slug": "grill-roasted-beer-can-chicken",
+              "title": "Spice Rub",
+              "section": "Spice Rub",
+              "note": null,
+              "yield_text": "MAKES 1 CUP",
+              "kcal": 265.29,
+              "kcal_per_serving": 12.44,
+              "share_text": "0.19",
+              "current": true,
+              "default": false,
+              "state": "ready",
+              "pickable": true,
+              "host_title": null
+            },
+            {
+              "group": "other_section",
+              "slug": "grilled-pork-chops",
+              "title": "Basic Spice Rub for Pork Chops",
+              "section": "Basic Spice Rub for Pork Chops",
+              "note": "a section of Grilled Pork Chops",
+              "yield_text": "MAKES ¼ CUP",
+              "kcal": 103.68,
+              "kcal_per_serving": 19.44,
+              "share_text": "¾",
+              "current": false,
+              "default": false,
+              "state": "ready",
+              "pickable": true,
+              "host_title": "Grilled Pork Chops"
+            }
+          ]
+        },
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 4,
+      "raw": "2 cups wood chips, soaked in water for 15 minutes and drained",
+      "item": "wood chips",
+      "line_amount": "2 cup",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "wood chips",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Equipment — not food, counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    },
+    {
+      "position": 5,
+      "raw": "1 (13 by 9-inch) disposable aluminum roasting pan (if using charcoal)",
+      "item": "(13 by 9-inch) disposable aluminum roasting pan",
+      "line_amount": "1",
+      "kcal_per_100g": null,
+      "portions": [],
+      "others": 0,
+      "others_lines": 0,
+      "candidates_query": "disposable aluminum roasting pan",
+      "candidates_name_ingredient": null,
+      "candidates_cached_at": null,
+      "match": {
+        "fdc_id": null,
+        "description": "Equipment — not food, counts as zero",
+        "data_type": null,
+        "confidence": 1.0,
+        "grams": null,
+        "gram_source": null,
+        "gram_basis": null,
+        "status": "confirmed",
+        "hold": null,
+        "hold_note": null,
+        "carried_from": null,
+        "child": null,
+        "parts": [],
+        "flag": null
+      },
+      "candidates": []
+    }
+  ]
+}

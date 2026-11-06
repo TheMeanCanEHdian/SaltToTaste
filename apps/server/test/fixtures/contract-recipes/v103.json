@@ -1,0 +1,393 @@
+[
+  {
+    "corpus_file": "0598-grilled-pork-chops.yaml",
+    "recipe": {
+      "title": "Grilled Pork Chops",
+      "servings": "SERVES 4",
+      "prep_notes": "Rib loin chops are our top choice for their big flavor and juiciness. The spice rub adds a lot of flavor for very little effort, but the chops can also be seasoned with pepper alone just before grilling. If the pork is enhanced, do not brine and add 2 teaspoons salt along with spice rub or pepper.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "3 tablespoons salt",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "salt"
+            },
+            {
+              "raw": "3 tablespoons sugar",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "sugar"
+            },
+            {
+              "raw": "4 (12-ounce) bone-in pork rib or center-cut chops, 1½ inches thick, trimmed",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "4",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(12-ounce) bone-in pork rib or center-cut chops",
+              "prep": "1 1/2 inches thick, trimmed"
+            },
+            {
+              "raw": "1 recipe Basic Spice Rub for Pork Chops (recipe follows) or 2 teaspoons pepper",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "recipe",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Basic Spice Rub for Pork Chops",
+              "prep": "recipe follows; or 2 teaspoons pepper"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Dissolve salt and sugar in 1½ quarts cold water in large container. Submerge chops in brine, cover, and refrigerate for 30 minutes to 1 hour. Remove chops from brine and pat dry with paper towels. Rub chops with spice rub."
+        },
+        {
+          "number": 2,
+          "text": "Open bottom vent completely. Light large chimney starter filled with charcoal briquettes (6 quarts). When top coals are partially covered with ash, pour two-thirds evenly over grill, then pour remaining coals over half of grill. Set cooking grate in place, cover, and open lid vent completely. Heat grill until hot, about 5 minutes."
+        },
+        {
+          "number": 3,
+          "text": "Turn all burners to high, cover, and heat grill until hot, about 15 minutes. Leave primary burner on high and turn off other burner(s)."
+        },
+        {
+          "number": 3,
+          "text": "Clean and oil cooking grate. Place chops on hotter side of grill and cook (covered if using gas) until browned on both sides, 4 to 8 minutes. Move chops to cool side of grill, cover, and continue to cook, turning once, until meat registers 145 degrees, 7 to 9 minutes longer. Transfer chops to serving platter, tent loosely with aluminum foil, and let rest for 5 to 10 minutes. Serve."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Basic Spice Rub for Pork Chops",
+          "kind": "variation",
+          "servings": "MAKES ¼ CUP",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "1 tablespoon ground cumin",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground cumin"
+                },
+                {
+                  "raw": "1 tablespoon chili powder",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "chili powder"
+                },
+                {
+                  "raw": "1 tablespoon curry powder",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "curry powder"
+                },
+                {
+                  "raw": "2 teaspoons packed brown sugar",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "packed brown sugar"
+                },
+                {
+                  "raw": "1 teaspoon pepper",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "pepper"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        }
+      ]
+    }
+  },
+  {
+    "corpus_file": "0640-grill-roasted-beer-can-chicken.yaml",
+    "recipe": {
+      "title": "Grill-Roasted Beer Can Chicken",
+      "servings": "SERVES 4",
+      "prep_notes": "Two medium wood chunks, soaked in water for 1 hour, can be substituted for the wood chip packet on a charcoal grill. If you prefer, use lemonade instead of beer; fill an empty 12-ounce soda or beer can with 10 ounces (1¼ cups) of lemonade and proceed as directed.",
+      "ingredients": [
+        {
+          "items": [
+            {
+              "raw": "1 (12-ounce) can beer",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "unit": "can",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "beer"
+            },
+            {
+              "raw": "2 bay leaves",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "2",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "bay leaves"
+            },
+            {
+              "raw": "1 (3½- to 4-pound) whole chicken",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(3 1/2- to 4-pound) whole chicken"
+            },
+            {
+              "raw": "3 tablespoons Spice Rub (recipe follows)",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "3",
+                  "unit": "tablespoon",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "Spice Rub (recipe follows)"
+            },
+            {
+              "raw": "2 cups wood chips, soaked in water for 15 minutes and drained",
+              "amounts": [
+                {
+                  "measure": "volume",
+                  "quantity": "2",
+                  "unit": "cup",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "wood chips",
+              "prep": "soaked in water for 15 minutes and drained"
+            },
+            {
+              "raw": "1 (13 by 9-inch) disposable aluminum roasting pan (if using charcoal)",
+              "amounts": [
+                {
+                  "measure": "count",
+                  "quantity": "1",
+                  "approximate": false,
+                  "primary": true
+                }
+              ],
+              "item": "(13 by 9-inch) disposable aluminum roasting pan",
+              "prep": "if using charcoal"
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "number": 1,
+          "text": "Open beer can and pour out (or drink) about ¼ cup. With church key can opener, punch 2 more large holes in the top of can (for total of 3 holes). Crumble bay leaves into beer."
+        },
+        {
+          "number": 2,
+          "text": "Pat chicken dry with paper towels. Rub chicken evenly, inside and out, with spice rub, lifting up skin over breast and rubbing spice rub directly onto meat. Using skewer, poke skin all over. Slide chicken over beer can so that drumsticks reach down to bottom of can and chicken stands upright; set aside at room temperature."
+        },
+        {
+          "number": 3,
+          "text": "Using large piece of heavy-duty aluminum foil, wrap soaked chips in foil packet and cut several vent holes in top."
+        },
+        {
+          "number": 4,
+          "text": "Open bottom vent halfway and place roasting pan in center of grill. Light large chimney starter two-thirds filled with charcoal briquettes (4 quarts). When top coals are partially covered with ash, pour into 2 even piles on either side of roasting pan. Place wood chip packet on 1 pile of coals. Set cooking grate in place, cover, and open lid vent halfway. Heat grill until hot and wood chips are smoking, about 5 minutes."
+        },
+        {
+          "number": 5,
+          "text": "Place wood chip packet directly on primary burner. Turn all burners to high, cover, and heat grill until hot and wood chips are smoking, about 15 minutes. Turn all burners to medium. (Adjust burners as needed to maintain grill temperature around 325 degrees.)"
+        },
+        {
+          "number": 5,
+          "text": "Clean and oil cooking grate. Place chicken (with can) in center of grill (over roasting pan if using charcoal), using drumsticks to help steady bird. Cover (position lid vent over chicken if using charcoal) and cook until breast registers 160 degrees and thighs register 175 degrees, 1 to 1½ hours."
+        },
+        {
+          "number": 6,
+          "text": "Using large wad of paper towels, carefully transfer chicken (with can) to tray, making sure to keep can upright. Tent loosely with foil and let rest for 15 minutes. Carefully lift chicken off can and onto carving board. Discard remaining beer and can. Carve chicken and serve."
+        }
+      ],
+      "subsections": [
+        {
+          "title": "Spice Rub",
+          "kind": "variation",
+          "servings": "MAKES 1 CUP",
+          "prep_notes": "Store leftover spice rub in an airtight container for up to 3 months.",
+          "ingredients": [
+            {
+              "items": [
+                {
+                  "raw": "½ cup paprika",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1/2",
+                      "unit": "cup",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "paprika"
+                },
+                {
+                  "raw": "2 tablespoons kosher salt",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "kosher salt"
+                },
+                {
+                  "raw": "2 tablespoons garlic powder",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "garlic powder"
+                },
+                {
+                  "raw": "1 tablespoon dried thyme",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "1",
+                      "unit": "tablespoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "dried thyme"
+                },
+                {
+                  "raw": "2 teaspoons ground celery seeds",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "ground celery seeds"
+                },
+                {
+                  "raw": "2 teaspoons pepper",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "pepper"
+                },
+                {
+                  "raw": "2 teaspoons cayenne pepper",
+                  "amounts": [
+                    {
+                      "measure": "volume",
+                      "quantity": "2",
+                      "unit": "teaspoon",
+                      "approximate": false,
+                      "primary": true
+                    }
+                  ],
+                  "item": "cayenne pepper"
+                }
+              ]
+            }
+          ],
+          "steps": []
+        }
+      ]
+    }
+  }
+]

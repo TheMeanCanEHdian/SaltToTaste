@@ -293,6 +293,8 @@ List<String> partialLines(RecipeNutrition nutrition) => [
         'Partial: ${line.name} is not counted (${switch (line.reason) {
           'section' => 'its section has no totals yet',
           'served_with' => 'served with it, not made from it',
+          // v103 U13: a section line naming its own host (v47).
+          'self' => 'it names its own recipe',
           'no_amount' => 'no amount on the line',
           'no_share' => 'no share the yield can read',
           'no_ingredients' => 'its section lists no ingredients',

@@ -267,7 +267,15 @@ void main() {
       );
       await applyMatchOverride(db, provider, b, 0, {'skipped': false});
       final row = db.ingredientMatchesFor('rb').single;
-      expect((row.status, row.hold), ('auto', null));
+      // RE-PIN (fix103 batch, v103, U4): the engine-era `no_nutrients` still
+      // goes; the row is what the compute writes for a kept row whose food
+      // no cache holds — held `food_unavailable`, its food kept, no grams
+      // (was ('auto', null) with the stale 453.6 g counted under a fresh
+      // stamp).
+      expect(
+        (row.status, row.hold, row.fdcId, row.grams),
+        ('auto', 'food_unavailable', 747431, null),
+      );
     });
   });
 

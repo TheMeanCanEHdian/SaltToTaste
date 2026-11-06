@@ -79,9 +79,16 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
   /// field starts empty and a pick waits on it.
   bool get _marinade => widget.match.hold == 'discarded_recipe';
 
-  void _reset() {
+  /// Back to the line's share — of [staged] when a candidate other than the
+  /// current child is staged and the server sent its share (v103 U12: the
+  /// share the PUT will store), else the line's share of the current child
+  /// (a search result carries none: a `recipe`-unit line's share is the
+  /// line's own).
+  void _reset([RecipeCandidate? staged]) {
     _setting = true;
-    _share.text = _marinade ? '' : widget.match.child?.shareText ?? '';
+    _share.text = _marinade
+        ? ''
+        : staged?.shareText ?? widget.match.child?.shareText ?? '';
     _setting = false;
     _last = _share.text;
     _unit = 'recipe';
@@ -134,6 +141,8 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     final recipes = context.read<RecipeRepository>();
     final nutrition = context.read<NutritionRepository>();
     final self = context.read<NutritionCubit>().idOrSlug;
+    // v103 U11: on a section's own line no recipe is pickable.
+    final canRecipe = _canRecipe(context);
     try {
       final page = await recipes.listRecipes(
         page: 1,
@@ -165,7 +174,7 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
             note: 'search result',
             yieldText: card.servingsText,
             kcal: batch,
-            pickable: batch != null,
+            pickable: batch != null && canRecipe,
           ),
         );
       }
@@ -185,10 +194,19 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
     }
   }
 
+  /// Whether the action table offers a recipe on this line (v103 U11: not
+  /// on a section's own line, whose PUT refuses every `child`).
+  bool _canRecipe(BuildContext context) => offers(
+    widget.match,
+    HoldDecision.recipe,
+    section: context.read<NutritionCubit>().section != null,
+  );
+
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<NutritionCubit>();
     final m = widget.match;
+    final canRecipe = _canRecipe(context);
     final c = m.child!;
     final busy = widget.busy;
     final routedSlug = c.state == 'routed' ? c.slug : null;
@@ -277,10 +295,11 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
       onPick: busy || !candidate.pickable
           ? null
           : () => setState(() {
-              // A number typed in a unit of the old child's yield means
-              // nothing for another recipe: back to the line's share.
-              if (candidate.key != current && _unit != 'recipe') {
-                _reset();
+              // A number typed for the old child means nothing for another
+              // recipe: back to the line's share OF the new one (v103 U12 —
+              // the share the server stores for a pick with none typed).
+              if (candidate.key != selected) {
+                _reset(candidate.key == current ? null : candidate);
               }
               _staged = candidate;
             }),
@@ -414,31 +433,35 @@ class _RecipeFixPanelState extends State<RecipeFixPanel> {
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(sentence, style: says),
                     ),
-                  const SizedBox(height: 7),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 92,
-                        child: FTextField(
-                          control: FTextFieldControl.managed(
-                            controller: _share,
-                          ),
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
+                  // v103 U11: the share field sends a `child` — only where
+                  // the table offers a recipe.
+                  if (canRecipe) ...[
+                    const SizedBox(height: 7),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 92,
+                          child: FTextField(
+                            control: FTextFieldControl.managed(
+                              controller: _share,
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      UnitToggle(
-                        unit: unit,
-                        units: [for (final u in units) u.unit],
-                        onChanged: (u) => setState(() {
-                          _unit = u;
-                          _dirty = true;
-                        }),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        UnitToggle(
+                          unit: unit,
+                          units: [for (final u in units) u.unit],
+                          onChanged: (u) => setState(() {
+                            _unit = u;
+                            _dirty = true;
+                          }),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 11),
                   Wrap(
                     spacing: 8,

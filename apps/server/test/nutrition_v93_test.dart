@@ -58,7 +58,7 @@ const _lines = [
 ];
 
 void main() {
-  test('matcherVersion 95 (v93 set it to 88, batch M91: two rows move)', () {
+  test('matcherVersion 96 (v93 set it to 88, batch M91: two rows move)', () {
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
     // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
@@ -66,7 +66,8 @@ void main() {
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
-    expect(matcherVersion, 95);
+    // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
+    expect(matcherVersion, 96);
   });
 
   group('the keys on the corpus lines (no compute)', skip: skipIfNoCorpus, () {

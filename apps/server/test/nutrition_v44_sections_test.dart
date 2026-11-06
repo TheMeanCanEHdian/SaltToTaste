@@ -621,12 +621,15 @@ void main() {
           ),
           isNot(ingredientsHashOf(tabil, ResolverMemo(db))),
         );
+        // RE-PIN (fix103 batch, v103, U2): a MAIN recipe's yield is hashed
+        // too (a library child's parents read it through routeShareOf) —
+        // was equal.
         expect(
           ingredientsHashOf(
             host.copyWith(servings: 'SERVES 8'),
             ResolverMemo(db),
           ),
-          ingredientsHashOf(host, ResolverMemo(db)),
+          isNot(ingredientsHashOf(host, ResolverMemo(db))),
         );
       });
     });

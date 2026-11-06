@@ -342,4 +342,110 @@ void main() {
       unit: 'ounce',
     ));
   });
+
+  // v103 U1: every arm of shareReaderOf reads the one validity predicate
+  // (validShare — the PUT's (0, 100] bound). Real corpus forms: 0184 Herb
+  // Sauce line 3 "¼ cup Sauce Base (½ recipe; recipe follows)" → ½ and
+  // 0977|0 "1 recipe double-crust pie dough" → 1. STATED synthesized
+  // negative paths (no corpus line writes 0 or more than 100 recipes): the
+  // same 0184 line with its written share edited to 0 / 500000 / 101, and
+  // 0977|0's `recipe` amount edited to 0.
+  group('v103 U1 validShare', () {
+    const cup = [
+      Amount(
+        measure: Measure.volume,
+        quantity: '1/4',
+        unit: 'cup',
+        primary: true,
+      ),
+    ];
+    Amount recipeAmount(String q) => Amount(
+      measure: Measure.count,
+      quantity: q,
+      unit: 'recipe',
+      primary: true,
+    );
+    test('the written "(N recipe" arm', () {
+      expect(
+        parseShare('¼ cup Sauce Base (½ recipe; recipe follows)', cup, null),
+        0.5,
+      );
+      expect(
+        parseShare('¼ cup Sauce Base (0 recipe; recipe follows)', cup, null),
+        isNull,
+      );
+      expect(
+        parseShare(
+          '¼ cup Sauce Base (500000 recipes; recipe follows)',
+          cup,
+          null,
+        ),
+        isNull,
+      );
+      expect(
+        parseShare('¼ cup Sauce Base (101 recipe; recipe follows)', cup, null),
+        isNull,
+      );
+      expect(
+        parseShare('¼ cup Sauce Base (100 recipes; recipe follows)', cup, null),
+        100,
+      );
+    });
+    test('the `recipe` amount arm', () {
+      expect(
+        parseShare('1 recipe double-crust pie dough', [
+          recipeAmount('1'),
+        ], null),
+        1,
+      );
+      expect(
+        parseShare('0 recipe double-crust pie dough', [
+          recipeAmount('0'),
+        ], null),
+        isNull,
+      );
+      expect(
+        parseShare('101 recipe double-crust pie dough', [
+          recipeAmount('101'),
+        ], null),
+        isNull,
+      );
+    });
+    // The yield-division arm: 0139's real "1 cup Spicy Mayonnaise (recipe
+    // follows)" over its yield edited to MAKES 1 TEASPOON (48.0 shares).
+    test('the yield-division arm', () {
+      const amounts = [
+        Amount(
+          measure: Measure.volume,
+          quantity: '1',
+          unit: 'cup',
+          primary: true,
+        ),
+      ];
+      const raw = '1 cup Spicy Mayonnaise (recipe follows)';
+      expect(parseShare(raw, amounts, 'MAKES ABOUT 1 CUP'), 1.0);
+      expect(parseShare(raw, amounts, 'MAKES 1 TEASPOON'), closeTo(48, 0.01));
+      expect(
+        parseShare('5 cups x', [
+          const Amount(
+            measure: Measure.volume,
+            quantity: '5',
+            unit: 'cup',
+            primary: true,
+          ),
+        ], 'MAKES 1 TEASPOON'),
+        isNull,
+      );
+    });
+    test('the predicate', () {
+      expect(validShare(null), isFalse);
+      expect(validShare(0), isFalse);
+      expect(validShare(-1), isFalse);
+      expect(validShare(double.infinity), isFalse);
+      expect(validShare(double.nan), isFalse);
+      expect(validShare(100.0001), isFalse);
+      expect(validShare(100), isTrue);
+      expect(validShare(1e-9), isTrue);
+    });
+  });
 }

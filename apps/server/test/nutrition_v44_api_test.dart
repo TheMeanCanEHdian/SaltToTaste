@@ -152,6 +152,9 @@ void main() {
                 (batch * 0.125 / db.nutritionFor(chraime.id)!.servingBasis!)
                     .toStringAsFixed(2),
               ),
+              // RE-PIN (fix103 batch, v103, U12): + the share a pick of the
+              // candidate stores (its line's ⅛ of Tabil).
+              'share_text': '⅛',
               'current': true,
               'default': false,
               'state': 'ready',

@@ -529,9 +529,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     2,
     '1¼ cups peeled and shredded Granny Smith apple (1 large apple)',
     1750342,
-    '283.49',
+    // RE-PIN (fix103 batch, v103, U3: the cup at v43 Y8's edible yield,
+    // 1.25 × 236.588 × 0.7477): was 283.49, the basis without "× 0.78
+    // edible (AH-102 item 17)".
+    '221.13',
     'counted',
-    '1 1/4 cup ≈ 296 mL · approximate (ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups)',
+    '1 1/4 cup ≈ 296 mL · approximate (ATK: 1½ pounds Granny Smith apples, peeled, cored, shredded = 3 cups, × 0.78 edible (AH-102 item 17))',
   ),
   // Z7: ATK's printed equivalences.
   (
@@ -945,7 +948,6 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsS = [
   ),
 ];
 
-/// The class ruling's 14 library lines (corpus file, position, raw).
 /// The held `second_food` lines S11's key reaches (D1 of the v37 verify):
 /// (file, position, raw, grams).
 const List<(String, int, String, String)> _heldChipotle = [
@@ -963,6 +965,9 @@ const List<(String, int, String, String)> _heldChipotle = [
   ),
 ];
 
+/// The class ruling's library lines (corpus file, position, raw): v37's 14,
+/// since v64 the gel food dye and v73 the two makrut lime leaves and the
+/// Lapsang tea — 18 (v103 docs, Run 075 S13 / Run 076 O11).
 const List<(String, int, String)> _flavourings = [
   ('0203-skillet-barbecued-pork-chops.yaml', 15, '1 teaspoon liquid smoke'),
   ('0493-sous-vide-cochinita-pibil.yaml', 10, '1 teaspoon liquid smoke'),
@@ -1078,7 +1083,8 @@ const List<(String, int, String, int, String, String)> _recordFirst = [
   // with skin" 'cup, sliced' 109 g (1750342, the Granny Smith record,
   // publishes a RACC only). The mark dropped: 283.49, '1 1/4 cup ≈ 296 mL ·
   // approximate (ATK: 1½ pounds Granny Smith apples, peeled, cored,
-  // shredded = 3 cups)'.
+  // shredded = 3 cups)' (since v103 U3 221.13, the basis "…, × 0.78 edible
+  // (AH-102 item 17)").
   (
     '0777-classic-strawberry-jam.yaml',
     2,

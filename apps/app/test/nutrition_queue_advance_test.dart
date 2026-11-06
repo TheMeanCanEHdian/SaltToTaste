@@ -35,6 +35,7 @@ void main() {
     lines: 2,
     child: null,
     share: null,
+    childSection: null,
     recipe: false,
   );
   const receipt = (

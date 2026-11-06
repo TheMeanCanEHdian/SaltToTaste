@@ -1186,7 +1186,11 @@ final RegExp _forDredging = RegExp(r'\bfor (dredging|coating)\b');
 /// thickener off (0304's 3 tablespoons of gravy flour, 0525's 1 tablespoon
 /// plus 2 teaspoons of cornstarch). A coat wholly eaten — a toss, a binder,
 /// a crust pressed on with no excess sentence — in a recipe that does not
-/// fry stays counted (0414 Chicken Marsala, 0115 Katsu, 0287 Salmon Cakes).
+/// fry stays counted (0414 Chicken Marsala's 1 cup flour, 141.75 g; 0287
+/// Salmon Cakes' "3 tablespoons plus ¾ cup panko", 55.45 g). Since v53
+/// `_fries` ORs in [_shallowFries], so 0115 Katsu fries: its panko
+/// `discarded`, 63.19 g "only the coat on the food counted" (v103 docs,
+/// Run 076 O10; the v102 rows).
 bool _dredge(
   Recipe recipe,
   String raw,
@@ -7772,27 +7776,67 @@ bool skinDiscarded(Recipe recipe, IngredientLine line) {
   // plan weighs every browning line per plan pass, and each weighing
   // rescanned every skin sentence (a recompute at the caps with a skin
   // sentence per chunk, 4.7 s, 14 × f912190).
-  final skin = _stepIndexOf(recipe).memo(
-    #skinSentences,
-    () => (
-      sentences: [
-        for (final sentence in _stepIndexOf(recipe).allSentences)
-          if (_skinWord.hasMatch(sentence)) sentence,
-      ],
-      answers: <String, bool>{},
-    ),
-  );
+  final skin = _skinFactsOf(recipe);
   return skin.answers[item] ??= () {
     _count('skinScans');
-    return !skin.sentences.any(_skinKept.hasMatch) &&
-        skin.sentences.any((sentence) => _skinOffFor(item, sentence));
+    return !skin.kept && skin.facts.any((fact) => _skinOffFor(item, fact));
   }();
 }
 
-bool _skinOffFor(String item, String sentence) {
-  final part = _skinPart.firstMatch(sentence)?.group(1);
-  return _skinOff.hasMatch(sentence) && (part == null || item.contains(part));
-}
+/// One skin sentence's facts — none depends on the item (v103, Run 075 S5,
+/// U7): the part it takes the skin from ([_skinPart]), whether it takes
+/// the skin off ([_skinOff]), the part it leaves the skin on
+/// ([_skinLeftOn]), whether it takes the skin "from" words naming no bird
+/// ([_skinFrom], [_birdWords]; v103 U14).
+typedef _SkinFact = ({
+  String? part,
+  bool off,
+  String? leftOn,
+  bool fromOther,
+});
+
+/// The sentences naming the skin and their facts, once per recipe
+/// (`skinSentenceFacts`: one per skin sentence), the recipe-wide veto
+/// ([_skinKept]) once, and the answers per item. v103 (U7): every regex
+/// runs once per sentence here — an item's scan reads the facts alone
+/// (base: `_skinPart`'s lazy gap ran per sentence per distinct item,
+/// 170.7 s for 400 items × 1,200 sentences).
+({List<_SkinFact> facts, bool kept, Map<String, bool> answers}) _skinFactsOf(
+  Recipe recipe,
+) => _stepIndexOf(recipe).memo(#skinSentences, () {
+  final sentences = [
+    for (final sentence in _stepIndexOf(recipe).allSentences)
+      if (_skinWord.hasMatch(sentence)) sentence,
+  ];
+  return (
+    facts: [
+      for (final sentence in sentences)
+        () {
+          _count('skinSentenceFacts');
+          return (
+            part: _skinPart.firstMatch(sentence)?.group(1),
+            off: _skinOff.hasMatch(sentence),
+            leftOn: _skinLeftOn.firstMatch(sentence)?.group(1),
+            fromOther: switch (_skinFrom.firstMatch(sentence)?.group(1)) {
+              final from? => !from.split(' ').any(_birdWords.contains),
+              null => false,
+            },
+          );
+        }(),
+    ],
+    kept: sentences.any(_skinKept.hasMatch),
+    answers: <String, bool>{},
+  );
+});
+
+bool _skinOffFor(String item, _SkinFact fact) =>
+    fact.off &&
+    (fact.part != null
+        ? item.contains(fact.part!)
+        // v103 (Run 075 S2, U14): a part-less sentence taking the skin
+        // "from" another food ("Remove the skin from the roasted peppers")
+        // trips nothing; no "from" object trips as before.
+        : !fact.fromOther);
 
 /// v40: the part a tripping skin-off sentence of [recipe] keeps its skin on
 /// — "peel skin off chicken, leaving skin on wings" (Grilled Lemon Chicken
@@ -7807,12 +7851,13 @@ String? skinKeptPart(Recipe recipe, IngredientLine line) {
   // and discard the skin.") trips every line, and each line's grams
   // rescanned every sentence (17 s a compute at the caps).
   // Key: item — the scan's only input beside the sentences.
+  // v103 (U7): over the skin sentences' facts ([_skinFactsOf]) — a
+  // tripping sentence names "skin", so the scan of every sentence read
+  // the same ones.
   return _stepIndexOf(recipe).memo(('skinKeptPart', item), () {
     _count('skinKeptScans');
-    for (final sentence in _stepIndexOf(recipe).allSentences) {
-      if (!_skinOffFor(item, sentence)) continue;
-      final part = _skinLeftOn.firstMatch(sentence)?.group(1);
-      if (part != null) return part;
+    for (final fact in _skinFactsOf(recipe).facts) {
+      if (_skinOffFor(item, fact) && fact.leftOn != null) return fact.leftOn;
     }
     return null;
   });
@@ -7826,6 +7871,24 @@ final RegExp _skinPart = RegExp(
   r'\bskin\b.*?\bfrom\s+(?:the\s+)?(?:[a-z-]+\s+){0,2}?'
   '(breast|thigh|leg|wing|drumstick)',
 );
+
+/// v103 (U14): the words a skin sentence takes the skin "from" — up to
+/// three after "from (the)", the gap bounded (corpus census: the widest
+/// skin…from gap of a tripping sentence is 21 characters). Up to three, not
+/// the first alone: Hearty Chicken Noodle Soup (0002) takes it "from the
+/// reserved cooked chicken".
+final RegExp _skinFrom = RegExp(
+  r'\bskin\b.{0,80}?\bfrom (?:the )?((?:[a-z-]+ ){0,2}[a-z-]+)',
+);
+
+/// v103 (U14): the words that name a bird or its part as a skin sentence's
+/// object.
+const Set<String> _birdWords = {
+  'chicken', 'chickens', 'turkey', 'turkeys', 'duck', 'ducks', 'bird', //
+  'birds', 'hen', 'hens', 'poultry', 'breast', 'breasts', 'thigh', //
+  'thighs', 'leg', 'legs', 'wing', 'wings', 'drumstick', 'drumsticks', //
+  'piece', 'pieces', 'half', 'halves', 'quarter', 'quarters', 'meat', //
+};
 
 final RegExp _skinOff = RegExp(
   r'\b(?:remove|discard|discarding)\s+(?:and\s+discard\s+)?(?:the\s+)?'
@@ -8281,10 +8344,10 @@ int resolverIndexReads = 0;
 @visibleForTesting
 int childNutritionReads = 0;
 
-/// How many whole host documents were decoded for a SECTION since reset —
-/// a [ResolverMemo.hostRecipe] read or a section key's [nutritionRecipeOf]
-/// (v101, Run 073 S5 / U5: the matches GET's per-line decode), never a
-/// clock.
+/// How many whole documents were decoded since reset — a
+/// [ResolverMemo.hostRecipe] read or a [nutritionRecipeOf] (v101, Run 073
+/// S5 / U5: the matches GET's per-line decode; v103 U8: a main key's too,
+/// so the GET's every decode is counted), never a clock.
 @visibleForTesting
 int hostDecodes = 0;
 
@@ -8319,6 +8382,13 @@ class ResolverMemo {
   }();
 
   final Map<String, RecipeNutritionRow?> _children = {};
+
+  /// [recipeReach]'s walk per (item key, child) — the rows reached with
+  /// nothing excluded, each row's [routeShareOf] and [isDefaultRoute] read
+  /// ONCE a request (v103, Run 076 O3, U8: the matches GET walked it per
+  /// routed line, 400 identical lines × 400 rows); a caller's exclusion
+  /// filters the list.
+  final Map<(String, String), List<IngredientMatchRow>> _reach = {};
 
   final Map<String, Recipe?> _hosts = {};
 
@@ -8383,10 +8453,11 @@ class ResolverMemo {
   String key,
 ) {
   final host = hostOf(key);
+  hostDecodes++;
   if (host == key) {
+    // v103 (U8): every whole-document decode counted, a main key's too.
     return db.recipeByIdOrSlug(key);
   }
-  hostDecodes++;
   final found = db.recipeByIdOrSlug(host);
   if (found == null || found.recipe.id != host) {
     return null;
@@ -8893,7 +8964,9 @@ ReferenceResolution _resolveInOrder(
   if (child.id == hostOf(recipe.id)) {
     return const ReferenceResolution(ReferenceKind.self);
   }
-  final found = nutritionRecipeOf(db, child.id)?.recipe;
+  // v103 (U8): through the request memo — one decode per child a request
+  // (base: a whole document per call, per line × row on the matches GET).
+  final found = childRecipeOf(db, child.id, memo);
   if (found == null) {
     return const ReferenceResolution(ReferenceKind.held, missing: true);
   }
@@ -12108,7 +12181,11 @@ final RegExp _baconOut = RegExp(
 );
 
 /// A number B1's fat terms read: digits, a vulgar fraction, a word.
-final String _baconN = '[\\d$vulgarFractionChars]+|one|two|three|four';
+// v103 (Run 075 S4, U6): the digit run bounded as [_amountRun]'s is — an
+// unbounded `[\d…]+` in `($_baconN)\s+to\s+($_baconN)` was quadratic on a
+// digit run (2.3 s per 10,000-char step); no corpus text holds a run of
+// more than 4 such characters (census, fix103).
+final String _baconN = '[\\d$vulgarFractionChars]{1,12}|one|two|three|four';
 
 /// B1's (b): the fat poured off down to a stated amount ...
 final RegExp _baconKeep = RegExp(
@@ -14185,10 +14262,12 @@ String ingredientsHashOf(Recipe recipe, ResolverMemo memo) {
         for (final group in recipe.ingredients)
           [group.group, group.items.length],
       ],
-    // v44 (P1 §3.1): a SECTION's yield, which its parents' shares read
-    // ([parseShare]) and no other term covers — a yield edit stales the
-    // section, whose new stamp re-derives its parents.
-    if (hostOf(recipe.id) != recipe.id) 'servings': recipe.servings,
+    // The recipe's yield, which its parents' shares read ([parseShare]) and
+    // no other term covers: v44 (P1 §3.1) a SECTION's; v103 (Run 075/076
+    // U2) a MAIN library child's too, read by its parents' shares through
+    // [routeShareOf]. A yield edit stales the child; its recompute moves
+    // `computed_at`, so `childStampUnderivedSql` restales every parent.
+    'servings': recipe.servings,
     // v101 (Run 073 S10, U12): a SECTION's "<amount> reserved <mixture>"
     // line reads the HOST's group headings ([_mainRecipePartNote]) — a host
     // heading renamed left the section fresh. Only for a section holding
@@ -14695,6 +14774,7 @@ Future<NutritionProviderException?> _computePass(
           clearGrams: !typed,
           clearGramSource: !typed,
           derivedSeq: derivedKey,
+          heldOn: _heldOnOf(db, row),
         ),
         over: over,
         layoutSeq: seq,
@@ -18947,27 +19027,35 @@ List<IngredientMatchRow> recipeReach(
   if (child == null) {
     return const [];
   }
-  final recipes = <String, Recipe?>{};
+  final reached = memo._reach.putIfAbsent((itemKey, childId), () {
+    final recipes = <String, Recipe?>{};
+    return [
+      for (final row in db.undecidedRoutedMatchesForItemKey(
+        itemKey,
+        excluding: (recipeId: '', position: -1),
+      ))
+        if (hostOf(row.childRecipeId!) == row.childRecipeId)
+          if (recipes.putIfAbsent(
+                row.recipeId,
+                // v101 (U9): through the request memo — one instance a
+                // request (each line's call decoded the recipe afresh).
+                () => childRecipeOf(db, row.recipeId, memo),
+              )
+              case final recipe?)
+            if (nutritionLines(recipe).elementAtOrNull(row.position)
+                case final line?
+                when line.raw == row.raw &&
+                    routeShareOf(recipe, line, child) != null &&
+                    (row.childRecipeId != childId ||
+                        isDefaultRoute(db, recipe, line, row, memo)))
+              row,
+    ];
+  });
   return [
-    for (final row in db.undecidedRoutedMatchesForItemKey(
-      itemKey,
-      excluding: excluding,
-    ))
-      if (hostOf(row.childRecipeId!) == row.childRecipeId)
-        if (recipes.putIfAbsent(
-              row.recipeId,
-              // v101 (U9): through the request memo — one instance a
-              // request (each line's call decoded the recipe afresh).
-              () => childRecipeOf(db, row.recipeId, memo),
-            )
-            case final recipe?)
-          if (nutritionLines(recipe).elementAtOrNull(row.position)
-              case final line?
-              when line.raw == row.raw &&
-                  routeShareOf(recipe, line, child) != null &&
-                  (row.childRecipeId != childId ||
-                      isDefaultRoute(db, recipe, line, row, memo)))
-            row,
+    for (final row in reached)
+      if (row.recipeId != excluding.recipeId ||
+          row.position != excluding.position)
+        row,
   ];
 }
 
@@ -20205,16 +20293,47 @@ Future<IngredientMatchRow> unskippedRow(
   final onRow = out.fdcId == null
       ? null
       : knownFood(db, out.fdcId!, line: eaten);
+  // v103 (Run 075 S3, U4): a kept engine row (`auto` with a food — the
+  // compute's `failed` shape, v36) whose food no cache holds is the row the
+  // compute writes for it: held `food_unavailable`, no grams, its food and
+  // retry count kept — and the totals read it underived (v102 R2's hook),
+  // so the `all` scope asks again. Never an `auto` row with no grams under
+  // a fresh stamp.
+  IngredientMatchRow unavailable() {
+    onUnavailable?.call();
+    return out.copyWith(
+      hold: foodUnavailableHold,
+      clearGrams: true,
+      clearGramSource: true,
+      heldOn: _heldOnOf(db, out),
+    );
+  }
+
   if (onRow == null) {
     // A skipped rule row — a marked count's sub-recipe, a seasoning, water,
     // equipment — is that row again, as the compute wrote it: never an
     // `auto` row on no food, in `no_match` (Run 047 critic).
     final rule = row.copyWith(status: 'confirmed');
-    return isEngineRuleRow(rule) ? rule : out;
+    if (isEngineRuleRow(rule)) {
+      return rule;
+    }
+    return out.fdcId != null ? unavailable() : out;
   }
   final medium = heldMediumLine(recipe, eaten);
   final source = GramSource.values.asNameMap()[out.gramSource];
   final derived = lineGrams(db, eaten, onRow, recipe: recipe);
+  // …and the same row when the food is known only as a search hit whose
+  // detail — the one the compute would ask FDC for ([gramsFor]: a volume or
+  // count needs its portions) — no cache holds: the compute's cache-only
+  // read of a held row throws there. S3's own probe: 0857's butter survives
+  // as a hit in a cached answer, so [knownFood] answers it.
+  if (_foodFromCache(db, onRow.fdcId) == null) {
+    try {
+      await gramsFor(db, cacheOnly, onRow, eaten, recipe: recipe);
+    } on NutritionProviderException {
+      return unavailable();
+    }
+  }
   // The stored grams keep their basis when the line still derives them
   // (the tolerance [gramBasisFor] reads with): the hold reads it — a shell
   // row counts only by its yield's flag ([shellCounted]; v49 closer 2: an
@@ -20661,6 +20780,22 @@ derivedFor(
     }
   }
   return (row: gated ?? row, food: food, note: note, unavailable: null);
+}
+
+/// The record a FOOD hold of [row] waits on when it is not the row's own
+/// food (v103 U5, migration 022 `held_on`): the first of its parts no cache
+/// holds — [_resolveParts]' own test, so the part it failed to fetch — else
+/// null (the row's own `fdc_id` is matched by [SaltDatabase.unholdOn]).
+/// ponytail: a failing candidate's detail (another record than the row's
+/// and its parts) is not named — the exception carries no id; add the id
+/// to the failure when a corpus path reaches it.
+int? _heldOnOf(SaltDatabase db, IngredientMatchRow row) {
+  for (final part in partsOf(row.parts)) {
+    if (part.fdcId != row.fdcId && knownFood(db, part.fdcId) == null) {
+      return part.fdcId;
+    }
+  }
+  return null;
 }
 
 /// Rule B1's part records ([withRenderedBacon]), resolved where the row's

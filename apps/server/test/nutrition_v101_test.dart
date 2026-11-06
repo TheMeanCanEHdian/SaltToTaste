@@ -473,8 +473,11 @@ void hashes() {
 }
 
 /// 1176's hash at v101 — the base tree's with matcherVersion 95 alone.
+// RE-PIN (fix103 batch, v103): matcherVersion 96 and U2's `servings` term
+// for every recipe (was b7d51339…) — base 63e4315 with the bump and U2's
+// term gives this literal.
 const _kibbehHash =
-    'b7d51339be974de57e5c1ac75c395bb020b9160c0a7966144a3d8cb9e26324bf';
+    'b6e8c4168485bfb12b35f58caa0eab70d9e916e8f5e00b5f0dbcf8bd9a1c428d';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person
@@ -989,8 +992,9 @@ void person() {
     ).dbPath;
     SaltDatabase.open(path).dispose();
     final raw = sqlite3.open(path);
-    expect(migrations, hasLength(21));
-    expect(raw.select('PRAGMA user_version').first.columnAt(0), 21);
+    // RE-PIN (fix103 batch, v103): migration 022 (U5's held_on) — was 21.
+    expect(migrations, hasLength(22));
+    expect(raw.select('PRAGMA user_version').first.columnAt(0), 22);
     final cols = {
       for (final c in raw.select('PRAGMA table_info(ingredient_decisions)'))
         c['name']: (c['type'], c['notnull'], c['dflt_value']),
@@ -1324,14 +1328,17 @@ void costShapes() {
   test('U4 SKIN-KEPT: a part-less skin sentence trips every line — '
       '`skinKeptPart` scans once per index and item (skinKeptScans 1 a '
       'path), every other family as without the sentence', () async {
+    // RE-PIN (fix103 batch, v103, U14): 0706's "remove skin … from squash
+    // just below skin" takes the skin from a food no bird word names, so it
+    // trips nothing now; the shape's part-less TRIPPING sentence is 1098
+    // Fried Yuca's real one (no "from": trips as before) — the counts the
+    // same (one scan per index and item).
     const skin =
-        'Using sharp vegetable peeler or chef’s knife, remove skin and '
-        'fibrous threads from squash just below skin (peel until squash is '
-        'completely orange with no white flesh remaining, roughly ⅛ inch '
-        'deep). ';
+        'Place pieces cut side down and use knife to remove skin in '
+        'sections, cutting away any flesh that isn’t pure white. ';
     expect(
       loadCorpusRecipe(
-        '0706-roasted-butternut-squash-with-browned-butter-and-hazelnuts.yaml',
+        '1098-fried-yuca.yaml',
       ).steps.map((s) => s.text).join(' '),
       contains(skin.trim()),
     );

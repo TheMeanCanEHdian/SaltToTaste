@@ -167,4 +167,16 @@ void main() {
       MatchBucket.noMatch,
     );
   });
+
+  // v103 U11: on a SECTION's own line a routed row offers and accepts no
+  // recipe (the PUT refuses every `child` there); a main line's is unchanged.
+  test('holdActionsOf: a routed row on a section line offers no recipe', () {
+    final section = holdActionsOf(null, routed: true, section: true);
+    expect(section.offers, {HoldDecision.skip, HoldDecision.confirm});
+    expect(section.accepts, {HoldDecision.skip, HoldDecision.confirm});
+    expect(section.finishes, {HoldDecision.skip, HoldDecision.confirm});
+    expect(section.decidesLibraryWide, isTrue);
+    expect(holdActionsOf(null, routed: true), same(routedActions));
+    expect(holdActionsOf(null, section: true), same(unheldActions));
+  });
 }

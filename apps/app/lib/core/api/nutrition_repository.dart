@@ -476,7 +476,8 @@ class RecipeRef {
 
   /// held: `missing` | `generic` | `nested` | `marinade`; not_routed:
   /// `section` | `served_with` | `no_amount` | `no_share` |
-  /// `no_ingredients` (v44); routed: null.
+  /// `no_ingredients` (v44) | `self` (v47: a section line naming its own
+  /// host); routed: null.
   final String? reason;
 
   /// The line's reference as written ("double-crust pie dough").
@@ -533,6 +534,7 @@ class RecipeCandidate {
     this.yieldText,
     this.kcal,
     this.kcalPerServing,
+    this.shareText,
     this.current = false,
     this.isDefault = false,
     this.pickable = false,
@@ -550,6 +552,7 @@ class RecipeCandidate {
         yieldText: json['yield_text'] as String?,
         kcal: (json['kcal'] as num?)?.toDouble(),
         kcalPerServing: (json['kcal_per_serving'] as num?)?.toDouble(),
+        shareText: json['share_text'] as String?,
         current: json['current'] == true,
         isDefault: json['default'] == true,
         pickable: json['pickable'] == true,
@@ -568,6 +571,10 @@ class RecipeCandidate {
   final String? yieldText;
   final double? kcal;
   final double? kcalPerServing;
+
+  /// The share of this candidate the line counts when picked with no typed
+  /// share (v103 U12) — what the server will store.
+  final String? shareText;
   final bool current;
   final bool isDefault;
   final bool pickable;

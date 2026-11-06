@@ -686,7 +686,13 @@ void main() {
           'Using fingers and shears, peel skin off chicken, leaving skin on wings.',
           171447,
           (1, 1),
-          [capCounts(2, 16717, 199208), capCounts(1, 16680, 198720)],
+          // RE-PIN (fix103 batch, v103, U7): + the facts of the cap recipe's
+          // 16,560 skin sentences, once per GET's index (`skinSentenceFacts`;
+          // uncounted before; the QUIET shape names no skin).
+          [
+            {...capCounts(2, 16717, 199208), 'skinSentenceFacts': 16560},
+            {...capCounts(1, 16680, 198720), 'skinSentenceFacts': 16560},
+          ],
         ),
         (
           'QUIET',
@@ -923,7 +929,10 @@ void main() {
         // RE-PIN (fix101 batch, v101): the hash at matcherVersion 95 (was
         // fddf4ebc…; the version alone — base 30c1f83 with 95 gives this
         // literal).
-        'ba41a98058dfe5321d92fee87495f879012ce96be9a8d285f67957d8198c727e',
+        // RE-PIN (fix103 batch, v103): the hash at matcherVersion 96 (was
+        // ba41a980…; the version alone — a section hashed `servings` already:
+        // base 63e4315 with 96 gives this literal).
+        '1322ff0e1af97298703e173de9f7e440909d6ffa089ccb643089caff6850094a',
       );
     });
   });

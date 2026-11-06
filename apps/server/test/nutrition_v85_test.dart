@@ -319,7 +319,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 95 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 96 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -335,7 +335,8 @@ void main() {
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
-    expect(matcherVersion, 95);
+    // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
+    expect(matcherVersion, 96);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
@@ -620,7 +621,26 @@ void main() {
         servings: 'SERVES 8 TO 12',
         serves: const Serves(min: 8, max: 12),
       );
-      expect(ingredientsHashOf(upper, memo), hash);
+      // RE-PIN (fix103 batch, v103, U2): every recipe hashes its yield TEXT,
+      // so the written upper-only edit moves the hash now (was `hash`) — the
+      // read stays × 8. The `serves` term's own gate, isolated (the text
+      // kept): the upper alone moves nothing, the lower alone moves it
+      // (the mutant `max` leaves the lower-only object's hash unmoved).
+      expect(ingredientsHashOf(upper, memo), isNot(hash));
+      expect(
+        ingredientsHashOf(
+          gazpacho.copyWith(serves: const Serves(min: 8, max: 12)),
+          memo,
+        ),
+        hash,
+      );
+      expect(
+        ingredientsHashOf(
+          gazpacho.copyWith(serves: const Serves(min: 6, max: 10)),
+          memo,
+        ),
+        isNot(hash),
+      );
       expect(await read(upper), (
         '35.76',
         'from step 2: about 1 teaspoon × 8 portions (no amount on the line)',
@@ -1190,6 +1210,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:liftsVegetables': 1,
     'memo:smooth': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (fix103 batch, v103, U7): + the facts of the shape's two skin
+    // sentences, once per index (`skinSentenceFacts`; uncounted before).
+    'skinSentenceFacts': 2,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
     // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
     'skinScans': 400,
@@ -1228,6 +1251,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:reservedWhole': 1,
     'memo:discards': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (fix103 batch, v103, U7): + the facts of the shape's two skin
+    // sentences, once per index (`skinSentenceFacts`; uncounted before).
+    'skinSentenceFacts': 2,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
     // skin sentences, once per index and item text (`skinScans`; uncounted before).
     'skinScans': 1,
@@ -1254,6 +1280,9 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:stepAmountsAt': 400,
     'memo:labelScope': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (fix103 batch, v103, U7): + the facts of the shape's two skin
+    // sentences, once per index (`skinSentenceFacts`; uncounted before).
+    'skinSentenceFacts': 2,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
     // skin sentences, once per index and item text (`skinScans`; uncounted before).
     'skinScans': 1,

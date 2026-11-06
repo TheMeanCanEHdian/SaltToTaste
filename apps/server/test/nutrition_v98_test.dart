@@ -117,7 +117,8 @@ void main() {
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
       // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
       // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
-      expect(matcherVersion, 95);
+      // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
+      expect(matcherVersion, 96);
     },
   );
 
@@ -1242,6 +1243,9 @@ const Map<String, Map<String, int>> _skinCounts = {
   'compute': {
     'indexes': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (fix103 batch, v103, U7): + the facts of the shape's 14,280 skin
+    // sentences, once per index (`skinSentenceFacts`; uncounted before).
+    'skinSentenceFacts': 14280,
     'allSentences': 1,
     'lower': 1,
     'sentences': 29013,
@@ -1313,6 +1317,9 @@ const Map<String, Map<String, int>> _skinCounts = {
     'memo:parenthetical': 1,
     'browningFatLineReads': 399,
     'memo:skinSentences': 1,
+    // RE-PIN (fix103 batch, v103, U7): + the facts of the shape's 14,280 skin
+    // sentences, once per index (`skinSentenceFacts`; uncounted before).
+    'skinSentenceFacts': 14280,
     'allSentences': 1,
     'skinScans': 2,
     'memo:liftedFromMarinade': 1,
@@ -1348,6 +1355,9 @@ const Map<String, Map<String, int>> _skinCounts = {
     'words': 230478,
     'memo:naming': 1,
     'memo:skinSentences': 1,
+    // RE-PIN (fix103 batch, v103, U7): + the facts of the shape's 14,280 skin
+    // sentences, once per index (`skinSentenceFacts`; uncounted before).
+    'skinSentenceFacts': 14280,
     'allSentences': 1,
     'skinScans': 1,
     'memo:baconPan': 1,

@@ -78,3 +78,8 @@ refused on both, the tip's tags ⊂ the base's. NOT committed (the L4 oracle): s
 writing each row's `:${r.confidence.toStringAsFixed(2)}` and the E token `E=…|fresh=${nutritionIsFresh(…)}` (a
 two-line edit) — sw11c base 1,373 divergent (1,215 fresh after the PUTs), v102 the same 200 tags as sw11, every one stale
 after its PUTs; sw8c base 1,648 (all confidence-only: the Confirm class), v102 0.
+
+v103 (batch fix103, 2026-11-05; docs/API.md "Matcher v103"): GATE-P on base 63e4315 and on v103 (12 shards, fresh
+snapshot-32 copies) — sw5 31,713, sw6 37,400, sw7 1,872, sw8 56,868, sw8r 5,358, sw9 130, sw10 156 (bare and typed) on
+both: 0 divergent, 0 refused, calls 0; settled 268 (sw8r 21, sw9 128), a second pass moves 0. sw11: 39,760 combos,
+200 divergent on both, all energy-only, inherit 0, other 0, err 0, 14,070 refused; the tip's tags identical to the base's.

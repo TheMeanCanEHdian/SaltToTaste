@@ -177,4 +177,15 @@ void main() {
     expect(shareText(16 / 42), '0.38');
     expect(shareText(0.9999), '1');
   });
+
+  // v103 U18: a positive share never prints "0" or "0.00". STATED
+  // synthesized (no v102 row's share lies below 0.005 — the census in
+  // fix103/fix.md); 0.38 is the doc example (16/42 above).
+  test('shareText: a positive share below 0.005 floors at "<0.01"', () {
+    expect(shareText(1e-4), '<0.01');
+    expect(shareText(0.004), '<0.01');
+    expect(shareText(0.005), '0.01');
+    expect(shareText(0), '0');
+    expect(shareText(0.38), '0.38');
+  });
 }

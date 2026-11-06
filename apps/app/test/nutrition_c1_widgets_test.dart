@@ -1664,6 +1664,7 @@ void main() {
         lines: 8,
         child: null,
         share: null,
+        childSection: null,
         recipe: false,
       );
       await pumpStrip(
@@ -1778,6 +1779,7 @@ void main() {
         lines: 8,
         child: null,
         share: null,
+        childSection: null,
         recipe: false,
       );
       await pumpStrip(tester, offer: offer, promise: promised);

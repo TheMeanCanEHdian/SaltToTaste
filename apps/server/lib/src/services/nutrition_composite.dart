@@ -144,7 +144,9 @@ Map<String, Object?>? referenceChildJson(
     for (final candidate in referenceCandidates(recipe, line, memo))
       if (candidate.recipe case final library?)
         () {
-          final picked = nutritionRecipeOf(db, library.id)?.recipe;
+          // v103 (Run 076 O4, U10): through the request memo — one decode
+          // per distinct candidate a request (base: per line).
+          final picked = childRecipeOf(db, library.id, memo);
           final nutrition = db.nutritionFor(library.id);
           final batch = kcalOf(nutrition);
           final lineShare = picked == null
@@ -166,6 +168,9 @@ Map<String, Object?>? referenceChildJson(
             'kcal_per_serving': batch == null || lineShare == null
                 ? null
                 : _round2(batch * lineShare / basis),
+            // v103 U12: the share a pick of this candidate stores (the PUT
+            // without a typed share derives exactly this).
+            'share_text': lineShare == null ? null : shareText(lineShare),
             'current': current,
             'default': current && isDefault,
             'state': null,
@@ -264,6 +269,7 @@ Map<String, Object?> _sectionCandidateJson(
     'kcal_per_serving': batch == null || lineShare == null
         ? null
         : _round2(batch * lineShare / basis),
+    'share_text': lineShare == null ? null : shareText(lineShare),
     'current': current,
     'default': current && isDefault,
     'state': lines.isEmpty

@@ -243,6 +243,7 @@ void main() {
       lines: 44,
       child: null,
       share: null,
+      childSection: null,
       recipe: false,
     ));
     expect(cubit.state.applied, isNull);
@@ -301,6 +302,46 @@ void main() {
     cubit.dismissReceipt();
     expect(cubit.state.applied, isNull);
   });
+
+  // v103 U9 (Run 076 OC1): the resend carries the picked section in the
+  // body, as the pick did. STATED synthesized (the fake serves the Bundt
+  // golden; a section pick needs a host the golden does not hold): the
+  // golden's flour line picked onto 'chraime' § 'Tabil' — the probe's shape.
+  test(
+    'a section pick resends its section; a pick without one sends none',
+    () async {
+      await boot(others: 3);
+      final line = flour();
+      await cubit.pickRecipe(
+        line.position,
+        raw: line.raw,
+        child: 'chraime',
+        childSection: 'Tabil',
+      );
+      await pumpEventQueue();
+      expect(cubit.state.offer?.childSection, 'Tabil');
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts, [
+        {'raw': line.raw, 'child': 'chraime', 'section': 'Tabil'},
+        {
+          'raw': line.raw,
+          'child': 'chraime',
+          'section': 'Tabil',
+          'apply_to_all': true,
+        },
+      ]);
+      adapter.puts.clear();
+      await cubit.pickRecipe(line.position, raw: line.raw, child: 'chraime');
+      await pumpEventQueue();
+      await cubit.applyToAll();
+      await pumpEventQueue();
+      expect(adapter.puts, [
+        {'raw': line.raw, 'child': 'chraime'},
+        {'raw': line.raw, 'child': 'chraime', 'apply_to_all': true},
+      ]);
+    },
+  );
 
   test('a confirm resends confirmed, not a food id', () async {
     await boot(others: 7);
@@ -958,6 +999,7 @@ void main() {
         lines: 44,
         child: null,
         share: null,
+        childSection: null,
         recipe: false,
       );
       IngredientMatch row(int position, String raw) =>

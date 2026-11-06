@@ -212,10 +212,26 @@ const HoldActions routedActions = HoldActions(
   decidesLibraryWide: true,
 );
 
+/// [routedActions] on a SECTION's own line (v103 U11): one level is read,
+/// so the PUT refuses every `child` there — confirm or skip only.
+const HoldActions _sectionRouted = HoldActions(
+  kind: HoldKind.recipe,
+  finishes: {HoldDecision.skip, HoldDecision.confirm},
+  offers: {HoldDecision.skip, HoldDecision.confirm},
+  accepts: {HoldDecision.skip, HoldDecision.confirm},
+  decidesLibraryWide: true,
+);
+
 /// [holdActions] for [hold] (null: [unheldActions], or [routedActions] on a
-/// [routed] row — one carrying a child recipe).
-HoldActions holdActionsOf(String? hold, {bool routed = false}) =>
-    holdActions[hold] ?? (routed ? routedActions : unheldActions);
+/// [routed] row — one carrying a child recipe; on a [section]'s own line
+/// that row offers no `recipe`, v103 U11).
+HoldActions holdActionsOf(
+  String? hold, {
+  bool routed = false,
+  bool section = false,
+}) =>
+    holdActions[hold] ??
+    (routed ? (section ? _sectionRouted : routedActions) : unheldActions);
 
 /// The holds of [kinds], in table order.
 List<String> holdsOf(Set<HoldKind> kinds) => [
