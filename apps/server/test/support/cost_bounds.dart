@@ -130,9 +130,6 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // index; the host's bird, once per section instance.
       'memo:stirsGiblets',
       'memo:hostBird',
-      // v104 (Run 078 O1, U9): a section's host for its "reserved
-      // <mixture>" rule note, once per index.
-      'memo:host',
       // v54 (Q25), first met at the caps by v70's giblet section (its wine):
       // the steps' alcohol sentences, once per index.
       'memo:alcoholSentences',

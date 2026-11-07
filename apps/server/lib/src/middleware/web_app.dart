@@ -86,8 +86,9 @@ Middleware spaFallback({String indexPath = 'public/index.html'}) {
           body: index.readAsBytesSync(),
           headers: {
             HttpHeaders.contentTypeHeader: 'text/html; charset=utf-8',
-            // Same contract as `/`: the shell revalidates so deploys take
-            // effect immediately.
+            // Same contract as `/`: the shell revalidates, as every static
+            // file does (nothing is hashed; buildOutermostMiddleware, v105
+            // U4).
             HttpHeaders.cacheControlHeader: 'no-cache',
           },
         );

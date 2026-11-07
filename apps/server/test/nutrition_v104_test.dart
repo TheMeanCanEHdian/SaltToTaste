@@ -627,8 +627,10 @@ void u9() {
     );
     clock.stop();
     final section = nutritionRecipeOf(db, key)!.recipe;
-    // Base 9836d4e: 403 (lines + 3); the tip: the compute's own 3 + the
-    // memo's 1.
+    // Base 9836d4e: 403 (lines + 3) + this test's read; the tip: the
+    // compute's own 3 (the argument's nutritionRecipeOf + 2) + this test's
+    // own `nutritionRecipeOf(db, key)` above (the 4th — v105 U9: the memo
+    // never decoded; the decode saving is [_sectionHosts]').
     expect(hostDecodes, 4);
     final counts = Map.of(stepIndexCounts)..remove('names');
     expectBounded(
@@ -637,7 +639,6 @@ void u9() {
       'U9 reserved ×400 compute',
       copies: counts['indexes'] ?? 1,
     );
-    expect(counts['memo:host'], counts['indexes']);
     final rows = db.ingredientMatchesFor(key);
     expect(rows, hasLength(400));
     expect(

@@ -69,6 +69,9 @@ void main() {
     final publicDir = Directory('${tempDir.path}/public')..createSync();
     File('${publicDir.path}/index.html').writeAsStringSync(_shell);
     File('${publicDir.path}/main.dart.js').writeAsStringSync('void main(){}');
+    File(
+      '${publicDir.path}/flutter_bootstrap.js',
+    ).writeAsStringSync('// bootstrap');
     final config = ServerConfig.fromEnvironment(
       environment: {'DATA_DIR': tempDir.path, 'LOG_LEVEL': 'ERROR'},
     );
@@ -78,7 +81,17 @@ void main() {
     final routes = buildAppMiddleware(
       // Stands in for the generated route table: everything here is a miss,
       // so the SPA fallback answers /r/<slug> exactly as production does.
-      (_) => Response(statusCode: HttpStatus.notFound, body: 'Route not found'),
+      // v105 U4: an /images/ path answers with the images route's own
+      // header (routes/images/[source]/[file].dart:27 — STATED: the route
+      // needs auth and a library, so its header is what stands in).
+      (context) => context.request.uri.path.startsWith('/images/')
+          ? Response(
+              body: 'img',
+              headers: {
+                HttpHeaders.cacheControlHeader: 'private, max-age=86400',
+              },
+            )
+          : Response(statusCode: HttpStatus.notFound, body: 'Route not found'),
       config: config,
       database: database,
       authRuntime: AuthRuntime(),
@@ -108,10 +121,14 @@ void main() {
     tempDir.deleteSync(recursive: true);
   });
 
-  Future<HttpClientResponse> get(String path) async {
+  Future<HttpClientResponse> get(
+    String path, {
+    Map<String, String> headers = const {},
+  }) async {
     final client = HttpClient();
     addTearDown(client.close);
     final request = await client.getUrl(baseUri.resolve(path));
+    headers.forEach(request.headers.set);
     final response = await request.close();
     await response.drain<void>();
     return response;
@@ -135,7 +152,8 @@ void main() {
       expect(
         viaChain['content-security-policy'],
         isNotNull,
-        reason: 'the in-chain arm is the one that was always correct; if it '
+        reason:
+            'the in-chain arm is the one that was always correct; if it '
             'has no CSP this test is comparing nothing',
       );
       expect(
@@ -155,6 +173,31 @@ void main() {
       final headers = headersOf(await get('/main.dart.js'));
       expect(headers['x-content-type-options'], 'nosniff');
       expect(headers['referrer-policy'], 'same-origin');
+    });
+
+    // v105 U4 (Run 079/080 S9 + O8): the static files went out with
+    // Last-Modified only, so a browser reused an old bundle from its
+    // heuristic cache after a deploy. Every response naming no
+    // Cache-Control now revalidates; one that names its own keeps it.
+    test('every static file revalidates; own headers kept', () async {
+      for (final path in ['/main.dart.js', '/flutter_bootstrap.js']) {
+        final headers = headersOf(await get(path));
+        expect(headers['cache-control'], 'no-cache', reason: path);
+        expect(headers['last-modified'], isNotNull, reason: path);
+        final again = await get(
+          path,
+          headers: {'if-modified-since': headers['last-modified']!},
+        );
+        expect(again.statusCode, HttpStatus.notModified, reason: path);
+        expect(headersOf(again)['cache-control'], 'no-cache', reason: path);
+      }
+      // `/` and the SPA fallback keep their own no-cache (web_app.dart).
+      expect(headersOf(await get('/'))['cache-control'], 'no-cache');
+      expect(headersOf(await get('/r/some-slug'))['cache-control'], 'no-cache');
+      expect(
+        headersOf(await get('/images/atk-tv-2023/x.jpg'))['cache-control'],
+        'private, max-age=86400',
+      );
     });
 
     test('every non-per-response header matches the in-chain arm', () async {

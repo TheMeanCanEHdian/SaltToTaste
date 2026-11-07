@@ -1537,15 +1537,18 @@ Z15) eight figures for a record that publishes NO volume figure of its own
 labelled with its source — ATK's printed pairs: frozen pearl onions 113.4
 g a cup ("8 ounces (about 2 cups) frozen pearl onions"; `"1 1/2 cup ≈ 355
 mL · approximate (ATK: 8 ounces frozen pearl onions ≈ 2 cups)"`), lentils
-7 ounces a cup ("1 cup (7 ounces) lentils"), strawberries 5 ounces a cup
-("8 cups (40 ounces) strawberries"; the plural only, so "strawberry jam"
-keeps 'jam'), grape tomatoes 0.575 g/mL ("12 ounces cherry or grape
+7 ounces a cup ("1 cup (7 ounces) lentils"), strawberries — was 5 ounces a
+cup, now 133.24 g, the print at the AH-102 edible yield (see "Matcher
+v104", U1) — ("8 cups (40 ounces) strawberries"; the plural only, so
+"strawberry jam" keeps 'jam'), grape tomatoes 0.575 g/mL ("12 ounces cherry or grape
 tomatoes (about 2½ cups)"; "1 pint grape tomatoes" is 272.16 g), and,
 flagged as approximate by nature, cooked poultry 6 ounces a cup ("6 ounces
 cooked chicken, torn into 1-inch pieces (1 cup)", keyed on Turkey
-Tetrazzini's one line, 680.39 g) and shredded Granny Smith 8 ounces a cup
-("1½ pounds Granny Smith apples, peeled, cored, and shredded (3 cups)", a
-purchase weight); FDC's figures on stand-in records: jarred roasted red
+Tetrazzini's one line, 680.39 g) and shredded Granny Smith — was 8 ounces
+a cup ("1½ pounds Granny Smith apples, peeled, cored, and shredded (3
+cups)", a purchase weight), now 176.9 g at the edible yield (see "Matcher
+v103", U3); a cubed / diced / pieces cup reads 132.68 g ("Matcher v104",
+U2), and chopped / chunks join it ("Matcher v105", U6); FDC's figures on stand-in records: jarred roasted red
 peppers on 168559 "Pimento, canned" `cup` 192 g (item-keyed; the record
 2258590 carries fresh peppers too: `"… · approximate (pimento density,
 FDC 168559 cup 192 g)"`) and crushed tomatoes on 170054 "Tomato products,
@@ -5188,6 +5191,153 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v105 (batch fix105; matcherVersion 97 UNCHANGED — the fixes of
+dual-fleet review Run 079/080 over v104, union U1–U14, the spec
+.claude/diag/2026-11-06/review079/union_S.md, the rulings in fix105/brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07); no
+migration; NO corpus row moves — the replay on snapshot 32 is byte-identical
+to the v104 set).**
+- **U1 — the decided re-read arm re-stamps `held_on`.** The compute's arm
+  for a person-decided row held `food_unavailable` / `food_gone` and re-read
+  from the caches now writes `heldOn: (id: _heldOnOf(db, decided))` and fires
+  when EITHER `derived_seq` or `held_on` differs — the engine cacheOnly arm's
+  form (v104 U6). A confirmed two-part row (0040|5 rendered bacon, parts
+  168322 + 172345) no longer keeps `held_on` on the part already cached: the
+  other part's arrival re-opens it (base: 8/9, 78.12 kcal/serving under a
+  fresh stamp; now `derived_seq` NULL, not fresh, and the next 0-request
+  compute 9/9, 274.36). Limit by grep — `grep -n 'markDerivedIfUnchanged('
+  apps/server/lib`: salt_database.dart:1895 (the definition); engine.dart
+  :14980 the decided re-read arm (handled, U1); :15008 the decided arm's
+  derived branch (no hold to name: a held row's derivation clears the hold
+  and is written by `replaceIngredientMatchIfUnchanged`); :15375 the engine
+  cacheOnly arm (handled, v104 U6); :20336 `settleKeyInRecipe` Arm 1 (the
+  PUT's own settle — NOT fixed, reported).
+- **U2 — neither whole-batch arm reads a written share.** routeShareOf's A9
+  arm (a section child, one unitless '1') gains `!writesShare(line.raw)`, as
+  the WB arm (v104 U4): '1 Sauce Base (0 recipe)' / '(500000 recipes)' with
+  amount 1 on 0184|3 read `noShare` — the sub-recipe rule row, the GET
+  `not_routed` / `no_share` (base: auto, share 1.0, 1,456.7 g); the
+  '(½ recipe)' control 0.5, 728.35 g, the GET's 212.83 kcal. The corpus
+  writes only '(½ recipe' / '(1/2 recipe' (6 lines): reach 0.
+- **U3 — a recipe pick applied to others decodes the child once.**
+  `applyRecipeToOthers` passes its memo to the per-target `derivedFor`
+  (`references: memo`). Limit by grep — `grep -n 'derivedFor(' apps/server/lib`:
+  engine.dart :14962 / :15048 (the compute; `references`), :19261 (the apply
+  — now memo'd), :20590 (the definition), nutrition_handlers.dart :213 (the
+  GET; memo'd, v104 U10), :707 / :721 / :921 (the PUT; one each, ≤ 3 per
+  request).
+- **U13 — the GET's section candidates scan the section once.**
+  `_sectionCandidateJson`'s `nested` state reads `madeFromRecipe(section,
+  memo)` — the resolver's own scan (the same predicate over the same lines,
+  keyed by the section id; `_madeFromRecipe` made public), once per section a
+  request, never per (row, candidate). `referenceReads` (a test counter in
+  `isReferenceIn`) counts what the pin pins.
+- **U5 — a forbidden pour-off is no skim and no discard.** `_negatesSkim`
+  adds 'never skim' and the pour / spoon / drain-off negations ('not', "n't",
+  'n’t' pour / spoon / drain off; 'without pouring / spooning / draining
+  off') — substring tests, linear; `_panFactsOf`'s `discarded` reads both
+  pour-off arms (`_pansWiped`'s "pour off the fat" and `_poursOffFat`) under
+  `!_negatesSkim` (the negation half of `_skimsFatIn`: its skim arm is no
+  discard). Limit by grep — `grep -n '_poursOffFat\|_plainPourOff\|_skimsFat\b'
+  apps/server/lib`: engine.dart :4533 / :4535 / :4545 (`_skimsFat` and
+  `_plainPourOff` defined), :4541 (`_skimsFatIn`, the one code reader of
+  `_skimsFat` — `_fatSkimmed`, `_fatLinesOf`; guarded), :23516
+  (`_poursOffFat` at `_panFactsOf`; guarded, U5), :23640 (`_poursOffFat`
+  defined); :4538 / :4543 / :4544 / :22960 / :23028 / :23428 / :23639 doc comments.
+  Outside that grep, reported not fixed: `_pansWiped` in `_panFatLines` (a
+  negated pour-off would end the sauté window early) and `pourOffFatSentence`
+  (`_dryHeatOf`) — corpus reach 0 for both. Corpus: no step negates a
+  pour / spoon / drain-off; the one negated skim is 0492's.
+- **U6 — chopped and chunks are the cubed Granny Smith cup.** `_cutForm`
+  adds `chopped|chunks?` (the cut-into-pieces form; USDA's apple, raw,
+  chopped is 125 g/cup, within 6 % of 132.68). "sliced" stays at the shredded
+  print: FDC 171688's "1 cup slices" portion is on no record on disk (the
+  fixtures and snapshot 32 hold 171688 as a search hit only). Census of the
+  16 Granny Smith rows on v104_rows.tsv: density-cubed 1 (the stuffed
+  turkey's |3), density-shredded 1 (classic-strawberry-jam|2 "1¼ cups peeled
+  and shredded"), weight × 0.78 10, count 182 g 3, printed piece weight 1 —
+  no density line carries an added word: no row moves.
+- **U9 — the host memo removed.** Every section Recipe is built by
+  `sectionRecipeOf` (grep `sectionRecipeOf(\|sectionKeyOf(\|subsections:
+  const \[\]`: the one builder, engine.dart:8527, sets `_sectionHosts`), so
+  v104 U9's `index.memo(('host', …))` wrapper never decoded — removed, with
+  its `memo:host` cost family and the pin on its own counter; the compute
+  decodes the host 3 times at the 400-line cap (the v104 pin's 4 = + the
+  test's own read). The `hostWeighedGiblets` 'hostBird' memo stays (it
+  memoises the whole bird scan).
+- **U14 — the apply's one memo, not reproduced.** One probe (snapshot 32):
+  0 held reference rows, 0 reference rows whose child section holds the same
+  key — no corpus key reaches the critic's shape; the per-target totals
+  write builds its own memo, so only `decidedKeyRowFor`'s reference rows read
+  the apply's `childNutrition`. No code change.
+- **U4 — every static file revalidates.** `buildOutermostMiddleware` (the one
+  seam wrapping the static arm) gives every response that names no
+  `Cache-Control` `no-cache`: /main.dart.js and /flutter_bootstrap.js (base:
+  Last-Modified only — a returning browser reused an old bundle from its
+  heuristic cache for ~10 % of the file's age) now revalidate — a 304 on
+  If-Modified-Since or the new bytes; `/` and the SPA fallback keep their own
+  `no-cache`, the images route its `private, max-age=86400`. Nothing in the
+  bundle is hashed (routes/index.dart's comment corrected).
+- **Pins only:** U7 (the app's U15 pin: every ApplyOffer field of the moved
+  copy by record equality), U10 (`_inBatches`' remaining-piece word count:
+  'Repeat with remaining four sandwiches in 2 batches.' → 2 rounds), U8
+  (`decidedKeyRowFor`'s provider-failure arm in `applyDecisionToOthers`):
+  under `onePass` the weigh asks every food that arm re-reads, so no
+  provider fault alone reaches it — only the key's decision moving during
+  the apply does. STATED synthesized (a second PUT racing the apply; no
+  corpus run writes one): paella-on-the-grill|14 → 171977 (cached) onto
+  cioppino|11 (in the shell), the key's decision re-put onto 167765 at the
+  first turn after the PUT writes it, 167765's detail failing FOOD → one
+  request, the receipt `unavailable` 1 / lines 0, cioppino|11 unwritten
+  (174214), the recipe stale (closer 1).
+- **Docs:** U11 person_sweeps/README.md's paella|14 clause restated to the
+  measured facts; U12 the v37 density paragraph's strawberries and shredded
+  Granny Smith cups reworded "was … now …".
+- **Pins** (apps/server/test/nutrition_v105_test.dart, 30 tests; every
+  synthesized input stated with its corpus source): U1 the 0040|5 sequence
+  (held_on 168322 → 172345 → null, 9/9, 274.36, calls 0); U2 0184|3 ×3; U3
+  and U13 at the caps (count-pinned exactly); U5 15 (13 negations on 1171
+  bulalo's real K1 sentence, the control, the `_panFactsOf` discard on the
+  REAL 0351); U6 6 (0158's real stuffing line re-texted); U10 1; U8 1;
+  static_asset_headers_test.dart +1 (U4); the app's U15 pin extended in
+  place (U7). Mutants (each on a snapshot copy, anchor count 1, restored by
+  copy + cmp), every one killed by a VALUE: U1 the heldOn dropped (held_on
+  168322 for 172345); U2 the guard dropped (auto 1.0 1,456.7); U3 the memo
+  dropped (decodes / scans 1,220 / 1,206 for 21 / 8); U13 the bare any()
+  (isReferenceIn reads 160,800 / 160,400 for 800); U5 each of the 13 phrases
+  and the `_panFactsOf` guard; U6 chopped, chunks?, chunks?→chunks (353.80
+  for 265.35); U9 `_sectionHosts` dropped (host decodes 404 for 4); U4 never
+  / always adding the header; U10 the first group cut to digits (4 rounds
+  for 2); U1's `|| decided.heldOn != heldOn` dropped (held_on 168322 for
+  172345 on the raw held_on-only step, closer 1); U8 the catch's
+  `unavailable += 0` (0 for 1) and `unweighed = false` (fresh); U7 recipe / confirmed / grams / share / others / lines / label,
+  each separately.
+- **Cost** (base 5e6b4d7 vs v105): U3 at the caps (3 recipes × 400 lines
+  routed to a 400-line, 120 × 10,000-character child; PUT {child,
+  apply_to_all}) hostDecodes / madeFromScans 1,220 / 1,206, 13.95 s (the
+  fleet's) → 21 / 8, 280 ms; U13 (0158 × 400 rows on a 400-line section, the
+  matches GET) isReferenceIn reads 160,800 → 800 (quiet), 160,400 → 800
+  (nested), 545 → 138 ms / 473 → 79 ms; U9 unchanged (3 decodes per compute
+  — the memo never decoded). Each under the 10 s backstop.
+- **Gate** (fix105 on 5e6b4d7; fresh copies of snapshot 32 md5 ffd1cf26…,
+  main and `--reverse-parents` cmp-identical): rows, recs, sections, calls
+  (0) and notes byte-identical to v104_*; buckets byte-identical; staleAfter
+  0, 0 person rows. Suites: server +3,202 ~4 (base +3,171 ~4 + the 31),
+  salt_shared +223, app +669 (U7 extends a test in place); analyze ×3 clean.
+  GATE-P on snapshot 32 (12 shards, calls 0 every settle): sw5 31,713, sw6
+  37,400, sw7 1,872, sw8 56,868, sw8r 5,358, sw9 130 — 0 divergent, 0
+  refused; sw10 156 bare and typed, 0 divergent; sw11 39,760 combos, 200
+  divergent, all `calls-only` (real 0, inherit 0, other 0; 14,070 refused);
+  sw12 129 combos (79 × 2, 29 with no other), 52 divergent — the 47
+  line-held rows and 5 routed pie parents outside U7, U7 classes 0: v104's
+  figures, base == tip.
+- **Deploy note**: no migration; matcherVersion unchanged, so no stamp moves
+  — no stale sweep, 0 requests, the digest unchanged at 763,726.73. The
+  Flutter bundle is rebuilt into apps/server/public at deploy (the app's
+  change here is a test only); every served file without its own
+  Cache-Control now goes out `no-cache`, so a returning browser revalidates
+  each (a 304 or the new bytes) instead of running a cached bundle.
+
 **Matcher v104 (batch fix104; matcherVersion 96 → 97 — the fixes of dual-fleet
 review Run 077/078 over v98–v103, union U1–U25, the spec
 .claude/diag/2026-11-06/review077/union_R.md, the rulings in fix104/brief.md
@@ -5284,8 +5434,10 @@ routed line); replayed on snapshot 32 against the v103 set).**
   (pumpkin-pie|0 routed → `choose_recipe`) or a held reference's title
   (buffalo-wings|13 held → routed) stales the parent.
 - **U9 — a section's host once per index** for its "reserved <mixture>"
-  note (`memo:host`, the `hostWeighedGiblets` form): 403 → 4 decodes at the
-  400-line cap.
+  note (`memo:host`, the `hostWeighedGiblets` form): 403 → 3 decodes per
+  compute at the 400-line cap (the pin's 4 is the compute's 3 + the test's
+  own read; the saving is `_sectionHosts`', the memo never decoded — removed
+  in v105 U9).
 - **U10 — the child once per request.** `_madeFromRecipe` memoised per child
   id on the `ResolverMemo` (`madeFromScans`); `_childRowOf` and
   `recomputeParentsOf` on `childRecipeOf` under one memo per call; the
@@ -5341,8 +5493,8 @@ routed line); replayed on snapshot 32 against the v103 set).**
 - **Cost** (base 9836d4e vs v104): U8's hash at the cap (0987's line 0
   ×400 over 0972, median µs/hash of 15 × 10 calls, three runs) 11,561 /
   11,751 / 11,760 → 11,614 / 12,030 / 11,840 (+1.2 % mean; one identity per
-  distinct route — a list per line measured +5–8 %); U9 403 → 4 host decodes
-  at 400 reserved lines; U10 at the caps (GET / compute / recompute):
+  distinct route — a list per line measured +5–8 %); U9 403 → 3 host decodes
+  per compute at 400 reserved lines (4 with the pin's own read); U10 at the caps (GET / compute / recompute):
   undecided 2 / 2 / 2 decodes and 1 / 1 / 1 scans (base: 1,600 / 1,200 / 400
   scans, the GET 10.2 s), decided 1 / 2 / 2 decodes and 1 / 1 / 1 scans
   (base 401 / 402 decodes); each under the 10 s backstop. U7 runs

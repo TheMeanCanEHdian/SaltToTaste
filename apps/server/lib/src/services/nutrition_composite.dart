@@ -274,7 +274,9 @@ Map<String, Object?> _sectionCandidateJson(
     'default': current && isDefault,
     'state': lines.isEmpty
         ? 'no_ingredients'
-        : lines.any((l) => isReferenceIn(section!, l))
+        // v105 U13 (RULE C): the resolver's own scan, once per section a
+        // request ([madeFromRecipe] on the GET's memo), never per row.
+        : madeFromRecipe(section!, memo)
         ? 'nested'
         : nutrition == null
         ? 'no_totals'

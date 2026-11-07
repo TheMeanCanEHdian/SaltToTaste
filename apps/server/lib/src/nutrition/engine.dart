@@ -7941,8 +7941,15 @@ bool isSubRecipeReference(String raw) {
 /// of the recipe's own sections ([namesOwnSection]) — the recipe-aware gate
 /// the sub-recipe rule, the stale hash, the sweep's parent test, the nested
 /// checks and the basis read.
-bool isReferenceIn(Recipe recipe, IngredientLine line) =>
-    isSubRecipeReference(line.raw) || namesOwnSection(recipe, line);
+bool isReferenceIn(Recipe recipe, IngredientLine line) {
+  referenceReads++;
+  return isSubRecipeReference(line.raw) || namesOwnSection(recipe, line);
+}
+
+/// How many lines [isReferenceIn] read since reset — what the v105 U13 cap
+/// pin counts (the matches GET's section-candidate scan), never a clock.
+@visibleForTesting
+int referenceReads = 0;
 
 /// Whether the unmarked [line] of [recipe] names one of its OWN sections
 /// that lists ingredient lines (v44, A9 a): its reference item equals the
@@ -8397,7 +8404,7 @@ class ResolverMemo {
 
   final Map<String, Recipe?> _hosts = {};
 
-  /// [_madeFromRecipe] per child id (v104 U10).
+  /// [madeFromRecipe] per child id (v104 U10).
   final Map<String, bool> _madeFrom = {};
 
   /// The section keys holding a stamp: the CHILD sections a fix sheet may
@@ -8814,7 +8821,7 @@ typedef _ProseChoice = ({Recipe child, String? section, String host});
 /// line-free half — a function of [recipe] and [prose] alone, so a reader
 /// of many lines reads it once per prose section ([_proseReadsOf]). Null:
 /// no candidate shares a word, or the chosen base is made from a recipe
-/// ([_madeFromRecipe]: every line routes to it `nested`, never `routed` —
+/// ([madeFromRecipe]: every line routes to it `nested`, never `routed` —
 /// [_childTail]).
 _ProseChoice? _proseChoice(
   Recipe recipe,
@@ -8853,7 +8860,7 @@ _ProseChoice? _proseChoice(
     return null;
   }
   final child = hostScore >= bestScore ? host : sectionRecipeOf(host, best!);
-  return _madeFromRecipe(child, memo)
+  return madeFromRecipe(child, memo)
       ? null
       : (
           child: child,
@@ -9010,13 +9017,15 @@ ReferenceResolution _resolveInOrder(
 /// WB's whole batch, 1.0, for a line with no amount of a child with lines —
 /// never one a served-with marker reads (rule SW: [resolveReference]
 /// answers `servedWith` before any route, so the route never reads it
-/// there) and never one that writes its own share (v104 U4: "(0 recipe"
+/// there). Neither whole-batch arm (A9 nor WB) reads a line that writes
+/// its own share (v104 U4 the WB arm, v105 U2 the A9 arm: "(0 recipe"
 /// reads no share, [writesShare]). Null: no share reads (`noShare`; the PUT
 /// asks for one).
 double? routeShareOf(Recipe recipe, IngredientLine line, Recipe child) =>
     parseShare(line.raw, line.amounts, child.servings) ??
     (hostOf(child.id) != child.id &&
             !isSubRecipeReference(line.raw) &&
+            !writesShare(line.raw) &&
             line.amounts.length == 1 &&
             line.amounts.single.unit == null &&
             line.amounts.single.quantity.trim() == '1'
@@ -9062,7 +9071,7 @@ ReferenceResolution _childTail(
       noIngredients: true,
     );
   }
-  if (_madeFromRecipe(child, memo)) {
+  if (madeFromRecipe(child, memo)) {
     return ReferenceResolution(
       ReferenceKind.nested,
       childId: child.id,
@@ -9085,14 +9094,15 @@ ReferenceResolution _childTail(
 /// v104 (Run 077/078 O5 + S5, U10; RULE C): once per child a request
 /// ([ResolverMemo]: one bool per child id) — every resolve of a routed
 /// line rescanned the child's lines (1,600 calls = 9.9 s of a 10.2 s
-/// matches GET at the caps); [madeFromScans] counts the scans.
-bool _madeFromRecipe(Recipe child, ResolverMemo memo) =>
+/// matches GET at the caps); [madeFromScans] counts the scans. v105 U13:
+/// public — the GET's section candidates read the same scan.
+bool madeFromRecipe(Recipe child, ResolverMemo memo) =>
     memo._madeFrom.putIfAbsent(child.id, () {
       madeFromScans++;
       return nutritionLines(child).any((l) => isReferenceIn(child, l));
     });
 
-/// How many children [_madeFromRecipe] scanned since reset — what the U10
+/// How many children [madeFromRecipe] scanned since reset — what the U10
 /// cap pins count, never a clock.
 @visibleForTesting
 int madeFromScans = 0;
@@ -13190,16 +13200,14 @@ String? _mainRecipePartNote(
     return null;
   }
   final mixture = normalized.substring('reserved '.length);
-  // v104 (Run 078 O1, U9; RULE C): the host once per index, the sibling
-  // [hostWeighedGiblets]' form — never a whole-document decode per line
-  // (403 decodes, 3.48 s at the 400-line cap on 0591's real line).
-  final index = _stepIndexOf(recipe);
-  final host = index.memo(
-    ('host', hostOf(recipe.id)),
-    () =>
-        _sectionHosts[recipe] ??
-        nutritionRecipeOf(db, hostOf(recipe.id))?.recipe,
-  );
+  // v104 (Run 078 O1, U9; RULE C): never a whole-document decode per line
+  // (403 decodes, 3.48 s at the 400-line cap on 0591's real line) — the
+  // section's own host ([_sectionHosts]). v105 U9: every section Recipe is
+  // built by [sectionRecipeOf], which sets it, so the v104 per-index memo
+  // never decoded (an equivalent wrapper) and is gone; the decode stays a
+  // fallback only.
+  final host =
+      _sectionHosts[recipe] ?? nutritionRecipeOf(db, hostOf(recipe.id))?.recipe;
   return host != null &&
           host.ingredients.any(
             (group) => normalizeItem(group.group ?? '') == mixture,
@@ -14963,13 +14971,20 @@ Future<NutritionProviderException?> _computePass(
       if (unavailable != null) {
         if (!reread) {
           unavailableRow(position, decided, row, unavailable);
-        } else if (decided.derivedSeq != derivedKey && fresh()) {
-          db.markDerivedIfUnchanged(
-            decided,
-            derivedSeq: derivedKey,
-            layoutSeq: seq,
-            keepRetryCount: true,
-          );
+        } else {
+          // v105 U1: held on the part STILL uncached, as the engine
+          // cacheOnly arm below (v104 U6) — the decided sibling arm.
+          final heldOn = _heldOnOf(db, decided);
+          if ((decided.derivedSeq != derivedKey || decided.heldOn != heldOn) &&
+              fresh()) {
+            db.markDerivedIfUnchanged(
+              decided,
+              derivedSeq: derivedKey,
+              layoutSeq: seq,
+              keepRetryCount: true,
+              heldOn: (id: heldOn),
+            );
+          }
         }
         continue;
       }
@@ -16489,12 +16504,27 @@ bool defatsSentence(String s) {
 
 /// v101 (Run 073 S1, U7): a piece that forbids the skim ("(do not skim the
 /// fat from the liquid)", 0492) — substring tests, linear.
+/// v105 U5: and a piece that forbids the pour-off — "(do not pour off the
+/// fat)", "don't spoon off", "without draining off" — or "never skim".
 bool _negatesSkim(String piece) =>
     piece.contains('not skim') ||
     piece.contains("n't skim") ||
     piece.contains('n’t skim') ||
     piece.contains('without skimming') ||
-    piece.contains('no need to skim');
+    piece.contains('no need to skim') ||
+    piece.contains('never skim') ||
+    piece.contains('not pour off') ||
+    piece.contains("n't pour off") ||
+    piece.contains('n’t pour off') ||
+    piece.contains('not spoon off') ||
+    piece.contains("n't spoon off") ||
+    piece.contains('n’t spoon off') ||
+    piece.contains('not drain off') ||
+    piece.contains("n't drain off") ||
+    piece.contains('n’t drain off') ||
+    piece.contains('without pouring off') ||
+    piece.contains('without spooning off') ||
+    piece.contains('without draining off');
 
 /// v76 (batch M79, Q10 (b′); the planner's C8): the dry-heat cooking
 /// [recipe]'s own steps print — 'broiled' when a sentence heats a grill
@@ -19244,6 +19274,9 @@ applyRecipeToOthers(
             clearHold: true,
             clearParts: true,
           ),
+          // v105 U3: the request's one memo — the child decoded and
+          // scanned once, never once per target (v104 U10's class).
+          references: memo,
         )).row;
         if (!marked) {
           marked = true;
@@ -21035,7 +21068,7 @@ IngredientMatchRow _childRowOf(
     );
   }
   final stored = children.childNutrition(child.id);
-  if (_madeFromRecipe(child, children)) {
+  if (madeFromRecipe(child, children)) {
     return placed.copyWith(
       hold: nestedRecipeHold,
       grams: 0,
@@ -23474,9 +23507,13 @@ _PanFacts _panFactsOf(String s) {
     reused: _pourOffAllButFat.hasMatch(s) || _panReused.hasMatch(s),
     discarded:
         _fats.values.any((f) => f.discards.hasMatch(s)) ||
-        _pansWiped.hasMatch(s) ||
-        ((s.contains('fat') || s.contains('grease')) &&
-            _poursOffFat.hasMatch(s)),
+        // v105 U5: a forbidden pour-off discards nothing — the negation
+        // half of [_skimsFatIn] (its skim arm is no discard) over both
+        // pour-off arms ([_pansWiped]'s "pour off the fat" too).
+        (!_negatesSkim(s) &&
+            (_pansWiped.hasMatch(s) ||
+                ((s.contains('fat') || s.contains('grease')) &&
+                    _poursOffFat.hasMatch(s)))),
     cooks: _cooksInPan.hasMatch(s),
   );
 }

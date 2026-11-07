@@ -93,5 +93,7 @@ fresh snapshot-32 copies): sw5 31,713, sw6 37,400, sw7 1,872, sw8 56,868, sw8r 5
 typed) — 0 divergent, 0 refused, calls 0, settled 268 (sw8r 13 of its 21, sw9 128), a second pass moves 0: v103's
 figures. sw12 (new, U7; the row above): base 9836d4e 14 divergent in the U7 classes, v104 0 (129 combos run, 29 with no
 other cached candidate, calls 0, 0 errors); outside U7, base == tip: 47 line-held rows, 5 routed pie parents; and one
-row the tip offers that nothing moves (0105 paella|14's counted mussels on 2706350 under cioppino|14's own-food 174216
-decision: stored == compute == before; the apply counts it `moved`).
+row the raw `decisionReach` lists that nothing moves (0105 paella|14's counted mussels on 2706350 under cioppino|14's
+own-food 174216 decision): the apply writes and counts nothing (the PUT apply_to_all receipt moved 0 / lines 0), the
+GET offers others 0, sw12 classes it reached/shell none; stored == compute == before; base == tip (v105 U11 — this
+sentence said "one row the tip offers" and "the apply counts it `moved`", neither measured).

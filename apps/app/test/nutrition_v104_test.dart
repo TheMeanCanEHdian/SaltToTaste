@@ -344,5 +344,40 @@ void main() {
     expect(moved.position, 4);
     expect(moved.childSection, 'Basic Spice Rub for Pork Chops');
     expect(moved.child, 'grilled-pork-chops');
+    // v105 U7 (Sonnet S7): EVERY field of the moved copy — equality with
+    // the pre-shift offer, the position moved. The second offer carries a
+    // confirmed flag and grams (STATED synthesized field values: no real
+    // recipe-pick offer pairs them; offerOnReload copies fields alone), so
+    // a `confirmed: false` or `grams: null` copy is seen too.
+    ApplyOffer at4(ApplyOffer o) => (
+      position: 4,
+      raw: o.raw,
+      label: o.label,
+      fdcId: o.fdcId,
+      confirmed: o.confirmed,
+      grams: o.grams,
+      others: o.others,
+      lines: o.lines,
+      child: o.child,
+      share: o.share,
+      childSection: o.childSection,
+      recipe: o.recipe,
+    );
+    expect(moved, at4(offer));
+    final ApplyOffer confirmed = (
+      position: 3,
+      raw: offer.raw,
+      label: offer.label,
+      fdcId: 171688,
+      confirmed: true,
+      grams: 42.5,
+      others: 2,
+      lines: 3,
+      child: offer.child,
+      share: offer.share,
+      childSection: offer.childSection,
+      recipe: true,
+    );
+    expect(offerOnReload(confirmed, shifted), at4(confirmed));
   });
 }

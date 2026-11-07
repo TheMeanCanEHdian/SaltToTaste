@@ -492,11 +492,19 @@ final RegExp _hardCheeseForm = RegExp(r'\b(grated|shredded)\b');
 /// (about 4 cups)" (Skillet Apple Brown Betty) at v43 Y8's edible yield
 /// (AH-102 item 17, × 0.78) = 132.68 g/cup; any other line keeps the
 /// shredded bundt print's 176.9 g ('granny smith apple' in [_densities]).
+/// v105 U6: "chopped" and "chunk(s)" are the same cut-into-pieces form
+/// (USDA's apple, raw, chopped is 125 g/cup, within 6 %). "sliced" stays at
+/// the shredded print: FDC 171688's "1 cup slices" portion is on no record
+/// on disk (the fixtures and the snapshot hold 171688 as a search hit only,
+/// no portions) — ponytail: add a slices constant from that record when a
+/// cache holds it.
 const double _cubedGrannySmith = 1.5 * 453.592 * 0.78 / (4 * 236.588);
 const String _cubedGrannySmithLabel =
     'ATK: 1½ pounds Granny Smith apples, peeled, cored, cut into ½-inch '
     'cubes = 4 cups, × 0.78 edible (AH-102 item 17)';
-final RegExp _cutForm = RegExp(r'\b(cubes?|cubed|dice|diced|pieces)\b');
+final RegExp _cutForm = RegExp(
+  r'\b(cubes?|cubed|dice|diced|pieces|chopped|chunks?)\b',
+);
 
 /// Piece weights (grams each) for common counted items, keyed by tokens.
 /// A key's weight is PER counted unit as the recipe counts it — for items

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 // dart_frog ships its own `requestLogger`; ours is the one wired here.
 import 'package:dart_frog/dart_frog.dart' hide requestLogger;
 import 'package:logging/logging.dart';
@@ -37,7 +39,27 @@ final Logger _log = Logger('proxy');
 /// [securityHeaders] therefore runs twice on a routed response. It is
 /// idempotent (same header names, same values), and keeping the in-chain copy
 /// is what lets the suite drive it without rebuilding the cascade.
-Handler buildOutermostMiddleware(Handler handler) => securityHeaders()(handler);
+///
+/// v105 U4: and every response that names no `Cache-Control` gets
+/// `no-cache` — the static arm's files (`/main.dart.js`,
+/// `/flutter_bootstrap.js`: unhashed, Last-Modified only) were reused from a
+/// browser's heuristic cache after a deploy; now each revalidates (a cheap
+/// 304 on If-Modified-Since, or the new bytes). A response that names its
+/// own (`/`, the SPA fallback, the images route) keeps it.
+Handler buildOutermostMiddleware(Handler handler) {
+  final secured = securityHeaders()(handler);
+  return (context) async {
+    final response = await secured(context);
+    return response.headers.containsKey(HttpHeaders.cacheControlHeader)
+        ? response
+        : response.copyWith(
+            headers: {
+              ...response.headers,
+              HttpHeaders.cacheControlHeader: 'no-cache',
+            },
+          );
+  };
+}
 
 /// The runtime counterpart to bootstrap's `configWarnings`: warns when a
 /// request carrying `X-Forwarded-For`/`-Proto` arrives from a peer that
