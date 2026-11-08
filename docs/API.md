@@ -5191,6 +5191,242 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v106 (batch fix106; matcherVersion 97 UNCHANGED — the fixes of
+dual-fleet review Run 081/082 over v105, union U1–U13, the spec
+.claude/diag/2026-11-07/review081/union_T.md, the rulings in fix106/brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07); no
+migration; NO corpus row moves — the replay on snapshot 32 is byte-identical
+to the v105 set and the salt_shared corpus golden is byte-identical).**
+- **U1 — one object-aware negation guard, every reader.** v105's
+  `_negatesSkim` (18 sentence-level substrings) is deleted: it was
+  object-blind ("skim excess fat … (do not pour off the broth)" lost a real
+  skim; "Pour off and discard fat in skillet (do not skim the sauce)" and
+  "Wipe out the skillet (do not skim the sauce)" lost a real discard — v105
+  regressions at reach 0) and incomplete ('never' / 'no need to' / 'avoid' ×
+  pour / spoon / drain off; the discard verb and the wipe arm unguarded).
+  `_forbids(piece, act)` (engine.dart :16553) answers whether the piece
+  forbids an act ON ITS OWN OBJECT: a negation word (not | n't | n’t | never
+  | no need to | avoid | without | refrain from), the act's verb (its -ing
+  form too), only the|any|all|of|excess|off|out between, the object — skim
+  and pour / spoon / drain off → fat|grease|drippings; discard →
+  oil|shortening|lard|fat; wipe → skillet|pan|pot. Eight native finds first;
+  a regex only past a negation word; linear per piece. Readers:
+  `_skimsFatIn` per arm (the skim arm unless a forbidden skim, the separator,
+  the pour arm unless a forbidden pour-off), `defatsSentence` (a forbidden
+  skim per period-free piece — 0224's "skim fat from surface and discard; do
+  not pour off the braising liquid" defats), `_panFactsOf`'s `discarded` (the
+  discard verb, `_poursOffFat` and each `_pansWiped` match, each under its
+  own act). The partial "do not pour off all the fat" reads no discard
+  (stated, reach 0). Limit by grep — `grep -rn '_negatesSkim\|_forbids'
+  apps/server/lib`: engine.dart :4549 (skim / fat, `_skimsFatIn`), :4550
+  (pour-off / fat, `_skimsFatIn`), :16540 (skim / fat, `defatsSentence`),
+  :23572 (discard / oil…, `_panFactsOf`), :23575 (pour-off / fat,
+  `_panFactsOf`), :23579 / :23581 (`_pansWiped` per match: pour-off / fat,
+  wipe / skillet…); :16553 the definition, :16573 / :16577 / :16581 / :16585
+  the acts, :4541 / :16564 / :23569 doc comments; `_negatesSkim` 0 (15
+  hits). v105's three greps re-run:
+  `markDerivedIfUnchanged(` 5, `derivedFor(` 8 (unchanged); `_poursOffFat\|
+  _plainPourOff\|_skimsFat\b` 13 → 15 (+:4554 `_poursOffFat` inside
+  `_skimsFatIn`'s pour arm, +:4557 `_skimsTheFat`'s doc — closer 1's linear
+  skim arm; `_skimsFatIn`'s own read at :4546): :4533 :4535 :4538 :4546
+  :4554 :4557 :4577 :4578 :4579 :23019 :23087 :23487 :23574 :23706 :23707. Outside it, unchanged (reported): `_pansWiped` in
+  `_panFatLines` and `pourOffFatSentence`. Corpus: the step-text scan for a
+  negation word before an act verb — `grep -h '^  text:' recipes/*.yaml |
+  grep -oiE "(\bnot|n't|n’t|\bnever|\bno need to|\bavoid|\bwithout|\brefrain
+  from) (skim|pour|spoon|drain|discard|wip)\w*( \w+){0,2}" | sort | uniq -c`
+  — 8 hits, 1 each: "avoid pouring the syrup", "not discard liquid in", "not
+  discard water", "not drain" (1137's "(do not drain)", object-less), "not
+  drain the beans", "not pour over chicken", "not skim the fat" (0492),
+  "without discarding parchment" — only 0492's carries the act's own object,
+  and it reads as before.
+- **U2 — the written share's number classes (salt_shared).**
+  `_recipeShare` reads a vulgar fraction (`_num`), an ASCII fraction (the
+  mixed "1 1/2" in the same alternation) and a decimal; `writesShare` also
+  matches any numeric-looking token before "recipe" (`_shareToken`), and
+  `shareReaderOf` reads such an unreadable written share as NO share in every
+  arm. `_num` (SERVES / MAKES) is untouched. 0184|3 re-texted, A9 (amounts
+  [count '1']) and WB (none): '(1/2 recipe)' / '(0.5 recipe)' 0.5, 728.35 g,
+  the GET routed 212.83 kcal (base 1.0, 1,456.7 g, 425.67); '(1.5 recipes)'
+  1.5, 2,185.05 g, 638.5; '(1e9 recipes)' `not_routed` `no_share` (base the
+  whole batch). '(0.00001 recipe)' reads 0.00001 (0.0146 g): validShare's
+  (0, 100] is the one predicate (stated). Reach — `grep -h 'raw:'
+  recipes/*.yaml | grep -E '\(\s*[0-9½⅓¼⅔¾⅛⅜⅝⅞.,/e+-]+\s*recipes?\b'`: 3
+  lines, every one "¼ cup Sauce Base (½ recipe; recipe follows)" — none the
+  new classes read.
+- **U3 — the 500 path.** shelf_static threw on a malformed
+  If-Modified-Since ('garbage', '', a '+0000' date) and an int64-overflowing
+  Range — a bare text/plain 500 outside every header. The static arm's
+  validators (`staticFileValidators`, web_app.dart) strip If-Modified-Since
+  (U4) and drop a Range not matching `^bytes=\d{0,15}-\d{0,15}$`; and
+  `buildOutermostMiddleware` catches any error nothing below caught: the
+  uniform 500 envelope (`errorResponse`, the error middleware's builder) with
+  a fresh request id (`newRequestId`) in the body and `X-Request-Id`, logged
+  SEVERE like errorHandler, through securityHeaders and the no-cache branch.
+  Recorded, not changed (U13): `bytes=9999999-` past EOF answers 200 with the
+  whole body (shelf_static's `start > end`).
+- **U4 — a strong ETag on the static arm.** For a file the static arm serves
+  (resolved as shelf_static resolves it), `staticFileValidators` sets
+  `ETag: "<md5>"` (hashed once per RESOLVED path + mtime + size — one map
+  entry per file of the root, whatever the URL's slash spelling: closer 1),
+  answers
+  `If-None-Match` itself on GET and HEAD alike (match → 304 with the ETag;
+  mismatch → the bytes; the WEAK comparison of RFC 7232 §3.2 — a proxy's
+  `W/"…"` matches: closer 2; HEAD's half pinned: closer 3). Only a regular
+  file whose real path lies inside the root's real path is such a file
+  (closer 4): a symlink out of the root carries no ETag and never 304s (no
+  hash of an outside file, no If-None-Match oracle), one inside shares its
+  target's ETag; a directory and a missing public dir pass through to the
+  cascade untouched (never a 500).
+  and strips `If-Modified-Since` before shelf_static (RFC 7232 §6): a client
+  holding a NEWER Last-Modified than a rolled-back file (an image-tag
+  rollback, `cp -p`, a restore) got 304 and kept the newer bundle; now it gets
+  the new bytes. Last-Modified is informational. `/` and the SPA fallback are
+  unchanged (no file of the static arm). `buildOutermostMiddleware` takes
+  `publicDir` (default 'public', the generated handler's).
+- **U5 — the images route pinned; two headers deleted.** The real images
+  route's `private, max-age=86400` (200 and 304) is pinned through the route
+  itself (images_from_url_http_test); routes/index.dart's and spaFallback's
+  own `no-cache` are deleted — the outermost seam is their one source.
+- **U7 — multi-value headers kept.** dart_frog's `copyWith(headers:)` is
+  shelf's merging `change`, so the `...response.headers` spreads in
+  securityHeaders and the no-cache branch (which joined two Set-Cookie into
+  "a=1,b=2") are deleted.
+- **U8 — the apply's memo: the stale arm is unreachable (closer 2,
+  verify2 D4).** The fixer's probe (0158|10 / 0154|8 picked onto 0154#Giblet
+  Pan Gravy) is a NON-TEST: `recipeReach` returns [] for a SECTION child
+  (v44 S9 a), so it applied 0/0 (pick and share, 4 of 4 — verify2). The
+  reachable form, by reading: in `applyRecipeToOthers` the shared memo's
+  `childNutrition` is read only for the picked [childId] (each target row is
+  `derivedFor`'d with `childRecipeId: childId`); each target's totals write is
+  `recomputeTotalsResolving`, which takes no memo (its own reads). A stale
+  read needs [childId]'s own row rewritten mid-loop — [childId] a target,
+  i.e. the child holding a routed row of the picked key (a self-route; a
+  recipe is never its own child). On snapshot 32 0 such rows: `SELECT …
+  FROM ingredient_matches a JOIN ingredient_matches b ON b.host_id =
+  host(a.child_recipe_id) AND b.item_key = a.item_key` hits only section
+  children (each its own host's line, reaching nothing); and no pair of
+  targets of one non-section key where one routes to the other (0 rows; the
+  multi-target keys: classic tart dough 3, double-crust pie dough 4, graham
+  cracker crust 3). No code change; the docstring states this.
+- **U9 — sw13, the sweep of the two arms GATE-P never ran** (README row):
+  (a) the recipe-pick apply per routed key (pick / share), (b) the decided
+  multi-part hold per part. 170 combos (128 + 42), 0 divergent at eb9614c,
+  5e6b4d7 and v106 (the line sets identical); its own negative 23 divergent.
+- **Docs / titles:** U10 the apply's "once" comment and the v105 U3 test
+  title ("once per request on the apply's read; the totals write rescans once
+  per target", 21 / 8); U11 grams.dart's unsourced "125 g/cup" comparison in
+  `_cutForm`'s doc deleted.
+- **Pins** (apps/server/test/nutrition_v106_test.dart, 51 tests; every
+  synthesized input stated with its corpus source): U1 28 (8 sibling
+  negations on 1171 bulalo's real K1 sentence, 4 mixed sentences keeping the
+  real skim, 13 on the REAL 0351 |20 through `_panFactsOf` — the controls,
+  the siblings, the mixed pour-off / wipe kept, the wipe and its negation,
+  the partial — 0357's real discard and its negation, `defatsSentence` ×7,
+  0224's braise pair on 170827); U2 14 (0184|3, both arms); closer 1 3 (the
+  linear skim arm against its regex on a 4,000-sentence fuzz, a real skim
+  beside a forbidden pour-off of the fat on 1171's K1 — the skim arm's own
+  gate, unpinned before — and the cap shape); closer 2 6 (on 1171's K1: a forbidden skim beside a
+  fat separator / a pour-off of the fat → true / {0}, base false / {}; the
+  qualifiers any / excess / of / off each forbidding: "(do not pour off any
+  fat)", "… excess fat", "… all of the fat", "(do not skim off the fat)" →
+  false / {}); servings_parser_test +12 (U2);
+  static_asset_headers_test +13 (U3 ×3, U4 ×2, U7, closer 2 a weak
+  `W/"<etag>"` → 304, closer 1 ×3: a slash
+  spelling answers the one entry's ETag, `If-None-Match: *` → 304, a POST
+  with a matching ETag → 200 with the bytes, never 304; closer 3 in place:
+  HEAD + `If-None-Match` of the ETag and of `W/"<etag>"` → 304 with the
+  ETag, and the Range START field's 15-digit bound — `bytes=<20 digits>-`
+  and `bytes=<20 digits>-3` → 200 with the whole body; closer 4 ×3, STATED
+  synthesized: a symlink `public/leak.txt` → an outside 'TOP SECRET' → the
+  routes arm's 404 envelope with no ETag, and `If-None-Match` of that
+  file's md5 → still the 404, no ETag, while `public/alias.txt` →
+  `public/real.txt` → 200 with /real.txt's ETag; `GET /assets` and
+  `/assets/` (a directory) → the SPA shell's 200, no ETag; a missing
+  `publicDir` → `GET /api/v1/x` 200 'api'); images_from_url_http_test +1 (U5); the app's U15 pin extended in
+  place (U6). RE-PINS (stated in place): static_asset_headers_test's
+  If-Modified-Since request answers 200 (was 304 — the ruled strip);
+  middleware_test's chain-only SPA fallback carries no Cache-Control (was
+  `no-cache` — its own header deleted, U5). Every existing negation pin
+  (v101 U7, v104 U5, v105 U5's 15) passes unchanged.
+- **Mutants** (each on a snapshot copy, anchor count 1, restored by copy +
+  cmp), every one killed by a VALUE: U1 each negation word dropped (never,
+  avoid, refrain from, no need to — true for false; `without` survives v106's
+  pins and dies on v105 U5's 'without pouring off the fat'), each act's
+  object dropped (fat ×2, oil {10} for {}, skillet {20} for {}), each
+  reader's call removed (skim / pour in `_skimsFatIn`, `defatsSentence`, the
+  discard, pour and wipe arms), the object-blind spelling (object → `\w+`:
+  {} for {20}); U2 the ASCII and decimal alternatives (confirmed / null for
+  auto / 0.5), `_shareToken` (auto 1.0 1,456.7 for `no_share`), the mixed
+  form (`writesShare` false for true on "(1 1/2 recipes"), the unread-written-share return (0.125 for null — servings_parser);
+  U3 the Range drop (500 for 200), the catch narrowed (text/plain for JSON);
+  U4 the IMS strip (304 for 200 on the rollback), the INM comparison
+  inverted ((200, the bytes) for (304, '')), the cache keyed on path alone (304 / the old ETag after a
+  same-size rewrite), the ETag never set (the header null — the pins' `!` read throws); U5 the route's header (null for
+  `private, max-age=86400`); U6 `recipe: true` / `false` / `offer.child !=
+  null` (record inequality); U7 each spread re-added (['a=1,b=2'] for
+  ['a=1', 'b=2']). Closer 1: the cache keyed on the unresolved path again
+  (the new ETag for the old on '//same.js'), the INM `*` arm dropped (200
+  for 304), the GET / HEAD gate dropped (304 for a POST's 200), the skim
+  arm's call dropped (false for true), its order dropped (`allMatches(p)`:
+  true for false on "fat …; skim …"), its period split on ';' (false for
+  true); the regex restored ahead of the two finds is killed by the cap
+  pin's clock RATIO (865 ms for < 440 ms — STATED: one regex find has no
+  step count). Closer 2: the W/ strip dropped ((200, the bytes) for (304,
+  '')), `_skimsFatIn`'s separator arm dropped and its pour arm dropped (false
+  for true), each of any / excess / of / off dropped from `_negatedAct` (true
+  for false). Closer 3: the method gate's HEAD half (`request.method ==
+  HttpMethod.head) &&` → `false) &&`: (200, the ETag) for (304, the ETag)),
+  the Range START bound (`^bytes=\d{0,15}-` → `^bytes=\d{0,25}-`: (500, the
+  envelope) for (200, the bytes)). Closer 4 (fileOf's gates): the
+  containment (`real.startsWith('$root…') ? File(real) : null` → `File(real)`:
+  the ETag `"4084d3aa…"` = md5('TOP SECRET') on the 404 for none), the
+  regular-file gate (`typeSync(path) != FileSystemEntityType.file` → `==
+  FileSystemEntityType.notFound`: (500, the envelope) for (200, the shell)
+  on /assets), the missing-root catch (`on FileSystemException` → `on
+  FormatException`: (500, the envelope) for (200, 'api')).
+- **Cost** (base eb9614c vs v106): `defatsSentence` on 10,000-character
+  sentences (STATED synthesized): quiet 487 → 268 µs, every window a negated
+  other-object act 240 → 217 µs (base false, v106 true), the unmatched
+  negation run 19 → 18 µs — `_forbids` is 8 native finds (base 18) and a
+  regex only past a negation word; every reader family's memo counts
+  unchanged (the v26 cost suite and v100's RULE C shallow-fry caps pass as
+  pinned). The skim arm of `_skimsFatIn` (`_skimsTheFat`): the first skim
+  word, then `\bfat\b` past it, per period-free piece — linear (the regex
+  `\bskim\w*\b[^.]*\bfat\b` it replaces was quadratic: 10k chars 54.7 ms,
+  ×4 per doubling); at the reader cap (120 distinct 10k-char "Do not pour off
+  the fat <skims>" steps) `fatSkimmedOf` base 22 → closer 1 24 ms (the fixer's
+  regex 94 ms); the pre-existing `_skimsFat` gate's own worst ("Fat <skims>",
+  105 ms) is base's, unchanged. U4: one stat per static request, the md5
+  once per resolved path + mtime + size (the ~10 MB bundle hashed once per
+  deploy; 50 distinct slash spellings of an 8 MB file 1,552 → 45 ms).
+- **Gate** (fix106 on eb9614c; fresh copies of snapshot 32 md5 ffd1cf26…,
+  main and `--reverse-parents` cmp-identical): rows, recs, sections, calls
+  (0) and notes byte-identical to v105_*; buckets byte-identical; staleAfter
+  0, 0 person rows; the salt_shared corpus golden byte-identical. Suites:
+  server +3,267 ~4 (base +3,202 ~4 + the 65: v106 51, static
+  headers 13, images 1), salt_shared +235 (+223 + 12), app +669 (U6 extends a
+  test in place); analyze ×3 clean. GATE-P on snapshot 32 (12 shards, calls 0
+  every settle), base eb9614c == v106: sw5 31,713, sw6
+  37,400, sw7 1,872, sw8 56,868, sw8r 5,358, sw9 130 — 0 divergent, 0
+  refused; sw10 156 bare and typed, 0 divergent; sw11 39,760 combos, 200
+  divergent, all `calls-only` (14,070 refused); sw12 129 combos, 52 (the 47
+  line-held rows and 5 routed pie parents, outside U7) — v105's figures, every
+  sweep's line set identical base vs tip; sw13 170 combos, 0 divergent at
+  eb9614c, 5e6b4d7 and v106 (identical line sets), its own negative 23. What each sweep exercises
+  (stated): sw5–sw8 / sw8r the M52 plan row's Confirm / pick / skip / typed
+  grams and their orders; sw9 the cold-cache food apply (`apply_to_all` on a
+  food); sw10 the Confirm round trip; sw11 picking another candidate; sw12
+  the food decision's reach vs the compute's decided arm; sw13 (NEW) the
+  recipe-pick apply and the decided multi-part hold. sw5–sw12 exercise
+  neither the U1 negation readers (corpus text only — the replay and the
+  pins) nor the U3 / U4 static arm (HTTP — static_asset_headers_test).
+- **Deploy note**: no migration; matcherVersion unchanged, so no stamp moves
+  — no stale sweep, 0 requests, the digest unchanged at 763,726.73. Every
+  static file now carries a strong ETag and revalidates by it (a 304 on a
+  matching ETag, or the new bytes; If-Modified-Since is ignored there, so a
+  rolled-back bundle is served fresh). The deploy kit's bundle_check (1) and
+  (6b) changes (U12, U4's kit half) are the orchestrator's.
+
 **Matcher v105 (batch fix105; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 079/080 over v104, union U1–U14, the spec
 .claude/diag/2026-11-06/review079/union_S.md, the rulings in fix105/brief.md
@@ -5274,9 +5510,12 @@ to the v104 set).**
   seam wrapping the static arm) gives every response that names no
   `Cache-Control` `no-cache`: /main.dart.js and /flutter_bootstrap.js (base:
   Last-Modified only — a returning browser reused an old bundle from its
-  heuristic cache for ~10 % of the file's age) now revalidate — a 304 on
-  If-Modified-Since or the new bytes; `/` and the SPA fallback keep their own
-  `no-cache`, the images route its `private, max-age=86400`. Nothing in the
+  heuristic cache for ~10 % of the file's age) now revalidate — v106
+  (U4): a 304 on a matching ETag, or the new bytes; Last-Modified is
+  informational (here, a 304 on If-Modified-Since kept a NEWER cached bundle
+  after an older-mtime rollback); `/` and the SPA fallback keep their own
+  `no-cache` (v106 U5: the outermost one), the images route its `private,
+  max-age=86400`. Nothing in the
   bundle is hashed (routes/index.dart's comment corrected).
 - **Pins only:** U7 (the app's U15 pin: every ApplyOffer field of the moved
   copy by record equality), U10 (`_inBatches`' remaining-piece word count:
@@ -5336,7 +5575,9 @@ to the v104 set).**
   Flutter bundle is rebuilt into apps/server/public at deploy (the app's
   change here is a test only); every served file without its own
   Cache-Control now goes out `no-cache`, so a returning browser revalidates
-  each (a 304 or the new bytes) instead of running a cached bundle.
+  each instead of running a cached bundle (v106 U4: by the ETag — a 304 on a
+  match, or the new bytes; the If-Modified-Since 304 was false after a
+  rollback).
 
 **Matcher v104 (batch fix104; matcherVersion 96 → 97 — the fixes of dual-fleet
 review Run 077/078 over v98–v103, union U1–U25, the spec

@@ -269,8 +269,19 @@ final RegExp _yieldMeasure = RegExp(
         );
 }
 
-/// "(½ recipe" on a reference line: the share it writes itself.
-final RegExp _recipeShare = RegExp('\\(\\s*($_num)\\s+recipes?\\b');
+/// "(½ recipe" on a reference line: the share it writes itself — v106 U2:
+/// a vulgar fraction ([_num]), an ASCII fraction ("(1/2 recipe", the
+/// corpus's own `item:` spelling of 0184|3; "(1 1/2 recipes") or a decimal
+/// ("(0.5 recipe"). [_num] itself (SERVES / MAKES) is untouched.
+final RegExp _recipeShare = RegExp(
+  '\\(\\s*($_num|(?:\\d+\\s+)?\\d+/\\d+|\\d+\\.\\d+)\\s+recipes?\\b',
+);
+
+/// v106 U2: any numeric-looking token written as a share ("(1e9 recipes",
+/// "(.5 recipe") — [writesShare]'s second class: written, read or not.
+final RegExp _shareToken = RegExp(
+  '\\(\\s*[0-9$_fractionChars.,/e+-]+\\s*recipes?\\b',
+);
 
 /// The share of a child recipe a reference line counts (v41, sub-recipe
 /// routing): its own "(½ recipe" wins ("¼ cup Sauce Base (½ recipe; recipe
@@ -284,9 +295,12 @@ double? parseShare(String raw, List<Amount> amounts, String? childServings) =>
 
 /// Whether [raw] writes its own share — the "(½ recipe" [parseShare]'s
 /// written arm reads, valid or not (v104 U4: an out-of-range written share
-/// is no share, never the whole batch of an amount-less line).
+/// is no share, never the whole batch of an amount-less line). v106 U2: a
+/// numeric-looking token too ([_shareToken]) — one [_recipeShare] cannot
+/// read is no share ([shareReaderOf]), never the whole batch.
 bool writesShare(String raw) =>
-    raw.contains('recipe') && _recipeShare.hasMatch(raw);
+    raw.contains('recipe') &&
+    (_recipeShare.hasMatch(raw) || _shareToken.hasMatch(raw));
 
 /// A child share every reader may store (v103 U1): finite, above 0, at
 /// most 100 recipes — the match-override PUT's own bound, spelled once. The
@@ -309,6 +323,9 @@ double? Function(String? childServings) shareReaderOf(
   if (written != null) {
     final share = parseQuantity(written.group(1)!);
     return (_) => validShare(share) ? share : null;
+  }
+  if (writesShare(raw)) {
+    return (_) => null;
   }
   for (final amount in amounts) {
     if (amount.unit == 'recipe' || amount.unit == 'recipes') {

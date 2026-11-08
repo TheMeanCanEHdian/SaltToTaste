@@ -4536,9 +4536,43 @@ final RegExp _skimsFat = RegExp(
 );
 
 /// Whether sentence [s] skims fat ([_skimsFat]) and does not forbid the
-/// skim ([_negatesSkim]: 0492's "(do not skim the fat from the liquid)") —
+/// skim (0492's "(do not skim the fat from the liquid)") —
 /// v104 U5: the one guard both readers ([_fatSkimmed], [_fatLinesOf]) read.
-bool _skimsFatIn(String s) => !_negatesSkim(s) && _skimsFat.hasMatch(s);
+/// v106 U1: per arm, each forbidden only with its own object ([_forbids]):
+/// the skim arm by a negated skim of the fat, the pour-off arm by a negated
+/// pour / spoon / drain-off of it — "skim excess fat … (do not pour off the
+/// broth)" skims.
+bool _skimsFatIn(String s) {
+  if (!_skimsFat.hasMatch(s)) {
+    return false;
+  }
+  final skim = _forbids(s, _forbidsSkim);
+  final pour = _forbids(s, _forbidsPourOff);
+  return !skim && !pour ||
+      !skim && _skimsTheFat(s) ||
+      s.contains('fat separator') ||
+      !pour && _poursOffFat.hasMatch(s);
+}
+
+/// [_skimsFat]'s skim arm alone (`\bskim\w*\b[^.]*\bfat\b`,
+/// [_skimsFatIn]'s per-arm read) as two finds per period-free piece — the
+/// regex is quadratic on a long sentence of skim words (Run 064's class;
+/// v106 closer 1 D3): `[^.]*` never crosses a period, and a fat after a
+/// later skim word is after the first, so the first skim word and a
+/// `\bfat\b` past its end give the same answer, linear. Pinned against the
+/// regex on a fuzz and at the cap (nutrition_v106_test).
+bool _skimsTheFat(String s) => s
+    .split('.')
+    .any(
+      (p) => switch (_skimWord.firstMatch(p)) {
+        final m? => _fatAlone.allMatches(p, m.end).isNotEmpty,
+        null => false,
+      },
+    );
+
+/// [_skimsTheFat] for the tests' fuzz and cap pins.
+@visibleForTesting
+bool skimsTheFatForTest(String s) => _skimsTheFat(s);
 
 /// [_skimsFat]'s K2 arm: a plain pour-off of fat or grease — v100 (M97
 /// R5) reads it alone ([_poursOffFat]).
@@ -8448,7 +8482,14 @@ class ResolverMemo {
   /// The child recipe [id]'s stored totals, read ONCE per request or
   /// compute (F14): the row the compute writes and the totals it counts
   /// read the same child (no write to it can land between them in one
-  /// compute: a recipe is never its own child).
+  /// compute: a recipe is never its own child). v106 U8: one request's
+  /// memo is also handed across every target of `applyRecipeToOthers`
+  /// (v105 U3); there it reads [childNutrition] only for the picked child
+  /// (each target derived onto it), and each target's totals write
+  /// ([recomputeTotalsResolving]) takes no memo. A stale read needs the
+  /// picked child's own row rewritten mid-loop — the child a target, i.e.
+  /// holding a routed row of the picked key (a self-route): 0 rows on
+  /// snapshot 32 ([recipeReach]: a section child reaches nothing). sw13.
   RecipeNutritionRow? childNutrition(String id) =>
       _children.putIfAbsent(id, () {
         childNutritionReads++;
@@ -16496,35 +16537,52 @@ bool defatsSentence(String s) {
           .split('.')
           .any(
             (p) =>
-                !_negatesSkim(p) &&
+                !_forbids(p, _forbidsSkim) &&
                 _skimWord.hasMatch(p) &&
                 _fatAlone.hasMatch(p),
           );
 }
 
-/// v101 (Run 073 S1, U7): a piece that forbids the skim ("(do not skim the
-/// fat from the liquid)", 0492) — substring tests, linear.
-/// v105 U5: and a piece that forbids the pour-off — "(do not pour off the
-/// fat)", "don't spoon off", "without draining off" — or "never skim".
-bool _negatesSkim(String piece) =>
-    piece.contains('not skim') ||
-    piece.contains("n't skim") ||
-    piece.contains('n’t skim') ||
-    piece.contains('without skimming') ||
-    piece.contains('no need to skim') ||
-    piece.contains('never skim') ||
-    piece.contains('not pour off') ||
-    piece.contains("n't pour off") ||
-    piece.contains('n’t pour off') ||
-    piece.contains('not spoon off') ||
-    piece.contains("n't spoon off") ||
-    piece.contains('n’t spoon off') ||
-    piece.contains('not drain off') ||
-    piece.contains("n't drain off") ||
-    piece.contains('n’t drain off') ||
-    piece.contains('without pouring off') ||
-    piece.contains('without spooning off') ||
-    piece.contains('without draining off');
+/// v106 U1 (Run 081/082 union U1): whether [piece] forbids [act] ON ITS
+/// OWN OBJECT — the one negation helper every step reader reads
+/// ([_skimsFatIn], [defatsSentence], [_panFactsOf]'s `discarded`). v101 /
+/// v105's 18 sentence-level substrings were object-blind ("skim excess fat
+/// … (do not pour off the broth)" lost a real skim) and incomplete ("never
+/// pour off the fat" read as a pour-off). Native finds first (no negation
+/// word: no regex); each act one bounded regex, linear per piece.
+bool _forbids(String piece, RegExp act) =>
+    (piece.contains('not') ||
+        piece.contains("n't") ||
+        piece.contains('n’t') ||
+        piece.contains('never') ||
+        piece.contains('no need') ||
+        piece.contains('avoid') ||
+        piece.contains('without') ||
+        piece.contains('refrain')) &&
+    act.hasMatch(piece);
+
+/// [_forbids]' acts: a negation word, the verb (its -ing form too), the
+/// determiners / qualifiers allowed between, the act's own object. "do not
+/// pour off all the fat" is forbidden (no discard read — stated, reach 0).
+RegExp _negatedAct(String verb, String object) => RegExp(
+  r"(?:\bnot|n't|n’t|\bnever|\bno need to|\bavoid|\bwithout|"
+  r'\brefrain from) (?:'
+  '$verb)\\b(?: (?:the|any|all|of|excess|off|out))* '
+  '(?:$object)\\b',
+);
+final RegExp _forbidsSkim = _negatedAct(
+  'skim(?:ming)?',
+  'fat|grease|drippings',
+);
+final RegExp _forbidsPourOff = _negatedAct(
+  '(?:pour|spoon|drain)(?:ing)? off',
+  'fat|grease|drippings',
+);
+final RegExp _forbidsDiscard = _negatedAct(
+  'discard(?:ing)?',
+  'oil|shortening|lard|fat',
+);
+final RegExp _forbidsWipe = _negatedAct('wip(?:e|ing)', 'skillet|pan|pot');
 
 /// v76 (batch M79, Q10 (b′); the planner's C8): the dry-heat cooking
 /// [recipe]'s own steps print — 'broiled' when a sentence heats a grill
@@ -19274,8 +19332,9 @@ applyRecipeToOthers(
             clearHold: true,
             clearParts: true,
           ),
-          // v105 U3: the request's one memo — the child decoded and
-          // scanned once, never once per target (v104 U10's class).
+          // v105 U3: the request's one memo — once per request on the
+          // apply's read; the totals write rescans once per target (v106
+          // U10: 21 host decodes / 8 scans for 3 targets at the caps).
           references: memo,
         )).row;
         if (!marked) {
@@ -23505,15 +23564,23 @@ _PanFacts _panFactsOf(String s) {
     away: away,
     nowEmpty: s.contains('now-empty') || s.contains('now empty'),
     reused: _pourOffAllButFat.hasMatch(s) || _panReused.hasMatch(s),
+    // v105 U5 / v106 U1: a forbidden discard, pour-off or wipe discards
+    // nothing — each arm forbidden only by its own verb on its own object
+    // ([_forbids]: "Wipe out the skillet (do not skim the sauce)" wipes).
     discarded:
-        _fats.values.any((f) => f.discards.hasMatch(s)) ||
-        // v105 U5: a forbidden pour-off discards nothing — the negation
-        // half of [_skimsFatIn] (its skim arm is no discard) over both
-        // pour-off arms ([_pansWiped]'s "pour off the fat" too).
-        (!_negatesSkim(s) &&
-            (_pansWiped.hasMatch(s) ||
-                ((s.contains('fat') || s.contains('grease')) &&
-                    _poursOffFat.hasMatch(s)))),
+        (_fats.values.any((f) => f.discards.hasMatch(s)) &&
+            !_forbids(s, _forbidsDiscard)) ||
+        ((s.contains('fat') || s.contains('grease')) &&
+            _poursOffFat.hasMatch(s) &&
+            !_forbids(s, _forbidsPourOff)) ||
+        _pansWiped
+            .allMatches(s)
+            .any(
+              (m) => !_forbids(
+                s,
+                m[0]!.startsWith('pour') ? _forbidsPourOff : _forbidsWipe,
+              ),
+            ),
     cooks: _cooksInPan.hasMatch(s),
   );
 }

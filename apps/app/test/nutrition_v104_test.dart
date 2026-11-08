@@ -379,5 +379,41 @@ void main() {
       recipe: true,
     );
     expect(offerOnReload(confirmed, shifted), at4(confirmed));
+    // v106 U6 (Run 081/082 S6 / O6): the two shapes the cubit builds that
+    // the offers above are not (nutrition_cubit.dart: recipe = child !=
+    // null || the row routed) — STATED synthesized field values on the
+    // same moved line: a FOOD pick (recipe false, child null, fdcId set)
+    // and a routed-row Confirm (recipe true, child null). Each kills
+    // `recipe: true`, `recipe: false` or `recipe: offer.child != null`.
+    final ApplyOffer food = (
+      position: 3,
+      raw: offer.raw,
+      label: offer.label,
+      fdcId: 171688,
+      confirmed: false,
+      grams: null,
+      others: 1,
+      lines: 1,
+      child: null,
+      share: null,
+      childSection: null,
+      recipe: false,
+    );
+    expect(offerOnReload(food, shifted), at4(food));
+    final ApplyOffer routedConfirm = (
+      position: 3,
+      raw: offer.raw,
+      label: offer.label,
+      fdcId: null,
+      confirmed: true,
+      grams: null,
+      others: 1,
+      lines: 1,
+      child: null,
+      share: null,
+      childSection: null,
+      recipe: true,
+    );
+    expect(offerOnReload(routedConfirm, shifted), at4(routedConfirm));
   });
 }

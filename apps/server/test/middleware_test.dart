@@ -310,7 +310,11 @@ void main() {
       expect(response.statusCode, HttpStatus.ok);
       expect(response.headers.contentType?.mimeType, 'text/html');
       expect(body, contains('SaltToTaste'));
-      expect(response.headers.value('cache-control'), 'no-cache');
+      // RE-PIN (v106 U5): was 'no-cache' — the fallback's own header is
+      // deleted; buildOutermostMiddleware (not in this chain-only harness)
+      // is the single source, pinned on the real cascade in
+      // static_asset_headers_test.
+      expect(response.headers.value('cache-control'), isNull);
       expect(
         response.headers.value('content-security-policy'),
         contains("default-src 'self'"),

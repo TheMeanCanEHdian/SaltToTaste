@@ -458,4 +458,51 @@ void main() {
       expect(validShare(1e-9), isTrue);
     });
   });
+
+  // v106 U2 (Run 081/082 S2 / O3): the written share's two number classes.
+  // `writesShare` matched only `_num` (digits + a vulgar fraction), so a
+  // line writing its share as '(1/2 recipe)' — the corpus's own `item:`
+  // spelling of 0184|3, "Sauce Base (1/2 recipe; recipe follows)" — or
+  // '(0.5 recipe)' wrote none and read the whole batch. STATED synthesized
+  // (negative path: every corpus `raw:` line writes '½') on 0184|3's raw
+  // "¼ cup Sauce Base (½ recipe; recipe follows)". '(0.00001 recipe)' is a
+  // share (validShare's (0, 100] — 1e-9 is pinned valid above: stated).
+  group('v106 U2 the written share', () {
+    const cup = [
+      Amount(
+        measure: Measure.volume,
+        quantity: '1/4',
+        unit: 'cup',
+        primary: true,
+      ),
+    ];
+    for (final (written, share) in const [
+      ('(½ recipe', 0.5),
+      ('(1/2 recipe', 0.5),
+      ('(0.5 recipe', 0.5),
+      ('(1.5 recipes', 1.5),
+      ('(1 1/2 recipes', 1.5),
+      ('(0.00001 recipe', 0.00001),
+      ('(1e9 recipes', null),
+      ('(1/0 recipe', null),
+      ('(0.0 recipe', null),
+      ('(1000000000000 recipes', null),
+      ('(.5 recipe', null),
+    ]) {
+      test('"$written; recipe follows)" writes a share; reads $share', () {
+        final raw = '¼ cup Sauce Base $written; recipe follows)';
+        expect(writesShare(raw), isTrue);
+        expect(parseShare(raw, cup, 'MAKES ABOUT 2 CUPS'), share);
+      });
+    }
+    test('no written share: none written', () {
+      for (final raw in const [
+        '¼ cup Sauce Base (recipe follows)',
+        '1 recipe double-crust pie dough',
+        '1 cup Spicy Mayonnaise (see recipe)',
+      ]) {
+        expect(writesShare(raw), isFalse, reason: raw);
+      }
+    });
+  });
 }

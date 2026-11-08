@@ -13,10 +13,6 @@ Response onRequest(RequestContext context) {
       body: index.readAsBytesSync(),
       headers: {
         HttpHeaders.contentTypeHeader: 'text/html; charset=utf-8',
-        // The shell revalidates; so does every static file (nothing in the
-        // bundle is hashed — buildOutermostMiddleware gives each response
-        // without its own Cache-Control `no-cache`, v105 U4).
-        HttpHeaders.cacheControlHeader: 'no-cache',
       },
     );
   }

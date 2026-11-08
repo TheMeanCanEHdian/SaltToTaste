@@ -292,8 +292,10 @@ void u2() {
 /// "1 recipe double-crust pie dough" × 400, routed to the real 0972.
 void u3() {
   test(
-    'U3: a recipe pick applied to 1,199 routed lines decodes the child '
-    'once — hostDecodes and madeFromScans exact, under the backstop',
+    'U3: a recipe pick applied to 1,199 routed lines reads the child once '
+    "per request on the apply's read; the totals write rescans once per "
+    'target (21 / 8) — hostDecodes and madeFromScans exact, under the '
+    'backstop',
     () async {
       final db = wp.tempDb();
       final dough = loadCorpusRecipe('0972-basic-double-crust-pie-dough.yaml');

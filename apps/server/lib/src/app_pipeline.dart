@@ -18,6 +18,7 @@ import 'package:salt_server/src/nutrition/bulk_job.dart'
     show BulkNutritionProvider;
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
+import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 final Logger _log = Logger('proxy');
 
@@ -43,20 +44,51 @@ final Logger _log = Logger('proxy');
 /// v105 U4: and every response that names no `Cache-Control` gets
 /// `no-cache` — the static arm's files (`/main.dart.js`,
 /// `/flutter_bootstrap.js`: unhashed, Last-Modified only) were reused from a
-/// browser's heuristic cache after a deploy; now each revalidates (a cheap
-/// 304 on If-Modified-Since, or the new bytes). A response that names its
-/// own (`/`, the SPA fallback, the images route) keeps it.
-Handler buildOutermostMiddleware(Handler handler) {
-  final secured = securityHeaders()(handler);
+/// browser's heuristic cache after a deploy; now each revalidates (v106: a
+/// 304 on a matching ETag, or the new bytes). A response that names its own
+/// (the images route) keeps it; `/` and the SPA fallback name none (v106
+/// U5) and take this one.
+///
+/// v106: the static arm's files carry a strong `ETag` and are revalidated
+/// by it ([staticFileValidators], U4 — a 304 on a matching ETag, or the new
+/// bytes; Last-Modified is informational); an error nothing below caught
+/// is the uniform 500 envelope with a fresh request id, through the same
+/// header path (U3 — was shelf's bare text/plain 500 outside every
+/// header); multi-value headers are kept (U7: copyWith merges).
+Handler buildOutermostMiddleware(
+  Handler handler, {
+  String publicDir = 'public',
+}) {
+  final validated = staticFileValidators(publicDir: publicDir)(handler);
+  final secured = securityHeaders()((context) async {
+    try {
+      return await validated(context);
+    } catch (error, stackTrace) {
+      final requestId = newRequestId();
+      _log.severe(
+        RequestLogMessage(
+          'Unhandled error on ${context.request.method.value} '
+          '${loggedPath(context.request.uri.path)}',
+          requestId,
+        ),
+        error,
+        stackTrace,
+      );
+      return errorResponse(
+        statusCode: HttpStatus.internalServerError,
+        code: ApiErrorCodes.internal,
+        message: 'Internal server error.',
+        requestId: requestId,
+        headers: {requestIdHeader: requestId},
+      );
+    }
+  });
   return (context) async {
     final response = await secured(context);
     return response.headers.containsKey(HttpHeaders.cacheControlHeader)
         ? response
         : response.copyWith(
-            headers: {
-              ...response.headers,
-              HttpHeaders.cacheControlHeader: 'no-cache',
-            },
+            headers: {HttpHeaders.cacheControlHeader: 'no-cache'},
           );
   };
 }

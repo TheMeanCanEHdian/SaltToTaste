@@ -26,7 +26,7 @@ class RequestId {
 Middleware requestIdProvider() {
   return (handler) {
     return (context) async {
-      final id = _generateRequestId();
+      final id = newRequestId();
       final response = await handler(context.provide(() => RequestId(id)));
       return response.copyWith(headers: {requestIdHeader: id});
     };
@@ -48,7 +48,8 @@ String? requestIdOf(RequestContext context) {
 
 final Random _random = Random.secure();
 
-String _generateRequestId() {
+/// A fresh request id (also the outermost 500's, v106 U3).
+String newRequestId() {
   final buffer = StringBuffer();
   for (var i = 0; i < 8; i++) {
     buffer.write(_random.nextInt(256).toRadixString(16).padLeft(2, '0'));

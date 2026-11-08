@@ -492,8 +492,8 @@ final RegExp _hardCheeseForm = RegExp(r'\b(grated|shredded)\b');
 /// (about 4 cups)" (Skillet Apple Brown Betty) at v43 Y8's edible yield
 /// (AH-102 item 17, × 0.78) = 132.68 g/cup; any other line keeps the
 /// shredded bundt print's 176.9 g ('granny smith apple' in [_densities]).
-/// v105 U6: "chopped" and "chunk(s)" are the same cut-into-pieces form
-/// (USDA's apple, raw, chopped is 125 g/cup, within 6 %). "sliced" stays at
+/// v105 U6: "chopped" and "chunk(s)" are the same cut-into-pieces form.
+/// "sliced" stays at
 /// the shredded print: FDC 171688's "1 cup slices" portion is on no record
 /// on disk (the fixtures and the snapshot hold 171688 as a search hit only,
 /// no portions) — ponytail: add a slices constant from that record when a

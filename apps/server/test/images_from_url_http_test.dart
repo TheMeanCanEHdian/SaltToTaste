@@ -23,6 +23,7 @@ import '../routes/api/v1/recipes/[id]/images/from_url.dart' as from_url_route;
 import '../routes/api/v1/recipes/[id]/images/store_from_url.dart'
     as store_from_url_route;
 import '../routes/api/v1/recipes/index.dart' as recipes_route;
+import '../routes/images/[source]/[file].dart' as image_route;
 import 'support/corpus.dart';
 
 /// T11 — the success path of `POST .../images/from_url` (and its store-only
@@ -321,8 +322,9 @@ void main() {
 
     /// Asserts the fetch is refused AND that the refusal cost at most one
     /// already-buffered chunk of the body.
-    Future<void> expectDropped(_FakeResponse Function(Stream<List<int>>) build)
-    async {
+    Future<void> expectDropped(
+      _FakeResponse Function(Stream<List<int>>) build,
+    ) async {
       installTransport((url) async => build(body.stream));
       await expectLater(
         fetchImageFromUrl(imageUrlText),
@@ -358,8 +360,7 @@ void main() {
 
     test('an over-long Content-Length is not read', () async {
       await expectDropped(
-        (stream) =>
-            rejectable(stream, contentLength: maxImageBytes + 1),
+        (stream) => rejectable(stream, contentLength: maxImageBytes + 1),
       );
     });
 
@@ -417,6 +418,10 @@ void main() {
       }
       if (path == '/api/v1/recipes') {
         return recipes_route.onRequest(context);
+      }
+      final image = RegExp(r'^/images/([^/]+)/([^/]+)$').firstMatch(path);
+      if (image != null) {
+        return image_route.onRequest(context, image[1]!, image[2]!);
       }
       final fromUrl = RegExp(
         r'^/api/v1/recipes/([^/]+)/images/from_url$',
@@ -535,6 +540,45 @@ void main() {
       expect(response.statusCode, HttpStatus.created, reason: body);
       return jsonOf(body);
     }
+
+    // v106 U5 (Run 081 S5): the REAL images route's own Cache-Control —
+    // its 200 and its 304 — was pinned by no test (the static-headers
+    // harness pinned a stub that returned it). The real corpus photo
+    // placed in the library as the importer lays it out.
+    test(
+      'the images route: 200 and 304 carry private, max-age=86400',
+      () async {
+        Directory(
+          '${config.libraryDir}/atk-tv-2023/images',
+        ).createSync(recursive: true);
+        File(
+          '${config.libraryDir}/atk-tv-2023/images/$corpusImage',
+        ).writeAsBytesSync(heroJpeg);
+        final client = HttpClient();
+        addTearDown(client.close);
+        Future<HttpClientResponse> get([
+          Map<String, String> extra = const {},
+        ]) async {
+          final request = await client.getUrl(
+            baseUri.resolve('/images/atk-tv-2023/$corpusImage'),
+          );
+          auth().forEach(request.headers.set);
+          extra.forEach(request.headers.set);
+          final response = await request.close();
+          await response.drain<void>();
+          return response;
+        }
+
+        final ok = await get();
+        expect(ok.statusCode, HttpStatus.ok);
+        expect(ok.headers.value('cache-control'), 'private, max-age=86400');
+        final again = await get({
+          'if-modified-since': ok.headers.value('last-modified')!,
+        });
+        expect(again.statusCode, HttpStatus.notModified);
+        expect(again.headers.value('cache-control'), 'private, max-age=86400');
+      },
+    );
 
     test('fetchImageFromUrl returns the fetched image verbatim', () async {
       installTransport((url) async => imageResponse(heroJpeg));
