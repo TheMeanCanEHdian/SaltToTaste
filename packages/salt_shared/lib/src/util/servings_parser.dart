@@ -272,15 +272,23 @@ final RegExp _yieldMeasure = RegExp(
 /// "(½ recipe" on a reference line: the share it writes itself — v106 U2:
 /// a vulgar fraction ([_num]), an ASCII fraction ("(1/2 recipe", the
 /// corpus's own `item:` spelling of 0184|3; "(1 1/2 recipes") or a decimal
-/// ("(0.5 recipe"). [_num] itself (SERVES / MAKES) is untouched.
+/// ("(0.5 recipe"). [_num] itself (SERVES / MAKES) is untouched. v107
+/// U2: the ASCII fraction spaced as [parseQuantity]'s own grammar reads it
+/// (`\s*/\s*`: "(1 / 2 recipe" is ½, was the whole batch).
 final RegExp _recipeShare = RegExp(
-  '\\(\\s*($_num|(?:\\d+\\s+)?\\d+/\\d+|\\d+\\.\\d+)\\s+recipes?\\b',
+  '\\(\\s*($_num|(?:\\d+\\s+)?\\d+\\s*/\\s*\\d+|\\d+\\.\\d+)\\s+recipes?\\b',
 );
 
 /// v106 U2: any numeric-looking token written as a share ("(1e9 recipes",
-/// "(.5 recipe") — [writesShare]'s second class: written, read or not.
+/// "(1-2 recipes") — [writesShare]'s second class: written, read or not.
+/// v107 U2: it STARTS with a digit or a fraction (or ".5" — v106's pinned
+/// written "(.5 recipe" kept), a space before "recipe",
+/// any case — "(2-recipe batch" and "(-recipe follows" are no written
+/// share (an amount's share reads), "(1E9 recipes" is one.
 final RegExp _shareToken = RegExp(
-  '\\(\\s*[0-9$_fractionChars.,/e+-]+\\s*recipes?\\b',
+  '\\(\\s*(?:[0-9$_fractionChars]|\\.\\d)[0-9$_fractionChars.,/e+-]*'
+  '\\s+recipes?\\b',
+  caseSensitive: false,
 );
 
 /// The share of a child recipe a reference line counts (v41, sub-recipe

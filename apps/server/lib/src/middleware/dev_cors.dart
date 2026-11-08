@@ -41,9 +41,8 @@ Middleware devCors(ServerConfig config) {
         );
       }
       final response = await handler(context);
-      return response.copyWith(
-        headers: {...response.headers, ..._corsHeaders(context)},
-      );
+      // v107 U9: copyWith MERGES — the spread joined two Set-Cookie values.
+      return response.copyWith(headers: _corsHeaders(context));
     };
   };
 }

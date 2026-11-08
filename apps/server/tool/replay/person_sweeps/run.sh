@@ -1,7 +1,7 @@
 #!/bin/zsh
 # sw4–sw13: settle a fresh snapshot copy, then sweep it in shards (each shard clones the settled DB).
 # usage: run.sh <swN.dart> <tree-root> <snapshot.db> <workdir> <nshards>
-set -u
+set -u; setopt null_glob  # v107: the settled.db* glob may match nothing (zsh's 'no matches found')
 SW=$1; T=$2; SNAP=$3; D=$4; N=$5; mkdir -p $D
 dart compile kernel --packages=$T/.dart_tool/package_config.json $SW -o $D/sw.dill > $D/compile.log 2>&1 || { echo "compile failed: $D/compile.log"; exit 1; }
 rm -f "${D:?}"/settled.db*

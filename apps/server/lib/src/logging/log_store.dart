@@ -135,7 +135,13 @@ String _withError(String message, LogRecord record) {
   if (error != null) {
     // The type is NOT redundant: `StateError.toString()` is "Bad state: …"
     // and names nothing, and triage starts from the type.
-    buffer.write('\n${error.runtimeType}: $error');
+    // v107 U1: the error text is caller-chosen too (an exception can
+    // quote a header): capped like the emitter's text, so it never
+    // displaces the stack below it.
+    buffer.write(
+      '\n${error.runtimeType}: '
+      '${_cap(redactLogMessage('$error'), maxLogTextChars)}',
+    );
   }
   if (stack != null) {
     buffer.write('\n$stack');

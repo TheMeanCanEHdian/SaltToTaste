@@ -11,6 +11,11 @@
 //     caches (the part served) and compute ('served'); compute again ('again'). Per pass: hold, held_on,
 //     derived_seq set, fresh, E. Classes: 'held-on-ne-part' (a no-record hold not naming the dropped part — null when it is the row's own food), 'not-healed'
 //     (served: hold or held_on left, underived, or freshness unlike the decided pass's), 'again-moved' (the third compute writes).
+// (b′) v107 U4 — THE PAIR RULE'S DECIDED PARTIAL: for each auto row whose parts are rule B1's peel plus juice (a part
+//     with role 'juice'), its juice: (b)'s sequence, but the juice ARRIVES through `cachedFood` (the real re-open
+//     path, `unholdOn`) and the row is read before the next compute ('arrived'). Extra classes: 'held-not-no-record'
+//     (the held pass holds no `food_unavailable` / `food_gone` — the base's partial `second_food`), 'not-reopened'
+//     (arrived still derived and fresh). Tags 'P|…'; the (b) combos are unchanged.
 // Base vs tip: the COMBO / ROW lines are diffed (run.sh on each tree). args: settle <snap> <out-db> |
 // sweep <settled-db> <workdir> <shard> <nshards>
 // ignore_for_file: avoid_print, public_member_api_docs, lines_longer_than_80_chars
@@ -138,6 +143,30 @@ List<(String, int, int)> holdPlan(SaltDatabase db) => [
         for (final p in partsOf(r.parts)) (id, r.position, p.fdcId),
 ];
 
+/// (b′) one combo per (auto row with a 'juice' part, that part).
+List<(String, int, int)> pairPlan(SaltDatabase db) => [
+  for (final id in bulkScopeIds(db, BulkScope.all))
+    for (final r in db.ingredientMatchesFor(
+      id,
+    )..sort((a, b) => a.position.compareTo(b.position)))
+      if (r.status == 'auto' && r.parts != null)
+        for (final p in (jsonDecode(r.parts!) as List).cast<Map>())
+          if (p['role'] == 'juice') (id, r.position, p['fdc_id'] as int),
+];
+
+/// Serves the saved detail [json] — the part's arrival (b′).
+class Serve implements NutritionProvider {
+  Serve(this.json);
+  final String json;
+  @override
+  Future<List<FdcCandidate>> search(String q) async =>
+      throw const NutritionProviderException('serve', scope: FailureScope.food);
+
+  @override
+  Future<FdcFood?> food(int id) async =>
+      FdcFood.fromJson(jsonDecode(json) as Map<String, dynamic>);
+}
+
 Set<String> settleIds(SaltDatabase db) {
   final keys = byKey(db);
   return {
@@ -169,7 +198,7 @@ Future<void> main(List<String> a) async {
       ];
     }
     stdout.writeln(
-      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
+      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
     );
     db.dispose();
     return;
@@ -179,7 +208,10 @@ Future<void> main(List<String> a) async {
   Process.runSync('cp', ['-c', src, probePath]);
   final probe = SaltDatabase.open(probePath);
   final applies = applyPlan(probe);
-  final holds = holdPlan(probe);
+  final holds = [
+    for (final (id, pos, part) in holdPlan(probe)) (id, pos, part, false),
+    for (final (id, pos, part) in pairPlan(probe)) (id, pos, part, true),
+  ];
   probe.dispose();
   File(probePath).deleteSync();
   final out = File('$work/sw_$shard.tsv').openWrite();
@@ -260,13 +292,13 @@ Future<void> main(List<String> a) async {
     }
   }
 
-  // (b) the decided multi-part hold.
-  for (final (id, pos, part) in holds) {
+  // (b) the decided multi-part hold; (b′) the pair rule's.
+  for (final (id, pos, part, pair) in holds) {
     k++;
     if (k % n != shard) continue;
     var db = fresh();
     final path = '$work/db_$shard.db';
-    final tag = 'B|$id|$pos|$part';
+    final tag = '${pair ? 'P' : 'B'}|$id|$pos|$part';
     try {
       final recipe = nutritionRecipeOf(db, id)!.recipe;
       calls = 0;
@@ -325,7 +357,8 @@ Future<void> main(List<String> a) async {
       // Serve the part again: both caches restored as they were.
       db.dispose();
       final c2 = raw.sqlite3.open(path);
-      for (final row in detail) {
+      // (b′) restores the detail through cachedFood below instead.
+      for (final row in pair ? const <Map<String, Object?>>[] : detail) {
         final cols = row.keys.toList();
         c2.execute(
           'INSERT INTO fdc_food_cache (${cols.join(', ')}) VALUES (${[for (final _ in cols) '?'].join(', ')})',
@@ -340,6 +373,12 @@ Future<void> main(List<String> a) async {
       }
       c2.dispose();
       db = SaltDatabase.open(path);
+      var arrived = '';
+      if (pair) {
+        // (b′): the detail arrives through the real path (unholdOn).
+        await cachedFood(db, Serve(detail.first['response'] as String), part);
+        arrived = pass('arrived');
+      }
       await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
       final served = pass('served');
       final servedS = state(db, id);
@@ -352,8 +391,13 @@ Future<void> main(List<String> a) async {
           'held-on-ne-part',
         if (!served.endsWith(':null:null:true:${d[5]}')) 'not-healed',
         if (again != servedS) 'again-moved',
+        if (pair && h[2] != 'food_unavailable' && h[2] != 'food_gone')
+          'held-not-no-record',
+        if (pair && arrived.endsWith(':true:fresh')) 'not-reopened',
       ];
-      out.writeln('COMBO\t$tag\t$decided\t$held\t$served\tcalls=$calls');
+      out.writeln(
+        'COMBO\t$tag\t$decided\t$held${pair ? '\t$arrived' : ''}\t$served\tcalls=$calls',
+      );
       out.writeln('ROW\t$tag\theld\t$heldE');
       out.writeln('ROW\t$tag\tserved\t$servedS');
       if (bad.isNotEmpty) {

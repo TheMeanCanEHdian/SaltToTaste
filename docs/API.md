@@ -107,7 +107,10 @@ temporary password with `must_change_password`: until the user calls
 
 - Every response carries an `X-Request-Id` header (16 hex chars, server
   generated). Errors echo it in the body so users can quote it in reports
-  and admins can grep the server logs.
+  and admins can grep the server logs. (True since v107 U9: the outermost
+  wrapper mints one per request and stamps it on any response that has none
+  — the static `public/` arm's 200 / 206 / 304 carried none before; the
+  routes arm's own `requestIdProvider` id stands where it sets one.)
 - **Error envelope** (every non-2xx):
 
   ```json
@@ -5191,6 +5194,246 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v107 (batch fix107; matcherVersion 97 UNCHANGED — the fixes of
+dual-fleet review Run 083/084 over v106, union U1–U11, the spec
+.claude/diag/2026-11-07/review083/union_U.md, the rulings in fix107/brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07); no
+migration; NO corpus row moves — the replay on snapshot 32 is byte-identical
+to the v106 set and the salt_shared corpus golden is byte-identical).**
+- **U1 (MED) — one resolver for the static arm; the catch-all made safe.**
+  `fileOf` joined the URL's segments with the separator while shelf_static
+  joins them with `p.joinAll`: a trailing slash / `//main.dart.js/` / `/.`
+  skipped every validator while shelf_static served the file (the date-only
+  304, the garbage-IMS and overflowing-Range 500s back); a `%2F`-encoded
+  absolute segment reset shelf_static's join inside the root (the same
+  bypass); `/%2Fmain.dart.js` 404ed carrying main.dart.js's ETag (INM → 304
+  on a 404). Each 500 wrote a SEVERE record with its stack into the admin
+  log store below the rate limiter (~5.3 KB a request: ~1,560 requests
+  evicted all history), and the exception text (the attacker's header)
+  went in uncapped (a 7,000-char IMS pushed every frame out). FIX
+  (`staticFileValidators`, web_app.dart): the CANONICALISATION RULE — the
+  decoded segments are read once; a segment that holds `/` or `\` is
+  REFUSED (the 404 envelope, `errorResponse`, with the request id;
+  shelf_static never reached; nothing logged) — UNDER `/api/` only a segment
+  STARTING with `/` or `\` (p.joinAll's absolute reset; closer 1 D1): an
+  inner separator there is route data (a free-text tag name, which
+  the app sends as `/api/v1/tags/${encodeComponent(name)}/style`:
+  `/api/v1/tags/a%2Fb/style`, `a%5Cb`, `/api/v1/recipes/x%2Fy` reach the
+  routes as at v106 — the fixer's first tip refused them with the 404
+  envelope) and joins identically in both resolvers (a non-rooted segment:
+  the separator join and `p.joinAll` build the same string); the empty
+  segments are DROPPED (so `/main.dart.js/`, `//main.dart.js`,
+  `/main.dart.js/.` ARE `/main.dart.js`: the validators apply, the file is
+  served with its ETag). A `.` or `..` segment NEVER ARRIVES — Dart's `Uri`
+  (and dart:io's request parser) removes dot segments, `%2E`-encoded ones
+  too, before `pathSegments` (measured in the owner gate: `/main.dart.js/.`
+  → `[main.dart.js, ]`, `/./main.dart.js` → `[main.dart.js]`, `/%2E%2E/x` →
+  `[x]`; the fixer's `s == '..'` refusal and `s != '.'` drop were dead code
+  — an EQUIVALENT mutant kept every pin green — and are deleted; the
+  separator refusal is the whole rule). Every segment left is a plain name,
+  so `fileOf` and shelf_static join the same path (shelf_static's
+  `p.joinAll` drops an empty segment; no request rewrite is needed — shelf's
+  `Request.change` cannot rewrite the URL). STATED vs the brief: an empty
+  segment is dropped anywhere, not refused in a non-final position —
+  the brief's own pin `//main.dart.js` → 200 + the ETag needs it. THE FLOOD:
+  `buildOutermostMiddleware`'s catch throttles the SEVERE write per throw
+  site (the error's type + its stack's top frame — never the path or header
+  text, which would make every request distinct and the map unbounded): the
+  first with its stack, then at most one per 60 s naming how many it
+  suppressed; the response is the 500 envelope every time. `_withError`
+  (log_store.dart) caps the error text at `maxLogTextChars` (redacted first)
+  before the stack, so caller-chosen text never displaces the reserved
+  tail. LIMIT (grep `fileOf\|createStaticFileHandler(\|staticFileValidators`
+  over lib / routes / main.dart / test): app_pipeline.dart:62 the one
+  wiring (outermost, above the cascade); web_app.dart's definition and its
+  one `fileOf` call; the production `createStaticFileHandler()` lives only in
+  the generated build/bin/server.dart, every request through :62 first;
+  static_asset_headers_test.dart:121 the harness. Pins
+  (static_asset_headers_test 'v107 U1', a raw-socket helper = `curl
+  --path-as-is`): the three spellings × {plain, IMS = LM, garbage IMS,
+  overflowing Range} → 200 + the ETag; five separator spellings × {plain,
+  INM, garbage IMS} → the 404 envelope, no ETag, the id header == body, no
+  ERROR record in an attached store; the equivalence over 17 spellings (an
+  ETag ⟺ the body is the file's bytes: `fileOf` null ⟺ shelf_static 404); a
+  1,000-request throwing burst → ONE record; a 7,000-char error text → one
+  truncation marker, before `#0`, the frames kept. Mutants (value): the
+  refusal dropped (200 for 404), the drop removed (no ETag), the throttle
+  removed (1,000 records), the cap removed (the marker at 8,200 past `#0`).
+  Closer 1: the throttle's clock is a `now` parameter of
+  `buildOutermostMiddleware` (default `DateTime.now`); pinned under a fake
+  clock — 5 throws at t0 → 1 record with `#0`; +59 s → still 1; +60 s → 2,
+  the second "(5 like it suppressed)" with no `#0`; +119 s ×2 → 2; +120 s →
+  3, "(2 like it suppressed)". Mutants (value): the count always 0 ("(0
+  like…"), the window 3,600 s (1 record at +60 s), the stack on every
+  record (`#0` present), the real clock (1 record). The `/api/` scope:
+  pinned (the routed stand-in echoes `[api, v1, tags, a/b, style]`;
+  `/api/%2F<abs-root>%2Fmain.dart.js` and `/api/%2Fmain.dart.js` → the 404
+  envelope, no ETag); mutants: the scope dropped (the envelope for the tag),
+  the leading-separator test dropped (`/api/%2F<abs>…` → 200 the file);
+  the leading-`\` test is EQUIVALENT on POSIX (no separator there; both
+  resolvers join it alike) — kept for a Windows host, not counted. COST per
+  request (the validators' own filesystem calls, an `IOOverrides` count;
+  base 069fe70 → v107): an `/api` GET 1 `typeSync` → 1 (an inner-separator
+  one too); a static hit 1 `typeSync` + 1 `statSync` + 2 `File` → the same;
+  `/main.dart.js/` 1 `typeSync` (no file: the bypass) → the hit's 4 calls;
+  a refused spelling (`/%2Fmain.dart.js` 4, `/api/%2Fmain.dart.js` 1) → 0;
+  the refusal itself a scan of the decoded segments (no filesystem call).
+- **U2 — the share grammar (salt_shared, servings_parser.dart).**
+  `_recipeShare`'s ASCII fraction now `\d+\s*/\s*\d+` (parseQuantity's own
+  spacing: "(1 / 2 recipe" is ½, was the whole batch); `_shareToken` starts
+  with a digit, a vulgar fraction or `.\d` (v106's pinned "(.5 recipe"
+  kept), needs `\s+` before "recipe", any case — "(2-recipe batch" and
+  "(-recipe follows" are no written share (the amount's share reads again),
+  "(1E9 recipes" and "(1-2 recipes" are written and unreadable (no_share).
+  `_num` untouched. Corpus `raw:` grep with the final grammar: 3 hits, all
+  "¼ cup Sauce Base (½ recipe; recipe follows)". Pins: servings_parser_test
+  'v107 U2' (15: one per class character `-` `+` `,` `/` `e`, the case, the
+  `\s+`, the leading digit, the spaced fractions), nutrition_v107_test 'U2'
+  on 0184|3 (A9 count '1' and the whole-batch arm: 0.5 / 728.35 g / 212.83
+  for 1.0 / 1,456.7 / 425.67; "(1E9" not_routed no_share; "1 cup Sauce Base
+  (2-recipe batch)" the amount share 2.0 — the child prints "MAKES ½ CUP" —
+  2,913.4 g, routed 851.33, for v106's no_share). Nine mutants killed by
+  `writesShare` / `parseShare` values.
+- **U3 — the negation grammar, the clause rule, every regex reader
+  (engine.dart).** v106's `_negatedAct` was narrower than the v105
+  substrings it replaced (one literal space, a closed determiner list, the
+  object required), `_forbids` read the whole sentence (a same-verb
+  negation of ANOTHER object erased a real wipe), and the guarded regexes'
+  other readers read no negation (the limit was the predicate's callers,
+  not the regexes' readers). FIX: `_negatedAct` — the negation words +
+  `cannot`, an optional `to` / `ever` / `bother` / `first`, `\s+`
+  throughout, the old determiner run then up to three more words before the
+  object, or NO object (the verb, or "verb it", ending its clause);
+  `_forbidsReuse` (scrape up / deglaze / leave / reserve). `_forbiddenAt(s,
+  act)` reads the CLAUSE of the act's match (cut at `;` `,` `(` `)` " but "
+  " and "): "Wipe out the skillet; do not wipe out the pot" wipes.
+  Readers: `_Fat.discardsIn` (`_eatenAfterDiscard`, `_fries`, the oil-owner
+  scan, `_m52Fries`, `_panFactsOf`), `_skimsFatIn` / `_skimsTheFat`,
+  `defatsSentence`, `_panFactsOf`'s `reused` (`_panReused`) and `discarded`,
+  `_wipesPan` (`_panFatLines` — was an unguarded `_pansWiped.hasMatch` —
+  and `_panFactsOf`). LIMIT (grep `discards.hasMatch\|_pourOffAllButFat\|
+  _panReused\|_pansWiped\|_poursOffFat\|_skimWord\|_fatAlone\|_plainPourOff\|
+  _skimsFat\b\|discardsIn` over lib): every `discards` reader through
+  `discardsIn`; `_poursOffFat` / `_skimWord` / `_fatAlone` read per match
+  under the guard; `_pansWiped` only inside `_wipesPan`; UNGUARDED, stated:
+  `_pourOffAllButFat` (`_pourOffFatAt`, the browning-fat reader, `reused`
+  — "pour off all but N" IS the kept part; no negated form in the corpus)
+  and `pourOffFatSentence` (`_dryHeatOf`'s roast test, as v106 recorded).
+  The corpus step scan with the WIDER grammar (every step sentence): ONE
+  act match, 0492's "not skim the fat" (from the liquid); a broad net
+  (a negation within six words of any of the ten verbs) 13 sentences, none
+  on its act's own object (0108 "not to pour any grit", 0076 "not discard
+  liquid", 0929 "not scrape out saucepan", 1137 "not drain)" …). Pins
+  (nutrition_v107_test 'U3'): 17 negations through `braisedKeptOf` on 0224
+  re-texted (null; the qualified, object-less, double-space, "careful not
+  to", "taking care not to … off", "not ever", "don't bother skimming",
+  "cannot" forms; the owner gate added "(do not first skim the fat)" and
+  "(do not skim the thick yellow surface fat)" — the `first` slot and the
+  THIRD qualifier word, each unkilled by the fifteen) + its controls; `defatsSentence`; 17 sentences through
+  `shallowFryLinesOf` on 0351 re-texted (the forbidden pour-off {}, the
+  same-verb other-object wipes {20}, "Do not discard the oil." {20}, the
+  four reuse negations {20}); and every other reader's value (`friesForTest`
+  on 0224, `panFatLinesOf` on 0466 {3, 4} → {}, `fatSkimmedOf`, 0042's
+  eaten 2 tablespoons 28.0 g, 0118's rows unchanged by a forbidden discard
+  after the bake). Every v100–v106 pin passes unchanged. Eighteen mutants
+  (the `\s+`, the `to` slot, the qualifier slot, the object-less arm,
+  `cannot`, the clause cut, each reader's guard) killed by reader values.
+- **U4 — the fifth held_on arm (a person path).** The compute's DECIDED arm
+  on a confirmed rule-B1 peel-plus-juice row with the juice uncached took
+  `withParts`' partial `second_food` (24 g zest, stamped, FRESH at 597.22
+  for 604.2 on snapshot 32) and the juice's arrival re-opened nothing.
+  FIX (`derivedFor`): a row on a peel record whose rule's second record no
+  cache holds fetches it as the engine arm (`_ruleRowFor`) does; a failure
+  is this derivation's — held `food_unavailable` held_on the juice
+  (`unavailableRow` / `_heldOnOf`), so `unholdOn` re-opens it. LIMIT (grep
+  `second_food` over lib): engineOutcome's line hold (engine.dart
+  :7349 / :7373, a line naming an uncounted second food — unchanged),
+  `withParts`' partial (:12683 — now reached only when FDC answers no such
+  juice record, and from the engine arm after its own fetch), the queue's
+  exclusion (salt_database.dart:1214) and comments. Pin (nutrition_v107_test
+  'U4', the recorded fixtures — 86.0 g / 603.92 kcal/serving there): PUT
+  confirmed → 169098 dropped from both caches + a FOOD fault ×3 → confirmed /
+  food_unavailable / held_on 169098 / grams null, 591.13, fresh (the held
+  write is the derived state, as the engine arm's) → `cachedFood(169098)`
+  → re-opened, NOT fresh → one compute, 0 requests → 86.0 g / 603.92; the
+  undecided control unchanged. Mutant (the fetch skipped) killed by
+  (second_food, held_on null, 24.0 g). sw13 gains (b′) (below).
+- **U5 / U8 — the Range drops.** `If-Range` was read by neither layer (a
+  stale If-Range + Range → 206 of the NEW bytes); a CLOSED range past EOF
+  got shelf_static's bare 416. The validators now drop a Range under an
+  If-Range that is not the strong ETag (weak / date / other — RFC 9110
+  §13.1.5) and one whose start ≥ the file's size: 200, the whole file, the
+  ETag. Mutants killed by the status / length values.
+- **U6 — RULE C at the caps.** `_forbiddenAt` computes each act's
+  whole-sentence verdict lazily ONCE per sentence (shared by `_panFactsOf`'s
+  two pour-off arms), tests each clause once (the cuts found once, a binary
+  search per match; one clause → the sentence's verdict). Measured (0351 +
+  119 steps of ten ~1,000-char sentences, STATED): "pour off fat … do not
+  pour off fat." base 2,936 / 3,167 / 3,199 ms (shallowFryLinesOf /
+  matchAndCompute / GET) → 449 / 679 / 705; "wipe skillet …" 1,054 / 1,299 /
+  1,315 → 279 / 493 / 515; plain 232 / 487 / 500 → 236 / 490 / 514; the
+  same text at 250 / 500 / 995-char sentences 511 / 482 / 486 ms (linear).
+  COUNT pins (`forbidsEvaluations`, exact): 2 per one-clause cap sentence
+  (base ~77), 2 with one cut, 42 for 39 forbidden clauses + 1 real (= the
+  ruled clauses + 2: `_panFactsOf` 39 — its two pour-off arms share one
+  guard — and `_skimsFatIn` 3); the backstop kept. Closer 1 D6: the fixer's
+  tip read the whole-sentence verdict before every cut sentence's clause
+  (4 with one cut, 43 = clauses + 3); now `_forbiddenAt.at` reads it only
+  for a one-clause sentence, and a verdict already read false answers every
+  clause free (pinned: "Skim the fat not too hard; do not pour off the
+  fat." 3, re-testing the clause 4). Mutants (value): the whole verdict
+  first (4,760 / 43), the free answer dropped (4), the one-clause verdict
+  `true` (the shallow-fry set). Results unchanged (a clause match is a
+  sentence match; the replay byte-identical).
+- **U7 — the pins.** The default publicDir under a temp `Directory.current`;
+  a `public2/` sibling symlink → 404, no ETag, never 304; a same-mtime
+  different-size rewrite → a new ETag; a 206's ETag == the 200's and a
+  POST's the file's own — the five mutants ('publicX', `'$root'`, the size
+  term, `statusCode == 200 ? …`, a constant tag) killed by value.
+- **U9 — the request id; the devCors merge.** The outermost wrapper mints
+  the id ONCE per request, provides it below (the catch's 500 and the
+  static refusal read it) and stamps it on any response without one;
+  `devCors` no longer spreads `...response.headers` (two Set-Cookie stay
+  two). The Conventions' "Every response carries an `X-Request-Id`" is now
+  true. Closer 1 D2: a route's OWN id is kept (the stamp only when absent):
+  an `/api` 404 envelope through the harness cascade has header == body id;
+  the mutant stamping unconditionally gives the outer id in the header and
+  the routes chain's in the body (killed).
+- **Docs:** the v106 U3 / U4 bullets and deploy note corrected ("never a
+  500", "resolved as shelf_static resolves it", the date-only 304, "one
+  stat", "~10 MB once per deploy" → the measured facts).
+- **Gate** (fix107 on 069fe70; fresh copies of snapshot 32 md5 ffd1cf26…,
+  main and `--reverse-parents` cmp-identical): rows, recs, sections, calls
+  (0) and notes byte-identical to v106_* (= v105_* = v104_*); buckets
+  byte-identical; staleAfter 0, 0 person rows — after U2, after U3, after
+  U6 and on the final tree. The salt_shared corpus tests (1,198 files:
+  decode, round-trip, servings coverage) pass unchanged. Suites: server
+  +3,304 ~4 (base +3,267 ~4 + the 37: v107 20, static headers 17 — closer 1
+  added 3: the `/api/` scope, the throttle clock, the route's own id),
+  salt_shared +250 (+235 + 15), app +669; every new / changed test file
+  loads without the corpus; analyze ×3 clean. GATE-P on snapshot 32 (12
+  shards, calls 0 every settle), base 069fe70 vs v107: sw5 31,713, sw6
+  37,400, sw7 1,872, sw8 56,868, sw8r 5,358, sw9 130 — 0 divergent, 0
+  refused, the line sets identical; sw10 156 bare and typed, 0 divergent;
+  sw11 39,760, 200 divergent, all `calls-only` (14,070 refused), the DIV
+  lines identical; sw12 129, 52 (the 47 line-held rows + 5 routed pie
+  parents), identical; sw13 175 = the 170 (0 divergent both; B 0536|3's
+  held pass second_food → food_unavailable on 169098, its only line move)
+  + (b′) the 5 pair-rule combos: base (069fe70 and 5e6b4d7, identical) 1
+  divergent — P 0536|3 held `second_food`, never re-opened (the four
+  lemon / lime rows held food_unavailable on the juice at base already —
+  their held pass asked it, calls 3 / 6; why their path fetches it was not
+  traced) — v107 0.
+- **Deploy note**: no migration; matcherVersion unchanged, so no stamp moves
+  — no stale sweep, 0 requests, the digest unchanged at 763,726.73. The
+  static arm: every spelling of a file is that file (with its ETag); a
+  separator-bearing segment is the 404 envelope (under `/api/` only a
+  leading separator — an encoded `/` inside a tag name is routed, as at
+  v106; a dot segment never arrives); a stale If-Range or a range past EOF
+  is the whole file (a suffix range `bytes=-N` is kept, pinned); every response carries an
+  X-Request-Id. The deploy kit's input hash, marker and the rows
+  comparison (U10) are the orchestrator's.
+
 **Matcher v106 (batch fix106; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 081/082 over v105, union U1–U13, the spec
 .claude/diag/2026-11-07/review081/union_T.md, the rulings in fix106/brief.md
@@ -5263,9 +5506,20 @@ to the v105 set and the salt_shared corpus golden is byte-identical).**
   a fresh request id (`newRequestId`) in the body and `X-Request-Id`, logged
   SEVERE like errorHandler, through securityHeaders and the no-cache branch.
   Recorded, not changed (U13): `bytes=9999999-` past EOF answers 200 with the
-  whole body (shelf_static's `start > end`).
+  whole body (shelf_static's `start > end`). CORRECTED by v107 (Run 083/084
+  U1 / U8): the static arm was NOT free of the 500 — a trailing slash,
+  `//main.dart.js/`-style empty segments, `/.` or a `%2F`-encoded absolute
+  segment skipped every validator, so a garbage If-Modified-Since or an
+  overflowing Range still reached shelf_static's throw and this catch (each
+  a SEVERE record with its stack in the admin log store, below the rate
+  limiter); and a CLOSED range past EOF (`bytes=9999999-99999999`) got
+  shelf_static's bare 416. v107 canonicalises the URL first, throttles the
+  record and drops that range.
 - **U4 — a strong ETag on the static arm.** For a file the static arm serves
-  (resolved as shelf_static resolves it), `staticFileValidators` sets
+  (resolved as shelf_static resolves it — CORRECTED by v107 U1: it was not;
+  `[root, ...segments].join(sep)` and shelf_static's `p.joinAll` diverged on
+  an empty / `.` segment and a `%2F` segment, both ways; v107 states the
+  canonicalisation rule), `staticFileValidators` sets
   `ETag: "<md5>"` (hashed once per RESOLVED path + mtime + size — one map
   entry per file of the root, whatever the URL's slash spelling: closer 1),
   answers
@@ -5276,11 +5530,13 @@ to the v105 set and the salt_shared corpus golden is byte-identical).**
   (closer 4): a symlink out of the root carries no ETag and never 304s (no
   hash of an outside file, no If-None-Match oracle), one inside shares its
   target's ETag; a directory and a missing public dir pass through to the
-  cascade untouched (never a 500).
-  and strips `If-Modified-Since` before shelf_static (RFC 7232 §6): a client
+  cascade untouched. It also strips `If-Modified-Since` before shelf_static
+  (RFC 7232 §6): a client
   holding a NEWER Last-Modified than a rolled-back file (an image-tag
   rollback, `cp -p`, a restore) got 304 and kept the newer bundle; now it gets
-  the new bytes. Last-Modified is informational. `/` and the SPA fallback are
+  the new bytes (on the spellings the resolver read — the date-only 304 stayed
+  reachable on `/main.dart.js/` and the `%2F` spelling until v107 U1).
+  Last-Modified is informational. `/` and the SPA fallback are
   unchanged (no file of the static arm). `buildOutermostMiddleware` takes
   `publicDir` (default 'public', the generated handler's).
 - **U5 — the images route pinned; two headers deleted.** The real images
@@ -5396,9 +5652,14 @@ to the v105 set and the salt_shared corpus golden is byte-identical).**
   ×4 per doubling); at the reader cap (120 distinct 10k-char "Do not pour off
   the fat <skims>" steps) `fatSkimmedOf` base 22 → closer 1 24 ms (the fixer's
   regex 94 ms); the pre-existing `_skimsFat` gate's own worst ("Fat <skims>",
-  105 ms) is base's, unchanged. U4: one stat per static request, the md5
-  once per resolved path + mtime + size (the ~10 MB bundle hashed once per
-  deploy; 50 distinct slash spellings of an 8 MB file 1,552 → 45 ms).
+  105 ms) is base's, unchanged. U4: the md5 once per resolved path + mtime +
+  size (50 distinct slash spellings of an 8 MB file 1,552 → 45 ms).
+  CORRECTED by v107 (U11, measured by reading `fileOf`): not "one stat per
+  static request" — `typeSync` on EVERY request (the API's included), then
+  `resolveSymbolicLinksSync` + `statSync` on a static hit (3 sync FS calls),
+  the root resolved once and re-tried while it does not exist; and not "the
+  ~10 MB bundle hashed once per deploy" — main.dart.js is 5,659,207 bytes,
+  hashed once per (path, mtime, size) per PROCESS start.
 - **Gate** (fix106 on eb9614c; fresh copies of snapshot 32 md5 ffd1cf26…,
   main and `--reverse-parents` cmp-identical): rows, recs, sections, calls
   (0) and notes byte-identical to v105_*; buckets byte-identical; staleAfter
@@ -5424,8 +5685,9 @@ to the v105 set and the salt_shared corpus golden is byte-identical).**
   — no stale sweep, 0 requests, the digest unchanged at 763,726.73. Every
   static file now carries a strong ETag and revalidates by it (a 304 on a
   matching ETag, or the new bytes; If-Modified-Since is ignored there, so a
-  rolled-back bundle is served fresh). The deploy kit's bundle_check (1) and
-  (6b) changes (U12, U4's kit half) are the orchestrator's.
+  rolled-back bundle is served fresh — on the canonical spelling only, until
+  v107 U1). The deploy kit's bundle_check (1) and (6b) changes (U12, U4's
+  kit half) are the orchestrator's.
 
 **Matcher v105 (batch fix105; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 079/080 over v104, union U1–U14, the spec

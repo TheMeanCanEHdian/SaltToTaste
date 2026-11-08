@@ -505,4 +505,52 @@ void main() {
       }
     });
   });
+
+  // v107 U2 (Run 083/084 S2 S11 / O3 O6 O14): the reader's ASCII fraction
+  // took no spaces ('(1 / 2 recipe' read the whole batch where parseQuantity
+  // reads ½) and the token class over-read ('(2-recipe batch' killed an
+  // amount's yield share; '(1E9' was no token). STATED synthesized (negative
+  // path: every corpus `raw:` writing a share writes '(½ recipe' — the 3
+  // lines of 0184's "¼ cup Sauce Base (½ recipe; recipe follows)", grep) on
+  // that raw with its amount re-read as '1 cup' over 0184's child yield
+  // "MAKES ABOUT 1½ CUPS" (⅔ by the amount).
+  group('v107 U2 the share grammar', () {
+    const cup = [
+      Amount(
+        measure: Measure.volume,
+        quantity: '1',
+        unit: 'cup',
+        primary: true,
+      ),
+    ];
+    const yield = 'MAKES ABOUT 1½ CUPS';
+    for (final (written, writes, share) in const [
+      ('(1 / 2 recipe', true, 0.5),
+      ('(1 /2 recipe', true, 0.5),
+      ('(1/ 2 recipe', true, 0.5),
+      ('(1 1 / 2 recipes', true, 1.5),
+      ('(1E9 recipes', true, null),
+      ('(1e9 recipes', true, null),
+      ('(1-2 recipes', true, null),
+      ('(2-recipe batch', false, 2 / 3),
+      ('(-recipe follows', false, 2 / 3),
+      // The leading digit: a token led by a class character alone is no
+      // share (base: written, null).
+      ('(- recipe follows', false, 2 / 3),
+      ('(, recipe follows', false, 2 / 3),
+      // One per class character (`-` above): each read as written; the
+      // character dropped from the class reads ⅔ (the amount's share).
+      ('(1+1 recipe', true, null),
+      ('(1,5 recipe', true, null),
+      ('(1/ recipe', true, null),
+      ('(2e recipe', true, null),
+    ]) {
+      test('"1 cup Sauce Base $written; recipe follows)" writes $writes; '
+          'reads $share', () {
+        final raw = '1 cup Sauce Base $written; recipe follows)';
+        expect(writesShare(raw), writes);
+        expect(parseShare(raw, cup, yield), share);
+      });
+    }
+  });
 }

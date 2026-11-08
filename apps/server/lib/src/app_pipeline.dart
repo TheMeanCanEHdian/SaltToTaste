@@ -55,25 +55,43 @@ final Logger _log = Logger('proxy');
 /// is the uniform 500 envelope with a fresh request id, through the same
 /// header path (U3 — was shelf's bare text/plain 500 outside every
 /// header); multi-value headers are kept (U7: copyWith merges).
+///
+/// [now] is the throttle's clock (tests pass a fake one; closer 1 D3).
 Handler buildOutermostMiddleware(
   Handler handler, {
   String publicDir = 'public',
+  DateTime Function() now = DateTime.now,
 }) {
   final validated = staticFileValidators(publicDir: publicDir)(handler);
+  // v107 U1: the SEVERE record throttled per throw site (the error's type
+  // and its stack's top frame — never the attacker's path or header text,
+  // which would make every request distinct and the map unbounded): the
+  // first with its stack, then at most one per [_severeEvery] naming how
+  // many it suppressed. The response is the 500 envelope every time.
+  final seen = <String, ({DateTime at, int suppressed})>{};
   final secured = securityHeaders()((context) async {
     try {
       return await validated(context);
     } catch (error, stackTrace) {
-      final requestId = newRequestId();
-      _log.severe(
-        RequestLogMessage(
-          'Unhandled error on ${context.request.method.value} '
-          '${loggedPath(context.request.uri.path)}',
-          requestId,
-        ),
-        error,
-        stackTrace,
-      );
+      final requestId = requestIdOf(context)!;
+      final site = '${error.runtimeType} ${'$stackTrace'.split('\n').first}';
+      final at = now();
+      final last = seen[site];
+      if (last == null || at.difference(last.at) >= _severeEvery) {
+        seen[site] = (at: at, suppressed: 0);
+        _log.severe(
+          RequestLogMessage(
+            'Unhandled error on ${context.request.method.value} '
+            '${loggedPath(context.request.uri.path)}'
+            '${last == null ? '' : ' (${last.suppressed} like it suppressed)'}',
+            requestId,
+          ),
+          error,
+          last == null ? stackTrace : null,
+        );
+      } else {
+        seen[site] = (at: last.at, suppressed: last.suppressed + 1);
+      }
       return errorResponse(
         statusCode: HttpStatus.internalServerError,
         code: ApiErrorCodes.internal,
@@ -83,15 +101,25 @@ Handler buildOutermostMiddleware(
       );
     }
   });
+  // v107 U9: the request id minted ONCE per request, before the try —
+  // provided to everything below (the catch's 500 and the static arm's 404
+  // envelope read it) and stamped on every response that has none (the
+  // static arm's 200 / 206 / 304 had none; the routes arm stamps its own).
   return (context) async {
-    final response = await secured(context);
-    return response.headers.containsKey(HttpHeaders.cacheControlHeader)
-        ? response
-        : response.copyWith(
-            headers: {HttpHeaders.cacheControlHeader: 'no-cache'},
-          );
+    final id = newRequestId();
+    final response = await secured(context.provide(() => RequestId(id)));
+    return response.copyWith(
+      headers: {
+        if (!response.headers.containsKey(HttpHeaders.cacheControlHeader))
+          HttpHeaders.cacheControlHeader: 'no-cache',
+        if (!response.headers.containsKey(requestIdHeader)) requestIdHeader: id,
+      },
+    );
   };
 }
+
+/// [buildOutermostMiddleware]'s SEVERE throttle window (v107 U1).
+const Duration _severeEvery = Duration(seconds: 60);
 
 /// The runtime counterpart to bootstrap's `configWarnings`: warns when a
 /// request carrying `X-Forwarded-For`/`-Proto` arrives from a peer that
