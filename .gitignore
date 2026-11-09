@@ -12,6 +12,8 @@ build/
 # App data dir (dev)
 .data/
 apps/server/public/
+# The deploy kit's build-inputs marker (written beside public/, never served).
+apps/server/.build_inputs
 
 # Local Claude Code config/state
 .claude/
