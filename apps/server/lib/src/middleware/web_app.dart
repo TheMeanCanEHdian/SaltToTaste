@@ -2,9 +2,6 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dart_frog/dart_frog.dart';
-import 'package:salt_server/src/middleware/error_handler.dart';
-import 'package:salt_server/src/middleware/request_context.dart';
-import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 /// Content-Security-Policy for the served Flutter web build.
 ///
@@ -104,21 +101,24 @@ Middleware spaFallback({String indexPath = 'public/index.html'}) {
 }
 
 /// v106 U3 / U4 (Run 081/082): the validators of a file the static
-/// `public/` arm serves. v107 U1 (Run 083/084): the URL is CANONICALISED
-/// first — a request whose decoded segment holds a path separator (`/` or
-/// `\`, the `%2F` absolute-segment reset and its reverse) is REFUSED here
-/// (the 404 envelope, never reaching shelf_static; under `/api/` only a
-/// LEADING separator — an inner one is route data, closer 1 D1); the empty
-/// segments are dropped (`/main.dart.js/`, `//main.dart.js`,
-/// `/main.dart.js/.` ARE `/main.dart.js` — Dart's `Uri` removes a dot
-/// segment, a `%2E`-encoded one too, before `pathSegments`, so no `.` or
-/// `..` ever arrives here (measured, the owner gate), and shelf_static's
-/// `p.joinAll` drops an empty one, so it served them; now the validators
-/// apply too). Every segment left is a plain name (or, under `/api/`, holds
-/// only an INNER separator, which `p.joinAll` joins exactly as the
-/// separator join does), so this resolver and shelf_static join the same
-/// path: the root's real path joined with them, a file, its real path
-/// inside the root. For such a file:
+/// `public/` arm serves. v108 V5 (Run 085/086): the file is resolved
+/// EXACTLY as shelf_static 1.1.3 resolves it (static_handler.dart:
+/// `p.joinAll([root, ...request.url.pathSegments])`, a file, its resolved
+/// path `p.isWithin` the root) — the same decoded segments, the POSIX
+/// join (an empty part skipped, a part starting with `/` RESETS the path),
+/// the same containment on the real path. So every spelling shelf_static
+/// serves is the file WITH its validators (`/main.dart.js/`,
+/// `//main.dart.js`, `/<root>%2Fmain.dart.js`, `/assets%2Fx.js`), and a
+/// request that names no file passes through UNTOUCHED, under `/api/` and
+/// outside it (a tag route `/api/v1/tags/%2Fquick/style`, a deep link
+/// `/r/a%2Fb`) — v107's separator refusal, wider than that, is deleted.
+/// No dot segment arrives here: `Uri.parse` keeps a final `.` before a
+/// `?` or `#` (`/x/.?`), but shelf's `Request` constructor (shelf 1.4.2
+/// request.dart: handlerPath + url must equal the requested path's
+/// segments) refuses such a target, and shelf_io answers its bare 400
+/// before any middleware. Windows (a dev-only platform): `p.joinAll` there
+/// also splits on `\`, this join does not — the stated limit.
+/// For such a file:
 /// - a strong `ETag` (md5 of the bytes, hashed ONCE per RESOLVED path +
 ///   mtime + size — one entry per file of the root, whatever the URL's
 ///   spelling), answered here on `If-None-Match` (GET / HEAD: 304 with the
@@ -139,17 +139,22 @@ Middleware staticFileValidators({String publicDir = 'public'}) {
   String? root;
   File? fileOf(List<String> segments) {
     try {
-      root ??= Directory(publicDir).resolveSymbolicLinksSync();
-      final path = [root, ...segments].join(Platform.pathSeparator);
+      final base = root ??= Directory(publicDir).resolveSymbolicLinksSync();
+      var path = base;
+      for (final s in segments) {
+        if (s.isNotEmpty) {
+          path = s.startsWith('/')
+              ? s
+              : '${path.endsWith('/') ? path : '$path/'}$s';
+        }
+      }
       if (FileSystemEntity.typeSync(path) != FileSystemEntityType.file) {
         return null;
       }
       final real = File(path).resolveSymbolicLinksSync();
       // The RESOLVED path (closer 1 D1): '//x' and '/x' are one cache entry,
       // so the ETag map holds at most one entry per file of the root.
-      return real.startsWith('$root${Platform.pathSeparator}')
-          ? File(real)
-          : null;
+      return real.startsWith('$base/') ? File(real) : null;
     } on FileSystemException {
       return null;
     }
@@ -158,33 +163,7 @@ Middleware staticFileValidators({String publicDir = 'public'}) {
   return (handler) {
     return (context) async {
       final request = context.request;
-      final segments = request.uri.pathSegments;
-      // v107 closer 1 D1: under /api/ a decoded separator is route data (a
-      // free-text tag name: `/api/v1/tags/a%2Fb/style`), so only what makes
-      // the two resolvers diverge is refused there — a segment STARTING
-      // with a separator (p.joinAll's absolute reset); an inner one joins
-      // identically in both. Elsewhere every separator is refused. (A `.`
-      // or `..` segment never arrives: `Uri` removes dot segments first.)
-      final api = segments.isNotEmpty && segments.first == 'api';
-      if (segments.any(
-        (s) =>
-            s.startsWith('/') ||
-            s.startsWith(r'\') ||
-            !api && (s.contains('/') || s.contains(r'\')),
-      )) {
-        final id = requestIdOf(context) ?? newRequestId();
-        return errorResponse(
-          statusCode: HttpStatus.notFound,
-          code: ApiErrorCodes.notFound,
-          message: 'Not found.',
-          requestId: id,
-          headers: {requestIdHeader: id},
-        );
-      }
-      final file = fileOf([
-        for (final s in segments)
-          if (s.isNotEmpty) s,
-      ]);
+      final file = fileOf(request.url.pathSegments);
       if (file == null) {
         return handler(context);
       }

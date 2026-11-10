@@ -553,4 +553,38 @@ void main() {
       });
     }
   });
+
+  // v108 V7 (Run 085/086 S2 / Opus critic 2 G1): '(1 ½ recipes' was neither
+  // read nor written (the amount's ⅔ stored where the text says 1½), and
+  // the case-sensitive gate / reader disagreed with the case-insensitive
+  // token ('(2 Recipes; see below)' → the amount's share). STATED
+  // synthesized (negative path: the corpus `raw:` writes only '(½ recipe' —
+  // 0184's 3 lines, grep) on 0184's raw shape over its child yield
+  // "MAKES ABOUT 1½ CUPS"; no lower-case 'recipe' elsewhere in the 2nd–4th.
+  group('v108 V7 the share token, its gate and its reader agree', () {
+    const cup = [
+      Amount(
+        measure: Measure.volume,
+        quantity: '1',
+        unit: 'cup',
+        primary: true,
+      ),
+    ];
+    const yield = 'MAKES ABOUT 1½ CUPS';
+    for (final (raw, writes, share) in const [
+      // Base: writes false, share ⅔ (the amount's).
+      ('1 cup Sauce Base (1 ½ recipes; recipe follows)', true, 1.5),
+      // Base: writes false, share ⅔.
+      ('1 cup Sauce Base (2 Recipes; see below)', true, 2.0),
+      // Base: writes false, share ⅔.
+      ('1 cup Sauce Base (½ Recipe)', true, 0.5),
+      // Base: writes false, share ⅔ — now written, no share.
+      ('1 cup Sauce Base (1E9 RECIPES; see below)', true, null),
+    ]) {
+      test('"$raw" writes $writes; reads $share', () {
+        expect(writesShare(raw), writes);
+        expect(parseShare(raw, cup, yield), share);
+      });
+    }
+  });
 }

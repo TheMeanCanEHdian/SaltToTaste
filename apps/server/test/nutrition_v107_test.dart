@@ -482,7 +482,12 @@ void u6() {
       expect(shallowFryLinesOf(r), {20});
       expect(sw.elapsedMilliseconds, lessThan(backstopMs));
       // Base: ~77 whole-sentence scans per sentence (one per match).
-      expect(forbidsEvaluations, perSentence * sentences * 119);
+      // RE-PIN (v108 V6): perSentence * sentences * 119 → 1 for the three
+      // negated shapes — the spans are memoised on the sentence's text
+      // across every reader, and the 1,190 sentences are one text (one act
+      // read); 'plain' holds no negation word: 0. The distinct-text cap
+      // shapes are count-pinned in nutrition_v108_test (one per sentence).
+      expect(forbidsEvaluations, perSentence == 0 ? 0 : 1);
     });
   }
 
@@ -498,7 +503,10 @@ void u6() {
         '${List.filled(39, 'do not pour off fat').join('; ')}; pour off fat';
     forbidsEvaluations = 0;
     expect(shallowFryLinesOf(_gravy('$s. ')), {20});
-    expect(forbidsEvaluations, 42);
+    // RE-PIN (v108 V6): 42 → 2 — one span scan per (sentence, act): the
+    // pour act (`_panFactsOf`, `_skimsFatIn` share it) and the skim act
+    // (`_skimsFatIn`); no clause is scanned on its own.
+    expect(forbidsEvaluations, 2);
     // Closer 1 D6: a whole verdict already read false answers a clause
     // free — `_skimsFatIn` reads the skim verdict (false), then the first
     // skim word's clause ("Skim the fat not too hard", a negation word):
@@ -508,7 +516,8 @@ void u6() {
     shallowFryLinesOf(
       _gravy('Skim the fat not too hard; do not pour off the fat. '),
     );
-    expect(forbidsEvaluations, 3);
+    // RE-PIN (v108 V6): 3 → 2 — the skim and pour acts once each.
+    expect(forbidsEvaluations, 2);
   });
 }
 

@@ -11,12 +11,16 @@ import 'package:salt_server/src/auth/rate_limiter.dart';
 import 'package:salt_server/src/config.dart';
 import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
+import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/middleware/dev_cors.dart';
+import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
+
+import '../routes/api/v1/auth/login.dart' as login_route;
 
 /// The shipped web app is NOT served by the middleware chain.
 ///
@@ -615,10 +619,11 @@ void main() {
     String path, {
     Map<String, String> headers = const {},
     int? port,
+    String method = 'GET',
   }) async {
     final socket = await Socket.connect('127.0.0.1', port ?? server.port);
     socket.write(
-      'GET $path HTTP/1.1\r\nHost: x\r\nConnection: close\r\n'
+      '$method $path HTTP/1.1\r\nHost: x\r\nConnection: close\r\n'
       '${headers.entries.map((e) => '${e.key}: ${e.value}\r\n').join()}\r\n',
     );
     final out = await utf8.decoder.bind(socket).join();
@@ -692,8 +697,15 @@ void main() {
       }
     });
 
-    test('a separator-bearing segment is the 404 envelope with no ETag, '
-        'never 304, never a 500, nothing logged', () async {
+    // v108 V5 (Run 085/086 O12, Sonnet critics 1 / 3): the refusal was
+    // wider than the harm; the validators now resolve exactly what
+    // shelf_static serves. RE-PIN (ruled): '/<abs>%2Fmain.dart.js' 404 →
+    // 200 the file WITH its ETag (shelf_static serves it bare); the four
+    // spellings naming no file keep the 404 envelope — now the cascade's
+    // (shelf_static 404 → spaFallback: a dotted last segment).
+    test('a separator-bearing segment is what shelf_static answers: the '
+        'file WITH its ETag, else the 404 envelope with none; never a 500, '
+        'nothing logged', () async {
       final etag = (await send('/main.dart.js')).$2['etag']!;
       final logs = '${tempDir.path}/u1-logs';
       final store = LogStore(directory: logs)..attach(Logger.root.onRecord);
@@ -702,8 +714,19 @@ void main() {
         '/',
         '%2F',
       );
+      final file = '/$absolute%2Fmain.dart.js';
+      final served = await raw(file);
+      // Base (v107): the 404 envelope with no ETag.
+      expect(
+        (served.$1, served.$2['etag'], served.$3),
+        (HttpStatus.ok, etag, 'void main(){}'),
+      );
+      expect((await raw(file, headers: {'if-none-match': etag})).$1, 304);
+      expect(
+        (await raw(file, headers: {'if-modified-since': 'garbage'})).$1,
+        HttpStatus.ok,
+      );
       for (final path in [
-        '/$absolute%2Fmain.dart.js',
         '/%2Fmain.dart.js',
         '/main.dart.js%2F',
         '/main.dart.js%5C',
@@ -715,8 +738,6 @@ void main() {
           {'if-modified-since': 'garbage'},
         ]) {
           final (status, headers, body) = await raw(path, headers: h);
-          // Base: '/%2F<abs>…' 304 / 500; '/%2Fmain.dart.js' 404 WITH the
-          // ETag and 304 on INM.
           expect(
             (status, headers['etag']),
             (HttpStatus.notFound, null),
@@ -731,65 +752,69 @@ void main() {
       expect(severeIn(logs), isEmpty);
     });
 
-    test('under /api/ an INNER separator is route data (closer 1 D1); a '
-        'leading one is still refused', () async {
-      // STATED synthesized (no corpus recipe's tag holds a separator): a
-      // tag name is free text (tag_handlers.dart) and the app sends
-      // `/api/v1/tags/${Uri.encodeComponent(name)}/style`. The route
-      // stand-in echoes the decoded segments it was handed.
-      final routed = await serve(
-        buildOutermostMiddleware(
-          Cascade()
-              .add(createStaticFileHandler(path: publicDir.path))
-              .add(
-                (c) => Response(body: 'routed ${c.request.uri.pathSegments}'),
-              )
-              .handler,
-          publicDir: publicDir.path,
-        ),
-        InternetAddress.loopbackIPv4,
-        0,
-      );
-      addTearDown(() => routed.close(force: true));
-      for (final path in [
-        '/api/v1/tags/a%2Fb/style',
-        '/api/v1/tags/a%5Cb/style',
-        '/api/v1/recipes/x%2Fy',
-        // p.joinAll and the separator join agree: `<root>/api/../…` (no
-        // public/api) is no file for either resolver.
-        '/api/%2E%2E%2Fmain.dart.js',
-      ]) {
-        final (status, headers, body) = await raw(path, port: routed.port);
-        // Closer-1 base (the v107 fixer's tip): the validators' 404
-        // envelope, never routed.
+    // v108 V5: RE-PIN (ruled) — the leading separator is route data too
+    // (a free-text tag '/quick'; was the validators' 404 — v106 routed it);
+    // '/api/<abs>%2Fmain.dart.js' is the file with its ETag (shelf_static
+    // serves it bare; was the 404 envelope).
+    test(
+      'under /api/ a separator-bearing segment naming no file is route '
+      'data, leading or inner; one shelf_static serves is the file',
+      () async {
+        // STATED synthesized (no corpus recipe's tag holds a separator): a
+        // tag name is free text (tag_handlers.dart) and the app sends
+        // `/api/v1/tags/${Uri.encodeComponent(name)}/style`. The route
+        // stand-in echoes the decoded segments it was handed.
+        final routed = await serve(
+          buildOutermostMiddleware(
+            Cascade()
+                .add(createStaticFileHandler(path: publicDir.path))
+                .add(
+                  (c) => Response(body: 'routed ${c.request.uri.pathSegments}'),
+                )
+                .handler,
+            publicDir: publicDir.path,
+          ),
+          InternetAddress.loopbackIPv4,
+          0,
+        );
+        addTearDown(() => routed.close(force: true));
+        for (final (method, path) in [
+          ('GET', '/api/v1/tags/a%2Fb/style'),
+          ('GET', '/api/v1/tags/a%5Cb/style'),
+          ('GET', '/api/v1/recipes/x%2Fy'),
+          ('GET', '/api/%2E%2E%2Fmain.dart.js'),
+          ('PUT', '/api/v1/tags/%2Fquick/style'),
+          ('PUT', '/api/v1/tags/%5Co%2F/style'),
+          ('PUT', '/api/v1/tags/a%2Fb/style'),
+          ('GET', '/api/%2Fmain.dart.js'),
+        ]) {
+          final (status, headers, body) = await raw(
+            path,
+            port: routed.port,
+            method: method,
+          );
+          // Base (v107): '%2Fquick', '%5Co%2F' and '/api/%2Fmain.dart.js'
+          // the validators' 404 envelope, never routed.
+          expect(
+            (status, headers['etag'], body),
+            (HttpStatus.ok, null, 'routed ${Uri.parse(path).pathSegments}'),
+            reason: '$method $path',
+          );
+        }
+        final absolute = publicDir.resolveSymbolicLinksSync().replaceAll(
+          '/',
+          '%2F',
+        );
+        final (status, headers, body) = await raw(
+          '/api/$absolute%2Fmain.dart.js',
+          port: routed.port,
+        );
         expect(
           (status, headers['etag'], body),
-          (HttpStatus.ok, null, 'routed ${Uri.parse(path).pathSegments}'),
-          reason: path,
+          (HttpStatus.ok, '"${md5Hex('void main(){}')}"', 'void main(){}'),
         );
-      }
-      final absolute = publicDir.resolveSymbolicLinksSync().replaceAll(
-        '/',
-        '%2F',
-      );
-      for (final path in [
-        '/api/$absolute%2Fmain.dart.js',
-        '/api/%2Fmain.dart.js',
-      ]) {
-        // Never routed, never the file: the validators' own envelope.
-        final (status, headers, body) = await raw(path, port: routed.port);
-        expect(
-          (status, headers['etag']),
-          (HttpStatus.notFound, null),
-          reason: path,
-        );
-        expect(
-          ((jsonDecode(body) as Map)['error'] as Map)['code'],
-          'not_found',
-          reason: path,
-        );
-      }
-    });
+      },
+    );
 
     test('fileOf null <=> shelf_static 404: an ETag exactly when the body '
         "is the file's bytes", () async {
@@ -816,6 +841,17 @@ void main() {
         '/assets/',
         '/%2e%2e/etc/passwd',
         '/r/some-slug',
+        // v108 V5: the brief's rows (the base 404ed the file spellings).
+        '/api/x/%2F$absolute%2Fmain.dart.js',
+        '/api/$absolute%2Fmain.dart.js',
+        '/assets%2F..%2Fmain.dart.js',
+        '/%2Fetc%2Fpasswd',
+        '/r/a%2Fb',
+        '/r/a%5Cb',
+        '/search%2Fx',
+        '/..%00',
+        '/..;/main.dart.js',
+        '/main.dart.js%00.html',
       ]) {
         final (status, headers, body) = await raw(path);
         expect(
@@ -874,7 +910,7 @@ void main() {
 
     test(
       'the throttle: one record per site per 60 s after the first, '
-      'naming the suppressed count, without the stack (closer 1 D3)',
+      'naming the suppressed count, WITH the stack (closer 1 D3; v108 V1)',
       () async {
         // STATED synthesized: a fixed throw site under a fake clock.
         final logs = '${tempDir.path}/throttle-logs';
@@ -886,7 +922,7 @@ void main() {
           buildOutermostMiddleware(
             (_) => throw StateError('boom'),
             publicDir: publicDir.path,
-            now: () => t,
+            throttle: SevereThrottle(now: () => t),
           ),
           InternetAddress.loopbackIPv4,
           0,
@@ -909,13 +945,16 @@ void main() {
         m = await hit(const Duration(seconds: 60));
         expect(m, hasLength(2));
         expect(m.last, contains('(5 like it suppressed)'));
-        expect(m.last, isNot(contains('#0')));
+        // v108 V1 (ruled): REVERSED — every written record carries its
+        // stack (was isNot: a rotated store held no frame).
+        expect(m.last, contains('#0'));
         m = await hit(const Duration(seconds: 119), 2);
         expect(m, hasLength(2));
         m = await hit(const Duration(seconds: 120));
         expect(m, hasLength(3));
         expect(m.last, contains('(2 like it suppressed)'));
-        expect(m.last, isNot(contains('#0')));
+        // v108 V1: REVERSED as above.
+        expect(m.last, contains('#0'));
       },
     );
   });
@@ -1009,14 +1048,22 @@ void main() {
     test(
       "the production default publicDir 'public' (main.dart passes none)",
       () async {
-        final dir = Directory.systemTemp.createTempSync('salt_default_public_');
-        Directory('${dir.path}/public').createSync();
-        File('${dir.path}/public/app.js').writeAsStringSync('APP');
-        final previous = Directory.current;
-        Directory.current = dir;
+        // v108 V11 (Run 085/086 O10): no chdir of the cwd (it is process-
+        // wide — sibling suites' relative opens failed for ~2.2 ms):
+        // ONE uniquely named file under the REAL relative `public/` (made
+        // if absent; the file, and the directory if made here, removed).
+        final dir = Directory('public');
+        final made = !dir.existsSync();
+        if (made) {
+          dir.createSync();
+        }
+        final name = 'zz_v108_default_${newRequestId()}.js';
+        File('public/$name').writeAsStringSync('APP');
         addTearDown(() {
-          Directory.current = previous;
-          dir.deleteSync(recursive: true);
+          File('public/$name').deleteSync();
+          if (made) {
+            dir.deleteSync();
+          }
         });
         final cascade = Cascade()
             .add(createStaticFileHandler())
@@ -1028,7 +1075,7 @@ void main() {
           0,
         );
         addTearDown(() => def.close(force: true));
-        final (status, headers, body) = await raw('/app.js', port: def.port);
+        final (status, headers, body) = await raw('/$name', port: def.port);
         // 'publicX': the arm a pass-through, no ETag.
         expect((status, body), (HttpStatus.ok, 'APP'));
         expect(headers['etag'], '"${md5Hex('APP')}"');
@@ -1170,6 +1217,321 @@ void main() {
     });
   });
 
+  // v108 V5 + V4 (Run 085/086 S8 / O7 / O12, Sonnet critics 1 / 3): the
+  // static arm answers exactly what shelf_static answers; the validators
+  // only add their headers (the ETag, a 304, the Range rules). STATED
+  // synthesized requests (the brief's table, measured base vs tip in the
+  // fix108 plan) on the harness's own files.
+  group('v108 V5 / V4 the static arm is shelf_static plus its validators', () {
+    test('row by row: the pipeline answers as BARE shelf_static; an ETag '
+        'exactly on a file; a non-file never 304s', () async {
+      Directory('${publicDir.path}/v108dir').createSync();
+      File('${publicDir.path}/v108dir/nested.js').writeAsStringSync('NESTED');
+      File('${tempDir.path}/v108secret.js').writeAsStringSync('SECRET');
+      Link(
+        '${publicDir.path}/v108out.js',
+      ).createSync('${tempDir.path}/v108secret.js');
+      final routes = buildAppMiddleware(
+        (c) {
+          final p = c.request.uri.path;
+          if (p == '/') {
+            requireGet(c); // The real root route's guard (routes/index.dart).
+            return Response(
+              body: _shell,
+              headers: {HttpHeaders.contentTypeHeader: 'text/html'},
+            );
+          }
+          return p.startsWith('/api/')
+              ? Response(body: 'routed ${c.request.uri.pathSegments}')
+              : Response(statusCode: HttpStatus.notFound);
+        },
+        config: ServerConfig.fromEnvironment(
+          environment: {'DATA_DIR': tempDir.path, 'LOG_LEVEL': 'ERROR'},
+        ),
+        database: database,
+        authRuntime: AuthRuntime(),
+        nutritionProvider: _UnusedNutrition(),
+        searchRateLimiter: RequestRateLimiter(),
+        searchService: () => InlineSearchService(database),
+        logStore: LogStore(directory: '${tempDir.path}/v108-logs'),
+        indexPath: '${publicDir.path}/index.html',
+      );
+      final cascade = Cascade()
+          .add(createStaticFileHandler(path: publicDir.path))
+          .add(routes)
+          .handler;
+      final bare = await serve(cascade, InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => bare.close(force: true));
+      final full = await serve(
+        buildOutermostMiddleware(cascade, publicDir: publicDir.path),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => full.close(force: true));
+      final abs = publicDir.resolveSymbolicLinksSync().replaceAll('/', '%2F');
+      var files = 0;
+      for (final (method, path) in [
+        for (final m in ['GET', 'HEAD']) ...[
+          (m, '/'),
+          (m, '/index.html'),
+          (m, '/main.dart.js'),
+          (m, '/$abs%2Fmain.dart.js'),
+          (m, '/v108dir%2Fnested.js'),
+          (m, '/v108out.js'),
+        ],
+        ('GET', '/main.dart.js/'),
+        ('GET', '//main.dart.js'),
+        ('GET', '/main.dart.js/.'),
+        ('GET', '/%2Fmain.dart.js'),
+        ('GET', '/api/x/%2F$abs%2Fmain.dart.js'),
+        ('GET', '/v108dir/nested.js'),
+        ('GET', '/v108dir%2F..%2Fmain.dart.js'),
+        ('GET', '/%2Fetc%2Fpasswd'),
+        ('GET', '/r/a%2Fb'),
+        ('GET', '/r/a%5Cb'),
+        ('GET', '/search%2Fx'),
+        ('PUT', '/api/v1/tags/%2Fquick/style'),
+        ('PUT', '/api/v1/tags/%5Co%2F/style'),
+        ('PUT', '/api/v1/tags/a%2Fb/style'),
+        ('GET', '/..%00'),
+        ('GET', '/..;/main.dart.js'),
+        ('GET', '/main.dart.js%00.html'),
+        ('GET', '/api/%2Fmain.dart.js'),
+        ('GET', '/api/$abs%2Fmain.dart.js'),
+      ]) {
+        final b = await raw(path, port: bare.port, method: method);
+        final f = await raw(path, port: full.port, method: method);
+        final why = '$method $path';
+        // Each side mints its own request id.
+        String body(String s) =>
+            s.replaceAll(RegExp('"request_id":"[0-9a-f]{16}"'), 'ID');
+        expect(
+          (f.$1, f.$2['content-type'], body(f.$3)),
+          (b.$1, b.$2['content-type'], body(b.$3)),
+          reason: why,
+        );
+        expect(b.$2['etag'], isNull, reason: why);
+        // A file is what shelf_static serves with its Last-Modified.
+        final isFile = b.$2['last-modified'] != null;
+        expect(f.$2['etag'] != null, isFile, reason: why);
+        if (isFile && method == 'GET') {
+          files++;
+          expect(f.$2['etag'], '"${md5Hex(f.$3)}"', reason: why);
+        }
+        final inm = await raw(
+          path,
+          port: full.port,
+          method: method,
+          headers: {'if-none-match': '*'},
+        );
+        expect(inm.$1, isFile ? HttpStatus.notModified : b.$1, reason: why);
+      }
+      // Not vacuous: 12 GET rows are files (index.html; main.dart.js by
+      // nine spellings, the NUL-truncated one included; nested.js by two).
+      expect(files, 12);
+    });
+
+    test('V4: GET / is 200 the shell and HEAD / the route answer through the '
+        'outermost seam; the dot spellings are 404 by value', () async {
+      final get = await raw('/');
+      expect((get.$1, get.$3), (HttpStatus.ok, _shell));
+      // The harness's stand-in route 404s '/', and spaFallback answers GET
+      // only (production's routes/index.dart: requireGet → 405).
+      expect((await raw('/', method: 'HEAD')).$1, HttpStatus.notFound);
+      for (final path in ['/..%00', '/..;/main.dart.js']) {
+        final (status, headers, body) = await raw(path);
+        expect(
+          (status, headers['etag'], (jsonDecode(body) as Map)['error'] != null),
+          (HttpStatus.notFound, null, true),
+          reason: path,
+        );
+      }
+    });
+  });
+
+  // v108 V2 (Run 085/086 S12 / O1 O11): dart_frog's `Request.method`
+  // throws for a token outside its enum; the outermost catch's own log
+  // text read it again (the first per window a bare shelf_io 500, no record
+  // ever written). STATED synthesized requests (no browser sends them).
+  group('v108 V2 one gate for a method dart_frog cannot name', () {
+    test('TRACE / PROPFIND / FOO on a file, a routed and an unknown path: '
+        '405 with the envelope, Allow and the id, every time; GET '
+        'unchanged; nothing SEVERE', () async {
+      final logs = '${tempDir.path}/v2-logs';
+      final store = LogStore(directory: logs)..attach(Logger.root.onRecord);
+      addTearDown(store.dispose);
+      for (final path in ['/main.dart.js', '/api/v1/auth/me', '/nope']) {
+        for (final method in ['TRACE', 'TRACE', 'PROPFIND', 'FOO', 'FOO']) {
+          final (status, headers, body) = await raw(path, method: method);
+          // Base: the first a bare 500 text/plain, then the 500 envelope.
+          expect(
+            (status, headers['content-type']),
+            (HttpStatus.methodNotAllowed, 'application/json'),
+            reason: '$method $path',
+          );
+          final error = (jsonDecode(body) as Map)['error'] as Map;
+          expect(error['code'], 'method_not_allowed');
+          expect(error['request_id'], headers['x-request-id']);
+          expect(
+            headers['allow'],
+            'DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT',
+          );
+          expect(headers['cache-control'], 'no-cache');
+        }
+      }
+      expect((await raw('/main.dart.js')).$3, 'void main(){}');
+      expect((await raw('/api/v1/auth/me')).$1, HttpStatus.notFound);
+      expect((await raw('/nope')).$3, _shell);
+      expect(severeIn(logs), isEmpty);
+    });
+  });
+
+  // v108 V1 (Run 085/086 S1 S3 S11 S14 / O2 O8, Opus critic 1): ONE
+  // throttle for both persisting catch-alls ([SevereThrottle]).
+  group('v108 V1 one throttle', () {
+    test('50 truncated login bodies through the real routes arm: ONE SEVERE '
+        'record with its stack; the audit history kept', () async {
+      // STATED synthesized (negative path: a client closing mid-body).
+      final dir = Directory.systemTemp.createTempSync('salt_v108_v1_');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final config = ServerConfig.fromEnvironment(
+        environment: {'DATA_DIR': dir.path, 'LOG_LEVEL': 'ERROR'},
+      );
+      final db = SaltDatabase.open('${dir.path}/salt.db');
+      addTearDown(db.dispose);
+      final logs = '${dir.path}/logs';
+      final store = LogStore(directory: logs)..attach(Logger.root.onRecord);
+      addTearDown(store.dispose);
+      final level = Logger.root.level;
+      Logger.root.level = Level.WARNING;
+      addTearDown(() => Logger.root.level = level);
+      Logger('audit').warning('SENTINEL admin audit line');
+      final routes = buildAppMiddleware(
+        (c) => c.request.uri.path == '/api/v1/auth/login'
+            ? Future.sync(() => login_route.onRequest(c))
+            : Response(statusCode: HttpStatus.notFound),
+        config: config,
+        database: db,
+        authRuntime: AuthRuntime(),
+        nutritionProvider: _UnusedNutrition(),
+        searchRateLimiter: RequestRateLimiter(),
+        searchService: () => InlineSearchService(db),
+        logStore: store,
+      );
+      final login = await serve(
+        buildOutermostMiddleware(
+          Cascade()
+              .add(createStaticFileHandler(path: publicDir.path))
+              .add(routes)
+              .handler,
+          publicDir: publicDir.path,
+        ),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => login.close(force: true));
+      for (var i = 0; i < 50; i++) {
+        final s = await Socket.connect('127.0.0.1', login.port);
+        s.write(
+          'POST /api/v1/auth/login HTTP/1.1\r\nHost: x\r\n'
+          'Content-Type: application/json\r\nContent-Length: 5000\r\n\r\n'
+          '{"user',
+        );
+        await s.flush();
+        s.destroy();
+      }
+      for (var i = 0; i < 50 && severeIn(logs).isEmpty; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      // Base: 50 records, each with its stack.
+      final records = severeIn(logs);
+      expect(records, hasLength(1));
+      expect(records.single['message'], contains('#0'));
+      expect(
+        File('$logs/server.jsonl').readAsStringSync(),
+        contains('SENTINEL admin audit line'),
+      );
+    });
+
+    test('the two catch-alls share ONE throttle: one site thrown through '
+        'both is one record', () async {
+      final logs = '${tempDir.path}/v1-shared-logs';
+      final store = LogStore(directory: logs)..attach(Logger.root.onRecord);
+      addTearDown(store.dispose);
+      final both = await serve(
+        buildOutermostMiddleware(
+          Cascade()
+              .add(
+                (c) => c.request.uri.path == '/outer'
+                    ? _v108Boom()
+                    : Response(statusCode: HttpStatus.notFound),
+              )
+              .add(errorHandler()((_) => _v108Boom()))
+              .handler,
+          publicDir: publicDir.path,
+        ),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => both.close(force: true));
+      expect((await raw('/outer', port: both.port)).$1, 500);
+      expect((await raw('/inner', port: both.port)).$1, 500);
+      // Two instances: 2.
+      expect(severeIn(logs), hasLength(1));
+    });
+
+    test('the clock: +60 s a record WITH its stack naming the count; a '
+        '2 h BACKWARDS step is recorded at once', () {
+      final records = <LogRecord>[];
+      final log = Logger.detached('v108')..level = Level.ALL;
+      final sub = log.onRecord.listen(records.add);
+      addTearDown(sub.cancel);
+      final t0 = DateTime.utc(2026, 11, 9);
+      var t = t0;
+      final throttle = SevereThrottle(now: () => t);
+      final (error, stack) = _v108Caught();
+      void hit(Duration at) {
+        t = t0.add(at);
+        throttle.severe(log, 'm', null, error, stack);
+      }
+
+      hit(Duration.zero);
+      hit(const Duration(seconds: 30));
+      hit(const Duration(seconds: 59));
+      expect(records, hasLength(1));
+      hit(const Duration(seconds: 60));
+      expect(records, hasLength(2));
+      expect(records.last.message, contains('(2 like it suppressed)'));
+      expect(records.last.stackTrace, isNotNull);
+      // Base (wall clock, `difference >= every`): silent for 2 h + 60 s.
+      hit(const Duration(seconds: 60) - const Duration(hours: 2));
+      expect(records, hasLength(3));
+      expect(records.last.stackTrace, isNotNull);
+      hit(const Duration(seconds: 61) - const Duration(hours: 2));
+      expect(records, hasLength(3));
+    });
+
+    test('the key: one type from two sites is two records; two types from '
+        'one site are two', () {
+      final records = <LogRecord>[];
+      final log = Logger.detached('v108k')..level = Level.ALL;
+      final sub = log.onRecord.listen(records.add);
+      addTearDown(sub.cancel);
+      final throttle = SevereThrottle(now: () => DateTime.utc(2026, 11, 9));
+      final sites = [
+        _v108Caught(),
+        _v108CaughtElsewhere(),
+        _v108Caught(format: true),
+      ];
+      for (final (error, stack) in [...sites, ...sites]) {
+        throttle.severe(log, 'm', null, error, stack);
+      }
+      // A constant key 1, a type-only key 2, a frame-only key 2.
+      expect(records, hasLength(3));
+    });
+  });
+
   test(
     'v106 U7: two Set-Cookie values both leave the outermost seam',
     () async {
@@ -1181,4 +1543,26 @@ void main() {
       expect(response.headers['set-cookie'], ['a=1', 'b=2']);
     },
   );
+}
+
+/// v108 V1: a fixed throw site (its stack's top frame is this function).
+Never _v108Boom() => throw StateError('v108 shared site');
+
+/// A StateError — or, [format], an ArgumentError — thrown at ONE site
+/// (one throw statement: one top frame), caught with its stack.
+(Object, StackTrace) _v108Caught({bool format = false}) {
+  try {
+    throw format ? ArgumentError('x') : StateError('x');
+  } catch (e, st) {
+    return (e, st);
+  }
+}
+
+/// A StateError thrown at ANOTHER site.
+(Object, StackTrace) _v108CaughtElsewhere() {
+  try {
+    throw StateError('x');
+  } catch (e, st) {
+    return (e, st);
+  }
 }

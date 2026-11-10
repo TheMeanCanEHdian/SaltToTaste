@@ -56,42 +56,49 @@ final Logger _log = Logger('proxy');
 /// header path (U3 — was shelf's bare text/plain 500 outside every
 /// header); multi-value headers are kept (U7: copyWith merges).
 ///
-/// [now] is the throttle's clock (tests pass a fake one; closer 1 D3).
+/// v108 V1: the SEVERE record through [throttle] — [severeThrottle], the
+/// one the routes arm's errorHandler shares (tests pass their own, with a
+/// fake clock). The response is the 500 envelope every time.
 Handler buildOutermostMiddleware(
   Handler handler, {
   String publicDir = 'public',
-  DateTime Function() now = DateTime.now,
+  SevereThrottle? throttle,
 }) {
   final validated = staticFileValidators(publicDir: publicDir)(handler);
-  // v107 U1: the SEVERE record throttled per throw site (the error's type
-  // and its stack's top frame — never the attacker's path or header text,
-  // which would make every request distinct and the map unbounded): the
-  // first with its stack, then at most one per [_severeEvery] naming how
-  // many it suppressed. The response is the 500 envelope every time.
-  final seen = <String, ({DateTime at, int suppressed})>{};
+  final records = throttle ?? severeThrottle;
   final secured = securityHeaders()((context) async {
+    // v108 V2: dart_frog's `Request.method` THROWS for a token outside
+    // [HttpMethod] (its exception type is not exported) — the one read is
+    // here, before anything below reads it (the validators, the request
+    // logger, both catch-alls' log text), so nothing below can throw on it.
+    // dart_frog's own Router answers 405 for the same token.
+    try {
+      context.request.method;
+    } on Exception {
+      return errorResponse(
+        statusCode: HttpStatus.methodNotAllowed,
+        code: ApiErrorCodes.methodNotAllowed,
+        message: 'Method not allowed.',
+        requestId: requestIdOf(context),
+        headers: {
+          HttpHeaders.allowHeader: [
+            for (final m in HttpMethod.values) m.value,
+          ].join(', '),
+        },
+      );
+    }
     try {
       return await validated(context);
     } catch (error, stackTrace) {
       final requestId = requestIdOf(context)!;
-      final site = '${error.runtimeType} ${'$stackTrace'.split('\n').first}';
-      final at = now();
-      final last = seen[site];
-      if (last == null || at.difference(last.at) >= _severeEvery) {
-        seen[site] = (at: at, suppressed: 0);
-        _log.severe(
-          RequestLogMessage(
-            'Unhandled error on ${context.request.method.value} '
-            '${loggedPath(context.request.uri.path)}'
-            '${last == null ? '' : ' (${last.suppressed} like it suppressed)'}',
-            requestId,
-          ),
-          error,
-          last == null ? stackTrace : null,
-        );
-      } else {
-        seen[site] = (at: last.at, suppressed: last.suppressed + 1);
-      }
+      records.severe(
+        _log,
+        'Unhandled error on ${context.request.method.value} '
+        '${loggedPath(context.request.uri.path)}',
+        requestId,
+        error,
+        stackTrace,
+      );
       return errorResponse(
         statusCode: HttpStatus.internalServerError,
         code: ApiErrorCodes.internal,
@@ -117,9 +124,6 @@ Handler buildOutermostMiddleware(
     );
   };
 }
-
-/// [buildOutermostMiddleware]'s SEVERE throttle window (v107 U1).
-const Duration _severeEvery = Duration(seconds: 60);
 
 /// The runtime counterpart to bootstrap's `configWarnings`: warns when a
 /// request carrying `X-Forwarded-For`/`-Proto` arrives from a peer that

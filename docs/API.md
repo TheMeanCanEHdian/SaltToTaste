@@ -105,12 +105,29 @@ temporary password with `must_change_password`: until the user calls
 
 ## Conventions
 
-- Every response carries an `X-Request-Id` header (16 hex chars, server
-  generated). Errors echo it in the body so users can quote it in reports
-  and admins can grep the server logs. (True since v107 U9: the outermost
-  wrapper mints one per request and stamps it on any response that has none
-  — the static `public/` arm's 200 / 206 / 304 carried none before; the
-  routes arm's own `requestIdProvider` id stands where it sets one.)
+- Every response the pipeline produces carries an `X-Request-Id` header (16
+  hex chars, server generated); errors echo it in the body so users can
+  quote it in reports. (True since v107 U9: the outermost wrapper mints one
+  per request and stamps it on any response that has none — the static
+  `public/` arm's 200 / 206 / 304 carried none before; the routes arm's own
+  `requestIdProvider` id stands where it sets one.) A ROUTED request's id is
+  in the request log, so admins can grep it there; the outermost wrapper's
+  own answers — the static arm's files, the 405 for a method dart_frog
+  cannot name, a 500 the SEVERE throttle suppressed — carry an id no log
+  line holds (v108 V10).
+- The framework's own pre-pipeline answers carry neither the id nor the
+  envelope and write a stack to stderr (v108 V9, STATED — measured on an
+  in-process server): shelf_io's bare `400 text/plain` for an invalid UTF-8
+  percent-escape (`/%FF`) or a target whose path does not round-trip
+  (`/x/.?`, `/main.dart.js/.?`), and its bare `500 text/plain` for `OPTIONS
+  *`, `GET *`, a relative target (`GET main.dart.js`), a path-less absolute
+  one (`GET http://x#a`, `GET http://x?/../main.dart.js`) and an
+  `X-Forwarded-Host` holding `#` (500, not the 400 an earlier record named).
+  No in-app fix exists: dart_frog 1.2.6's `serve` is `shelf_io.serve` over
+  `RequestContext._` (private), and its `toShelfHandler` /
+  `toShelfMiddleware` are not exported, so nothing of ours runs before
+  shelf's `Request` constructor. A method outside `HttpMethod.values` is
+  ours: the 405 envelope (v108 V2).
 - **Error envelope** (every non-2xx):
 
   ```json
@@ -5194,12 +5211,384 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v108 (batch fix108; matcherVersion 97 UNCHANGED — the fixes of
+dual-fleet review Run 085/086 over v107, union V1–V13, the spec
+.claude/diag/2026-11-09/review085/union_V.md, the rulings in fix108_brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07); no
+migration; NO corpus row moves — the replay on snapshot 32 is byte-identical
+to the v107 set and the salt_shared corpus golden is byte-identical. V13 (the
+deploy kit) is the owner's, fixed outside this batch. This section cites
+symbols, grep commands and hit counts — never a line number.)**
+- **V2 (MED) — one gate for a method dart_frog cannot name.** dart_frog
+  1.2.6's `Request.method` THROWS `UnsupportedHttpMethodException` (not
+  exported) for a token outside `HttpMethod.values`, and its readers sat
+  below in the static arm's validators, `requestLogger` (outside
+  `errorHandler`) and the log text of both catch-alls — so the outermost
+  catch threw inside itself: the first `TRACE` / `PROPFIND` / `FOO` per 60 s
+  window was shelf_io's bare 500 (no id, a stderr stack), the rest the 500
+  envelope, and no record was ever written (measured: 18 requests, 0 SEVERE).
+  FIX (`buildOutermostMiddleware`): ONE read of the method, the first thing
+  inside `securityHeaders`, in a `try … on Exception` → the 405 envelope
+  `method_not_allowed`, `Allow: DELETE, GET, HEAD, OPTIONS, PATCH, POST,
+  PUT` (`HttpMethod.values`), the request id (header == body), no-cache;
+  nothing logged (dart_frog's own `Router` answers 405 for the same token).
+  LIMIT: `grep -rn 'request\.method' apps/server/lib apps/server/routes` →
+  23 hits: the gate itself; the two catch-alls' log text, `requestLogger`'s,
+  `spaFallback`, the validators, the CSRF check, `devCors`, `requireGet` /
+  `requireMethods` and 12 route files — every one below the gate, so none
+  can throw on the read; no second guard (it would be dead code). Pins
+  (static_asset_headers_test 'v108 V2'): TRACE ×2 / PROPFIND / FOO ×2 on a
+  file, a routed and an unknown path → 405 application/json, the envelope
+  id == `x-request-id`, `Allow`, no-cache, every time; GET on the same paths
+  unchanged; 0 ERROR records in an attached store. Mutant: the gate removed
+  — killed by the FIRST request's (500, text/plain) for (405,
+  application/json).
+- **V1 (MED) — ONE throttle for both persisting catch-alls.** v107 U1
+  throttled only the outermost catch; `errorHandler`'s catch one layer down
+  wrote SEVERE + the full stack per request, and an anonymous truncated JSON
+  body on login / setup / recover (`readJsonBody` streams the body before
+  any limiter; dart:io fails it with `HttpException: Connection closed while
+  receiving data`) wrote ~3.4 KB a request. The throttle's own flaws: the
+  wall clock (a backwards step silenced a site for the size of the step),
+  the stack only on the process's first throw (a rotated store held no
+  frame), the key's composition unpinned. FIX: `SevereThrottle`
+  (error_handler.dart; `now` and `every` injectable), ONE instance
+  `severeThrottle` (built at library load — no value swapped in `run()` is
+  captured) read by `errorHandler({throttle})` and
+  `buildOutermostMiddleware(…, {throttle})` alike (the `now:` parameter of
+  the latter is replaced by `throttle:`). Key = the error's runtime type +
+  its stack's top frame (never caller text). A record is written when the
+  site is new, its 60 s window passed, OR the clock went backwards
+  (`difference.isNegative`); EVERY written record carries its stack (at
+  most one per site per window); a re-opened site's names `(N like it
+  suppressed)`; the bookkeeping is written after the record; the response is
+  the 500 envelope every time. The client abort stays a 500 (not ruled).
+  LIMIT: `grep -rn '\.severe(\|\.shout(' apps/server/lib apps/server/routes`
+  → 12 hits: the throttle's own write and its two callers (the catch-alls —
+  per-request reachable, throttled); bootstrap's four (the startup scan, the
+  serves backfill, the scheduled backup, the revoked-token prune) and
+  decision_rekey's four boot backfills — boot or timer, never per request;
+  import_job's one (an admin-started job's crash, once per job); no
+  `.shout(`. Pins ('v108 V1'): 50 truncated login bodies through the real
+  `buildAppMiddleware` + `buildOutermostMiddleware` → exactly 1 SEVERE
+  record with a `#0` frame and a planted WARNING sentinel still in the store
+  (the fleet's 20,000-request flood at the tip: the sentinel kept, 3 records
+  in 2:37); one throw site reached through both catch-alls → ONE record (two
+  instances: 2); the injected clock: 0 / 30 / 59 s → 1 record, +60 s → 2 with
+  its stack naming `(2 like it suppressed)`, a 2 h BACKWARDS step → recorded
+  at once with its stack, +1 s after it → suppressed; the key: one type from
+  two sites + two types from one site → 3 records. RE-PIN (ruled): v107's
+  'the throttle …(closer 1 D3)' pin asserted the 60 s / 120 s records carry
+  NO `#0` — REVERSED to `contains('#0')`. HARNESS (closer 1, verify 1 D1):
+  log_store_test's 'request logging over a real chain' builds
+  `errorHandler(throttle: SevereThrottle())` per test — with the shared
+  default, its '100 KB request path on the 500 path' test throws the SAME
+  site less than 60 s before 'a 500 is retained WITH its exception and
+  stack', whose record was then suppressed (`items.single` on none); the
+  file's expectations are unchanged (the mutant back to `errorHandler()`:
+  +38 -1, "No element"). Mutants (value): errorHandler's own
+  instance (2 records for 1), its throttle disabled (the login pin's 50 for
+  1), the outer's own instance (2 for 1), the backwards clause dropped (2
+  for 3), the re-open's stack dropped (no `#0`), a constant / type-only /
+  frame-only key (1 / 2 / 2 for 3), the count not incremented (`(0 like it
+  suppressed)`), `<=` for `<` (1 for 2). Equivalent (stated, not counted):
+  the bookkeeping moved before the write (`Logger.severe` cannot throw back
+  — its listeners run on a sync broadcast stream).
+- **V5 + V4 + V8 (V4 MED) — the static arm answers exactly what shelf_static
+  answers; the validators only add their headers.** v107's separator refusal
+  was WIDER than the harm: it 404ed `PUT /api/v1/tags/%2Fquick/style` and
+  `/%5Co%2F/style` (a free-text tag — routed at v106), `/api/%2Fmain.dart.js`'s
+  route and the SPA deep links `/r/a%2Fb`, `/r/a%5Cb`, `/search%2Fx` (the JSON
+  404 where the shell was served). MEASURED (shelf_static 1.1.3: `segs =
+  [root, ...request.url.pathSegments]`, `p.joinAll`, `typeSync`, the resolved
+  path `p.isWithin` the root else 404 and the cascade moves on): every alias
+  spelling that serves a body serves a file INSIDE the root, so no harm in
+  serving it with the validators (rule B; fallback A not needed). FIX
+  (`staticFileValidators`): `fileOf` takes `request.url.pathSegments` and
+  joins them as POSIX `p.joinAll` does — an empty part skipped, a part
+  starting with `/` RESETS the path, else `/` + part (`package:path` is not a
+  direct dependency) — then a file whose real path lies inside the root's;
+  the refusal, the `api` special case and its `segments.isNotEmpty` are
+  DELETED. Every spelling shelf_static serves is the file WITH its ETag
+  (`/<root>%2Fmain.dart.js`, `/api/x/%2F<root>%2Fmain.dart.js`,
+  `/assets%2Fx.js`, `/assets%2F..%2Fmain.dart.js`); every request naming no
+  file passes untouched, under `/api` and outside it. Windows (dev-only):
+  `p.joinAll` also splits on `\` there — the stated limit. STATED, and
+  RULED no refusal (the owner gate): `/main.dart.js%00.html` is served by
+  shelf_static itself (dart:io stats the path up to the NUL; the mime is
+  read from `.html`) as text/html with the CSP — bare and pipeline alike;
+  the validators add only the ETag. No harm is shown: `public/` holds only
+  the build's own files (uploads are served by the images route, never
+  from it), containment is checked on the resolved path, and the CSP
+  (`script-src 'self' 'wasm-unsafe-eval'`) runs no inline script of a
+  mis-typed document; a refusal here would be v107's separator refusal
+  again — wider than a harm. The row is pinned as bare's answer.
+  V8 (text): "Dart's `Uri` removes dot segments, so a `.` never arrives" was
+  false at the Uri level — `Uri.parse('http://x/main.dart.js/.?')` keeps
+  `[main.dart.js, .]`; what holds is that shelf 1.4.2's `Request`
+  constructor refuses a target whose handlerPath + url do not equal the
+  requested path's segments, so shelf_io answers its bare 400 before any
+  middleware (measured: `/main.dart.js/.?`, `/.?`, `/assets/.?`, `/x/.?` →
+  400 text/plain; `/main.dart.js/.` → 200 the file). LIMIT: `grep -rn
+  --exclude-dir=.data --exclude-dir=build --exclude-dir=.dart_tool
+  'fileOf\|staticFileValidators\|createStaticFileHandler' apps/server` → 18
+  hits: `buildOutermostMiddleware`'s one wiring and its two doc mentions;
+  web_app.dart's definition, `fileOf` and its one call; static_asset_headers
+  _test's harness cascade, the /api echo cascade, the default-dir cascade,
+  the V5 invariant's and V1's cascades and their comment mentions (the
+  production `createStaticFileHandler()` lives only in the generated
+  build/bin/server.dart, every request through the outermost first). Pins
+  ('v108 V5 / V4'): ROW BY ROW against BARE `createStaticFileHandler` (the
+  same cascade with and without the outermost; a real `requireGet` root
+  stand-in, an /api echo, the SPA fallback) over 32 requests — status,
+  content-type and body (request ids normalised) equal; an ETag ⟺ bare
+  served a file (its Last-Modified), equal to the body's md5 on GET (12 GET
+  rows are files); `If-None-Match: *` → 304 exactly on those, bare's status
+  elsewhere; V4: GET / → 200 the shell through the outermost seam, HEAD / the
+  route's answer (production's `routes/index.dart` is GET-only:
+  `requireGet` → 405 at base and tip), `/..%00` and `/..;/main.dart.js` →
+  the 404 envelope, no ETag. RE-PIN (ruled, v107 'U1'): the separator pin
+  `/<root>%2Fmain.dart.js` 404 → 200 the file + its ETag (INM → 304; the
+  four spellings naming no file keep the 404 envelope, now the cascade's);
+  the /api pin `/api/<root>%2Fmain.dart.js` 404 → 200 the file + ETag,
+  `/api/%2Fmain.dart.js` 404 → routed, and the tag rows `%2Fquick`,
+  `%5Co%2F` (PUT) → routed with the decoded segment; the 17-spelling
+  equivalence pin extended by 10 rows (27). Mutants (value): `/` throwing
+  in `fileOf` (500 for 200), the reset dropped, the empty skip dropped, the
+  containment dropped (each an ETag-presence flip), the base web_app.dart
+  restored (the three rewritten pins fail). Equivalent (stated): the
+  doubled separator after a reset part ending in `/`; `request.uri` for
+  `request.url` (they differ only by empty parts, which the join skips).
+- **V3 (MED) — the pair fetch reads its consumer's predicate; the hold names
+  the record it waits on.** v107 U4's fetch of rule B1's second record (the
+  juice) ran for ANY decided row on a peel record — a PICK (`overridden`,
+  one record, how a person undoes the rule) never reads it: a pick of the
+  peel during a juice outage was stored underived, then held out of the
+  totals; "no such food" cost a request per compute; and a confirm on a row
+  storing no parts held with `held_on` null (the juice's arrival never
+  re-opened it). FIX (engine.dart): `withParts`' gate is ONE predicate
+  `_splits` and its rule ONE function `_pairOf`; `derivedFor`'s fetch moved
+  to just before `withParts` and runs IFF `_splits` holds on the very row
+  `withParts` receives and `_pairOf` names a second record no cache holds
+  (its failure the same `unavailable` outcome as the food's own, one
+  closure `unavailableBy`); `_heldOnOf(db, row, recipe, line)` names, when
+  the stored row carries no parts and its own record is cached, the rule's
+  uncached second record (`_pairOf` on `weighedLine` — the line the fetch
+  read), so `SaltDatabase.unholdOn` re-opens it on the juice's arrival (its
+  ponytail note: a pick of a cached peel failing on another detail during a
+  juice outage names the juice too — a re-open with no request). LIMIT:
+  `grep -rn 'derivedFor(' apps/server/lib` → 8 (the definition + 7 call
+  sites: the compute's decided arms, the un-skip, the matches GET (cache
+  only), the GET's re-read, the two PUT paths — every one reaches the moved
+  fetch the same way); `grep -rn '_heldOnOf(' apps/server/lib` → 5 (the
+  definition + countFoodFailure, the decided re-read, the engine cacheOnly
+  arm, `unskippedRow` — each passes its recipe and line). Pins
+  (nutrition_v108_test 'V3', 0536 line 3, the fixtures): (a) the juice
+  dropped + a FOOD fault, PUT the peel pick → `overridden`, 24.00 g, hold
+  null, derived, fresh, 596.95 kcal/serving, 0 juice requests — the same
+  after 3 computes; (b) FDC "no such food" for the juice: the PUT + 4
+  computes → 0 juice requests (base 5); (c) a CONFIRM of a row storing no
+  parts during the outage → held `food_unavailable` with `held_on` 169098;
+  `cachedFood` re-opens it (derived_seq null, stale) and the next compute
+  derives the pair (86.0 g, 603.92 kcal/serving); (d) T7's U4 pins
+  unchanged. On the base engine all three fail. Mutants: the predicate
+  dropped (the pick's row the failed derivation's: parts / grams VALUE),
+  `_heldOnOf` reading parts only (held_on null for 169098). (e) [the owner
+  gate's pin] the row's OWN record uncached too → `held_on` null — the
+  failure was its own fetch, the juice was never asked, and the juice
+  arriving first re-opens nothing (the stamp kept, the recipe fresh): the
+  mutant dropping `_heldOnOf`'s own-record test survived (a)–(d) and dies
+  on it (169098 for null). STATED: a row STORING parts names its first
+  uncached part whatever its own record's state (v103 U5's loop,
+  unchanged) — a spare re-open when that part arrives first. sw13 gains
+  (b″) the pick on a pair line (below).
+- **V6 (LOW) — the negation verdict by MATCH SPAN.** v107 judged each act
+  match by the CLAUSE holding its verb (`_forbiddenAt` / `_clauseCut`):
+  "Skim the foam from the broth; do not skim the fat." read a fat skim (the
+  only fat in the forbidding clause — v106 read none); "do not skim the
+  liquid and fat", "(do not skim the juices, onions, and fat)", "Do not pour
+  off the juices and fat." read the act as real (the cut split the
+  coordinated object — v105 forbade them); "do not skim the broth then skim
+  fat from the surface" lost the real skim (the bridge swallowed the second
+  verb); and every reader built its own guard (3× the stated bound). FIX
+  (engine.dart): `_negatedSpans(s, act)` — the act's negated matches, ONE
+  `allMatches` per (sentence, act) across every reader, memoised on the
+  text (a pure function of it; only sentences passing the native negation
+  prefilter are stored; ponytail: process-wide, cleared past 2 MiB of keyed
+  text); a verb occurrence is forbidden iff it lies inside a span
+  (`_inSpan`, a binary search), and an object occurrence counts only outside
+  every span of that act. Per reader: `_Fat.discardsIn`, `_wipesPan` and
+  `_panFactsOf`'s `reused` — the match is verb + object, contiguous, so its
+  start decides; `_skimsTheFat` (the skim arm of `_skimsFatIn`) and the
+  pour-off arms of `_skimsFatIn` and `_panFactsOf` — `_freeActIn`: the
+  first free verb (`_skimWord` / `_pourOffVerb`) with a free object
+  (`_fatAlone` / `_fatOrGrease`, `_plainPourOff`'s two halves) past its end
+  in its period-free piece; `defatsSentence` (order-free by design, the v26
+  fuzz's reference regex) — a free skim word AND a free fat in the piece.
+  `_negatedAct`'s bridge never crosses the act's own verb (`(?!verb\b)`) and
+  takes a list comma. DELETED: `_forbiddenAt`, `_clauseCut`, the per-clause
+  memo and its binary search over cuts, `_forbids`. `forbidsEvaluations`
+  counts the span scans (its setter, a test's reset, clears the memo). Every
+  verdict pin of nutrition_v101 / v104 / v105 / v106 / v107 kept its value
+  (NO pin flipped). LIMIT (one unbroken command):
+
+  ```sh
+  grep -rn 'discardsIn\|_pourOffAllButFat\|_panReused\|_pansWiped\|_poursOffFat\|_skimWord\|_fatAlone\|_plainPourOff\|_skimsFat\b\|_forbiddenAt\|_forbids\b' apps/server/lib
+  ```
+
+  → 72 hits at the base, 50 at the tip (no `_forbiddenAt` / `_forbids` left —
+  `grep -rn '_forbiddenAt\|_forbids\b\|_clauseCut' apps/server/lib` → 0; the
+  `_pourOffAllButFat`, `_skimsFat`, `pourOffFatSentence` and
+  `_panReusedAfter` hits read no negation, unchanged); `grep -rn
+  '_negatedSpans\|_inSpan\|_freeActIn' apps/server/lib` → 35 hits, every
+  reader above. Corpus scan (the final grammar over the 1,198 recipes'
+  steps): ONE negated act — 0492's "not skim the fat", as at the base.
+  Pins (nutrition_v108_test 'V6', STATED re-texts of 0224's skim sentence
+  and 0351 S4 as T7's): through `defatsSentence` and `braisedKeptOf` the
+  sentences above both ways ("Do not skim the fat, skim the foam." → none;
+  "Skim the fat; do not skim the broth." → a skim; the `or` and `and` lists
+  → none); through `shallowFryLinesOf` "Pour off the juices; never pour off
+  the fat." / "Drain off the water; do not drain off the fat." / "Do not
+  pour off the juices and fat." → {} (v107 {20}), "Wipe out the skillet; do
+  not wipe out the pot." → {20}, "Pour off the liquid; do not pour off the
+  fat." → {20} = 0351's own "Pour off the liquid." (base and tip). COST
+  (count-pinned): the fleets' discard shape (39 negated clauses + one real)
+  → 1 span scan per path through `shallowFryLinesOf`, `matchAndCompute` and
+  the matches GET (base 78 / 117 / 117 on 0118); 119 steps of ten DISTINCT
+  ~1,000-character sentences → 1,190 (one per sentence and act) under the
+  backstop; v107's U6 cap pins RE-PINNED as equalities (the 1,190 identical
+  sentences are one text: 2,380 → 1; the 40-clause sentence 42 → 2; the
+  "not too hard" sentence 3 → 2). Timed base → tip: S9's shape
+  `shallowFryLinesOf` 352 → 108 ms (3,570 → 1 scans; the verdict {20} → {}:
+  its sentences hold free "discard the oil" verbs — a real discard, rule
+  (i)), its defats shape 40 → 11 ms (1,190 → 1); O6's cap shape (0118 / 0351
+  padded to 120 steps of ten distinct "do not discard the oil, …" sentences)
+  compute 641 / 466 → 602 / 488 ms, GET 493 / 541 → 474 / 514 ms, scans
+  92,040 / 45,640 → 1,150 / 1,140 — all under the 10 s backstop. Mutants
+  (value): the bridge's verb exclusion (the then-skim's true), the comma
+  (the onions list's false), the free fat in `defatsSentence`, the free
+  object in `_freeActIn` ({20} for {}), the memo (a rebuild per reader: (2,
+  3, 3) for (1, 1, 1)), the discard / wipe / reuse span tests (v107's U3
+  pins). The owner gate's pin (no corpus read, so CI runs it): the memo's
+  only bound is the clear past 2 MiB of keyed text — a repeat inside it is
+  a hit (1 scan), and after 2,200 distinct ~1,020-character sentences the
+  first is scanned again (2,202; a mutant never clearing: 2,201).
+- **V7 (LOW) — the share token, its gate and its reader agree
+  (salt_shared).** "(1 ½ recipes" was neither read nor written (the
+  amount's ⅔ stored where the text says 1½), and `writesShare` gated on a
+  case-SENSITIVE `contains('recipe')` while `_shareToken` is
+  case-insensitive ("(2 Recipes; see below)" → the amount's share). FIX
+  (servings_parser.dart): `_recipeShare` reads a whole number, a space, a
+  vulgar fraction as `parseQuantity` does (1.5) and is case-insensitive;
+  the gate is one case-insensitive `_namesRecipe` read by `writesShare` and
+  `shareReaderOf`. `_num` (SERVES / MAKES) untouched; the corpus golden
+  byte-identical. Corpus: `grep -rhiE` of a numeric parenthesised recipe
+  token over the corpus `raw:` lines → the 3 lines of 0184's "(½ recipe;
+  recipe follows)" (unchanged), 0 lines with a capitalised one. Pins
+  (servings_parser_test 'v108 V7', three of four with no lower-case
+  "recipe" elsewhere): "(1 ½ recipes; recipe follows)" → 1.5; "(2 Recipes;
+  see below)" → written, 2.0; "(½ Recipe)" → 0.5; "(1E9 RECIPES; see below)"
+  → written, no share. Mutants (value): the reader case-sensitive (null for
+  2.0), the gate case-sensitive (written false), the `N ½` arm dropped.
+- **V11 (LOW, test-only) — no test moves the process cwd.** The default
+  publicDir pin wrote under a temp dir and chdir'ed into it (process-wide:
+  a ~2.2 ms window of failed sibling opens). It now writes ONE uniquely named
+  file under the real relative `public/` (made if absent; removed with it)
+  and fetches it through `buildOutermostMiddleware(cascade)` with no
+  publicDir and `createStaticFileHandler()` with no path. `grep -rn
+  'Directory.current\s*=' apps/*/test packages/*/test` → 0. Mutant
+  ('public' → 'publicX'): the ETag null. The fleet's window probe: 0 misses.
+- **V12 (LOW) — run.sh fails loudly.** `setopt null_glob` emptied the
+  summary `grep`'s file list (it then read stdin). The `(N)` qualifier is
+  scoped to the `rm` glob; no shard TSV → a message naming the logs and exit
+  1.
+- **V8 / V9 / V10 (LOW) — text.** Conventions: the request-id sentence
+  narrowed to what holds (every response the pipeline produces carries the
+  id; a routed request's id is in the request log; the outermost's own
+  answers carry an id no log line holds) and a NEW bullet for the
+  framework's pre-pipeline answers (V9, STATED with the measured reason no
+  in-app seam exists); the v107 section carries one dated correction note
+  (its counts, its line cites, the two cascades its U1 limit omits, the
+  dot-segment mechanism, the tag-route claim, the v106 U4 bullet's "empty /
+  `.` segment"); README's Docker section caps the container log.
+- **Gate.** The replay (tool/replay/gate.sh on fresh snapshot-32 copies,
+  main and `--reverse-parents` cmp-identical): rows / recs / sections /
+  notes / calls (0) and the buckets BYTE-IDENTICAL to v107_*, 0 person rows,
+  0 rows differing. The salt_shared suite +254 (base +250; the 4 V7 pins),
+  the corpus golden green; the app suite +669 (= base); the server suite on
+  the live corpus +3,320 ~4 All tests passed (base +3,304 ~4; +7
+  static_asset_headers — 9 new, 2 renamed re-pins — and +9 nutrition_v108:
+  the batch's 7 and the owner gate's 2).
+  Every new or changed test file
+  loads without the corpus (0 "Failed to load"); dart analyze clean on all
+  three packages (tool/replay included); dart format 0 changed. GATE-P
+  (person_sweeps/run.sh, 12 shards, the tip's sweep scripts on both trees,
+  base b885baf vs tip; calls 0 at every settle, a second pass moves 0):
+  sw5 31,713 / sw6 37,400 / sw7 1,872 / sw8 56,868 / sw8r 5,358 / sw9 130
+  combos, 0 divergent 0 refused both; sw10 0 divergent both; sw11 39,760, 200
+  divergent `calls-only` both (14,070 refused), the lines identical; sw12
+  129, the known 52 both, identical; sw13 180 = 175 + the 5 (b″) PICK ON A
+  PAIR LINE combos (per (b′) row: the juice dropped from both caches, PUT
+  {raw, fdc_id: the row's own peel record} under NoNet, compute ×3; classes
+  `pick-asks` — more requests than a CONTROL with the row skipped under the
+  same drop, which counts what the recipe's other rows ask: 0860 / 0861
+  print the juice as their own line, 3 — and `pick-not-derived`): BASE 5
+  divergent (every Q combo, both classes: calls 4 / 4 / 7 / 7 / 4 against
+  control 0 / 0 / 3 / 3 / 0, the pick held `food_unavailable` with no
+  grams), TIP 0 (0142|8 8.00 g, 0536|3 24.00 g, 0860|2 18.00 g, 0861|5
+  12.00 g, 0989|1 8.00 g, each `overridden`, unheld and derived; calls ==
+  control); every non-Q line identical base vs tip.
+- **Owner gate (2026-11-09).** gate.sh on fresh snapshot-32 copies:
+  byte-identical to v107_* and cmp-identical to the verifier's final set.
+  Seven own mutants, one per ruled slot — six on neither the fixer's nor
+  the verifier's list, one (the window boundary) the fixer's `<=` again —
+  each killed by a VALUE: the 405's `Allow` header dropped (null for the
+  list); the throttle's window boundary (`<` → `<=`: 1 record for 2 at
+  exactly +60 s); the join reset on ANY
+  separator-bearing segment (no ETag on a nested file's `%2F` spelling);
+  the pair fetch's failure swallowed (`second_food` for `food_unavailable`
+  on 169098); `defatsSentence`'s verb read without its span (0224 kept for
+  null); the span memo's cap raised (2,201 for 2,202 — on the pin added
+  for it, V6; the pin's verifier found the clear's count restart unpinned
+  — two sentences stored after the clear are now asserted hits: 2,203
+  for 2,201 without the restart); `_heldOnOf`'s own-record test dropped —
+  SURVIVED the batch's pins, killed by the pin added for it (V3 (e):
+  169098 for null).
+  One ruling: no refusal for the NUL spelling (V5). One environmental
+  failure, named: the first TWO full runs on the final tree were +3,319
+  ~4 −1, the same test both times — search_isolate_wiring_test's "a
+  timed-out search evicts the worker", its tearDown `deleteSync`
+  ("Directory not empty", a temp dir: an evicted worker isolate's exit is
+  awaited by nobody, so its SQLite files can appear under the delete; no
+  file of the test or its library is in this batch; four earlier gates
+  hold the same failure); the file alone (+3) and the third full run
+  (+3,320 ~4 All tests passed) are green. The race is NOT fixed here (a
+  follow-up: make an evicted worker's exit awaitable by `dispose()`).
+- **Deploy note.** No migration; matcherVersion 97 unchanged, so no stamp
+  moves and no stale sweep; the digest is unchanged at 763,726.73. The
+  server needs the rebuild of any lib change (`dart_frog build`); the deploy
+  kit is the owner's (V13).
+
 **Matcher v107 (batch fix107; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 083/084 over v106, union U1–U11, the spec
 .claude/diag/2026-11-07/review083/union_U.md, the rulings in fix107/brief.md
 (the orchestrator's, under the owner's standing authorization 2026-10-07); no
 migration; NO corpus row moves — the replay on snapshot 32 is byte-identical
 to the v106 set and the salt_shared corpus golden is byte-identical).**
+CORRECTED at v108 (Run 085/086 V8 / V10; the text below is kept as
+written): the U3 pin's "17 sentences through `shallowFryLinesOf`" are 20
+(closer 1 D5's three cut pins); the line cites below are fe92d3d's, not the
+tip's — the v108 section cites greps and counts instead; the U1 limit omits
+two cascades of static_asset_headers_test (the /api echo and the
+default-dir one); "a `.` segment never arrives because `Uri` removes dot
+segments" names the wrong mechanism — `Uri.parse` keeps a final `.`
+before `?` / `#`, and it is shelf 1.4.2's `Request` constructor that
+refuses such a target (shelf_io's bare 400), so the deletion stayed
+equivalent; "a tag name reaches the routes as at v106" held only for an
+inner separator — a LEADING `/` or `\` was refused (v108 V5 deletes the
+refusal); and the v106 U4 bullet's "diverged on an empty / `.` segment"
+is reconciled the same way (an empty segment diverged; a `.` never reached
+either resolver).
 - **U1 (MED) — one resolver for the static arm; the catch-all made safe.**
   `fileOf` joined the URL's segments with the separator while shelf_static
   joins them with `p.joinAll`: a trailing slash / `//main.dart.js/` / `/.`

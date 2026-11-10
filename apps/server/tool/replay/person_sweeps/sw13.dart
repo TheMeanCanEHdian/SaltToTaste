@@ -16,6 +16,12 @@
 //     path, `unholdOn`) and the row is read before the next compute ('arrived'). Extra classes: 'held-not-no-record'
 //     (the held pass holds no `food_unavailable` / `food_gone` — the base's partial `second_food`), 'not-reopened'
 //     (arrived still derived and fresh). Tags 'P|…'; the (b) combos are unchanged.
+// (b″) v108 V3 — THE PICK ON A PAIR LINE: for each (b′) row, its juice dropped from both caches (sw9's form), then a
+//     PUT {raw, fdc_id: the row's own peel record} (a pick — one record, how a person undoes rule B1) under NoNet
+//     and compute ×3. A pick never reads the juice: classes 'pick-asks' (more requests than the CONTROL — the same
+//     drop on a fresh copy, the row SKIPPED (a skip reads no food on either tree) and compute ×3: what the recipe's
+//     other rows ask, e.g. 0860 / 0861's own juice line), 'pick-not-derived' (the pick after the PUT or the computes
+//     is held, has no grams or is underived). Tags 'Q|…'; divergent on the BASE only.
 // Base vs tip: the COMBO / ROW lines are diffed (run.sh on each tree). args: settle <snap> <out-db> |
 // sweep <settled-db> <workdir> <shard> <nshards>
 // ignore_for_file: avoid_print, public_member_api_docs, lines_longer_than_80_chars
@@ -198,7 +204,7 @@ Future<void> main(List<String> a) async {
       ];
     }
     stdout.writeln(
-      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
+      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; pick combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
     );
     db.dispose();
     return;
@@ -208,6 +214,7 @@ Future<void> main(List<String> a) async {
   Process.runSync('cp', ['-c', src, probePath]);
   final probe = SaltDatabase.open(probePath);
   final applies = applyPlan(probe);
+  final picks = pairPlan(probe);
   final holds = [
     for (final (id, pos, part) in holdPlan(probe)) (id, pos, part, false),
     for (final (id, pos, part) in pairPlan(probe)) (id, pos, part, true),
@@ -400,6 +407,101 @@ Future<void> main(List<String> a) async {
       );
       out.writeln('ROW\t$tag\theld\t$heldE');
       out.writeln('ROW\t$tag\tserved\t$servedS');
+      if (bad.isNotEmpty) {
+        div++;
+        out.writeln('DIV\t$tag\t${bad.join(',')}');
+      }
+    } catch (e) {
+      errs++;
+      out.writeln('ERR\t$tag\t$e');
+    }
+    db.dispose();
+    done++;
+  }
+  // (b″) the pick on a pair line.
+  for (final (id, pos, juice) in picks) {
+    k++;
+    if (k % n != shard) continue;
+    var db = fresh();
+    final path = '$work/db_$shard.db';
+    final tag = 'Q|$id|$pos|$juice';
+    try {
+      final peel = db
+          .ingredientMatchesFor(id)
+          .firstWhere((m) => m.position == pos)
+          .fdcId;
+      db.dispose();
+      // The juice dropped from both caches (sw9's form), on the copy at path.
+      void drop() {
+        final c = raw.sqlite3.open(path);
+        c.execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [juice]);
+        for (final row in c.select(
+          'SELECT query, response FROM fdc_search_cache',
+        )) {
+          final hits = (jsonDecode(row['response'] as String) as List)
+              .cast<Map>();
+          if (hits.any((h) => h['fdc_id'] == juice)) {
+            c.execute(
+              'UPDATE fdc_search_cache SET response = ? WHERE query = ?',
+              [
+                jsonEncode([
+                  for (final h in hits)
+                    if (h['fdc_id'] != juice) h,
+                ]),
+                row['query'],
+              ],
+            );
+          }
+        }
+        c.dispose();
+      }
+
+      // The CONTROL: what the recipe's OTHER rows ask under the same drop.
+      drop();
+      db = SaltDatabase.open(path);
+      calls = 0;
+      final skipRecipe = nutritionRecipeOf(db, id)!.recipe;
+      await applyMatchOverride(db, NoNet(), skipRecipe, pos, {
+        'raw': nutritionLines(skipRecipe)[pos].raw,
+        'skipped': true,
+      });
+      for (var p = 0; p < 3; p++) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final control = calls;
+      db.dispose();
+      fresh().dispose();
+      drop();
+      db = SaltDatabase.open(path);
+      String pass(String name) {
+        final r = db
+            .ingredientMatchesFor(id)
+            .firstWhere((m) => m.position == pos);
+        return '$name:${r.status}:${r.fdcId}:${g(r.grams)}:${r.hold}:${r.derivedSeq != null}';
+      }
+
+      calls = 0;
+      final recipe = nutritionRecipeOf(db, id)!.recipe;
+      await applyMatchOverride(db, NoNet(), recipe, pos, {
+        'raw': nutritionLines(recipe)[pos].raw,
+        'fdc_id': peel,
+      });
+      final put = pass('put');
+      for (var p = 0; p < 3; p++) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final computed = pass('computed');
+      bool derived(String x) =>
+          RegExp(r':overridden:\d+:[0-9.]+:null:true$').hasMatch(x) &&
+          !x.contains(':-:');
+      final bad = <String>[
+        if (calls > control) 'pick-asks',
+        if (!derived(put) || !derived(computed)) 'pick-not-derived',
+      ];
+      out.writeln(
+        'COMBO\t$tag\t$put\t$computed\tcalls=$calls\tcontrol=$control',
+      );
+      out.writeln('ROW\t$tag\tcomputed\t${state(db, id)}');
       if (bad.isNotEmpty) {
         div++;
         out.writeln('DIV\t$tag\t${bad.join(',')}');

@@ -1452,15 +1452,16 @@ class _Fat {
   /// the skillet", 0198; "discard oil", 1133).
   final RegExp discards;
 
-  /// v107 U3: whether [s] really discards the fat — a [discards] match its
-  /// clause does not forbid ([_forbiddenAt]: "Do not discard the oil." is
+  /// v107 U3: whether [s] really discards the fat — a [discards] match no
+  /// negated discard holds (v108 V6: [_negatedSpans]; the match is verb +
+  /// object, contiguous, so its start decides: "Do not discard the oil." is
   /// none). Every reader of [discards] reads this.
   bool discardsIn(String s) {
     if (!discards.hasMatch(s)) {
       return false;
     }
-    final forbidden = _forbiddenAt(s, _forbidsDiscard);
-    return discards.allMatches(s).any((m) => !forbidden.at(m.start));
+    final spans = _negatedSpans(s, _forbidsDiscard);
+    return discards.allMatches(s).any((m) => !_inSpan(spans, m.start));
   }
 
   /// "pour off all but 2 tablespoons oil" (1193): the written part kept.
@@ -4549,22 +4550,28 @@ final RegExp _skimsFat = RegExp(
 /// Whether sentence [s] skims fat ([_skimsFat]) and does not forbid the
 /// skim (0492's "(do not skim the fat from the liquid)") —
 /// v104 U5: the one guard both readers ([_fatSkimmed], [_fatLinesOf]) read.
-/// v106 U1: per arm, each forbidden only with its own object ([_forbids]):
+/// v106 U1: per arm, each forbidden only with its own object:
 /// the skim arm by a negated skim of the fat, the pour-off arm by a negated
 /// pour / spoon / drain-off of it — "skim excess fat … (do not pour off the
 /// broth)" skims.
-/// v107 U3: each act's match read on its OWN clause ([_forbiddenAt]): a
-/// negated skim of another object never erases a real one.
+/// v107 U3: a negated skim of another object never erases a real one.
+/// v108 V6: each arm by its act's negated SPANS ([_negatedSpans]): its verb
+/// outside them and its fat after it outside them too ([_freeActIn]) —
+/// "Skim the foam from the broth; do not skim the fat." skims no fat.
 bool _skimsFatIn(String s) {
   if (!_skimsFat.hasMatch(s)) {
     return false;
   }
-  final skim = _forbiddenAt(s, _forbidsSkim);
-  final pour = _forbiddenAt(s, _forbidsPourOff);
-  return !skim.any() && !pour.any() ||
-      _skimsTheFat(s, skim.at) ||
+  final skim = _negatedSpans(s, _forbidsSkim);
+  return skim.isEmpty && _negatedSpans(s, _forbidsPourOff).isEmpty ||
+      _skimsTheFat(s, skim) ||
       s.contains('fat separator') ||
-      _poursOffFat.allMatches(s).any((m) => !pour.at(m.start));
+      _freeActIn(
+        s,
+        _pourOffVerb,
+        _fatOrGrease,
+        _negatedSpans(s, _forbidsPourOff),
+      );
 }
 
 /// [_skimsFat]'s skim arm alone (`\bskim\w*\b[^.]*\bfat\b`,
@@ -4573,36 +4580,23 @@ bool _skimsFatIn(String s) {
 /// v106 closer 1 D3): `[^.]*` never crosses a period, and a fat after a
 /// later skim word is after the first, so the first skim word and a
 /// `\bfat\b` past its end give the same answer, linear. Pinned against the
-/// regex on a fuzz and at the cap (nutrition_v106_test). v107 U3: a skim
-/// word [forbidden] at its offset in [s] (its clause forbids the skim) is
-/// none — the first skim word that is not, with a fat past it (the last
-/// fat of the piece found once: linear).
-bool _skimsTheFat(String s, bool Function(int at) forbidden) {
-  var offset = 0;
-  for (final p in s.split('.')) {
-    int? lastFat;
-    for (final m in _skimWord.allMatches(p)) {
-      lastFat ??= _fatAlone.allMatches(p).fold<int>(-1, (_, f) => f.start);
-      if (lastFat < m.end) {
-        break;
-      }
-      if (!forbidden(offset + m.start)) {
-        return true;
-      }
-    }
-    offset += p.length + 1;
-  }
-  return false;
-}
+/// regex on a fuzz and at the cap (nutrition_v106_test). v108 V6: the first
+/// skim word outside [spans] with a fat past it outside them ([_freeActIn]).
+bool _skimsTheFat(String s, List<Match> spans) =>
+    _freeActIn(s, _skimWord, _fatAlone, spans);
 
 /// [_skimsTheFat] (nothing forbidden) for the tests' fuzz and cap pins.
 @visibleForTesting
-bool skimsTheFatForTest(String s) => _skimsTheFat(s, (_) => false);
+bool skimsTheFatForTest(String s) => _skimsTheFat(s, const []);
 
 /// [_skimsFat]'s K2 arm: a plain pour-off of fat or grease — v100 (M97
 /// R5) reads it alone ([_poursOffFat]).
 const String _plainPourOff =
     r'\b(?:pour|spoon|drain)\w* off\b[^.]*\b(?:fat|grease)\b';
+
+/// [_plainPourOff]'s two halves, read as two finds ([_freeActIn], v108 V6).
+final RegExp _pourOffVerb = RegExp(r'\b(?:pour|spoon|drain)\w* off\b');
+final RegExp _fatOrGrease = RegExp(r'\b(?:fat|grease)\b');
 
 /// Whether each sentence of [recipe]'s steps is inside a parenthesis — a
 /// make-ahead note ("(Broth can be refrigerated for up to 3 days. Skim off
@@ -12670,12 +12664,7 @@ IngredientMatchRow withParts(
   double? raw,
 }) {
   final bacon = withRenderedBacon(recipe, line, row, raw: raw);
-  if (bacon.parts != null ||
-      bacon.fdcId == null ||
-      (bacon.status != 'auto' && bacon.status != 'confirmed') ||
-      bacon.hold != null ||
-      bacon.gramSource == GramSource.override.name ||
-      (bacon.grams ?? 0) <= 0) {
+  if (bacon.parts != null || !_splits(bacon)) {
     return bacon;
   }
   double round2(double v) => double.parse(v.toStringAsFixed(2));
@@ -12694,12 +12683,9 @@ IngredientMatchRow withParts(
     );
   }
 
-  // Only a row on a peel record reads the rule (its regexes run per row).
-  final rule = _citrus.values.any((c) => c.peel.fdcId == bacon.fdcId)
-      ? secondFoodRuleOf(line, recipe: recipe)
-      : null;
+  final rule = _pairOf(recipe, line, bacon.fdcId!);
   final second = rule?.second;
-  if (rule != null && second != null && bacon.fdcId == rule.fdcId) {
+  if (rule != null && second != null) {
     final zest = rule.gramsOn(knownFood(db, rule.fdcId, line: line));
     final juice = second.grams(knownFood(db, second.fdcId, line: line));
     // Either record not cached (never after the compute's own fetch,
@@ -12726,6 +12712,30 @@ IngredientMatchRow withParts(
     );
   }
   return bacon;
+}
+
+/// [withParts]' gate (v108 V3: ONE predicate — [derivedFor]'s pair fetch
+/// reads it too): a row with a food, `auto` or `confirmed`, unheld, never
+/// under grams a person typed, grams above 0.
+bool _splits(IngredientMatchRow row) =>
+    row.fdcId != null &&
+    (row.status == 'auto' || row.status == 'confirmed') &&
+    row.hold == null &&
+    row.gramSource != GramSource.override.name &&
+    (row.grams ?? 0) > 0;
+
+/// Rule B1's two-record rule of [line] when [fdcId] is its first record (a
+/// citrus peel: only a row on a peel record reads the rule — its regexes
+/// run per row), else null — the rule [withParts] splits by, [derivedFor]
+/// fetches the second record of and [_heldOnOf] names (v108 V3).
+SecondFoodRule? _pairOf(Recipe recipe, IngredientLine line, int fdcId) {
+  if (!_citrus.values.any((c) => c.peel.fdcId == fdcId)) {
+    return null;
+  }
+  final rule = secondFoodRuleOf(line, recipe: recipe);
+  return rule != null && rule.second != null && rule.fdcId == fdcId
+      ? rule
+      : null;
 }
 
 /// The parts a two-part row stores: `[{"fdc_id": …, "grams": …}, …]`
@@ -14925,7 +14935,7 @@ Future<NutritionProviderException?> _computePass(
           clearGrams: !typed,
           clearGramSource: !typed,
           derivedSeq: derivedKey,
-          heldOn: _heldOnOf(db, row),
+          heldOn: _heldOnOf(db, row, recipe, lines[position]),
         ),
         over: over,
         layoutSeq: seq,
@@ -15040,7 +15050,7 @@ Future<NutritionProviderException?> _computePass(
         } else {
           // v105 U1: held on the part STILL uncached, as the engine
           // cacheOnly arm below (v104 U6) — the decided sibling arm.
-          final heldOn = _heldOnOf(db, decided);
+          final heldOn = _heldOnOf(db, decided, recipe, line);
           if ((decided.derivedSeq != derivedKey || decided.heldOn != heldOn) &&
               fresh()) {
             db.markDerivedIfUnchanged(
@@ -15435,7 +15445,7 @@ Future<NutritionProviderException?> _computePass(
         // v104 U6: and held on the part STILL uncached — the first may have
         // landed while the other has not, and [SaltDatabase.unholdOn] reads
         // only the stamped one.
-        final heldOn = _heldOnOf(db, failed!);
+        final heldOn = _heldOnOf(db, failed!, recipe, line);
         if ((failed.derivedSeq != derivedKey || failed.heldOn != heldOn) &&
             fresh()) {
           db.markDerivedIfUnchanged(
@@ -16562,93 +16572,108 @@ bool defatsSentence(String s) {
         if (!_fatAlone.hasMatch(p)) {
           return false;
         }
-        final forbidden = _forbiddenAt(p, _forbidsSkim);
-        return _skimWord.allMatches(p).any((m) => !forbidden.at(m.start));
+        // v108 V6: a skim word and a fat, each outside every negated skim
+        // ([_negatedSpans]) — "Do not skim the fat, skim the foam." is none.
+        final spans = _negatedSpans(p, _forbidsSkim);
+        return _skimWord.allMatches(p).any((m) => !_inSpan(spans, m.start)) &&
+            _fatAlone.allMatches(p).any((m) => !_inSpan(spans, m.start));
       });
 }
 
-/// v106 U1 (Run 081/082 union U1): whether [piece] forbids [act] ON ITS
-/// OWN OBJECT — the one negation helper every step reader reads
-/// ([_skimsFatIn], [defatsSentence], [_panFactsOf]'s `discarded`). v101 /
-/// v105's 18 sentence-level substrings were object-blind ("skim excess fat
-/// … (do not pour off the broth)" lost a real skim) and incomplete ("never
-/// pour off the fat" read as a pour-off). Native finds first (no negation
-/// word: no regex); each act one bounded regex, linear per piece.
-bool _forbids(String piece, RegExp act) {
-  if (!(piece.contains('not') ||
-      piece.contains("n't") ||
-      piece.contains('n’t') ||
-      piece.contains('never') ||
-      piece.contains('no need') ||
-      piece.contains('avoid') ||
-      piece.contains('without') ||
-      piece.contains('refrain'))) {
-    return false;
+/// v108 V6 (Run 085/086 S4 S9 S10 / O3 O6): the negated matches of [act]
+/// in [s] — its SPANS, the one negation reading every step reader reads
+/// (v106 U1's helper, v107 U3's clauses replaced): a verb occurrence inside
+/// a span is forbidden, and an object occurrence counts for a positive
+/// read only outside every span of that act ([_inSpan], [_freeActIn]) — a
+/// span holds its own object, a coordinated one included ("do not skim the
+/// liquid and fat"), so an object borrowed from a forbidding span is none.
+/// Found ONCE per (sentence, act) across every reader: one `allMatches`,
+/// memoised on the text (a pure function of it). Native finds first (no
+/// negation word: no regex, nothing stored); each act one bounded regex,
+/// linear per negation word.
+/// ponytail: the memo is process-wide (the readers take a sentence, not
+/// its step index), cleared past [_spanTextCap] characters of keyed text —
+/// a recipe at the editor caps fits; move it onto the step index if the
+/// readers ever take one.
+List<Match> _negatedSpans(String s, RegExp act) {
+  if (!(s.contains('not') ||
+      s.contains("n't") ||
+      s.contains('n’t') ||
+      s.contains('never') ||
+      s.contains('no need') ||
+      s.contains('avoid') ||
+      s.contains('without') ||
+      s.contains('refrain'))) {
+    return const [];
   }
-  forbidsEvaluations++;
-  return act.hasMatch(piece);
+  if (_spanMemo[act]?[s] case final known?) {
+    return known;
+  }
+  if ((_spanText += s.length) > _spanTextCap) {
+    _spanMemo.clear();
+    _spanText = s.length;
+  }
+  _forbidsEvaluations++;
+  return (_spanMemo[act] ??= {})[s] = act.allMatches(s).toList();
 }
 
-/// How many [_forbids] regex evaluations ran since reset — the v107 U6 cap
-/// pin's count (at most the sentence's clauses + 2 per sentence).
-@visibleForTesting
-int forbidsEvaluations = 0;
+final Map<RegExp, Map<String, List<Match>>> _spanMemo = Map.identity();
+int _spanText = 0;
+const int _spanTextCap = 1 << 21;
 
-/// v107 U3 (Run 083/084 U3): the guard of [act] on [s] — `any()` the
-/// whole-sentence verdict (computed lazily, ONCE per sentence and act; no
-/// negation of the act anywhere and every match is real), `at(i)` whether
-/// the CLAUSE of [s] holding offset `i` forbids it ([_clauseCut]: `;` `,`
-/// `(` `)` " but " " and " — "Wipe out the skillet; do not wipe out the
-/// pot" wipes). Each clause is tested once (memoised; the cuts found once,
-/// a binary search per offset): linear per sentence. A clause match is a
-/// sentence match ([_negatedAct]'s object-less arm ends at a cut too), so
-/// `any()` false, once read, answers every `at` false.
-({bool Function() any, bool Function(int at) at}) _forbiddenAt(
-  String s,
-  RegExp act,
-) {
-  bool? whole;
-  List<Match>? cuts;
-  final clauses = <int, bool>{};
-  bool any() => whole ??= _forbids(s, act);
-  return (
-    any: any,
-    at: (at) {
-      // Closer 1 D6: the whole verdict answers a clause only when already
-      // read (false: no clause forbids) — never computed for a cut
-      // sentence, whose clauses answer for themselves (at most its clauses
-      // + 2 evaluations per sentence across the readers).
-      if (whole == false) {
-        return false;
-      }
-      final c = cuts ??= _clauseCut.allMatches(s).toList();
-      if (c.isEmpty) {
-        return any(); // One clause: the sentence's own verdict.
-      }
-      var lo = 0;
-      var hi = c.length;
-      while (lo < hi) {
-        final mid = (lo + hi) >> 1;
-        if (c[mid].end <= at) {
-          lo = mid + 1;
-        } else {
-          hi = mid;
+/// Whether offset [at] of a sentence lies inside one of its [spans] (in
+/// order, disjoint): a binary search.
+bool _inSpan(List<Match> spans, int at) {
+  var lo = 0;
+  var hi = spans.length;
+  while (lo < hi) {
+    final mid = (lo + hi) >> 1;
+    if (spans[mid].end <= at) {
+      lo = mid + 1;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo < spans.length && spans[lo].start <= at;
+}
+
+/// A verb … object reader's positive read (v108 V6): a period-free piece of
+/// [s] holding a [verb] match outside [spans] with an [object] match past
+/// its end outside them too — the first free verb decides (a later one
+/// sees only later objects): linear.
+bool _freeActIn(String s, RegExp verb, RegExp object, List<Match> spans) {
+  var offset = 0;
+  for (final p in s.split('.')) {
+    for (final v in verb.allMatches(p)) {
+      if (!_inSpan(spans, offset + v.start)) {
+        if (object
+            .allMatches(p, v.end)
+            .any((o) => !_inSpan(spans, offset + o.start))) {
+          return true;
         }
+        break;
       }
-      return clauses[lo] ??= _forbids(
-        s.substring(
-          lo == 0 ? 0 : c[lo - 1].end,
-          lo < c.length ? c[lo].start : s.length,
-        ),
-        act,
-      );
-    },
-  );
+    }
+    offset += p.length + 1;
+  }
+  return false;
 }
 
-final RegExp _clauseCut = RegExp('[;,()]| but | and ');
+/// How many [_negatedSpans] regex evaluations ran since reset — at most one
+/// per (sentence, act) across every reader (the v108 V6 count pins). Setting
+/// it (a test's reset) clears the span memo too, so a count starts cold.
+@visibleForTesting
+int get forbidsEvaluations => _forbidsEvaluations;
+@visibleForTesting
+set forbidsEvaluations(int count) {
+  _forbidsEvaluations = count;
+  _spanMemo.clear();
+  _spanText = 0;
+}
 
-/// [_forbids]' acts: a negation word (`cannot` too), an optional "to" /
+int _forbidsEvaluations = 0;
+
+/// [_negatedSpans]' acts: a negation word (`cannot` too), an optional "to" /
 /// "ever" / "bother" / "first" ("being careful not to skim", "don't bother
 /// skimming"), the verb (its -ing form too), then the act's own object
 /// after the closed determiner run and up to three more words ("do not
@@ -16656,12 +16681,15 @@ final RegExp _clauseCut = RegExp('[;,()]| but | and ');
 /// "verb it") ending its clause ("(do not skim)"). Whitespace is `\s+`.
 /// v107 U3: at least as wide as v105's substrings on every real shape. "do
 /// not pour off all the fat" is forbidden (no discard read — stated, reach
-/// 0). Bounded repetition: linear per negation word.
+/// 0). v108 V6: the bridge words never the act's own verb ("do not skim the
+/// broth then skim fat" keeps the real skim) and a list comma between them
+/// ("(do not skim the juices, onions, and fat)"). Bounded repetition:
+/// linear per negation word.
 RegExp _negatedAct(String verb, String object) => RegExp(
   r"(?:\bnot|n't|n’t|\bnever|\bcannot|\bno need to|\bavoid|\bwithout|"
   r'\brefrain from)(?:\s+(?:to|ever|bother|first))?\s+(?:'
   '$verb)\\b(?:(?:\\s+(?:the|any|all|of|excess|off|out))*'
-  '(?:\\s+\\w+){0,3}\\s+(?:$object)\\b'
+  '(?:,?\\s+(?!(?:$verb)\\b)\\w+){0,3},?\\s+(?:$object)\\b'
   r'|(?:\s+it)?(?:\s*(?:[^\w\s]|$)|\s+(?:and|but)\b))',
 );
 final RegExp _forbidsReuse = _negatedAct(
@@ -20599,7 +20627,7 @@ Future<IngredientMatchRow> unskippedRow(
       hold: foodUnavailableHold,
       clearGrams: true,
       clearGramSource: true,
-      heldOn: _heldOnOf(db, out),
+      heldOn: _heldOnOf(db, out, recipe, line),
     );
   }
 
@@ -20872,29 +20900,15 @@ derivedFor(
   // Never a throw for one row. FDC answering "no such food" (a 404) for
   // the food or its nutrient record is NOT this outcome: it is derived, to
   // the `food_gone` hold (below).
-  final (FdcFood, GramResolution?)? weighed;
-  try {
-    final known = onCache ?? await _cachedFood(db, provider, edited.fdcId!);
-    // A food whose nutrient record FDC answers "no such food" for is gone
-    // as surely as one whose own record is (v28, Sonnet critic 2).
-    weighed = known == null || await _siblingGone(db, provider, known.fdcId)
-        ? null
-        : await gramsFor(db, provider, known, eaten, recipe: recipe);
-    // v107 U4 (Run 083/084 S6): a two-part rule's second record (rule B1's
-    // peel plus juice) fetched as the engine arm fetches it ([_ruleRowFor])
-    // — a failure is this derivation's (below: held `food_unavailable` on
-    // the part, [_heldOnOf], so its arrival re-opens the row), never
-    // [withParts]' partial `second_food` under a fresh stamp.
-    if (known != null &&
-        _citrus.values.any((c) => c.peel.fdcId == known.fdcId)) {
-      final rule = secondFoodRuleOf(eaten, recipe: recipe);
-      if (rule?.second case final second?
-          when rule!.fdcId == known.fdcId &&
-              knownFood(db, second.fdcId, line: eaten) == null) {
-        await _cachedFood(db, provider, second.fdcId);
-      }
-    }
-  } on NutritionProviderException catch (failure) {
+  // The failure outcome (RULE A, below), one closure for the food's own
+  // fetch and rule B1's second record's (v108 V3).
+  ({
+    IngredientMatchRow row,
+    FdcFood? food,
+    String? note,
+    NutritionProviderException? unavailable,
+  })
+  unavailableBy(NutritionProviderException failure) {
     // The row as stored, at its current position — on the text it was last
     // derived on: a decision an amount edit carried keeps its old text, so
     // the next derivation still reads the amount as edited (typed grams of
@@ -20930,6 +20944,18 @@ derivedFor(
       note: holdNoteOf(recipe, line, edited.hold),
       unavailable: failure,
     );
+  }
+
+  final (FdcFood, GramResolution?)? weighed;
+  try {
+    final known = onCache ?? await _cachedFood(db, provider, edited.fdcId!);
+    // A food whose nutrient record FDC answers "no such food" for is gone
+    // as surely as one whose own record is (v28, Sonnet critic 2).
+    weighed = known == null || await _siblingGone(db, provider, known.fdcId)
+        ? null
+        : await gramsFor(db, provider, known, eaten, recipe: recipe);
+  } on NutritionProviderException catch (failure) {
+    return unavailableBy(failure);
   }
   if (weighed == null) {
     // FDC answers no such food and no cache holds it (a superseded record
@@ -21042,19 +21068,32 @@ derivedFor(
   // Rule B1 (v41, D12): a Confirm keeps a rendered row's two parts; a pick
   // (`overridden`) is one record at the line's raw grams — how a person
   // undoes the rule.
-  final row = withParts(
-    db,
-    recipe,
-    eaten,
-    placed.copyWith(
-      grams: grams,
-      clearGrams: grams == null,
-      gramSource: source,
-      clearGramSource: source == null,
-      hold: outcome.hold,
-      clearHold: !keepsHold,
-    ),
+  final split = placed.copyWith(
+    grams: grams,
+    clearGrams: grams == null,
+    gramSource: source,
+    clearGramSource: source == null,
+    hold: outcome.hold,
+    clearHold: !keepsHold,
   );
+  // v107 U4 (Run 083/084 S6): rule B1's second record (the peel's juice)
+  // fetched as the engine arm fetches it ([_ruleRowFor]) — a failure is
+  // this derivation's (held `food_unavailable` on the part, [_heldOnOf], so
+  // its arrival re-opens the row), never [withParts]' partial `second_food`
+  // under a fresh stamp. v108 V3 (Run 085/086 S5 S6 / O4 O5): fetched IFF
+  // [withParts] will read it — its own gate ([_splits]) on the very row it
+  // splits: a pick, typed grams, a held or a 0 g row never fetch.
+  if (_splits(split)) {
+    final second = _pairOf(recipe, eaten, split.fdcId!)?.second;
+    if (second != null && knownFood(db, second.fdcId, line: eaten) == null) {
+      try {
+        await _cachedFood(db, provider, second.fdcId);
+      } on NutritionProviderException catch (failure) {
+        return unavailableBy(failure);
+      }
+    }
+  }
+  final row = withParts(db, recipe, eaten, split);
   // The sub-recipe rule gates the row as a confirm or pick writes it: not a
   // skip, nor a row a person typed grams on (they count the line, whatever
   // the amount now weighs), nor a food on a reference line's food
@@ -21094,16 +21133,35 @@ derivedFor(
 /// food (v103 U5, migration 022 `held_on`): the first of its parts no cache
 /// holds — [_resolveParts]' own test, so the part it failed to fetch — else
 /// null (the row's own `fdc_id` is matched by [SaltDatabase.unholdOn]).
-/// ponytail: a failing candidate's detail (another record than the row's
-/// and its parts) is not named — the exception carries no id; add the id
-/// to the failure when a corpus path reaches it.
-int? _heldOnOf(SaltDatabase db, IngredientMatchRow row) {
+/// v108 V3: else, a row on rule B1's peel ([_pairOf] on the line the pair
+/// fetch read, [weighedLine]) whose own record is cached: the rule's second
+/// record when no cache holds it — what [derivedFor] fetched and failed
+/// on, though a row derived under the outage stores no parts.
+/// ponytail: a failing candidate's detail (another record than the row's,
+/// its parts and its rule's second) is not named — the exception carries
+/// no id; add the id to the failure when a corpus path reaches it. A pick
+/// of a cached peel failing on another detail during a juice outage names
+/// the juice too (a re-open with no request, then held again).
+int? _heldOnOf(
+  SaltDatabase db,
+  IngredientMatchRow row,
+  Recipe recipe,
+  IngredientLine line,
+) {
   for (final part in partsOf(row.parts)) {
     if (part.fdcId != row.fdcId && knownFood(db, part.fdcId) == null) {
       return part.fdcId;
     }
   }
-  return null;
+  final own = row.fdcId;
+  final eaten = weighedLine(recipe, line);
+  if (own == null || knownFood(db, own, line: eaten) == null) {
+    return null;
+  }
+  final second = _pairOf(recipe, eaten, own)?.second?.fdcId;
+  return second != null && knownFood(db, second, line: eaten) == null
+      ? second
+      : null;
 }
 
 /// Rule B1's part records ([withRenderedBacon]), resolved where the row's
@@ -22980,22 +23038,20 @@ final RegExp _pansWiped = RegExp(
   r'\bpour off (?:the |any )?(?:excess )?fat\b|\bwipe (?:out )?(?:the )?skillet\b',
 );
 
-/// v107 U3: whether [s] pours off or wipes the pan ([_pansWiped]) on a
-/// clause that does not forbid it ([_forbiddenAt]; each form its own act —
+/// v107 U3: whether [s] pours off or wipes the pan ([_pansWiped]) where no
+/// negated act holds it (v108 V6: [_negatedSpans], each form its own act;
+/// the forms are verb + object, contiguous, so a match's start decides —
 /// "Wipe out the skillet; do not wipe out the pot" wipes). Both readers
 /// ([_panFatLines], [_panFactsOf]) read this.
-bool _wipesPan(
-  String s, [
-  ({bool Function() any, bool Function(int at) at})? pourGuard,
-]) {
+bool _wipesPan(String s) {
   if (!_pansWiped.hasMatch(s)) {
     return false;
   }
-  final pour = pourGuard ?? _forbiddenAt(s, _forbidsPourOff);
-  final wipe = _forbiddenAt(s, _forbidsWipe);
+  late final pour = _negatedSpans(s, _forbidsPourOff);
+  late final wipe = _negatedSpans(s, _forbidsWipe);
   return _pansWiped
       .allMatches(s)
-      .any((m) => !(m[0]!.startsWith('pour') ? pour : wipe).at(m.start));
+      .any((m) => !_inSpan(m[0]!.startsWith('pour') ? pour : wipe, m.start));
 }
 
 /// The fat heads a sauté heats ([_panFatLines]): the frying fats and butter.
@@ -23680,8 +23736,6 @@ typedef _PanFacts = ({
 });
 
 _PanFacts _panFactsOf(String s) {
-  // v107 U6: the pour-off verdict read once for both arms below.
-  final pour = _forbiddenAt(s, _forbidsPourOff);
   final another = {for (final m in _anotherVessel.allMatches(s)) m.end};
   final named = <String>{};
   final away = another.isNotEmpty || _awayFromPan.hasMatch(s);
@@ -23695,27 +23749,34 @@ _PanFacts _panFactsOf(String s) {
     away: away,
     nowEmpty: s.contains('now-empty') || s.contains('now empty'),
     // v107 U3: a forbidden reuse act is no reuse ("(do not scrape up the
-    // browned bits)"), on its own clause ([_forbiddenAt]).
+    // browned bits)") — v108 V6: a match no negated reuse holds
+    // ([_negatedSpans]; its start decides).
     reused:
         _pourOffAllButFat.hasMatch(s) ||
         _panReused.hasMatch(s) &&
             () {
-              final forbidden = _forbiddenAt(s, _forbidsReuse);
+              final spans = _negatedSpans(s, _forbidsReuse);
               return _panReused
                   .allMatches(s)
-                  .any((m) => !forbidden.at(m.start));
+                  .any((m) => !_inSpan(spans, m.start));
             }(),
     // v105 U5 / v106 U1: a forbidden discard, pour-off or wipe discards
     // nothing — each arm forbidden only by its own verb on its own object
-    // ([_forbids]: "Wipe out the skillet (do not skim the sauce)" wipes).
-    // v107 U3 / U6: each match on its own clause, the two whole-sentence
-    // verdicts hoisted (once per sentence and act, [_forbiddenAt]).
+    // ("Wipe out the skillet (do not skim the sauce)" wipes).
+    // v108 V6: each act's negated spans found once per sentence across
+    // every reader ([_negatedSpans]); the pour-off a free verb with a free
+    // fat after it ([_freeActIn]).
     discarded:
         _fats.values.any((f) => f.discardsIn(s)) ||
         ((s.contains('fat') || s.contains('grease')) &&
             _poursOffFat.hasMatch(s) &&
-            _poursOffFat.allMatches(s).any((m) => !pour.at(m.start))) ||
-        _wipesPan(s, pour),
+            _freeActIn(
+              s,
+              _pourOffVerb,
+              _fatOrGrease,
+              _negatedSpans(s, _forbidsPourOff),
+            )) ||
+        _wipesPan(s),
     cooks: _cooksInPan.hasMatch(s),
   );
 }

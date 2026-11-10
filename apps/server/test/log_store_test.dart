@@ -476,10 +476,13 @@ void main() {
       }
 
       // The real middlewares, in the production order (outermost last).
+      // A fresh throttle per test (v108 V1): the default is ONE process-wide
+      // instance, and two tests here throw the same site within its 60 s
+      // window — the second test's record would be suppressed.
       final pipeline = const Pipeline()
           .addMiddleware(requestIdProvider())
           .addMiddleware(requestLogger())
-          .addMiddleware(errorHandler())
+          .addMiddleware(errorHandler(throttle: SevereThrottle()))
           .addHandler(dispatch);
       server = await serve(pipeline, InternetAddress.loopbackIPv4, 0);
       baseUri = Uri.parse('http://127.0.0.1:${server.port}');

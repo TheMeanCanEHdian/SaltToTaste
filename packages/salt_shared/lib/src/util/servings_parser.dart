@@ -274,9 +274,14 @@ final RegExp _yieldMeasure = RegExp(
 /// corpus's own `item:` spelling of 0184|3; "(1 1/2 recipes") or a decimal
 /// ("(0.5 recipe"). [_num] itself (SERVES / MAKES) is untouched. v107
 /// U2: the ASCII fraction spaced as [parseQuantity]'s own grammar reads it
-/// (`\s*/\s*`: "(1 / 2 recipe" is ½, was the whole batch).
+/// (`\s*/\s*`: "(1 / 2 recipe" is ½, was the whole batch). v108 V7: a
+/// whole number, a space, a vulgar fraction ("(1 ½ recipes") as
+/// [parseQuantity] reads it (1.5 — was neither read nor written: the
+/// amount's share), and any case, as [_shareToken] ("(½ Recipe").
 final RegExp _recipeShare = RegExp(
-  '\\(\\s*($_num|(?:\\d+\\s+)?\\d+\\s*/\\s*\\d+|\\d+\\.\\d+)\\s+recipes?\\b',
+  '\\(\\s*($_num|\\d+\\s+[$_fractionChars]|(?:\\d+\\s+)?\\d+\\s*/\\s*\\d+|'
+  '\\d+\\.\\d+)\\s+recipes?\\b',
+  caseSensitive: false,
 );
 
 /// v106 U2: any numeric-looking token written as a share ("(1e9 recipes",
@@ -307,8 +312,12 @@ double? parseShare(String raw, List<Amount> amounts, String? childServings) =>
 /// numeric-looking token too ([_shareToken]) — one [_recipeShare] cannot
 /// read is no share ([shareReaderOf]), never the whole batch.
 bool writesShare(String raw) =>
-    raw.contains('recipe') &&
+    _namesRecipe(raw) &&
     (_recipeShare.hasMatch(raw) || _shareToken.hasMatch(raw));
+
+/// The native gate of the share regexes (v108 V7: any case, as the regexes
+/// — "(2 Recipes; see below)" was the amount's share).
+bool _namesRecipe(String raw) => raw.toLowerCase().contains('recipe');
 
 /// A child share every reader may store (v103 U1): finite, above 0, at
 /// most 100 recipes — the match-override PUT's own bound, spelled once. The
@@ -327,7 +336,7 @@ double? Function(String? childServings) shareReaderOf(
   String raw,
   List<Amount> amounts,
 ) {
-  final written = raw.contains('recipe') ? _recipeShare.firstMatch(raw) : null;
+  final written = _namesRecipe(raw) ? _recipeShare.firstMatch(raw) : null;
   if (written != null) {
     final share = parseQuantity(written.group(1)!);
     return (_) => validShare(share) ? share : null;

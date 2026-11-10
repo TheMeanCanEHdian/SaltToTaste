@@ -41,6 +41,11 @@ docker build -t salttotaste .
 docker run -d --name salttotaste -p 8080:8080 -v salt-data:/data salttotaste
 ```
 
+The server's stderr carries a stack for each request the HTTP framework
+rejects before the app runs (a malformed request target, `OPTIONS *`), so cap
+the container log: `--log-opt max-size=10m --log-opt max-file=3` (or the
+compose `logging:` options).
+
 Then read the one-time setup code from the logs and open the app:
 
 ```sh
