@@ -128,6 +128,10 @@ class IsolateSearchService implements SearchService {
   /// respawn adds 1; a leaked double-spawn would add 2.
   int get totalSpawns => _workers.fold(0, (sum, w) => sum + w.spawnCount);
 
+  /// Killed isolates whose exit signal has not arrived yet (visible for
+  /// tests): [dispose] must not complete while any is left.
+  int get pendingExits => _workers.fold(0, (sum, w) => sum + w.pendingExits);
+
   /// Simulates a crash of every worker (visible for tests) so the next request
   /// exercises the respawn path.
   void crashWorkersForTest() {
@@ -146,8 +150,19 @@ class _SearchWorker {
   final int _index;
   Isolate? _isolate;
   SendPort? _commands;
-  ReceivePort? _exit;
   Future<void>? _spawning;
+
+  /// Completes when the isolate in this slot has exited (its `onExit`). Set
+  /// by [_spawn] before [_isolate], so it is readable whenever that is set.
+  late Future<void> _exited;
+
+  /// The exit signals still owed by killed isolates. `Isolate.kill` is
+  /// asynchronous: until its signal arrives a killed worker can still be
+  /// inside a SQLite call on its own connection to the database.
+  final Set<Future<void>> _dying = {};
+
+  /// How many killed isolates have not exited yet (visible for tests).
+  int get pendingExits => _dying.length;
 
   /// How many isolates this slot has spawned over its life (visible for tests:
   /// a respawn increments it, so a leaked double-spawn would show as +2).
@@ -166,21 +181,46 @@ class _SearchWorker {
   }
 
   Future<void> _spawn() async {
+    final ready = ReceivePort();
+    final exit = ReceivePort();
     try {
-      final ready = ReceivePort();
-      // onExit fires if the isolate dies (crash or uncaught error); clear the
-      // channel so the next request respawns instead of sending into the void.
-      final exit = ReceivePort()..listen((_) => _markDead());
-      _exit = exit;
-      _isolate = await Isolate.spawn(
-        _searchWorkerMain,
-        _WorkerInit(_dbPath, ready.sendPort),
-        onExit: exit.sendPort,
-        debugName: 'search-worker-$_index',
-      );
-      _commands = await ready.first as SendPort;
+      final Isolate isolate;
+      try {
+        isolate = await Isolate.spawn(
+          _searchWorkerMain,
+          _WorkerInit(_dbPath, ready.sendPort),
+          onExit: exit.sendPort,
+          debugName: 'search-worker-$_index',
+        );
+      } on Object {
+        exit.close();
+        rethrow;
+      }
+      // onExit fires when the isolate is gone, however it died. After a crash
+      // or an uncaught error, clear the channel so the next request respawns
+      // instead of sending into the void. A KILLED isolate's exit only settles
+      // its entry in [_dying]: the slot may already hold its replacement,
+      // which a late signal must not mark dead. `first` closes the port.
+      late final Future<void> exited;
+      exited = exit.first.then((_) {
+        if (!_dying.remove(exited)) {
+          _markDead();
+        }
+      });
+      _exited = exited;
+      _isolate = isolate;
+      // An isolate that dies before it is ready (its connection failed to
+      // open, or it was killed) never sends `ready`: without the race this
+      // spawn — and every request sharing it — would wait forever.
+      final first = await Future.any<Object?>([ready.first, exited]);
+      if (first is! SendPort) {
+        _markDead();
+        throw StateError('search worker exited before it was ready');
+      }
+      _commands = first;
       spawnCount++;
     } finally {
+      ready.close();
       _spawning = null;
     }
   }
@@ -188,17 +228,20 @@ class _SearchWorker {
   void _markDead() {
     _commands = null;
     _isolate = null;
-    _exit?.close();
-    _exit = null;
   }
 
   /// Kills the current isolate and clears the channel so the next [run]
-  /// respawns. Used on a timeout (a wedged worker never fires onExit) and by
-  /// tests to simulate a crash.
+  /// respawns. Used on a timeout (a wedged worker never fires onExit), by
+  /// [dispose], and by tests to simulate a crash. The kill is only REQUESTED
+  /// here; the isolate's exit signal is kept in [_dying] for [dispose].
   void evict() {
     final isolate = _isolate;
     _markDead();
-    isolate?.kill(priority: Isolate.immediate);
+    if (isolate == null) {
+      return;
+    }
+    _dying.add(_exited);
+    isolate.kill(priority: Isolate.immediate);
   }
 
   Future<SearchPage> run(
@@ -210,6 +253,10 @@ class _SearchWorker {
     required Duration timeout,
   }) async {
     await ensureSpawned();
+    // The isolate this request goes to. By the time its timeout fires the slot
+    // may hold a replacement (another request's timeout or a crash evicted
+    // this one), which this request has no claim on.
+    final target = _isolate;
     final reply = ReceivePort();
     _commands!.send(
       _SearchRequest(
@@ -222,6 +269,12 @@ class _SearchWorker {
       ),
     );
     try {
+      if (timeout <= Duration.zero) {
+        // Already expired. Decided here, not by a zero timer: that timer and
+        // the worker's reply are both messages to this isolate, delivered in
+        // arrival order, so the reply could win and the search would succeed.
+        throw TimeoutException('search timed out', timeout);
+      }
       final response = await reply.first.timeout(timeout);
       if (response is _SearchFailure) {
         // Re-raise on the serving isolate so the error middleware wraps it in
@@ -233,8 +286,14 @@ class _SearchWorker {
     } on TimeoutException {
       // A wedged (not crashed) worker never fires onExit, so it would poison
       // every request routed to it — and the default pool is ONE worker. Evict
-      // it; the next request respawns a fresh one (#48 review, MED).
-      evict();
+      // it; the next request respawns a fresh one (#48 review, MED). Only the
+      // isolate this request was sent to: a request queued behind a wedged
+      // worker times out after that worker was already replaced, and killing
+      // the slot's isolate then would fail a healthy replacement's search, or
+      // kill one still spawning.
+      if (identical(_isolate, target)) {
+        evict();
+      }
       throw StateError('search timed out');
     } finally {
       reply.close();
@@ -242,24 +301,38 @@ class _SearchWorker {
   }
 
   Future<void> dispose() async {
+    final spawning = _spawning;
+    if (spawning != null) {
+      // A respawn in flight: its isolate is shut down like any other, so let
+      // it finish first. Bounded; a spawn whose isolate exists but is not
+      // ready is killed below — one whose `Isolate.spawn` has not returned
+      // by then is not (stated in docs/API.md, "Search worker lifecycle").
+      try {
+        await spawning.timeout(const Duration(seconds: 2));
+      } on Object {
+        // Failed or not ready: nothing to ask, the slot is evicted below.
+      }
+    }
     final commands = _commands;
-    if (commands == null) {
-      return;
+    if (commands != null) {
+      final done = ReceivePort();
+      commands.send(_Shutdown(done.sendPort));
+      try {
+        // The worker closes its read-only connection, then replies.
+        await done.first.timeout(const Duration(seconds: 2));
+      } on TimeoutException {
+        // Fall through to the hard kill.
+      }
+      done.close();
     }
-    final done = ReceivePort();
-    commands.send(_Shutdown(done.sendPort));
-    try {
-      // The worker closes its read-only connection, then replies.
-      await done.first.timeout(const Duration(seconds: 2));
-    } on TimeoutException {
-      // Fall through to a hard kill below.
-    }
-    done.close();
-    _exit?.close();
-    _exit = null;
-    _isolate?.kill(priority: Isolate.immediate);
-    _isolate = null;
-    _commands = null;
+    evict();
+    // Wait until every killed isolate — this one and any evicted earlier — is
+    // really gone, so none is still using its connection when the caller goes
+    // on to close the writer or delete the database's directory. Bounded: a
+    // kill cannot interrupt an isolate that is inside native code.
+    await Future.wait(
+      _dying.toList(),
+    ).timeout(const Duration(seconds: 1), onTimeout: () => const []);
   }
 }
 
@@ -314,7 +387,9 @@ class _Shutdown {
 /// Background-isolate entry point: opens a read-only connection and serves
 /// searches until told to shut down.
 void _searchWorkerMain(_WorkerInit init) {
-  final db = SaltDatabase.openReadOnly(init.dbPath);
+  // Closed at this isolate's exit: an evicted worker is killed, and a killed
+  // isolate never runs the dispose() of the shutdown path below.
+  final db = SaltDatabase.openReadOnly(init.dbPath, closeAtIsolateExit: true);
   final commands = ReceivePort();
   init.ready.send(commands.sendPort);
   commands.listen((message) {

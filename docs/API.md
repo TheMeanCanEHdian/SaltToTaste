@@ -5211,6 +5211,274 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Search worker lifecycle (2026-11-09, closed 2026-11-11, after v108 — the
+search_isolate_wiring_test flake the v108 section names as a follow-up, one
+test with two symptoms; no matcher change, no migration, no endpoint or
+response change. The evidence: .claude/diag/2026-11-09/wiring-flake/. This
+section cites symbols, grep commands and counts — never a line number.)**
+- **A killed search worker is waited for.** `Isolate.kill` only REQUESTS a
+  death. `IsolateSearchService.dispose()` used to return at once after an
+  eviction (the slot's channel was already cleared), so the caller went on to
+  close the writer — or, in the test, to delete the temp directory — while
+  the evicted worker could still be running the search it was evicted under.
+  Now every kill goes through `_SearchWorker.evict()` (`grep -rn "\.kill("
+  apps/server/lib` → 1 hit, `evict()`'s own; the graceful shutdown's kill
+  included), which keeps the isolate's `onExit` signal in `_dying`, and
+  `dispose()` completes only when every such signal has arrived. The wait is
+  bounded at 1 s — a kill cannot interrupt an isolate that is inside native
+  code. A killed isolate's late exit only settles its `_dying` entry; it
+  never marks the replacement in its slot dead. The exit port is no longer
+  closed by `_markDead()` or `dispose()`: it closes through `exit.first`
+  when the signal arrives (and explicitly when `Isolate.spawn` throws), so a
+  worker still inside native code when the 1 s bound passes leaves its port
+  open until it dies — harmless at shutdown, which ends in `exit(0)`.
+  Shutdown's worst case after the 5 s drain (main.dart's bound) is 2 s (a
+  respawn in flight, below) + 2 s (the worker's shutdown reply) + 1 s (its
+  exit), the workers in parallel — about 10.1 s from the signal, which
+  passes Docker's default 10 s grace only when a respawn in flight at the
+  signal takes nearly its 2 s bound and the new worker then misses its
+  shutdown reply (a spawn that runs out its bound has no reply to wait for:
+  2 s + 1 s); without a respawn in flight it is 2 s + 1 s (about 8.1 s), as
+  before the respawn wait.
+  Measured (the test's body looped on the unmodified tree): 16 and 25 of 300
+  runs idle and 91 of 600 under 3× CPU load failed in the tearDown's
+  `deleteSync` with errno 66, every one leaving exactly ONE new file,
+  `salt.db-shm` (3 or 32,768 bytes). Evicting an IDLE worker: 0 of 600 — so
+  it is the evicted worker's in-flight search, whose first read on its
+  ALREADY OPEN connection re-creates the WAL index after the recursive
+  delete has listed the directory (not a connection still being opened).
+  With the wait alone, on the old timing: 0 of 300, 0 of 600.
+- **A non-positive search timeout has already expired.** `Duration.zero`
+  used to arm a zero timer, and that timer's event and the worker's reply
+  are both messages to the serving isolate, delivered in arrival order: when
+  the serving thread stalls between sending the request and arming the timer
+  the reply is queued first and the search returns a page (CI run
+  42758491911, `emitted (items: [], total: 0)`; reproduced exactly by a
+  temporary 20 ms stall at that point, and gone under the same stall with
+  the fix — mutant_PA.log, which records neither the stall nor the fix: see
+  the evidence README). `_SearchWorker.run` now raises the timeout itself,
+  after the request is sent and through the same handler that evicts, when
+  `timeout <= Duration.zero` (that it comes AFTER the send is UNPINNED: a
+  check moved before the send passes the file — telling a busy worker's exit
+  from an idle one's would need a negative wait; the test's comment says
+  so). No production input changes: the only production caller
+  passes no timeout (`grep -rn "IsolateSearchService.spawn(" apps/server/lib`
+  → 1 hit, bootstrap's, the 10 s default). Chosen over a test-only command
+  that holds a worker: no new message type, no blocking code in the worker,
+  and the test still drives the real eviction path.
+  The two fixes are separate: with this one alone the eviction lands before
+  the worker starts its search, and the tearDown still failed 7 of 600 under
+  load; with both, 0 of 300 and 0 of 600.
+- **A timed-out request evicts only the isolate it was sent to** (closer,
+  2026-11-11; pre-existing, a sibling of the late-exit class). `run`
+  captures the slot's isolate right after `ensureSpawned()` and its
+  timeout arm evicts only `if (identical(_isolate, target))`; otherwise the
+  target was already evicted (or crashed) and nothing is killed — the
+  request still fails 'search timed out'. Before, a request queued behind a
+  wedged worker timed out after that worker was replaced and killed the
+  REPLACEMENT: a healthy one serving another search, or one still spawning,
+  whose `ready` then never came — every later search waited forever
+  (verifier A's sweep, B sent x µs after A, re-run by the closer on the
+  patch before this rule: 9 of 31 hung, 8 failed). ONE eviction definition: `evict()` stays
+  unconditional; `grep -n "evict("
+  apps/server/lib/src/search/search_service.dart` → 4 hits — the definition,
+  `crashWorkersForTest` and `dispose()` (unconditional: the slot's own
+  isolate), `run`'s timeout arm (guarded).
+- **A worker that dies before it is ready fails its spawn** (closer,
+  2026-11-11; pre-existing). `_spawn` races `ready.first` against the exit
+  signal (`Future.any`): an isolate gone before it sends `ready` (its
+  connection failed to open, or it was killed) fails the spawn with a
+  StateError — `_spawning` cleared in `finally`, the slot emptied, both
+  ports closed — so the search that started it fails with the uniform
+  error envelope and the next one respawns; at startup
+  `IsolateSearchService.spawn` fails instead of hanging. A killed spawn's
+  exit still settles its `_dying` entry first (the race listens on the same
+  future). `Isolate.spawn` throwing now closes both ports (`exit` in its
+  catch, `ready` in `finally`; unpinned — no test makes the spawn throw).
+  Also unpinned: `ready`'s close in `finally` on the died-before-ready
+  path, where nothing else closes it (`ready.first` never fired; the delta
+  verifier's V_R2c deletes it and passes the file) — a leaked ReceivePort
+  has no observable value to pin.
+  `grep -n "_spawning\|ready\.first"
+  apps/server/lib/src/search/search_service.dart` → 5 hits — the field,
+  `ensureSpawned`'s shared `??=`, the race, `_spawn`'s `finally`, and
+  `dispose()`'s read (next bullet).
+- **dispose() during a respawn shuts the new worker down too** (closer,
+  2026-11-11; pre-existing). `dispose()` used to see an empty slot and
+  return; the spawning isolate then served the pending search after it and
+  kept its connection open past the writer's close (5 of 5, verifier A).
+  Now `dispose()` first awaits a spawn in flight (bounded, 2 s), then takes
+  the same path for whatever the slot holds: the shutdown request when the
+  worker is ready, `evict()` always (a no-op on an empty slot; a spawn
+  whose isolate exists but is not ready is killed, and its race fails the
+  spawn — unless that worker sends `ready` before it dies (the kill is
+  asynchronous: before, or just after, the bound fired): the message is
+  queued ahead of the exit, so the race takes the
+  killed isolate's port, `_spawn` installs it with `_isolate` null, and
+  the pending search sends into the void and fails 'search timed out'
+  after its 10 s instead of at once; benign — the isolate is killed and
+  its exit awaited, no connection leaks; argued, not reproduced: the
+  window needs a spawn taking ~2 s to reach `ready`), then the wait.
+  UNPINNED: that `evict()` runs outside `if
+  (commands != null)` — moved back inside, the file passes (the delta
+  verifier's V_R3b; no test holds a spawn past the 2 s bound). STATED, not closed:
+  if the bound passes before `Isolate.spawn` itself has returned,
+  `_isolate` is still null, `evict()` does nothing and `dispose()` returns;
+  the spawn then installs a worker that serves the pending search after
+  `dispose()` and keeps its connection open past the writer's close — the
+  class above, in a window that needs `Isolate.spawn` alone to take 2 s.
+- **Pins** (search_isolate_wiring_test; killed by a VALUE unless said):
+  'dispose() waits until every killed worker has exited' — `pendingExits`
+  1 for 0 with the wait skipped, 0 for 1 with the kill untracked; it reads
+  that counter, so a `dispose()` that CLEARS `_dying` without waiting
+  passes it (verifier B's MB3) — the wait itself is held by the lock group
+  below. 'a non-positive timeout expires before any event is handled' — a
+  sentinel zero timer queued ahead of the search: false for true with the
+  timeout left to the timer. 'a worker that dies before it is ready fails
+  the spawn' (a database path in a missing directory) and 'a worker that
+  dies during a respawn fails that search only' (the directory moved away
+  for the respawn, then back): on the tree before the race both hung — a
+  bounded probe: spawn, that search and the next one each HUNG > 5 s,
+  `totalSpawns` 1 — and the pins time out at 30 s; the shape NOT pinned
+  is a kill landing inside a respawn (between `Isolate.spawn` returning and
+  `ready`), which no test can aim at from outside. 'dispose() during a
+  respawn shuts the new worker down too' — `refused: database is locked`
+  for `delete` without the respawn wait. The group 'IsolateSearchService
+  with a worker held inside SQLite' holds a worker INSIDE native code: this
+  isolate opens its own database in rollback-journal mode and holds `BEGIN
+  EXCLUSIVE`, so a worker's read busy-waits in SQLite (5.27 s before it
+  gives up, a release noticed within ~140 ms) until the test releases it:
+  'a stale request's timeout never kills the replacement' — D failed
+  'search timed out' (null expected) without the identity guard; 'a killed
+  worker's late exit never orphans its replacement' — 3 spawns for 2 with
+  the late exit marking the slot dead; 'dispose() kills a worker that
+  missed its shutdown reply and waits for its exit' — `released` false
+  for true (dispose() back at ~2.0 s, before the release at 2.5 s) with the
+  kill replaced by `_markDead()`, with the wait cleared, and with the wait
+  skipped. Each of those tests says in its comment, timer by timer, what
+  holds when the worker's thread is starved or this isolate stalls, and
+  asserts nothing a starved worker falsifies on the real code (the late-
+  exit pin expects 3 spawns when worker 2's own search timed out — a
+  legitimate eviction; the dispose pin does not assert the exit arrived) —
+  except one stated assumption: the dispose pin needs the worker to START
+  the search within dispose()'s 2 s reply bound; a worker starved past it
+  is killed (`Isolate.immediate`, ahead of the queued search) at ~2.0 s and
+  dispose() returns before the release, so `released` is false on the real
+  code (never seen: the delta verifier's 200 of 200 idle and 200 of 200
+  under load).
+  UNPINNED, stated: that the non-positive timeout is raised AFTER the send
+  (above), and the connection's `detach` in `SaltDatabase.dispose()` —
+  without it a graceful shutdown leaves `sqlite3_close_v2` attached to a
+  closed handle, run at the isolate's exit: undefined behaviour with no
+  observable value (verifier B's MB6 passes the file).
+  The closer's gate: the file alone 100 of 100 idle and 100 of 100 under
+  45 busy processes on 15 cores; the full server suite +3,329 ~4.
+- **A killed worker's SQLite connection is closed when its isolate exits.**
+  It never was: the only Dart reference dies with the isolate, and sqlite3
+  2.9.4 closes an undisposed database from a Dart `Finalizer`, which does
+  not run for a dead isolate. Measured with `lsof` on the tree before this
+  change: after an eviction, the isolate's exit and the writer's close, the
+  process still held the worker's descriptors on `salt.db`, `-wal` and
+  `-shm` (none after a graceful dispose). Now the worker opens with
+  `SaltDatabase.openReadOnly(path, closeAtIsolateExit: true)`: the
+  connection (`sqlite3_close_v2`) and every statement its `_prepared` cache
+  holds (`sqlite3_finalize`) hang on NATIVE finalizers whose anchor lives as
+  long as the isolate, so they run when it is gone, natively and — measured
+  — before its exit signal, which `dispose()` awaits. That is MEASURED VM
+  behaviour, held by the pin below, not an SDK guarantee: `NativeFinalizer`
+  promises its callbacks only "at the latest, when an isolate group shuts
+  down", and a worker shares the server's isolate group (the same clause in
+  `_IsolateExit`'s comment). `dispose()` detaches
+  them FIRST and the object is held until then, so no handle is ever closed
+  twice (a kill half-way through leaves it open instead). The flag is the
+  worker's alone (`grep -rn "closeAtIsolateExit: true" apps/server/lib` → 1
+  hit); the writer and `tool/` are untouched.
+  Rejected, with its reason: closing the handle from the serving isolate
+  after the exit signal. Finalizing every statement `sqlite3_next_stmt`
+  lists also finalizes FTS5's own internal statements, which SQLite's close
+  then finalizes again — a segfault in `sqlite3Fts5IndexClose`, reproduced.
+  Measured on the fixed tree (`lsof`, 25 runs each): a worker killed idle,
+  killed after a served search, and disposed gracefully — nothing left open
+  once the writer closes, 25 of 25 each. On the real corpus with the kill
+  landing inside a ranked search (1,197 hits, real timeouts): before, every
+  kill left a connection open (40 of 40 at 300 µs and at 1 ms, descriptors
+  4 → 142); after, 0 of 40 at 1 ms.
+  STATED, the limit: a statement is attached right after it is prepared, so
+  a kill that lands while one is being prepared for the first time — or
+  inside the two uncached card-hydration lookups (`_tagsFor`,
+  `_favoriteIdsAmong`) — leaves that statement unfinalized and the
+  connection open, as before. That is where a COLD worker spends its first
+  few hundred microseconds: 23 of 40 kills at a 300 µs timeout, 2 of the
+  13 at 3 ms, 1 of 25 on a zero timeout. The same holds for the window
+  between `sqlite3.open` and `closeConnection.attach` in `openReadOnly` (the
+  open and its three PRAGMAs): a kill there leaves the connection
+  unattached and open. Production evicts after 10 s, inside the ranked
+  statement's step, which is attached — and since the closer's identity
+  guard (above) only a request's OWN timeout evicts, so a stale timeout no
+  longer reaches a replacement still spawning or cold (pinned: 'a stale
+  request's timeout never kills the replacement'); `dispose()` and
+  `crashWorkersForTest` remain the only other kills. Not measured: whether the
+  image's SQLite skipped the writer's final checkpoint while a killed
+  reader stayed open (macOS's system SQLite leaves `-wal` / `-shm` on disk
+  after every close, so the files show nothing there).
+  Pin ('a killed worker's connection is closed once it has exited'): asked
+  of SQLite itself, no `lsof` — after a served search, a kill, the dispose
+  and the writer's close, a fresh connection leaves WAL mode (`PRAGMA
+  journal_mode = DELETE` → `delete`), which any other connection that has
+  read the database refuses. `refused: database is locked` for `delete`
+  with the flag dropped, with the statements unattached, and with the
+  connection unattached; with the STATEMENTS' detach removed from
+  `dispose()` the test process crashes in `sqlite3_finalize` (the
+  connection's detach is unpinned — above). The file alone 60 of 60 again.
+  Which log holds which mutant: the evidence README (the author's logs
+  name none; the closer re-ran all four by name).
+  One environmental failure, named: the first full run on the final tree
+  was +3,321 ~4 −2 — secure_cookie_http_test and trusted_proxy_test, both
+  "Connection closed before full header was received" in the same second
+  (the ephemeral-port flake of 2026-10-09 and 2026-11-03, the same two
+  files). Checked against this change, since it closes descriptors
+  natively in the process every suite shares: 15,000 worker kills beside
+  about 10,000 HTTP pings to fresh loopback servers in one process (the
+  pinger throttled), 0 ping errors; the two UNTHROTTLED stress runs in the
+  same directory failed instead (stress_ping_vs_kills_fixed_a / _b: 32,400
+  and 32,088 `Can't assign requested address`) — ephemeral-port exhaustion
+  by the pinger itself, with no no-kill control, so they say nothing about
+  the kills; the two files alone 10 of 10; and the tests that kill a worker
+  sit in two files — search_isolate_wiring_test, which ends about 5 s
+  before those two files start, and search_service_test (its `dispose()`
+  kills after the shutdown reply), which starts about 49 s after they
+  start
+  (per-test timing of the next two runs). Full runs two and three: +3,323 ~4 All tests passed.
+
+- **Owner gate (2026-11-11).** On the final tree: the nutrition replay
+  (tool/replay/gate.sh on fresh snapshot-32 copies) byte-identical to the
+  v108 set — `salt_database.dart` is on its path; dart analyze (server, salt_shared) and flutter analyze (app)
+  clean, dart format 0 changed; the server suite +3,329 ~4 All
+  tests passed (v108: +3,320 ~4; +9 in the wiring file, 12 tests now),
+  salt_shared +254, app +669; the wiring file alone 40 of 40 and loaded
+  without the corpus (+12). Nine own mutants on snapshot copies: eight
+  killed by a VALUE (the late exit made unconditional: 3 spawns for 2; the
+  zero timeout left to the timer; the dispose wait skipped, and cleared;
+  the kill after the shutdown request dropped; the identity guard dropped;
+  the spawn await dropped; the statements unattached) and the race
+  dropped killed by the test's own 30 s timeout — a hang has no value, and
+  the hang is the defect (RULED accepted, as the Pins bullet states).
+  RULED: the ≈10.1 s shutdown worst case stays as stated — it needs a
+  respawn in flight at the signal that becomes ready just inside its 2 s
+  bound and a new worker that then misses its reply; a SIGKILL there
+  skips the writer's close (its final checkpoint), the 'Shutdown complete'
+  record and exit(0) — nothing else (the log store writes each record
+  synchronously; the WAL is read at the next open — SQLite's design, not
+  measured here). The dying worker's stderr line is
+  kept. How it was verified: two verifiers on the author's patch (11
+  findings: no crash, no double close, three pre-existing siblings, pins
+  and text), then three closer / delta-verifier rounds — no
+  executable line changed since the first (the second reworded two
+  comments, `_SearchWorker.dispose()`'s and the dispose pin's); in the second a closer left a LIVE MUTANT in
+  the tree (found and restored by the verifier by md5; the mutant runner
+  now restores from a signal trap and refuses to start on a wrong md5);
+  the third left one sentence, corrected with the verifier's own wording.
+
 **Matcher v108 (batch fix108; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 085/086 over v107, union V1–V13, the spec
 .claude/diag/2026-11-09/review085/union_V.md, the rulings in fix108_brief.md
@@ -5563,7 +5831,8 @@ symbols, grep commands and hit counts — never a line number.)**
   file of the test or its library is in this batch; four earlier gates
   hold the same failure); the file alone (+3) and the third full run
   (+3,320 ~4 All tests passed) are green. The race is NOT fixed here (a
-  follow-up: make an evicted worker's exit awaitable by `dispose()`).
+  follow-up: make an evicted worker's exit awaitable by `dispose()`)
+  (fixed 2026-11-09/11 after v108 — 'Search worker lifecycle').
 - **Deploy note.** No migration; matcherVersion 97 unchanged, so no stamp
   moves and no stale sweep; the digest is unchanged at 763,726.73. The
   server needs the rebuild of any lib change (`dart_frog build`); the deploy

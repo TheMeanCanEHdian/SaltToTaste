@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi' as ffi;
 import 'dart:io';
 
 import 'package:logging/logging.dart';
@@ -6,6 +7,7 @@ import 'package:meta/meta.dart';
 import 'package:salt_server/src/db/migrations.dart';
 import 'package:salt_server/src/search/fts_compiler.dart';
 import 'package:salt_shared/salt_shared.dart';
+import 'package:sqlite3/open.dart' as sqlite_library;
 import 'package:sqlite3/sqlite3.dart';
 
 final Logger _log = Logger('db');
@@ -44,6 +46,29 @@ enum UpsertOutcome {
   unchanged,
 }
 
+/// What a [SaltDatabase.openReadOnly] `closeAtIsolateExit` connection hangs
+/// its native finalizers on. All of it is per isolate, and [anchor] is never
+/// collected while its isolate lives, so the finalizers run only when the
+/// isolate is gone — and then natively, with no Dart code left to run. That
+/// they run as soon as THIS isolate is gone, before its exit signal, is
+/// measured VM behaviour held by the pin "a killed worker's connection is
+/// closed once it has exited" — not an SDK guarantee: `NativeFinalizer`
+/// promises them only "at the latest, when an isolate group shuts down", and
+/// a worker shares the server's group.
+final class _IsolateExit implements ffi.Finalizable {
+  static final anchor = _IsolateExit();
+  static final held = <SaltDatabase>{};
+  static final finalizeStatement = _finalizer('sqlite3_finalize');
+  static final closeConnection = _finalizer('sqlite3_close_v2');
+
+  // Both return an int the finalizer drops.
+  static ffi.NativeFinalizer _finalizer(String symbol) => ffi.NativeFinalizer(
+    sqlite_library.open.openSqlite().lookup<ffi.NativeFinalizerFunction>(
+      symbol,
+    ),
+  );
+}
+
 /// The SQLite data-access layer for the server.
 ///
 /// Wraps a single `package:sqlite3` connection. All SQL uses prepared
@@ -80,12 +105,31 @@ class SaltDatabase {
   /// WAL-recovery pitfall) but pinned with `PRAGMA query_only` so it can never
   /// write. It does NOT migrate: the writer connection owns the schema, and a
   /// query-only connection could not run migrations anyway.
-  factory SaltDatabase.openReadOnly(String dbPath) {
+  ///
+  /// With [closeAtIsolateExit] the connection is also closed when its isolate
+  /// exits without calling [dispose] — a killed search worker. Nothing else
+  /// would close it: `package:sqlite3` closes an undisposed database from a
+  /// Dart `Finalizer`, which never runs for a dead isolate, so the process
+  /// kept the connection's files open for good. The object is then held until
+  /// [dispose], so that finalizer and this one can never both close it.
+  factory SaltDatabase.openReadOnly(
+    String dbPath, {
+    bool closeAtIsolateExit = false,
+  }) {
     final db = sqlite3.open(dbPath)
       ..execute('PRAGMA busy_timeout = 5000')
       ..execute('PRAGMA foreign_keys = ON')
       ..execute('PRAGMA query_only = TRUE');
-    return SaltDatabase._(db);
+    final database = SaltDatabase._(db);
+    if (closeAtIsolateExit) {
+      _IsolateExit.held.add(database);
+      _IsolateExit.closeConnection.attach(
+        _IsolateExit.anchor,
+        db.handle.cast(),
+        detach: database,
+      );
+    }
+    return database;
   }
 
   final Database _db;
@@ -96,8 +140,21 @@ class SaltDatabase {
   /// The cache is never evicted, so every SQL text this class can emit must
   /// come from a fixed, finite set — no request input may reach the SQL
   /// string itself. [preparedSqlTexts] is the seam that pins it.
-  PreparedStatement _prepared(String sql) =>
-      _statements[sql] ??= _db.prepare(sql);
+  PreparedStatement _prepared(String sql) => _statements[sql] ??= _prepare(sql);
+
+  PreparedStatement _prepare(String sql) {
+    final statement = _db.prepare(sql);
+    if (_IsolateExit.held.contains(this)) {
+      // sqlite3_close_v2 only marks a connection a zombie while one of its
+      // statements is left: each must be finalized for its files to close.
+      _IsolateExit.finalizeStatement.attach(
+        _IsolateExit.anchor,
+        statement.handle.cast(),
+        detach: this,
+      );
+    }
+    return statement;
+  }
 
   /// The distinct SQL texts this connection has cached prepared statements
   /// for. Bounded by the code, not by traffic — see [_prepared].
@@ -106,6 +163,12 @@ class SaltDatabase {
 
   /// Closes the underlying connection and all cached statements.
   void dispose() {
+    if (_IsolateExit.held.remove(this)) {
+      // FIRST: from here the handles are closed below, and nothing may close
+      // them a second time if the isolate is killed half-way through.
+      _IsolateExit.finalizeStatement.detach(this);
+      _IsolateExit.closeConnection.detach(this);
+    }
     for (final statement in _statements.values) {
       statement.dispose();
     }
