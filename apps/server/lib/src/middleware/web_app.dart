@@ -139,11 +139,7 @@ Middleware staticFileValidators({String publicDir = 'public'}) {
   final etags = <String, (DateTime, int, String)>{};
   String? root;
   File? fileOf(Uri url) {
-    // v109 W1: a path no file can have is not resolved at all (O(1), before
-    // the root or the segments are read) — the request passes untouched.
-    if (url.path.length > _maxPathLength) {
-      return null;
-    }
+    // v110 X1: a path over the bound never gets here (the outermost's 414).
     try {
       final base = root ??= Directory(publicDir).resolveSymbolicLinksSync();
       final path = staticJoin(base, url.pathSegments);
@@ -237,12 +233,6 @@ String staticJoin(String root, List<String> segments) {
   }
   return '$joined';
 }
-
-/// v109 W1 (Run 087/088 S5 / O4): the longest request path `fileOf`
-/// resolves — Linux's PATH_MAX (macOS's is 1,024): no file under the root
-/// has a longer path, so a longer request is never joined (one 400 KB path
-/// of 200,000 segments stalled v108's quadratic join 9–17 s).
-const int _maxPathLength = 4096;
 
 /// The one byte range shelf_static parses without overflow (U3).
 final RegExp _usableRange = RegExp(r'^bytes=(\d{0,15})-\d{0,15}$');

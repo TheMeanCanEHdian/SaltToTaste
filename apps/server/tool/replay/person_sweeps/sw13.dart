@@ -33,6 +33,14 @@
 //     juice ARRIVES and the row is read. Classes 'gone-asks' (more than the CONTROL — the same drop, the row skipped,
 //     compute ×4 under Gone — + the PUT's one ask), 'gone-partial' (not `food_gone` ON the juice),
 //     'gone-not-reopened'. Tags 'G|…'. Both divergent on the BASE only.
+// (b⁵) v110 X2 — THE STAND-IN: for each (b′) row, its juice's DETAIL dropped alone (every search answer listing it
+//     kept: `knownFood` answers a portion-less stand-in), the row's stamp cleared and compute ×3 under NoNet (a FOOD
+//     fault on the juice); then the juice ARRIVES (`cachedFood`), the row is read ('arrived') and computed once more
+//     ('healed': the settled row again). Classes 'standin-counted' (the held pass is not a no-record hold ON the juice — the base's partial
+//     `second_food`, or the pair counted from the stand-in), 'standin-asks' (more than the CONTROL — the same drop,
+//     the row skipped, compute ×3 — + one ask per compute), 'standin-not-reopened' (arrived still derived or fresh),
+//     'standin-not-healed' (healed not the stored pair: no hold, two parts, fresh). Tags 'S|…'. Divergent on the BASE
+//     only.
 // Base vs tip: the COMBO / ROW lines are diffed (run.sh on each tree). args: settle <snap> <out-db> |
 // sweep <settled-db> <workdir> <shard> <nshards>
 // ignore_for_file: avoid_print, public_member_api_docs, lines_longer_than_80_chars
@@ -234,7 +242,7 @@ Future<void> main(List<String> a) async {
       ];
     }
     stdout.writeln(
-      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; pick combos ${pairPlan(db).length}; unskip combos ${pairPlan(db).length}; gone combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
+      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; pick combos ${pairPlan(db).length}; unskip combos ${pairPlan(db).length}; gone combos ${pairPlan(db).length}; standin combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
     );
     db.dispose();
     return;
@@ -660,6 +668,93 @@ Future<void> main(List<String> a) async {
       db.dispose();
       done++;
     }
+  }
+  // (b⁵) the stand-in: the juice's detail dropped, its search answers kept.
+  for (final (id, pos, juice) in picks) {
+    k++;
+    if (k % n != shard) continue;
+    var db = fresh();
+    final path = '$work/db_$shard.db';
+    final tag = 'S|$id|$pos|$juice';
+    try {
+      final stored = db
+          .ingredientMatchesFor(id)
+          .firstWhere((m) => m.position == pos);
+      db.dispose();
+      String drop() {
+        final c = raw.sqlite3.open(path);
+        final detail =
+            c.select('SELECT response FROM fdc_food_cache WHERE fdc_id = ?', [
+                  juice,
+                ]).first['response']
+                as String;
+        c.execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [juice]);
+        c.dispose();
+        return detail;
+      }
+
+      // The CONTROL: the recipe's OTHER rows under the same drop.
+      drop();
+      db = SaltDatabase.open(path);
+      calls = 0;
+      final skipRecipe = nutritionRecipeOf(db, id)!.recipe;
+      await applyMatchOverride(db, NoNet(), skipRecipe, pos, {
+        'raw': nutritionLines(skipRecipe)[pos].raw,
+        'skipped': true,
+      });
+      for (var p = 0; p < 3; p++) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final control = calls;
+      db.dispose();
+      fresh().dispose();
+      final detail = drop();
+      db = SaltDatabase.open(path);
+      String pass(String name) {
+        final r = db
+            .ingredientMatchesFor(id)
+            .firstWhere((m) => m.position == pos);
+        return '$name:${r.status}:${r.fdcId}:${g(r.grams)}:${r.hold}:${r.heldOn}:${r.derivedSeq != null}:'
+            '${nutritionIsFresh(db, nutritionRecipeOf(db, id)!.recipe) ? 'fresh' : 'stale'}:${r.parts == null ? 0 : (jsonDecode(r.parts!) as List).length}';
+      }
+
+      final standIn = knownFood(db, juice) != null;
+      calls = 0;
+      db.clearDerivedSeq(id, [pos]);
+      for (var p = 0; p < 3; p++) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final held = pass('held');
+      final asked = calls;
+      await cachedFood(db, Serve(detail), juice);
+      final arrived = pass('arrived');
+      await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      final healed = pass('healed');
+      final h = held.split(':');
+      final bad = <String>[
+        // No answer listing the juice: the shape is vacuous.
+        if (!standIn) 'standin-vacuous',
+        if (h[4] != 'food_unavailable' || h[5] != '$juice') 'standin-counted',
+        if (asked > control + 3) 'standin-asks',
+        if (!arrived.contains(':false:stale')) 'standin-not-reopened',
+        if (healed !=
+            'healed:${stored.status}:${stored.fdcId}:${g(stored.grams)}:null:null:${stored.derivedSeq != null}:fresh:2')
+          'standin-not-healed',
+      ];
+      out.writeln(
+        'COMBO	$tag	standin=$standIn	$held	$arrived	$healed	calls=$asked	control=$control',
+      );
+      out.writeln('ROW	$tag	healed	${state(db, id)}');
+      if (bad.isNotEmpty) {
+        div++;
+        out.writeln('DIV	$tag	${bad.join(',')}');
+      }
+    } catch (e) {
+      errs++;
+      out.writeln('ERR	$tag	$e');
+    }
+    db.dispose();
+    done++;
   }
   out.writeln(
     'SUMMARY shard=$shard done=$done divergent=$div refused=$refused errors=$errs',

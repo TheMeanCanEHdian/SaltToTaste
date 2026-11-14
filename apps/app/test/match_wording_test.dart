@@ -244,6 +244,63 @@ void main() {
     expect(note, contains('Pick another food, or skip the line'));
   });
 
+  // v110 X3 (O4; unionX/c C4): 0536 Crispy Orange Beef line 3's peel row
+  // held ON its juice (169098), as the matches GET serves it (`held_on`;
+  // the server's pin: nutrition_v110_test X3). STATED synthesized hold (the
+  // juice's 404 / outage is synthesized, as the server's W8 pins).
+  IngredientMatch onJuice(String hold) => IngredientMatch.fromJson({
+    'position': 3,
+    'raw':
+        '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
+        'plus ¼ cup juice (2 oranges)',
+    'candidates': const <Object?>[],
+    'match': {
+      'fdc_id': 169103,
+      'description': 'Orange peel, raw',
+      'confidence': 1,
+      'grams': 24.0,
+      'gram_source': 'portion',
+      'status': 'confirmed',
+      'hold': hold,
+      'held_on': 169098,
+    },
+  });
+
+  testWidgets("v110 X3: the hold's label names the line's second food when "
+      'the row is held ON it (held_on)', (tester) async {
+    for (final (hold, label) in [
+      (foodGoneHold, "USDA no longer serves this line's second food"),
+      (
+        foodUnavailableHold,
+        "USDA kept failing to send this line's second food",
+      ),
+    ]) {
+      final m = onJuice(hold);
+      expect(m.heldOn, 169098);
+      await pump(tester, m);
+      expect(find.textContaining(label), findsOneWidget, reason: hold);
+      expect(find.textContaining('this food'), findsNothing, reason: hold);
+    }
+  });
+
+  testWidgets("v110 X3: the explanation line says a confirm cannot count the "
+      "line's SECOND food", (tester) async {
+    for (final (hold, serves) in [
+      (foodGoneHold, 'no longer serves'),
+      (foodUnavailableHold, 'cannot serve now'),
+    ]) {
+      await pump(tester, onJuice(hold));
+      expect(
+        find.textContaining(
+          "cannot count this line's second food, which USDA $serves",
+        ),
+        findsOneWidget,
+        reason: hold,
+      );
+      expect(find.textContaining('cannot count a food'), findsNothing);
+    }
+  });
+
   test('the stale banner names its cause (v28, Run 058 S15): a decision '
       'waiting on USDA is not an ingredients change', () {
     String? reasonOf(String reason) => RecipeNutrition.fromJson({

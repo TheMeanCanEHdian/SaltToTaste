@@ -610,6 +610,14 @@ void main() {
       ('1 cup Sauce Base (1 ½ to 2 recipes; recipe follows)', true, null),
       // The en dash range (ruled: a hyphen, an en dash or "to"); closer 1 D4.
       ('1 cup Sauce Base (1–2 recipes; recipe follows)', true, null),
+      // v110 X5 (S7): a SPACED hyphen and a spaced en dash (the mutant
+      // `[-–]` for `\s*[-–]\s*`: no share written, the amount's ⅔).
+      ('1 cup Sauce Base (1 - 2 recipes; recipe follows)', true, null),
+      ('1 cup Sauce Base (1 ½ – 2 recipes; recipe follows)', true, null),
+      // v110 X5 (O6): a range ENDING in a spaced mixed number (the mutant
+      // giving the second number one bare token: no share written).
+      ('1 cup Sauce Base (1 to 1 ½ recipes; recipe follows)', true, null),
+      ('1 cup Sauce Base (1-1 ½ recipes; recipe follows)', true, null),
       // The reader unchanged: a spaced mixed number alone reads 1.5.
       ('1 cup Sauce Base (1 ½ recipes; recipe follows)', true, 1.5),
       // A parenthetical with "to" that writes no number first: no share

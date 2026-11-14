@@ -22,6 +22,13 @@ import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 
 final Logger _log = Logger('proxy');
 
+/// v110 X1: the longest `url.path` (no leading slash, no query) the server
+/// reads — Linux's PATH_MAX. A longer one is a 414 at the very top of
+/// [buildOutermostMiddleware]. No validated path parameter comes near it
+/// (the longest legitimate path is a tag style's, 558); only a hand-edited
+/// recipe slug could (docs/API.md, Conventions).
+const int maxRequestPathLength = 4096;
+
 /// Wraps the ENTIRE handler dart_frog's generated entry point builds —
 /// `Cascade().add(createStaticFileHandler()).add(buildRootHandler())` — so
 /// [securityHeaders] also covers the arm no route middleware can reach.
@@ -108,11 +115,32 @@ Handler buildOutermostMiddleware(
       );
     }
   });
+  // v110 X1: a path over [maxRequestPathLength] is REFUSED before anything
+  // else reads the request — no `provide` (each rebuilds the shelf request:
+  // ~20 ms per 400 KB path), no method read, no validator, no route. The
+  // same headers as every other answer here: [securityHeaders], no-cache,
+  // a fresh id in the envelope and the header. Not logged (as the 405).
+  final refused = securityHeaders()((_) {
+    final id = newRequestId();
+    return errorResponse(
+      statusCode: HttpStatus.requestUriTooLong,
+      code: ApiErrorCodes.uriTooLong,
+      message: 'Request path too long.',
+      requestId: id,
+      headers: {
+        requestIdHeader: id,
+        HttpHeaders.cacheControlHeader: 'no-cache',
+      },
+    );
+  });
   // v107 U9: the request id minted ONCE per request, before the try —
   // provided to everything below (the catch's 500 and the static arm's 404
   // envelope read it) and stamped on every response that has none (the
   // static arm's 200 / 206 / 304 had none; the routes arm stamps its own).
   return (context) async {
+    if (context.request.url.path.length > maxRequestPathLength) {
+      return refused(context);
+    }
     final id = newRequestId();
     final response = await secured(context.provide(() => RequestId(id)));
     return response.copyWith(

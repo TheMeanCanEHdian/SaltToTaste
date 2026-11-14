@@ -13,6 +13,9 @@ abstract final class ApiErrorCodes {
   /// The route exists but the HTTP method is not supported (HTTP 405).
   static const String methodNotAllowed = 'method_not_allowed';
 
+  /// The request path is longer than the server reads (HTTP 414; v110 X1).
+  static const String uriTooLong = 'uri_too_long';
+
   /// An unhandled server error; details appear only in the server logs
   /// (HTTP 500).
   static const String internal = 'internal';

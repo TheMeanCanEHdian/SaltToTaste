@@ -418,6 +418,9 @@ Future<Map<String, Object?>> matchesBody(
               // score passes (`no_nutrients` | `discarded_medium` |
               // `second_food`); null when nothing holds it.
               'hold': row.hold,
+              // v110 X3: the record the hold waits on when it is not the
+              // row's own food (a pair's juice); absent otherwise.
+              if (_heldOnOther(row)) 'held_on': row.heldOn,
               // What a reviewer needs to judge the hold, in words: for a
               // `partial_pour_away` the part of the strained liquid a step
               // keeps ("1 cup defatted cooking liquid"), and a divided
@@ -693,6 +696,7 @@ Future<AppliedToOthers?> applyMatchOverride(
           row.hold,
           routed: row.childRecipeId != null,
           reference: madeFromRecipe,
+          heldOnOther: _heldOnOther(row),
         ),
       );
     }
@@ -936,7 +940,13 @@ Future<AppliedToOthers?> applyMatchOverride(
   }
   if (!holdActionsOf(stored.hold, routed: routedNow).decidesLibraryWide) {
     if (applyToAll == true) {
-      throw ValidationException(_refusalOf(stored.hold, routed: routedNow));
+      throw ValidationException(
+        _refusalOf(
+          stored.hold,
+          routed: routedNow,
+          heldOnOther: _heldOnOther(stored),
+        ),
+      );
     }
     decidedFood = false;
   }
@@ -1263,19 +1273,32 @@ const String needsRecipeDecisionMessage =
 /// The 422 a line's action table refuses with, by [hold]: on a [routed]
 /// row (it carries a child) and on a line made from a recipe the engine
 /// does not route ([reference]), what the line accepts (v41, N2) — never
-/// "no record of this food" on a line that takes no food.
+/// "no record of this food" on a line that takes no food. v110 X3: a hold
+/// that waits on ANOTHER record than the row's food ([heldOnOther] — a
+/// pair's juice) names "this line's second food".
 String _refusalOf(
   String? hold, {
   bool routed = false,
   bool reference = false,
-}) => switch (hold) {
-  foodUnavailableHold => unavailableMessage,
-  chooseRecipeHold || nestedRecipeHold => chooseRecipeMessage,
-  discardedRecipeHold => marinadeMessage,
-  null when routed => routedMessage,
-  null when reference => notRoutedMessage,
-  _ => noRecordMessage,
-};
+  bool heldOnOther = false,
+}) {
+  final message = switch (hold) {
+    foodUnavailableHold => unavailableMessage,
+    chooseRecipeHold || nestedRecipeHold => chooseRecipeMessage,
+    discardedRecipeHold => marinadeMessage,
+    null when routed => routedMessage,
+    null when reference => notRoutedMessage,
+    _ => noRecordMessage,
+  };
+  return heldOnOther
+      ? message.replaceFirst('this food', "this line's second food")
+      : message;
+}
+
+/// v110 X3: whether [row]'s hold waits on another record than its food
+/// (`held_on`, a pair's juice) — the matches GET serves `held_on` then.
+bool _heldOnOther(IngredientMatchRow row) =>
+    row.heldOn != null && row.heldOn != row.fdcId;
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.

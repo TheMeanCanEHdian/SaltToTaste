@@ -12696,12 +12696,15 @@ Future<IngredientMatchRow> withParts(
   final rule = _pairOf(recipe, line, bacon.fdcId!);
   final second = rule?.second;
   if (rule != null && second != null) {
-    if (knownFood(db, second.fdcId, line: line) == null &&
-        await _cachedFood(db, provider, second.fdcId) == null) {
+    // v110 X2: the second record is its DETAIL ([_foodFromCache], through
+    // [_cachedFood]) — a cached search hit listing it ([knownFood]'s
+    // stand-in, no portions) never supplies its grams.
+    final detail = await _cachedFood(db, provider, second.fdcId);
+    if (detail == null) {
       return bacon.copyWith(hold: foodGoneHold, heldOn: second.fdcId);
     }
     final zest = rule.gramsOn(knownFood(db, rule.fdcId, line: line));
-    final juice = second.grams(knownFood(db, second.fdcId, line: line));
+    final juice = second.grams(detail);
     // The first record not cached (never after the caller's own fetch of
     // the row's food): held.
     return zest == null || juice == null
@@ -16717,7 +16720,10 @@ int _forbidsEvaluations = 0;
 /// fat") stays a bridge word (the owner gate's G1); for a one-word act
 /// every word on the stem ends the bridge ("the skimmed fat", "the skimpy
 /// fat" read a real skim — stated, reach 0). A bridge word may hold an
-/// apostrophe or a hyphen ("the soup's fat", "the pan-juice fat"). Bounded
+/// apostrophe or a hyphen ("the soup's fat", "the pan-juice fat") — v110
+/// X4: and must hold a word character (a spaced "-" / "--" / "'" is no
+/// bridge word: "do not skim the foam - just fat." a real skim, as v107 and
+/// v108 read it). Bounded
 /// repetition: linear per negation word (the lookahead reads one word and
 /// its particle).
 RegExp _negatedAct(String verb, String inflected, String object) => RegExp(
@@ -16725,7 +16731,7 @@ RegExp _negatedAct(String verb, String inflected, String object) => RegExp(
   r'\brefrain from)(?:\s+(?:to|ever|bother|first))?\s+(?:'
   '$verb)\\b(?:(?:\\s+(?:the|any|all|of|excess|off|out))*'
   r'(?:(?:,\s+(?!(?:only|just|but|then|instead|rather)\b)|\s+)'
-  "(?!(?:$inflected)\\b)[\\w'’-]+){0,3},?\\s+(?:$object)\\b"
+  "(?!(?:$inflected)\\b)(?=[\\w'’-]*\\w)[\\w'’-]+){0,3},?\\s+(?:$object)\\b"
   r'|(?:\s+it)?(?:\s*(?:[^\w\s]|$)|\s+(?:and|but)\b))',
 );
 final RegExp _forbidsReuse = _negatedAct(
@@ -19993,9 +19999,9 @@ Future<FdcFood?> _cachedFood(
   NutritionProvider provider,
   int fdcId,
 ) async {
-  final cached = db.fdcFoodCacheGet(fdcId);
+  final cached = _foodFromCache(db, fdcId);
   if (cached != null) {
-    return FdcFood.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+    return cached;
   }
   final food = await provider.food(fdcId);
   if (food != null) {
@@ -21192,7 +21198,8 @@ derivedFor(
 /// null (the row's own `fdc_id` is matched by [SaltDatabase.unholdOn]).
 /// v108 V3: else, a row on rule B1's peel ([_pairOf] on the line the pair
 /// fetch read, [weighedLine]) whose own record is cached: the rule's second
-/// record when no cache holds it — what [derivedFor] fetched and failed
+/// record when its DETAIL is not cached (v110 X2: a cached search hit
+/// listing it is no record of it) — what [derivedFor] fetched and failed
 /// on, though a row derived under the outage stores no parts.
 /// ponytail: a failing candidate's detail (another record than the row's,
 /// its parts and its rule's second) is not named — the exception carries
@@ -21216,9 +21223,8 @@ int? _heldOnOf(
     return null;
   }
   final second = _pairOf(recipe, eaten, own)?.second?.fdcId;
-  return second != null && knownFood(db, second, line: eaten) == null
-      ? second
-      : null;
+  // v110 X2: its DETAIL, [withParts]' own read — a search hit is no record.
+  return second != null && _foodFromCache(db, second) == null ? second : null;
 }
 
 /// Rule B1's part records ([withRenderedBacon]), resolved where the row's

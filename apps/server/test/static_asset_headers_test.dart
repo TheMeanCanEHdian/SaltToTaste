@@ -1452,7 +1452,7 @@ void main() {
     }
 
     test('(i) an over-long path is never resolved — 0 filesystem calls in '
-        'the validators — and answers as bare shelf_static', () async {
+        'the validators — and is refused (v110 X1: 414)', () async {
       final (barePort, fullPort) = await pair();
       final count = _CountingIO();
       // The validators served INSIDE the overrides over a 404 stub (no
@@ -1483,12 +1483,12 @@ void main() {
         await raw(path, port: counted.port);
         // Base: the join (9 s), then the type lookup.
         expect(count.calls, 0, reason: path.substring(0, 40));
+        // RE-PIN (v110 X1): v109 answered as bare shelf_static here (the
+        // reset spelling's body, no ETag); now the outermost's 414.
         final f = await raw(path, port: fullPort);
         final b = await raw(path, port: barePort);
-        expect(
-          (f.$1, f.$2['content-type'], f.$3, f.$2['etag']),
-          (b.$1, b.$2['content-type'], b.$3, null),
-        );
+        expect((f.$1, f.$2['etag']), (HttpStatus.requestUriTooLong, null));
+        expect(b.$1, isNot(HttpStatus.requestUriTooLong));
       }
     });
 
@@ -1516,20 +1516,185 @@ void main() {
     });
 
     test('(iii) the bound by value: a path of exactly 4,096 characters naming '
-        "a file gets its ETag; 4,097 is bare's answer, no ETag", () async {
+        'a file gets its ETag; 4,097 is the 414 (v110 X1)', () async {
       final (barePort, fullPort) = await pair();
       final at = await raw(resetTo(4096), port: fullPort);
       expect(
         (at.$1, at.$2['etag']),
         (HttpStatus.ok, '"${md5Hex('void main(){}')}"'),
       );
+      // RE-PIN (v110 X1): 4,097 was bare's 200 with no ETag (v109); now
+      // the 414 — bare shelf_static still serves the file.
       final over = await raw(resetTo(4097), port: fullPort);
       final bare = await raw(resetTo(4097), port: barePort);
       expect(
-        (over.$1, over.$3, over.$2['etag']),
-        (bare.$1, bare.$3, null),
+        (over.$1, over.$2['etag'], bare.$1),
+        (HttpStatus.requestUriTooLong, null, HttpStatus.ok),
       );
-      expect(over.$1, HttpStatus.ok);
+    });
+  });
+
+  // v110 X1 (Run 089/090 S1 S4 S8 S9 / O1 O2 O8 O9): v109's bound let a
+  // path over 4,096 pass UNTOUCHED to bare shelf_static — and one padded
+  // with empty segments still names the file there, so every validator
+  // guard was skipped (IMS garbage / a 20-digit Range: 500 + SEVERE). Now a
+  // path over the bound is a 414 at the very top of the outermost. STATED
+  // synthesized requests (no browser sends them) on the harness's files.
+  group('v110 X1 a path over the bound is refused', () {
+    /// `/` padding to a `url.path` (no leading slash) of [length] that
+    /// still names main.dart.js at bare shelf_static (both joins skip empty
+    /// parts — no knowledge of the root needed).
+    String slashes(int length) => '/${'/' * (length - 12)}main.dart.js';
+
+    // The reset spelling (`/<junk>/<abs-root>%2Fmain.dart.js`).
+    String resetTo(int length) {
+      final abs = publicDir.resolveSymbolicLinksSync().replaceAll('/', '%2F');
+      final tail = '$abs%2Fmain.dart.js';
+      return '/${'x' * (length - tail.length - 1)}/$tail';
+    }
+
+    final etag = '"${md5Hex('void main(){}')}"';
+
+    // Every header but the per-response ones (and the 405's Allow).
+    Map<String, String> fixed(Map<String, String> h) => {
+      for (final e in h.entries)
+        if (!{
+          'date',
+          'content-length',
+          'x-request-id',
+          'allow',
+        }.contains(e.key))
+          e.key: e.value,
+    };
+
+    test('(i) 4,096 is the validated file; 4,097 is a 414 for every method '
+        "and validator, with the envelope, the id, no-cache and the 405's "
+        'headers; 0 SEVERE', () async {
+      final severe = <LogRecord>[];
+      final sub = Logger.root.onRecord
+          .where((r) => r.level >= Level.SEVERE)
+          .listen(severe.add);
+      addTearDown(sub.cancel);
+      final cascade = Cascade()
+          .add(createStaticFileHandler(path: publicDir.path))
+          .add((c) => Response(statusCode: HttpStatus.notFound))
+          .handler;
+      final full = await serve(
+        buildOutermostMiddleware(
+          cascade,
+          publicDir: publicDir.path,
+          throttle: SevereThrottle(),
+        ),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => full.close(force: true));
+      final port = full.port;
+      // In bound: v108's answers, unchanged.
+      for (final method in ['GET', 'HEAD']) {
+        for (final (headers, status) in [
+          (const <String, String>{}, HttpStatus.ok),
+          ({'if-modified-since': 'garbage'}, HttpStatus.ok),
+          ({'range': 'bytes=99999999999999999999-'}, HttpStatus.ok),
+          ({'if-none-match': '*'}, HttpStatus.notModified),
+        ]) {
+          final r = await raw(
+            slashes(4096),
+            headers: headers,
+            method: method,
+            port: port,
+          );
+          expect((r.$1, r.$2['etag']), (status, etag), reason: '$headers');
+        }
+      }
+      // The owner gate: the bound reads `url.path` ALONE — a query on a
+      // path at the bound does not count (the bound read from the path
+      // plus the query: 414).
+      final q = await raw('${slashes(4096)}?v=${'q' * 64}', port: port);
+      expect((q.$1, q.$2['etag']), (HttpStatus.ok, etag));
+      final (_, notAllowed, _) = await raw(
+        '/main.dart.js',
+        method: 'TRACE',
+        port: port,
+      );
+      final over = <(String, Map<String, String>, String)>[
+        for (final method in ['GET', 'HEAD'])
+          for (final headers in [
+            const <String, String>{},
+            {'if-modified-since': 'garbage'},
+            {'range': 'bytes=99999999999999999999-'},
+            {'if-none-match': '*'},
+            {'if-modified-since': 'Fri, 01 Jan 2100 00:00:00 GMT'},
+            {'range': 'bytes=6000000-6000001'},
+            {'range': 'bytes=0-3', 'if-range': 'W/"x"'},
+          ])
+            (method, headers, slashes(4097)),
+        // RE-PIN (v109 W1 (i) / (iii)): the reset spelling at 4,097 was
+        // bare shelf_static's 200 with no ETag; now the 414.
+        ('GET', const {}, resetTo(4097)),
+        // The owner gate: ONE long segment too (a refusal that waited for
+        // a second segment passed this one).
+        ('GET', const {}, '/${'a' * 4097}'),
+        // Every method: an over-bound TRACE is 414, not 405 (STATED).
+        ('TRACE', const {}, slashes(4097)),
+      ];
+      for (final (method, headers, path) in over) {
+        final (status, h, body) = await raw(
+          path,
+          headers: headers,
+          method: method,
+          port: port,
+        );
+        final why = '$method $headers ${path.substring(path.length - 20)}';
+        expect(status, HttpStatus.requestUriTooLong, reason: why);
+        expect(h['cache-control'], 'no-cache', reason: why);
+        expect(fixed(h), fixed(notAllowed), reason: why);
+        expect(h['x-request-id'], matches(RegExp(r'^[0-9a-f]{16}$')));
+        if (method != 'HEAD') {
+          final error = (jsonDecode(body) as Map)['error'] as Map;
+          expect(
+            (error['code'], error['request_id']),
+            ('uri_too_long', h['x-request-id']),
+            reason: why,
+          );
+        }
+      }
+      expect(severe, isEmpty);
+    });
+
+    test('(ii) over the bound the inner handler is never entered and the '
+        'file system never read (S4)', () async {
+      var entered = 0;
+      final count = _CountingIO();
+      final counted = await IOOverrides.runWithIOOverrides(
+        () => serve(
+          buildOutermostMiddleware((c) {
+            entered++;
+            return Response(statusCode: HttpStatus.notFound);
+          }, publicDir: publicDir.path),
+          InternetAddress.loopbackIPv4,
+          0,
+        ),
+        count,
+      );
+      addTearDown(() => counted.close(force: true));
+      // Not vacuous: in bound, the validators resolve (counted) and the
+      // inner handler runs.
+      await raw(slashes(4096), port: counted.port);
+      expect((entered, count.calls > 0), (1, true));
+      for (final path in [
+        '/${List.filled(200000, 'a').join('/')}',
+        slashes(4097),
+      ]) {
+        entered = 0;
+        count.calls = 0;
+        final (status, _, _) = await raw(path, port: counted.port);
+        expect(
+          (status, entered, count.calls),
+          (HttpStatus.requestUriTooLong, 0, 0),
+          reason: path.substring(0, 20),
+        );
+      }
     });
   });
 
@@ -1776,7 +1941,8 @@ void main() {
       // The package arm dropped (only file: frames own): 3.
       expect(records, hasLength(4));
       // A trace with NO own frame keys on its top frame (the V1 flood's: 0
-      // own frames of 39) — one site, one record.
+      // own frames of 39; corrected 2026-11-14, v110 X7: the live store's
+      // record holds 47 frames, all dart:, 0 own) — one site, one record.
       for (var i = 0; i < 2; i++) {
         throttle.severe(
           log,
@@ -1805,6 +1971,34 @@ void main() {
         );
       }
       expect(records, hasLength(7));
+      // v110 X5 (S6): the fallback keeps the frame's line and column — the
+      // same file at ANOTHER line is another site (8; the mutant stripping
+      // `:line:col` from the fallback frame: 7).
+      throttle.severe(
+        log,
+        'm',
+        null,
+        StateError('d'),
+        StackTrace.fromString('#0      dep (package:dep/d.dart:2:7)'),
+      );
+      expect(records, hasLength(8));
+      // v110 X5 (O5): the depth strip on the VM's REAL padding — `#9` is
+      // followed by 6 spaces, `#10` by 5 (a printed trace of a 12-deep
+      // recursion, copied): one app line at depths 9 and 10 is ONE record
+      // (9; the mutant `^#\d+\s`: 10).
+      for (final depth in ['#9      ', '#10     ']) {
+        throttle.severe(
+          log,
+          'm',
+          null,
+          StateError('d'),
+          StackTrace.fromString(
+            '#0      dep (package:dep/d.dart:1:1)\n'
+            '${depth}f (package:salt_server/c.dart:7:3)',
+          ),
+        );
+      }
+      expect(records, hasLength(9));
     });
   });
 
@@ -1855,6 +2049,14 @@ void main() {
       expect(records, hasLength(2));
       await hit(-const Duration(hours: 2) + const Duration(minutes: 1));
       expect(records, hasLength(2));
+      // v110 X5 (S3): a FORWARD step past the window re-opens it (mutant
+      // `last == null || now.isBefore(last)`: silent).
+      await hit(-const Duration(hours: 2) + const Duration(minutes: 61));
+      expect(records, hasLength(3));
+      // v110 X5 (O7): a backwards step SMALLER than the window re-opens it
+      // at once (mutant `now.isBefore(last.subtract(every))`: silent).
+      await hit(-const Duration(hours: 2) + const Duration(minutes: 31));
+      expect(records, hasLength(4));
     });
 
     test('the admin log-read audit: a 2 h BACKWARDS step records the read at '
@@ -1890,6 +2092,44 @@ void main() {
             t0.subtract(const Duration(hours: 2) - const Duration(minutes: 1)),
       );
       expect(records, hasLength(2));
+      // v110 X5 (S3): a FORWARD step past the 10 min window (+11 min).
+      final t1 = t0.subtract(
+        const Duration(hours: 2) - const Duration(minutes: 11),
+      );
+      logs_route.auditRead(user, now: () => t1);
+      expect(records, hasLength(3));
+      // v110 X5 (O7): a backwards step SMALLER than the window (-5 min).
+      logs_route.auditRead(
+        user,
+        now: () => t1.subtract(const Duration(minutes: 5)),
+      );
+      expect(records, hasLength(4));
+    });
+
+    test('v110 X5: the SEVERE throttle — a FORWARD step past 60 s re-opens '
+        'it, and a backwards step SMALLER than 60 s re-opens it at once', () {
+      final records = <LogRecord>[];
+      final log = Logger.detached('v110w')..level = Level.ALL;
+      final sub = log.onRecord.listen(records.add);
+      addTearDown(sub.cancel);
+      final t0 = DateTime.utc(2026, 11, 14);
+      var t = t0;
+      final throttle = SevereThrottle(now: () => t);
+      final (error, stack) = _v108Caught();
+      void hit(Duration at) {
+        t = t0.add(at);
+        throttle.severe(log, 'm', null, error, stack);
+      }
+
+      hit(Duration.zero);
+      hit(const Duration(seconds: 59));
+      expect(records, hasLength(1));
+      // Mutant `last == null || now.isBefore(last)`: silent.
+      hit(const Duration(seconds: 61));
+      expect(records, hasLength(2));
+      // Mutant `now.isBefore(last.subtract(every))`: silent.
+      hit(const Duration(seconds: 31));
+      expect(records, hasLength(3));
     });
   });
 

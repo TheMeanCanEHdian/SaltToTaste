@@ -146,14 +146,17 @@ bool isHeldLine(IngredientMatch m) =>
 /// (salt_shared `holdActions`, which the server's derivation reads too;
 /// v28 deleted the app's and the server's own lists). An ambiguous oil asks its
 /// own question first.
-String heldFinishes(String hold, {double? eatenPart}) {
+String heldFinishes(String hold, {double? eatenPart, bool second = false}) {
   final actions = holdActionsOf(hold);
   // A food with no record (`food_gone`, `food_unavailable`; RULE A): the
   // table finishes it by a pick or a skip only.
   if (!actions.finishes.contains(HoldDecision.confirm) &&
       !actions.finishes.contains(HoldDecision.typed)) {
+    // v110 X3: [second] — the hold waits on the line's SECOND food (the
+    // row's `held_on`), not the food shown.
     return 'Pick another food, or skip the line — a confirm or typed grams '
-        'cannot count a food USDA ${hold == foodGoneHold ? 'no longer serves' : 'cannot serve now'}';
+        'cannot count ${second ? "this line's second food, which" : 'a food'} '
+        'USDA ${hold == foodGoneHold ? 'no longer serves' : 'cannot serve now'}';
   }
   final ambiguous = hold == 'ambiguous_medium';
   // A pick keeps the hold unless the table says it finishes it, or the
@@ -295,7 +298,11 @@ Widget sourceChip(String? dataType) {
 /// the server's `hold_note` (a partial pour-away's kept part, a divided
 /// line's part eaten outside the dredge or braise, and the sentence an
 /// ambiguous oil shares).
-String? holdReason(String? hold, {String? note}) => switch (hold) {
+String? holdReason(
+  String? hold, {
+  String? note,
+  bool second = false,
+}) => switch (hold) {
   'no_nutrients' => 'USDA publishes no calories or macros for this food',
   // A reference marinade, poured away (v41, A5 a): the medium's words.
   'discarded_medium' || 'discarded_recipe' =>
@@ -328,10 +335,14 @@ String? holdReason(String? hold, {String? note}) => switch (hold) {
     'This is a preserved record for a fresh ingredient: the line asks for '
         'fresh meat, the match is cured',
   'borderline' => 'The match score is borderline; please confirm the food',
-  'food_gone' => 'USDA no longer serves this food — pick again',
+  // v110 X3: [second] — held on the line's second food (`held_on`).
+  'food_gone' =>
+    'USDA no longer serves ${second ? "this line's second food" : 'this food'}'
+        ' — pick again',
   'food_unavailable' =>
-    'USDA kept failing to send this food (several syncs in a row) — pick '
-        'again, or skip the line',
+    'USDA kept failing to send '
+        '${second ? "this line's second food" : 'this food'} (several syncs '
+        'in a row) — pick again, or skip the line',
   // A reference line no recipe counts (v41): the sheet's own clauses — the
   // generic one for choose_recipe (its reason is the child's, not the
   // hold's), the nested one verbatim; the WhyLine words both whole
@@ -366,7 +377,11 @@ class WhyLine extends StatelessWidget {
     // Whatever the bucket: a pick alone on a held line keeps the hold with
     // no grams (No grams), and a person's decision can carry one too — the
     // reason always shows (Run 054 S5/O6).
-    final held = holdReason(match.hold, note: match.holdNote);
+    final held = holdReason(
+      match.hold,
+      note: match.holdNote,
+      second: match.heldOn != null,
+    );
     final (text, color) = switch (bucket) {
       // Ruling 5: a held medium or shell line says which way out it takes.
       MatchBucket.check ||
@@ -384,7 +399,8 @@ class WhyLine extends StatelessWidget {
       // A person's food with no record (`food_gone`, `food_unavailable`):
       // how it finishes, from the action table.
       MatchBucket.check when held != null && noRecordHold(match.hold) => (
-        '$held — held out of the totals. ${heldFinishes(match.hold!)}',
+        '$held — held out of the totals. '
+            '${heldFinishes(match.hold!, second: match.heldOn != null)}',
         SaltColors.warnInk,
       ),
       // A held line passes on its name: the reason is the engine's, not the
@@ -555,7 +571,8 @@ class _ZeroRowState extends State<ZeroRow> {
           style: const TextStyle(fontSize: 12.5, color: SaltColors.muted),
         ),
         // ZeroRow stands in for WhyLine, so it carries the engine's hold.
-        if (holdReason(m.hold, note: m.holdNote) case final held?)
+        if (holdReason(m.hold, note: m.holdNote, second: m.heldOn != null)
+            case final held?)
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(

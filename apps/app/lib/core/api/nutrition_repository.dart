@@ -246,6 +246,7 @@ class IngredientMatch {
     this.status = 'unmatched',
     this.hold,
     this.holdNote,
+    this.heldOn,
     this.candidates = const [],
     this.lineAmount,
     this.portions = const [],
@@ -305,6 +306,7 @@ class IngredientMatch {
       status: match['status'] as String? ?? 'unmatched',
       hold: match['hold'] as String?,
       holdNote: match['hold_note'] as String?,
+      heldOn: (match['held_on'] as num?)?.toInt(),
       carriedFrom: match['carried_from'] as String?,
       child: match['child'] is Map<String, dynamic>
           ? RecipeRef.fromJson(match['child'] as Map<String, dynamic>)
@@ -376,6 +378,10 @@ class IngredientMatch {
   /// a `partial_pour_away`'s kept part ("1 cup defatted cooking liquid"),
   /// an `ambiguous_medium`'s sentence.
   final String? holdNote;
+
+  /// v110 X3: the record a `food_gone` / `food_unavailable` hold waits on
+  /// when it is NOT the row's own food (a pair's juice); null otherwise.
+  final int? heldOn;
 
   /// The line's previous text when this is a person's decision an amount
   /// edit carried onto the line, not yet written for it: the totals still

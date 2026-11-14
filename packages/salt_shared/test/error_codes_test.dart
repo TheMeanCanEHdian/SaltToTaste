@@ -9,6 +9,7 @@ void main() {
     expect(ApiErrorCodes.validation, 'validation');
     expect(ApiErrorCodes.notFound, 'not_found');
     expect(ApiErrorCodes.methodNotAllowed, 'method_not_allowed');
+    expect(ApiErrorCodes.uriTooLong, 'uri_too_long');
     expect(ApiErrorCodes.internal, 'internal');
     expect(ApiErrorCodes.unauthorized, 'unauthorized');
     expect(ApiErrorCodes.forbidden, 'forbidden');
