@@ -93,12 +93,18 @@ Middleware errorHandler({SevereThrottle? throttle}) {
 /// v108 V1 (Run 085/086): THE throttle of the persisting catch-alls — the
 /// routes arm's [errorHandler] and `buildOutermostMiddleware`'s (v107 U1
 /// throttled only the outer one; a truncated JSON body on the anonymous
-/// login wrote a full stack per request one layer down). Keyed per throw
-/// site — the error's type and its stack's top frame, never caller text
-/// (the attacker's path would make every request distinct and the map
-/// unbounded). A record is written when the site is new, its [every]
-/// window has passed, or the clock went BACKWARDS (a stepped wall clock
-/// never silences a site for the size of the step); every written record
+/// login wrote a full stack per request one layer down). Keyed per SITE —
+/// v109 W4: the error's type and the first frame of the stack in this
+/// server's OWN code ([_ownFrame]) with its `#N` depth stripped, else the
+/// top frame (a trace with no own frame — the truncated-login flood's — or
+/// an empty one, keyed on the type alone); was the TOP frame, which every
+/// SqliteException (package:sqlite3's `throwException`) and every `.first`
+/// (`List.first`) share. Never caller text (the attacker's path would make
+/// every request distinct and the map unbounded): the keys are bounded by
+/// code sites × types. A record is written when the window is open
+/// ([windowOpen]: the site is new, its [every] window has passed, or the
+/// clock went BACKWARDS — a stepped wall clock never silences a site for the
+/// size of the step); every written record
 /// carries its stack (at most one per site per window — a rotated store
 /// still holds a frame), a re-opened site's naming how many it suppressed.
 /// The bookkeeping is written AFTER the record.
@@ -123,11 +129,12 @@ class SevereThrottle {
     Object error,
     StackTrace stackTrace,
   ) {
-    final site = '${error.runtimeType} ${'$stackTrace'.split('\n').first}';
+    final frames = '$stackTrace'.split('\n');
+    final frame = frames.firstWhere(_ownFrame, orElse: () => frames.first);
+    final site = '${error.runtimeType} ${frame.replaceFirst(_depth, '')}';
     final at = now();
     final last = _seen[site];
-    final gap = last == null ? null : at.difference(last.at);
-    if (last != null && !gap!.isNegative && gap < every) {
+    if (last != null && !windowOpen(last.at, at, every)) {
       _seen[site] = (at: last.at, suppressed: last.suppressed + 1);
       return;
     }
@@ -143,6 +150,26 @@ class SevereThrottle {
     _seen[site] = (at: at, suppressed: 0);
   }
 }
+
+/// A frame in this server's own code (v109 W4): its library
+/// (`package:salt_server/`) or a `file:` URI — dart_frog's routes and
+/// main.dart are relative imports (JIT prints `file:///…:L:C`; AOT keeps the
+/// URI and drops the column). The SDK and dependencies print as `dart:` /
+/// `package:`.
+bool _ownFrame(String frame) =>
+    frame.contains('(package:salt_server/') || frame.contains('(file:');
+
+/// A frame's leading `#N` — its DEPTH, which a recursion would let vary: the
+/// site is the rest of the line.
+final RegExp _depth = RegExp(r'^#\d+\s+');
+
+/// v109 W5: THE window rule of every once-per-window record — the throttle,
+/// `untrustedProxyWarning`'s warning and the admin log-read audit: open when
+/// nothing was recorded yet, when [every] has passed since [last], or when
+/// the clock went BACKWARDS (a stepped wall clock never silences a record
+/// for the size of the step).
+bool windowOpen(DateTime? last, DateTime now, Duration every) =>
+    last == null || now.isBefore(last) || now.difference(last) >= every;
 
 /// The SEVERE throttle window (v107 U1).
 const Duration _severeEvery = Duration(seconds: 60);

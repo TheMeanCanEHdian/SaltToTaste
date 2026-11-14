@@ -170,6 +170,83 @@ void main() {
     expect(suffixed.recipe.slug, '${bundtCake.slug}-2');
   });
 
+  // v109 W13 (Run 088's killed claim, revived by the union, K1): the two
+  // card-hydration lookups ran a transient statement whose text named one
+  // `?` per hit — never finalized when a search worker is killed mid-step
+  // (its zombie connection kept a read transaction and pinned the WAL).
+  test('v109 W13: the tag and favorite lookups are ONE cached text each, '
+      'whatever the hit count', () {
+    insertAllThree();
+    final user = db.createUser(
+      username: 'w13',
+      passwordHash: 'not-a-real-hash',
+      role: 'member',
+    );
+    db.setFavorite(userId: user, recipeId: bundtCake.id, favorite: true);
+    final query = compileSearch(
+      parseSearchQuery('chocolate or soup or vinaigrette').root!,
+    );
+    const tags =
+        'SELECT rt.recipe_id AS rid, t.name AS name FROM recipe_tags rt '
+        'JOIN tags t ON t.id = rt.tag_id '
+        'WHERE rt.recipe_id IN (SELECT value FROM json_each(?)) '
+        'ORDER BY t.name';
+    const favorites =
+        'SELECT recipe_id FROM user_favorites '
+        'WHERE user_id = ? AND recipe_id IN (SELECT value FROM json_each(?))';
+    final one = db.searchCards(query, page: 1, limit: 1, viewerId: user);
+    expect(one.items, hasLength(1));
+    expect(db.preparedSqlTexts, containsAll([tags, favorites]));
+    final cached = db.preparedSqlTexts.length;
+    final all = db.searchCards(query, page: 1, limit: 100, viewerId: user);
+    // Base: a text per hit count — 3 more statements here (a lookup on
+    // `_db.select` fails the containsAll above instead).
+    expect(db.preparedSqlTexts.length, cached);
+    // Same rows: the favorite and the tags by value.
+    expect(
+      {for (final c in all.items) c.id: '${c.favorite} ${c.tags}'},
+      {
+        bundtCake.id: 'true [dessert]',
+        sweetPotatoSoup.id: 'false []',
+        vinaigrette.id: 'false []',
+      },
+    );
+    // closer 1 D5: every id of each lookup bound — a viewer who favorites
+    // all three hits (a dropped id of the favorites lookup, first or not,
+    // reads false), and a search whose ONE hit is the tagged recipe (its id
+    // is the tags lookup's first; the corpus gives the other two no tags).
+    final every = db.createUser(
+      username: 'w13all',
+      passwordHash: 'not-a-real-hash',
+      role: 'member',
+    );
+    for (final r in [bundtCake, sweetPotatoSoup, vinaigrette]) {
+      db.setFavorite(userId: every, recipeId: r.id, favorite: true);
+    }
+    final faved = db.searchCards(query, page: 1, limit: 100, viewerId: every);
+    expect(
+      {for (final c in faved.items) c.id: c.favorite},
+      {
+        bundtCake.id: true,
+        sweetPotatoSoup.id: true,
+        vinaigrette.id: true,
+      },
+    );
+    final cake = db.searchCards(
+      compileSearch(parseSearchQuery('chocolate').root!),
+      page: 1,
+      limit: 100,
+      viewerId: user,
+    );
+    expect(
+      [for (final c in cake.items) '${c.id} ${c.favorite} ${c.tags}'],
+      [
+        '${bundtCake.id} true [dessert]',
+      ],
+    );
+    expect(db.preparedSqlTexts.length, cached);
+  });
+
   test('FTS row exists and matches a stemmed title word', () {
     insertAllThree();
 

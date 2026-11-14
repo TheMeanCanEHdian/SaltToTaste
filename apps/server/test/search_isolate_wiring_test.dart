@@ -155,9 +155,12 @@ void main() {
     // request must EVICT it or it poisons every future request (default pool =
     // one worker). A zero timeout has expired before the reply is awaited (the
     // next test pins that), so every search times out and evicts its worker.
-    // `_SearchWorker.run` raises it after sending the request, so the worker
-    // is usually evicted with a search in flight; that order is NOT pinned —
-    // telling a busy worker's exit from an idle one's needs a negative wait.
+    // `_SearchWorker.run` raises it after sending the request, but the
+    // immediate kill lands before the worker dequeues it: the worker is
+    // evicted IDLE (fix109 measured 0 of 40 evictions busy; Sonnet's S10 0 of
+    // 25). So raising it BEFORE the send (the stated slot u1) is EQUIVALENT by
+    // measurement, not by construction — no code orders the kill ahead of the
+    // dequeue (v109 W11; was "usually evicted with a search in flight").
     test(
       'a timed-out search evicts the worker so the next one respawns',
       () async {
@@ -220,6 +223,117 @@ void main() {
           failedBeforeAnyEvent,
           isTrue,
           reason: 'the timeout was left to a timer, which the reply can beat',
+        );
+      },
+    );
+
+    // v109 W12 (a) (Sonnet critic 2, the union's L-a): the exit handler's
+    // CRASH arm — a worker that dies on its own (an uncaught error, no kill)
+    // is not in `_dying`, so its exit must mark the slot dead and the next
+    // search respawn. No timer decides the order: failWorkersForTest()
+    // completes after the exit was handled. ASSUMED, the worker's pace: the
+    // respawned worker serves an empty-DB search within the 2 s timeout
+    // (short, so the mutant without the arm — the search sent into the dead
+    // port — fails by the value (false, 1) at 2 s, not at the test timeout).
+    test(
+      'a worker that dies on its own is respawned by the next search',
+      () async {
+        final svc = await IsolateSearchService.spawn(
+          dbPath: '${tempDir.path}/salt.db',
+          count: 1,
+          timeout: const Duration(seconds: 2),
+        );
+        addTearDown(svc.dispose);
+        await svc.failWorkersForTest();
+        expect(
+          svc.pendingExits,
+          0,
+          reason: 'precondition: no kill was tracked',
+        );
+        final served = await svc
+            .search(query, page: 1, limit: 10)
+            .then((_) => true, onError: (_) => false);
+        expect(
+          (served, svc.totalSpawns),
+          (true, 2),
+          reason: 'the crash left the dead channel in the slot',
+        );
+      },
+    );
+
+    // v109 W10 (S7, L-f): the `_disposed` guard — a search after dispose()
+    // is refused at once and spawns nothing (without it the search respawns
+    // a worker whose connection outlives the caller's close of the writer).
+    test('a search after dispose() is refused and spawns nothing', () async {
+      final svc = await IsolateSearchService.spawn(
+        dbPath: '${tempDir.path}/salt.db',
+        count: 1,
+      );
+      await svc.dispose();
+      Object? error;
+      try {
+        await svc.search(query, page: 1, limit: 10);
+      } on Object catch (e) {
+        error = e;
+      }
+      final spawns = svc.totalSpawns;
+      await svc.dispose(); // shuts down a mutant's respawn too
+      expect(
+        (error is StateError, spawns),
+        (true, 1),
+        reason: 'a disposed service served a search ($error)',
+      );
+    });
+
+    // v109 W9 (S12 / O5, L-e): an eviction between `await ensureSpawned()`
+    // and the send fails that search with the lifecycle's StateError — never
+    // a bare null-check _TypeError, and before its reply port exists. Ordered
+    // by microtasks only, no timer.
+    test(
+      'an eviction before the send fails that search with a StateError',
+      () async {
+        final svc = await IsolateSearchService.spawn(
+          dbPath: '${tempDir.path}/salt.db',
+          count: 1,
+        );
+        addTearDown(svc.dispose);
+        final pending = svc.search(query, page: 1, limit: 10);
+        svc.crashWorkersForTest(); // same turn: before run()'s continuation
+        Object? error;
+        await pending.then<void>((_) {}, onError: (Object e) => error = e);
+        // Base: a _TypeError (`_commands!`).
+        expect(
+          error,
+          isA<StateError>(),
+          reason: '${error.runtimeType}: $error',
+        );
+      },
+    );
+
+    // v109 W9 (O5's shape): two concurrent zero-timeout searches sharing the
+    // worker — the first one's synchronous expiry evicts before the second
+    // one's continuation runs.
+    test(
+      'concurrent zero-timeout searches each fail with a StateError',
+      () async {
+        final svc = await IsolateSearchService.spawn(
+          dbPath: '${tempDir.path}/salt.db',
+          count: 1,
+          timeout: Duration.zero,
+        );
+        addTearDown(svc.dispose);
+        final errors = <Object>[];
+        await Future.wait([
+          for (var i = 0; i < 2; i++)
+            svc
+                .search(query, page: 1, limit: 10)
+                .then<void>((_) {}, onError: errors.add),
+        ]);
+        // Base: [true, false] (the second a _TypeError).
+        expect(
+          errors.map((e) => e is StateError).toList(),
+          [true, true],
+          reason: '$errors',
         );
       },
     );
@@ -474,8 +588,10 @@ void main() {
     // the wait's 1 s bound ends after the release too. ASSUMED, the worker's
     // pace: its thread STARTS the search (enters SQLite) within dispose()'s
     // 2 s reply bound. A worker starved past that still has the search
-    // queued when the kill lands; `Isolate.immediate` acts before it, so the
-    // worker dies at ~2.0 s, its exit arrives and dispose() returns before
+    // queued when the kill lands; the kill acts before it (an immediate kill
+    // does, and so would `beforeNextEvent` — v109 W17, the union's L-c: this
+    // is no evidence for the kill's priority, which is STATED unpinned), so
+    // the worker dies at ~2.0 s, its exit arrives and dispose() returns before
     // the release — `released` false on the real code. NOT asserted: that
     // the exit arrived (`pendingExits` 0) — that needs the worker's thread
     // to leave SQLite and die within 0.5 s of the release.
@@ -496,5 +612,44 @@ void main() {
         reason: 'dispose() returned while the worker was still inside SQLite',
       );
     });
+
+    // v109 W12 (b) (Sonnet critic 2, the union's L-b): dispose()'s wait for
+    // killed isolates is BOUNDED at 1 s — the ≈10.1 s shutdown worst case in
+    // docs/API.md rests on it. A worker held inside SQLite misses the 2 s
+    // reply, is killed, and cannot die until the release at 4.5 s: dispose()
+    // must return at ~3.0 s regardless; unbounded, it returns only after the
+    // release (`released` true).
+    // Timers: the release (4.5 s), the reply timeout (2 s) and the wait's
+    // bound (armed when the reply timeout is handled, so >= 3.0 s) are all
+    // this isolate's, fired in deadline order. ASSUMED: this isolate handles
+    // the 2 s timeout within 1.5 s of its deadline, else the bound's deadline
+    // passes 4.5 s and the release fires first. A worker starved past the
+    // 2 s reply bound (never entered SQLite) dies at the kill: dispose()
+    // returns at ~2.0 s, `released` still false — the real code passes, the
+    // mutant is merely not killed that run.
+    test(
+      'dispose() stops waiting for a worker held in SQLite after 1 s',
+      () async {
+        final svc = await IsolateSearchService.spawn(dbPath: path, count: 1);
+        unawaited(
+          svc.search(query, page: 1, limit: 10).then((_) {}, onError: (_) {}),
+        );
+        await Future<void>.delayed(Duration.zero); // request queued first
+        Timer(const Duration(milliseconds: 4500), release);
+        final watch = Stopwatch()..start();
+        await svc.dispose();
+        final returnedAt = watch.elapsedMilliseconds;
+        final releasedAtReturn = released;
+        release();
+        await until(() => svc.pendingExits == 0); // cleanup: let it die
+        expect(
+          releasedAtReturn,
+          isFalse,
+          reason:
+              'dispose() returned at $returnedAt ms, after the release: '
+              'its wait is unbounded',
+        );
+      },
+    );
   });
 }

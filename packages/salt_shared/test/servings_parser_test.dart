@@ -587,4 +587,56 @@ void main() {
       });
     }
   });
+
+  // v109 W7 (Run 087 S3): a SPACED mixed number followed by a range was no
+  // written share — '(1 ½-2 recipes)' read the amount's ⅔ where the unspaced
+  // '(1½-2 recipes)' gave no share. STATED synthesized as V7's (the corpus
+  // `raw:` writes only '(½ recipe' — 0184's 3 lines) on 0184's raw shape
+  // over its child yield "MAKES ABOUT 1½ CUPS".
+  group('v109 W7 a spaced mixed number and a range are written shares', () {
+    const cup = [
+      Amount(
+        measure: Measure.volume,
+        quantity: '1',
+        unit: 'cup',
+        primary: true,
+      ),
+    ];
+    const yield = 'MAKES ABOUT 1½ CUPS';
+    for (final (raw, writes, share) in const [
+      // Base: writes false, share ⅔ (the amount's) — the three below.
+      ('1 cup Sauce Base (1 ½-2 recipes; recipe follows)', true, null),
+      ('1 cup Sauce Base (2 1/2-3 recipes; recipe follows)', true, null),
+      ('1 cup Sauce Base (1 ½ to 2 recipes; recipe follows)', true, null),
+      // The en dash range (ruled: a hyphen, an en dash or "to"); closer 1 D4.
+      ('1 cup Sauce Base (1–2 recipes; recipe follows)', true, null),
+      // The reader unchanged: a spaced mixed number alone reads 1.5.
+      ('1 cup Sauce Base (1 ½ recipes; recipe follows)', true, 1.5),
+      // A parenthetical with "to" that writes no number first: no share
+      // written — the amount's ⅔ (base and tip).
+      ('1 cup Sauce Base (up to 2 days; see recipe)', false, 2 / 3),
+    ]) {
+      test('"$raw" writes $writes; reads $share', () {
+        expect(writesShare(raw), writes);
+        expect(parseShare(raw, cup, yield), share);
+      });
+    }
+
+    // closer 1 D1: COST at the transport's 1,000-character raw cap. STATED
+    // synthesized (a cost shape no corpus line reaches) on 0184's reference
+    // shape: a '1-' run that never reaches " recipe" after a number. With
+    // '-' in both the token class and the range separator the run split at
+    // every '-' — quadratic: 400 lines took ~5.6 s (1,000 chars ×100 1.5 s);
+    // the range's first number without '-': ~0.05 s. The bound is ≥ 20×
+    // the measured linear cost and ~5× under the quadratic one.
+    test('COST: 400 cap-length "(1-1-…" lines read in linear time', () {
+      final raw = '¼ cup Sauce Base (${'1-' * 477}1 x recipe; recipe follows)';
+      expect(raw.length, lessThanOrEqualTo(1000));
+      final watch = Stopwatch()..start();
+      for (var i = 0; i < 400; i++) {
+        expect(writesShare(raw), isFalse);
+      }
+      expect(watch.elapsedMilliseconds, lessThan(1000));
+    });
+  });
 }

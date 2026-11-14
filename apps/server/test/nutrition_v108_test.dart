@@ -371,8 +371,10 @@ void v6() {
     }
   });
 
+  // v109 W16: true for this shape's ONE act; several acts per sentence are
+  // the v109 W16 pin's (the memo keyed on the sentence).
   test('V6 COST at the caps: 119 steps of ten DISTINCT ~1,000-character '
-      'sentences — one scan per sentence and act, under the backstop', () {
+      'sentences, one act — one scan per sentence, under the backstop', () {
     final base = loadCorpusRecipe(
       '0351-pasta-with-hearty-italian-meat-sauce-sunday-gravy.yaml',
     );

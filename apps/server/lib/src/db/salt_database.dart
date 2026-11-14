@@ -701,12 +701,14 @@ class SaltDatabase {
     if (recipeIds.isEmpty) {
       return const {};
     }
-    final placeholders = List.filled(recipeIds.length, '?').join(', ');
-    final rows = _db.select(
+    // v109 W13: ONE fixed text through the cache — a search worker killed
+    // mid-step has its cached statements finalized at its isolate's exit; a
+    // transient one kept its read transaction open in the zombie connection
+    // and pinned the WAL.
+    final rows = _prepared(
       'SELECT recipe_id FROM user_favorites '
-      'WHERE user_id = ? AND recipe_id IN ($placeholders)',
-      [userId, ...recipeIds],
-    );
+      'WHERE user_id = ? AND recipe_id IN (SELECT value FROM json_each(?))',
+    ).select([userId, jsonEncode(recipeIds)]);
     return {for (final row in rows) row['recipe_id'] as String};
   }
 
@@ -715,14 +717,13 @@ class SaltDatabase {
     if (recipeIds.isEmpty) {
       return const {};
     }
-    final placeholders = List.filled(recipeIds.length, '?').join(', ');
-    final rows = _db.select(
+    // v109 W13: one fixed text through the cache ([_favoriteIdsAmong]).
+    final rows = _prepared(
       'SELECT rt.recipe_id AS rid, t.name AS name FROM recipe_tags rt '
       'JOIN tags t ON t.id = rt.tag_id '
-      'WHERE rt.recipe_id IN ($placeholders) '
+      'WHERE rt.recipe_id IN (SELECT value FROM json_each(?)) '
       'ORDER BY t.name',
-      recipeIds,
-    );
+    ).select([jsonEncode(recipeIds)]);
     final result = <String, List<String>>{};
     for (final row in rows) {
       (result[row['rid'] as String] ??= <String>[]).add(row['name'] as String);
@@ -2205,7 +2206,12 @@ class SaltDatabase {
   /// kept row is keyed by `derived_seq` as a decided row is (the held
   /// write stamps it, every later compute re-stamps it, [unholdOn] clears
   /// it when a cache gains its food): a cache gain re-opens it with no
-  /// request (verifier D2).
+  /// request (verifier D2). v109 W8: any NO-RECORD hold of such a kept row
+  /// ([noRecordHolds]: `food_gone` on a pair's second record, held by
+  /// `withParts`, too): `unholdOn` clearing its stamp must read the recipe
+  /// stale, or the record's arrival re-opens nothing a sweep visits. Spelled
+  /// as the two constants (a cached SQL text takes no runtime value — the
+  /// `_prepared` constancy scan); `noRecordHolds` is exactly these two.
   static const String underivedSql =
       '(n.computing > 0 OR EXISTS (SELECT 1 FROM '
       'ingredient_matches m WHERE m.recipe_id = n.recipe_id AND '
@@ -2213,7 +2219,8 @@ class SaltDatabase {
       "AND NOT (m.status = 'confirmed' AND m.fdc_id IS NULL "
       'AND m.description IN ($engineRuleNotesSql)) '
       "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash)) "
-      "OR (m.status = 'auto' AND m.hold = '$foodUnavailableHold' "
+      "OR (m.status = 'auto' AND m.hold IN ('$foodGoneHold', "
+      "'$foodUnavailableHold') "
       "AND m.derived_seq IS NOT (n.layout_seq || ':' || n.ingredients_hash)) "
       "OR (m.status IN ('unmatched', 'auto') AND m.retry_count > 0 "
       "AND m.hold IS NOT '$foodUnavailableHold') "

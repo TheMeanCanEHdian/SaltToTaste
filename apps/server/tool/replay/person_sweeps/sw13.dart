@@ -22,6 +22,17 @@
 //     drop on a fresh copy, the row SKIPPED (a skip reads no food on either tree) and compute ×3: what the recipe's
 //     other rows ask, e.g. 0860 / 0861's own juice line), 'pick-not-derived' (the pick after the PUT or the computes
 //     is held, has no grams or is underived). Tags 'Q|…'; divergent on the BASE only.
+// (b‴) v109 W8 — THE UN-SKIP ON A PAIR LINE: for each (b′) row, a PUT {raw, skipped: true}, its juice dropped (sw9's
+//     form), a PUT {raw, skipped: false} under NoNet (a FOOD fault on the juice) and compute ×3; then the juice
+//     ARRIVES (`cachedFood`) and the row is read ('arrived'). Classes 'unskip-asks' (more requests than the CONTROL +
+//     the un-skip's own one ask — the control as (b″)'s), 'unskip-partial' (the held row is not a no-record hold ON
+//     the juice: the base's `second_food`, held_on null), 'unskip-not-reopened' (arrived still derived or fresh).
+//     Tags 'U|…'.
+// (b⁗) v109 W8 — THE CONFIRM WITH A GONE JUICE: for each (b′) row, its juice dropped, a PUT {raw, confirmed: true}
+//     and compute ×4 under Gone (FDC answers "no such food" for the juice, NoNet's fault for any other id); then the
+//     juice ARRIVES and the row is read. Classes 'gone-asks' (more than the CONTROL — the same drop, the row skipped,
+//     compute ×4 under Gone — + the PUT's one ask), 'gone-partial' (not `food_gone` ON the juice),
+//     'gone-not-reopened'. Tags 'G|…'. Both divergent on the BASE only.
 // Base vs tip: the COMBO / ROW lines are diffed (run.sh on each tree). args: settle <snap> <out-db> |
 // sweep <settled-db> <workdir> <shard> <nshards>
 // ignore_for_file: avoid_print, public_member_api_docs, lines_longer_than_80_chars
@@ -160,6 +171,25 @@ List<(String, int, int)> pairPlan(SaltDatabase db) => [
           if (p['role'] == 'juice') (id, r.position, p['fdc_id'] as int),
 ];
 
+/// FDC answering "no such food" for [gone] (b⁗); NoNet's FOOD fault for any
+/// other id. Counts every request in [calls].
+class Gone implements NutritionProvider {
+  Gone(this.gone);
+  final int gone;
+  @override
+  Future<List<FdcCandidate>> search(String q) async {
+    calls++;
+    throw const NutritionProviderException('nn', scope: FailureScope.food);
+  }
+
+  @override
+  Future<FdcFood?> food(int id) async {
+    calls++;
+    if (id == gone) return null;
+    throw const NutritionProviderException('nn', scope: FailureScope.food);
+  }
+}
+
 /// Serves the saved detail [json] — the part's arrival (b′).
 class Serve implements NutritionProvider {
   Serve(this.json);
@@ -204,7 +234,7 @@ Future<void> main(List<String> a) async {
       ];
     }
     stdout.writeln(
-      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; pick combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
+      'settled ${ids.length} recipes; apply combos ${applyPlan(db).length * 2}; hold combos ${holdPlan(db).length}; pair combos ${pairPlan(db).length}; pick combos ${pairPlan(db).length}; unskip combos ${pairPlan(db).length}; gone combos ${pairPlan(db).length}; second pass moved ${moved.length} $moved; calls $calls',
     );
     db.dispose();
     return;
@@ -512,6 +542,124 @@ Future<void> main(List<String> a) async {
     }
     db.dispose();
     done++;
+  }
+  // (b‴) the un-skip and (b⁗) the confirm with a gone juice, on a pair line.
+  for (final gone in const [false, true]) {
+    for (final (id, pos, juice) in picks) {
+      k++;
+      if (k % n != shard) continue;
+      var db = fresh();
+      final path = '$work/db_$shard.db';
+      final tag = '${gone ? 'G' : 'U'}|$id|$pos|$juice';
+      try {
+        db.dispose();
+        // The juice dropped from both caches (sw9's form); its detail kept.
+        String drop() {
+          final c = raw.sqlite3.open(path);
+          final detail =
+              c.select('SELECT response FROM fdc_food_cache WHERE fdc_id = ?', [
+                    juice,
+                  ]).first['response']
+                  as String;
+          c.execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [juice]);
+          for (final row in c.select(
+            'SELECT query, response FROM fdc_search_cache',
+          )) {
+            final hits = (jsonDecode(row['response'] as String) as List)
+                .cast<Map>();
+            if (hits.any((h) => h['fdc_id'] == juice)) {
+              c.execute(
+                'UPDATE fdc_search_cache SET response = ? WHERE query = ?',
+                [
+                  jsonEncode([
+                    for (final h in hits)
+                      if (h['fdc_id'] != juice) h,
+                  ]),
+                  row['query'],
+                ],
+              );
+            }
+          }
+          c.dispose();
+          return detail;
+        }
+
+        final computes = gone ? 4 : 3;
+        NutritionProvider net() => gone ? Gone(juice) : NoNet();
+        // The CONTROL: the recipe's OTHER rows under the same drop.
+        drop();
+        db = SaltDatabase.open(path);
+        calls = 0;
+        final skipRecipe = nutritionRecipeOf(db, id)!.recipe;
+        await applyMatchOverride(db, net(), skipRecipe, pos, {
+          'raw': nutritionLines(skipRecipe)[pos].raw,
+          'skipped': true,
+        });
+        for (var p = 0; p < computes; p++) {
+          await matchAndCompute(db, net(), nutritionRecipeOf(db, id)!.recipe);
+        }
+        final control = calls;
+        db.dispose();
+        fresh().dispose();
+        String pass(String name) {
+          final r = db
+              .ingredientMatchesFor(id)
+              .firstWhere((m) => m.position == pos);
+          return '$name:${r.status}:${r.fdcId}:${g(r.grams)}:${r.hold}:${r.heldOn}:${r.derivedSeq != null}:'
+              '${nutritionIsFresh(db, nutritionRecipeOf(db, id)!.recipe) ? 'fresh' : 'stale'}';
+        }
+
+        db = SaltDatabase.open(path);
+        final recipe = nutritionRecipeOf(db, id)!.recipe;
+        final lineRaw = nutritionLines(recipe)[pos].raw;
+        if (!gone) {
+          await applyMatchOverride(db, NoNet(), recipe, pos, {
+            'raw': lineRaw,
+            'skipped': true,
+          });
+        }
+        db.dispose();
+        final detail = drop();
+        db = SaltDatabase.open(path);
+        calls = 0;
+        await applyMatchOverride(
+          db,
+          net(),
+          nutritionRecipeOf(db, id)!.recipe,
+          pos,
+          {'raw': lineRaw, if (gone) 'confirmed': true else 'skipped': false},
+        );
+        final put = pass('put');
+        for (var p = 0; p < computes; p++) {
+          await matchAndCompute(db, net(), nutritionRecipeOf(db, id)!.recipe);
+        }
+        final held = pass('held');
+        final asked = calls;
+        await cachedFood(db, Serve(detail), juice);
+        final arrived = pass('arrived');
+        final h = held.split(':');
+        final want = gone ? 'food_gone' : 'food_unavailable';
+        final name = gone ? 'gone' : 'unskip';
+        final bad = <String>[
+          if (asked > control + 1) '$name-asks',
+          if (h[4] != want || h[5] != '$juice') '$name-partial',
+          if (!arrived.endsWith(':false:stale')) '$name-not-reopened',
+        ];
+        out.writeln(
+          'COMBO\t$tag\t$put\t$held\t$arrived\tcalls=$asked\tcontrol=$control',
+        );
+        out.writeln('ROW\t$tag\theld\t${state(db, id)}');
+        if (bad.isNotEmpty) {
+          div++;
+          out.writeln('DIV\t$tag\t${bad.join(',')}');
+        }
+      } catch (e) {
+        errs++;
+        out.writeln('ERR\t$tag\t$e');
+      }
+      db.dispose();
+      done++;
+    }
   }
   out.writeln(
     'SUMMARY shard=$shard done=$done divergent=$div refused=$refused errors=$errs',

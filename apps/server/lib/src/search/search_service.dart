@@ -139,6 +139,12 @@ class IsolateSearchService implements SearchService {
       worker.evict();
     }
   }
+
+  /// Ends every worker ON ITS OWN (visible for tests, v109 W12): no kill, so
+  /// its exit is not in `_dying` and takes the exit handler's crash arm.
+  /// Completes once every exit has been handled.
+  Future<void> failWorkersForTest() =>
+      Future.wait(_workers.map((w) => w.failForTest()));
 }
 
 /// A single background search isolate and its command channel. Lazily
@@ -244,6 +250,13 @@ class _SearchWorker {
     isolate.kill(priority: Isolate.immediate);
   }
 
+  /// Sends a message the worker's handler cannot cast: an uncaught error,
+  /// fatal to the isolate (visible for tests, via [IsolateSearchService]).
+  Future<void> failForTest() {
+    _commands?.send(Object());
+    return _exited;
+  }
+
   Future<SearchPage> run(
     CompiledSearch compiled, {
     required int page,
@@ -253,12 +266,19 @@ class _SearchWorker {
     required Duration timeout,
   }) async {
     await ensureSpawned();
+    // v109 W9: read ONCE — an eviction can land between the spawn and this
+    // continuation (another request's non-positive timeout, the test hook);
+    // then no port is open yet and the request was never sent.
+    final commands = _commands;
+    if (commands == null) {
+      throw StateError('search worker evicted before the request was sent');
+    }
     // The isolate this request goes to. By the time its timeout fires the slot
     // may hold a replacement (another request's timeout or a crash evicted
     // this one), which this request has no claim on.
     final target = _isolate;
     final reply = ReceivePort();
-    _commands!.send(
+    commands.send(
       _SearchRequest(
         compiled,
         page,

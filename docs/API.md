@@ -111,10 +111,16 @@ temporary password with `must_change_password`: until the user calls
   per request and stamps it on any response that has none — the static
   `public/` arm's 200 / 206 / 304 carried none before; the routes arm's own
   `requestIdProvider` id stands where it sets one.) A ROUTED request's id is
-  in the request log, so admins can grep it there; the outermost wrapper's
-  own answers — the static arm's files, the 405 for a method dart_frog
-  cannot name, a 500 the SEVERE throttle suppressed — carry an id no log
-  line holds (v108 V10).
+  in the request log (its INFO line), so admins can grep it there — a routed
+  500 whose SEVERE record the throttle suppressed included; the outermost
+  wrapper's own answers — the static arm's files, the 405 for a method
+  dart_frog cannot name, the outer catch-all's 500 when the throttle
+  suppressed its SEVERE record — carry an id no log line holds (v108 V10).
+  (Corrected 2026-11-13, v109 W17: v108 read "a 500 the SEVERE throttle
+  suppressed" unqualified — false for the ROUTES arm, whose `errorHandler`
+  sits inside `requestLogger`: 29 suppressed routed 500s of the V1 trigger
+  each hold their id in an INFO line of the live store. The INFO line
+  reaches the store only at LOG_LEVEL INFO or finer.)
 - The framework's own pre-pipeline answers carry neither the id nor the
   envelope and write a stack to stderr (v108 V9, STATED — measured on an
   in-process server): shelf_io's bare `400 text/plain` for an invalid UTF-8
@@ -5211,6 +5217,449 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v109 (batch fix109; matcherVersion 97 UNCHANGED — the fixes of
+dual-fleet review Run 087/088 over v108 and the search worker lifecycle, union
+W1–W19, the spec .claude/diag/2026-11-11/review087/union_W.md, the rulings in
+fix109_brief.md (the orchestrator's, under the owner's standing authorization
+2026-10-07); W2, W18 and W19 (the deploy kit, the mutant runner, the review
+bundle) are the orchestrator's, fixed outside this batch. No migration; NO
+corpus row moves — the replay on snapshot 32 is byte-identical to the v108 set
+and the salt_shared corpus golden is byte-identical. This section cites
+symbols, grep commands and hit counts — never a line number.)**
+- **W1 (MED) — the static arm's join is bounded and linear.** v108 V5's
+  `fileOf` rebuilt the whole path string per segment — QUADRATIC, synchronous,
+  on every request the outermost sees (before any route, limiter or auth): one
+  anonymous `GET /a/a/…` of 200,000 segments (400 KB) took 8,973 ms in-process
+  through `buildOutermostMiddleware` over a stub (25k / 100k segments: 90 / 627
+  ms); v107's join 49 / 39 / 70 ms. FIX (web_app.dart): `fileOf(Uri url)`
+  answers null — the request passes UNTOUCHED, as when it names no file —
+  when `url.path` is longer than `_maxPathLength` (4,096: Linux PATH_MAX;
+  macOS's is 1,024), checked before the root or the segments are read; the
+  join is the top-level `staticJoin(root, segments)` (`@visibleForTesting`):
+  ONE StringBuffer pass with a `slash` flag, the POSIX rule unchanged (an
+  empty part skipped, a part starting with `/` RESETS, one separator between
+  parts). Tip: 200,000 segments 59 ms (25k / 100k: 47 / 32). STATED: a
+  spelling over the bound that RESETS into the root
+  (`/<junk>/<abs-root>%2Fmain.dart.js`, 4,097 characters) is bare
+  shelf_static's 200 with the body and NO ETag — the ruled pass-through (an
+  ETag exactly on a file now reads: on a file named by a path within the
+  bound). LIMIT: `grep -nE 'pathSegments|uri\.path|url\.path'
+  lib/src/app_pipeline.dart lib/src/middleware/web_app.dart
+  lib/src/middleware/request_logger.dart lib/src/middleware/request_context.dart
+  lib/src/middleware/error_handler.dart routes/_middleware.dart` (from
+  apps/server) → 8 hits: `spaFallback`'s `uri.path` (startsWith / the last
+  segment: linear); a doc comment; `fileOf`'s guard and its `staticJoin`
+  call (FIXED); `loggedPath(uri.path)` in the outer catch, `errorHandler` and
+  `requestLogger` (log text); `requestLogger`'s `unloggedPaths` lookup (a
+  hash). Measured through the WHOLE chain (requestLogger, spaFallback,
+  errorHandler, a route stand-in) at 50k / 100k / 200k / 400k segments: `/`
+  125 / 124 / 254 / 479 ms, `/api/` 78 / 123 / 239 / 488, `/r/` 71 / 132 /
+  239 / 503 — linear. Pins (static_asset_headers_test 'v109 W1'): (i) 0
+  counted File / Directory / type lookups (an `IOOverrides` subclass) in the
+  validators for the 200,000-segment path and the 4,097 reset spelling (a
+  path under the bound > 0), each answering as bare (status, type, body, no
+  ETag); (ii) `staticJoin` of 200,000 segments under `backstopMs / 20`
+  (measured 3–7 ms; the quadratic join 10,165 ms — the kill), 2,048 segments
+  × 1,000 under `backstopMs / 10` (41 ms; the quadratic 449 ms: the cap at
+  the bound, NOT a separator), the POSIX rule by value; (iii) exactly 4,096
+  characters → 200 + the ETag, 4,097 → bare's 200, no ETag. Mutants (value):
+  the guard removed (calls 1 for 0), the join quadratic again (10,165 ms for
+  < 500), `>=` for `>` (no ETag at 4,096).
+- **W13 — the two card-hydration lookups through the prepared cache.**
+  `_tagsFor` and `_favoriteIdsAmong` ran a transient `_db.select` whose text
+  named one `?` per hit: never finalized, so a search worker killed inside
+  one kept a READ TRANSACTION open in its zombie connection and every later
+  checkpoint stopped at its frame (the union's measure on b3d19f0: busy 1,
+  the WAL 12 → 37 MB, kept after the writer's dispose). FIX
+  (salt_database.dart): each is `_prepared` with ONE fixed text — `… IN
+  (SELECT value FROM json_each(?))` with `jsonEncode(recipeIds)` (the house
+  idiom) — so `closeAtIsolateExit`'s finalizers cover them; same rows, same
+  ORDER BY, the empty-list return kept. `grep -n '_db\.select('
+  apps/server/lib/src/db/salt_database.dart` → 13 hits, none on a search
+  worker's per-request path. Gate measurement (not a pin: timing): the
+  union's kill probe on a snapshot-32 copy, 3 runs — busy 0, the WAL 0 at
+  every checkpoint. Pin (salt_database_test 'v109 W13', corpus-backed):
+  a viewer search at limit 1 then 100 — `preparedSqlTexts` holds both texts
+  and its length is EQUAL, every hit's favorite and tags by value; a viewer
+  who favorites all three hits (every id of the favorites lookup bound) and
+  a search whose one hit is the tagged recipe (the tags lookup's first id —
+  the corpus gives the other two no tags, so their ids in the tags lookup
+  stay unbound; closer 1 D5). Mutants: each lookup back on `_db.select`,
+  the text built per call (containsAll); the first id dropped from either
+  lookup, a middle favorites id dropped (by value).
+- **W9 / W10 / W11 / W12 — the search worker.** W9: `_SearchWorker.run`
+  dereferenced `_commands!` after `await ensureSpawned()`; an eviction in the
+  same microtask drain (the test hook; two searches sharing a spawn on a
+  non-positive timeout) gave a bare `_TypeError` and leaked the reply port.
+  Now the channel is read ONCE and null fails with `StateError('search worker
+  evicted before the request was sent')` before the port exists (`grep -n
+  '_commands!' apps/server/lib/src/search/search_service.dart` → 0).
+  Production reach 0 (the 10 s timeout fires on a timer event). W12 (a): a
+  test seam beside `crashWorkersForTest`, `failWorkersForTest()` — every
+  worker ends ON ITS OWN (a message its handler cannot cast: an uncaught
+  error, fatal; no kill, so the exit takes the CRASH arm) and it completes
+  once every exit is handled. Pins (search_isolate_wiring_test, 12 → 17
+  tests): the crash arm — the next search served, `totalSpawns` 2 (the arm
+  removed: (false, 1) at the pin's 2 s timeout); W10 — a search after
+  `dispose()` refused, nothing spawned ((true, 1); the guard deleted: a
+  respawn); W9 — an eviction in the same turn as a search, and two
+  concurrent zero-timeout searches, each a StateError (the tip: a
+  `_TypeError`); W12 (b) in the lock group — `dispose()` returns before a
+  4.5 s release (unbounded, after it), with its timer-by-timer comment and
+  its stated assumption: it holds the wait bounded UNDER 2.5 s (the 4.5 s
+  release less the 2 s reply bound), not the figure 1 s — the owner's
+  mutant (the bound 1 s → 2 s) passes the file. W11 (text): the
+  zero-timeout tests evict an IDLE worker — re-measured on this tree: 40 of
+  40 zero-timeout evictions idle, 12 of 12 busy at 100 ms — so the slot u1
+  is EQUIVALENT by measurement, not by construction (the wiring test's
+  comment and the lifecycle section corrected). STATED (UNPINNED): W12 (c)
+  the kill's priority (`immediate` vs `beforeNextEvent` differ only for a
+  worker busy in Dart code); W12 (d) a request sent in the turn a worker
+  crashes on its own waits out its timeout (measured 1,005 ms at 1 s), the
+  next respawns (served in 7 ms); W9's "before the port exists" holds by
+  construction — the owner's mutant (a `ReceivePort()` opened on the
+  eviction path before the throw) passes the file (+17): a leaked port has
+  no observable value. Mutants (value): the null check, the `_disposed`
+  guard, the crash arm, the 1 s bound dropped.
+- **W4 + W5 — the throttle key; ONE window rule.** W4: the key was the
+  error's type + the stack's TOP frame — every SqliteException shares
+  package:sqlite3's `throwException`, every `.first` `List.first` — so one
+  failing site hid every other of its type for 60 s, on both catch-alls. Now
+  `SevereThrottle.severe` keys on the type + the first frame in the app's OWN
+  code (`_ownFrame`: `(package:salt_server/` or `(file:` — dart_frog's routes
+  are relative imports, `file:` URIs; AOT keeps the URI and drops the
+  column) with its `#N` depth stripped (`_depth`), else the top frame (the
+  truncated-login flood's trace holds 0 own frames of 39: still ONE record).
+  Keys stay bounded by code sites × types. STATED residuals: every PREPARE
+  error shares `SaltDatabase._prepare`'s frame; an empty trace keys on the
+  type alone. W5: v108 V1's backwards-clock rule now holds for its two
+  siblings — ONE `windowOpen(last, now, every)` (never seen / passed / the
+  clock went BACKWARDS) read by `SevereThrottle.severe`,
+  `untrustedProxyWarning` (new `now:` parameter) and the admin log-read
+  audit (`auditRead(user, {now})`, `@visibleForTesting`, in
+  routes/api/v1/admin/logs.dart). LIMIT: `grep -rn 'difference('
+  apps/server/lib apps/server/routes` → 16 hits at the tip (18 at the base):
+  `windowOpen`'s own; bootstrap's backup-age check (a backwards step reads
+  "recent": one backup skipped at most — stated); the rate limiter's
+  lockout and retry-after (fail CLOSED on a backwards step, on purpose);
+  fdc_provider's hourly grant window (keeps grants counted: the safe side);
+  import_job's 400 ms progress debounce (one progress write delayed); nine
+  `Set.difference` in matcher.dart and engine.dart (not clocks). `grep -rn
+  'windowOpen(' apps/server/lib apps/server/routes` → 4 (the definition and
+  its three readers). Pins (static_asset_headers_test 'v109 W4' / 'v109
+  W5'): two SqliteExceptions from real statements in one window → TWO
+  records; one app line at depths #3 / #7 / #12 → ONE (closer 1 D2: a
+  two-digit depth); another app line another; a
+  trace with no own frame twice → one; the owner gate's G3: the same type at
+  TWO more top frames over ONE shared bottom frame, no own frame → two more
+  records, the first trace's top frame again still suppressed (5 → 7); the
+  proxy warning and the audit each
+  under a fake clock — +30 / +5 min silent, a 2 h BACKWARDS step recorded at
+  once, +1 min after it silent. The four 'v108 V1 one throttle' pins and the
+  re-pinned v107 throttle pin keep their values. Mutants (value): the top
+  frame, the depth kept, a one-digit depth only (`^#\d\s+`), each frame
+  arm dropped, the helper's backwards arm, each sibling on its own
+  comparison; the fallback keyed on the type alone (`orElse: () => ''`: 5
+  records for 7) and on the BOTTOM frame (`frames.last`: 6 for 7 — the
+  owner's delta gate: G3's first pin held one-frame traces, where the top
+  frame is the bottom one, and this mutant survived it).
+- **W3 + W14 — two static-arm pins.** W3: 'a slash spelling is the same
+  cache entry' gains `/<abs-root>%2F%2Fsame.js` — a spelling that still
+  differs after the join — around the same-mtime same-size rewrite: ONE
+  ETag (the mutant `File(path)` for `File(real)`: two). W14: the default
+  publicDir pin writes ONE FIXED file name into the real `public/`, deleting
+  it if present at its start and in its tearDown (a killed run's leftover is
+  cleaned by the next; nothing accumulates in a served directory). Mutants:
+  `File(path)`; `buildOutermostMiddleware`'s default 'public' → 'publicX'.
+  Equivalent (stated): `staticFileValidators`' own default (`grep -rn
+  'staticFileValidators(' apps/server/lib` → 2: the definition and its one
+  caller, which passes `publicDir:`).
+- **W8 — the pair row's second record, on EVERY `withParts` caller.** v108
+  V3 left two arms storing `withParts`' partial `second_food` under a FRESH
+  stamp with `held_on` null: a CONFIRM while FDC answers "no such food" for
+  the juice (a request per PUT and per compute, never re-opened) and an
+  UN-SKIP of a pair row with the juice uncached (no fetch at all). FIX
+  (engine.dart): `withParts` takes the caller's provider and is the ONE place
+  the second record is fetched — no cache holds it → `_cachedFood`; "no such
+  food" → the row held `food_gone` ON that record (`held_on`); a provider
+  failure propagates as the caller's own food failure (held
+  `food_unavailable` on the record through `_heldOnOf`). DELETED:
+  `derivedFor`'s v108 pre-fetch and `_ruleRowFor`'s own second fetch. ONE
+  re-read rule `_rereadsHold(hold, retryUnavailable)` (a no-record hold,
+  except `food_unavailable` under the `all` scope) read by the compute's
+  decided arm, its engine arm and `settleKeyInRecipe` (both engine sites read
+  `food_unavailable` alone before); `withDerived` carries a derived `heldOn`;
+  `SaltDatabase.underivedSql`'s kept-engine-row arm reads both no-record
+  holds (spelled as the two constants — the `_prepared` constancy scan; it
+  read `food_unavailable` alone, so an un-skip's `food_gone` re-opened by
+  `unholdOn` read fresh). The hold LIST is unchanged; `food_gone`'s actions
+  are pick / skip, never library-wide — a confirm on the held row is refused
+  (422) while held, as V3 (c)'s `food_unavailable`. LIMIT: `grep -rn
+  'withParts(' apps/server/lib` → 7: the definition; the compute's engine arm
+  (`lineProvider`; failure → its catch); `_ruleRowFor`; `decidedKeyRowFor`'s
+  carried row; `unskippedRow` (a FOOD failure → `unavailable()`, held ON the
+  juice; global rethrown); `derivedFor` (→ `unavailableBy`);
+  `applyDecisionToOthers` (the row's build inside its `_resolveParts` try).
+  The carried row's call (`_decidedLineRow`, read by the compute's decided
+  arm and `decidedKeyRowFor`) never reaches the PAIR branch — the owner
+  gate's G5, stated plainly: `_pairOf(recipe, eaten, food.fdcId)` needs the
+  carried food on a citrus peel record that `secondFoodRuleOf(eaten)` pairs,
+  and both callers run `_ruleRowFor(line)` first, which returns the rule's
+  row whenever `secondFoodRuleOf(line)` holds a record it can read; so only
+  an `eaten` (`weighedLine`) other than the line with a pair the line lacks,
+  or a provider answering "no such food" for the peel in `_ruleRowFor` and
+  its record moments later in `_decidedFood` (the same lookup), would reach
+  it (`carriedFoodOf`'s moves are meat moves and return a cached record).
+  Measured: over the corpus's 16,510 nutrition lines (1,198 recipes and their
+  titled sections) the pair holds on 5 lines, every one on the line itself
+  with `secondFoodRuleOf(line)` on the same record — 0 where it is null or
+  differs; a probe throwing at that call site when `_pairOf` is non-null
+  ran every test/nutrition_*_test.dart (+2,565 ~4) and sw13 (190 combos) on
+  a snapshot-32 copy: 0 hits (its control, the probe on every carried row,
+  prints 14 markers in nutrition_v101_test, 7 tests failing). The call keeps the caller's
+  `provider`; the owner's mutant giving it `cacheOnly` survives for this
+  reason. `grep -rn '_pairOf(' apps/server/lib` → 3 (the definition,
+  `withParts`, `_heldOnOf`).
+  No caller lacks a provider: the matches GET reaches it through
+  `derivedFor(cacheOnly)` — the fetch throws → the row AS STORED, no stamp
+  moved. `grep -rn '_rereadsHold(' apps/server/lib` → 4. Pins
+  (nutrition_v109_test 'W8', 0536 line 3, STATED synthesized faults as V3's):
+  (a) confirm + gone juice — 1 ask at the PUT, held `food_gone` ON 169098 by
+  the PUT, 0 more over 4 computes and the GET (base 5), fresh at 591.13
+  kcal/serving (the line out; base 596.95, the partial's peel), a second
+  confirm refused, the juice's arrival re-opens (stale) and the next compute
+  derives the pair (86.0 g, 603.92); (a′) a confirmed pair whose juice later
+  answers "no such food" — the compute holds it ON the juice at once; (b)
+  un-skip, juice uncached, no fault → fetched, 603.92 at the PUT; under an
+  outage → `food_unavailable` ON the juice, stale, re-opened by the arrival;
+  "no such food" → `food_gone` ON the juice, 0 asks over 4 computes, the
+  arrival reads stale; the owner gate's G4 — the un-skip's TWO catches
+  (its decided food's, `decidedKeyRowFor`; the pair's second record's,
+  `withParts`) answer a GLOBAL failure alike: 0536 line 1 (its own food
+  picked, skipped, dropped) and line 3 (the juice dropped), each un-skipped
+  under a GLOBAL fault → `applyMatchOverride` throws the provider's failure
+  (the PUT route's 422 `validation` with its message), 1 ask, the stored row
+  unchanged (`skipped`). The first catch had NO pin before (its scope check
+  deleted: the 20 test files that un-skip pass, +615 ~1). V3 (a) (b) (c) (e)
+  and T7's U4 keep their values.
+  Mutants (value): the gone arm as success, `held_on` unset, the un-skip
+  without the fetch, the engine arm's re-read, `withDerived`'s `heldOn`,
+  `underivedSql`'s arm; the owner gate's: each un-skip catch's scope check
+  deleted (the PUT completes for a throw, line 3 / line 1). The owner's
+  `_ruleRowFor` mutant (its `withParts` given `cacheOnly`) fails 15 tests,
+  every one on an UNCAUGHT 'cache only: food …' error and 0 on a compared
+  value: four v108 V3 pins ((a) (b) (c) (e)), two v107 U4, five v109 W8,
+  nutrition_accuracy's setUpAll, v31 A (food 169098 in all of these), v11
+  M10 (food 168156) and v9 M1/M12 (food 167747). STATED survivor: `settleKeyInRecipe`'s re-read (it
+  needs a second line of the PUT's own key held on a pair juice in the same
+  recipe — no corpus recipe holds two pair lines of one key). STATED: a
+  confirmed row held `food_gone` on its juice keeps the peel's stored grams
+  (out of the totals by the hold).
+- **W6 + W16 — the negated-act bridge; the span memo keyed on the
+  sentence.** W6: `_negatedAct(verb, inflected, object)` — (a) a comma before a
+  CONTRAST word (only, just, but, then, instead, rather) ends the bridge
+  ("do not skim the broth, only the fat." a skim again — v108's regression
+  vs v107); (b) the exclusion `(?!(?:$inflected)\b)` reads a word
+  beginning with the act's stem (`\w*`: its INFLECTED verb), followed by the
+  particle of a two-word act — reuse `scrap\w* up|deglaz\w*|leav\w*|reserv\w*`
+  (v108's, exactly), skim `skim\w*`, pour-off `(?:pour|spoon|drain)\w* off`,
+  discard `discard\w*`, wipe `wip\w*` ("skimmed", "spooned off", "scraped
+  up"); (c) a bridge word `[\w'’-]+` ("the soup's fat", "the
+  pan-juice fat" forbidden); bounded repetition kept, linear per negation
+  word (the lookahead reads one word and its particle). The owner gate's G1
+  (a regression of the fixer's stem + `\w*` exclusion vs v107 AND v108,
+  reach 0): an adjective or noun on a two-word act's stem ended the bridge —
+  "Do not pour off the drained fat.", "… any drained grease.", "Do not drain
+  off the spoonful of fat.", "Do not spoon off the poured fat." read a REAL
+  pour-off; now forbidden, as v107 and v108 read them. The three-version
+  table (v107 / v108 / the tree, 76 sentences, before and after the edit):
+  besides those four, the rows that moved are the same class ("the spooned
+  / draining / pouring fat", "the drained, poured fat" — v108's reading),
+  hyphen and apostrophe bridge words v107 / v108 could not bridge ("the
+  drain-board fat", "the poured-off fat", "the drainer's fat" now forbidden;
+  "reserve the scraped-up fat" a reuse span) and "Do not reserve the
+  scraped bits." (a reuse span again, = v107 = v108); every row of the
+  fixer's own table keeps its value. "Do not pour off the drippings, spooned
+  off fat." reads a real pour-off (v107 and v108 read none; the tree's span
+  ends at "drippings" — "spooned off fat" lies outside it): the inflected
+  verb WITH its particle ends the bridge. STATED, NOT widened (reach 0; each widening has cost a regression):
+  more than three bridge words ("Do not skim the thin top layer of fat."), a
+  quantity before the object ("Do not skim 2 tablespoons of the fat."), a
+  coordinated verb ("Do not skim or pour off the fat.") — each reads a real
+  skim; a ONE-word act's inflection is also its participle or noun ("Do not
+  skim the skimmed fat.", "the skimmer fat") — it ends the bridge and reads
+  a real skim (reach 0, not narrowed); likewise a TWO-word act's participle
+  WITH its particle before the object ends the bridge (the ruled
+  `(?:pour|spoon|drain)\w* off` reads it as the act's own verb): "Do not pour
+  off the poured off fat.", "Do not pour off the drained off grease.", "Do
+  not spoon off the spooned off fat.", "Do not drain off the drained off
+  fat.", "Do not drain off the broth drained off fat." and "Without draining
+  off the spooned off fat." read a REAL pour-off where v107 AND v108 read
+  none (verify 3's table) — reach 0, not narrowed; and the exclusion's `\w*`
+  reads ANY word beginning with the act's stem, not only an inflection: "Do
+  not skim the skimpy fat." and "… the skimpy layer of fat." a skim, "Do
+  not discard the discardable fat." no negated-discard span (v107 and v108:
+  one — a span only: no reader's verdict moves there, see the discard and
+  wipe note below), "Do not pour off the drainage off fat." and "Do not pour off
+  the pours off fat." a REAL pour-off, where v107 AND v108 read the act
+  forbidden (verify 4's table) — reach 0, not narrowed. DISCARD AND WIPE
+  (the owner's delta gate): their positive readers read only the BARE verb
+  contiguous with its object (`_Fat.discards` "discard (the) oil", `_pansWiped`
+  "wipe (out) (the) skillet"), so no inflection of either is ever a real
+  act, and the `\w*` of `discard\w*` / `wip\w*` moves a verdict only where
+  a bridge word itself holds the bare verb after a hyphen or a quote (the
+  exclusion is read at a bridge word's first character only): "Do not
+  discard the discarded re-discard oil." reads a real discard on the tree
+  and none under the bare mutant, "Do not wipe the wiped re-wipe skillet." a
+  real wipe on the tree and none under it (verify 5a: 10 such sentences,
+  none a recipe shape). The mutants `discard` and `wipe` (bare) SURVIVE the
+  v100–v109 files and read the 17 probe sentences (inflections after a
+  comma and after "then", controls) and 60 more (verify 5a's 64 alike, 4
+  of them among the 17: one to four bridge words,
+  "then", "but", "only", "or", a semicolon, "Never", "Without", "Don't")
+  exactly as the tree — equivalent on every realistic shape, stated, no
+  pin. Corpus scan (24,173 step sentences, steps and subsections, through
+  the five act regexes and three readers, b3d19f0 vs the tip): ONE sentence
+  with a span on both (0492's "(do not skim the fat from the liquid)"), 0
+  differing — re-run after G1: 24,173 sentences, 0 differing. NO verdict pin
+  of v101–v108 flipped (the v10x suites +272, then +280 with v109; +280
+  before and after G1). `grep -rn '_negatedAct(' apps/server/lib` → 6 (the
+  definition + the five acts). W16: `_spanMemo` is keyed on the SENTENCE,
+  its acts' spans stored together; the sentence's length counts ONCE, when it
+  is first stored; the 2 MiB clear, the count restart and
+  `forbidsEvaluations` unchanged in meaning (`grep -rn '_spanMemo'
+  apps/server/lib` → 5). Pins (nutrition_v109_test, STATED re-texts of 0224 /
+  0351): 18 skim sentences through `defatsSentence` and `braisedKeptOf`
+  (each contrast word of the list in one — "rather" and "but" added by
+  closer 1 D3); 5
+  pour-off sentences through `shallowFryLinesOf` ({20} for the contrast
+  forms, {} for the possessive / hyphen); the owner gate's G1 / G2 rows
+  added — the four sentences {} through `shallowFryLinesOf` and
+  `defatsSentence` false; one row per act whose own inflected verb after a
+  list comma reads a REAL act ("Do not pour off the broth, pour off fat."
+  {20}, "Do not wipe the pot, wipe the skillet." {20}, "Do not discard the
+  butter, discard the oil. Pour off the fat." {} — the oil a discarded
+  medium, "Do not leave the broth, deglaze the pan. Pour off the fat." {} —
+  a reuse, "Do not skim the foam, skim the fat." a skim); reuse's PARTICLE
+  (the owner's delta gate — the reuse analog of G1, unpinned until then: the
+  mutant `scrap\w*` for `scrap\w* up` survived): "Do not deglaze the scraped
+  skillet. Pour off the fat." {20} — "scraped" alone is a bridge word, the
+  deglaze forbidden (`scrap\w*`: no span, a real deglaze, {}); "then" on its own
+  ("Do not skim the broth, then the fat." a skim through both readers, "Do
+  not pour off the broth, then the fat." {20}). A 0351 sentence holding
+  "the liquid" reads {20} through `shallowFryLinesOf` WHATEVER the act's
+  verdict (`_awayFromPan` switches the pan away): the existing "the liquid,
+  just the fat" row and the brief's "the liquid, then the fat" hold nothing
+  there — the G2 row is spelled "the broth"; the five-act shape (Opus critic 2's
+  sentence, 981 characters) at 80 steps × ten distinct sentences through ONE
+  compute → 3,200 scans (base 5,600). v108's cap pin's TITLE says "one act —
+  one scan per sentence"; its values and the memo-clear pin's (1 / 2,201 /
+  2,201 / 2,202) unchanged. Mutants (value): the contrast list, "rather"
+  dropped from it, "but" dropped from it, the stem
+  exclusion, the apostrophe / hyphen class, the and/but arm, the length per
+  act; the owner gate's: "then" dropped (both G2 rows), each act's
+  inflected pattern replaced by one that cannot match (reuse: {} → {20};
+  skim: the "skimmed" row true → false, and `skim\w+` the "skim the foam,
+  skim the fat" row; pour-off {20} → {}; discard {} → {20}; wipe {20} →
+  {}); the owner's delta gate, each pattern NARROWED instead of removed:
+  pour-off without its particle (`(?:pour|spoon|drain)\w*` — the G1
+  regression itself), skim bare (`skim`), reuse without `deglaz\w*`, reuse
+  without its particle (the new row), "then" misspelled — each by a value;
+  discard and wipe bare survive (equivalent on every realistic shape,
+  above).
+- **W7 — the share token (salt_shared).** `_shareToken` admits a SPACED mixed
+  number and a range after a number (a hyphen, an en dash or "to" between
+  two numeric tokens, `_shareNumber`): "(1 ½-2 recipes)", "(2 1/2-3
+  recipes)", "(1 ½ to 2 recipes)", "(1–2 recipes)" are written shares,
+  null-shared (base: the amount's ⅔); `_recipeShare` unchanged ("(1 ½
+  recipes" 1.5); "(up to 2 days; see recipe)" not written. Corpus: every
+  `raw:` line through `writesShare` → 3, 0184's "(½ recipe; recipe follows)",
+  base and tip (16,510 `raw:` lines of 1,198 files, re-run on the final
+  grammar). LINEAR (closer 1 D1): with '-' in both the token class and the
+  range separator, a "(1-1-1-…" run split at every '-' and the second
+  number rescanned the rest — writesShare on one line ×100 at 267 / 517 /
+  1,017 characters took 92 / 363 / 1,465 ms (b3d19f0: 3 / 2 / 6 ms), and
+  400 cap-length lines through `parseShare` 5,605 ms; the verifier measured
+  ONE `matchAndCompute` over 400 such reference lines at 16,162 ms and the
+  matches GET at 21,369 ms (b3d19f0 490 / 548 ms). Now the range's FIRST
+  number reads its tokens without '-' (`_shareNumber(hyphen: false)`; the
+  number without a range keeps the full class): 4 / 6 / 12 ms, 400 lines
+  59 ms. A bare "a-b" is still one token, so every spelling above reads as
+  before ("(1 ½-2 ½ recipes)", "(1 - 2 recipes)" too); what is no longer
+  written is a range whose first number itself holds a hyphen ("(1-1 to 2
+  recipes)", "(11-–1 recipes)") — over every sequence of up to six pieces
+  of 1 / ½ / 2 / - / – / space / " to " / e / , / slash (1,111,110
+  strings) the fixer's grammar wrote 7,263 more, all of that shape, and
+  the final grammar 0 more. Pins (servings_parser_test 'v109 W7', 7): the
+  five, the en dash row (closer 1 D4), and a COST pin — 400 cap-length
+  (999-character) "(1-1-…1 x recipe" lines under 1,000 ms (the linear
+  grammar: 59 ms for 400 lines through `parseShare`; the quadratic one
+  ~5.6 s). Mutants: the range arm, the spaced second
+  token, the en dash dropped from the separator, '-' back in the first
+  number (the cost pin, by value).
+- **W15 — run.sh refuses a broken sweep.** It clears `sw_*.tsv` with the
+  settled DB, requires the settle's exit 0 and a non-empty settled.db, waits
+  each shard's pid and keeps its status, and requires exactly N SUMMARY lines
+  — else exit 1 naming the logs. Measured (sw13, a snapshot-32 copy, 4
+  shards): a planted stale `sw_7.tsv` removed (EXIT 0, 4 lines); a shard
+  killed → "FAILED: 3 of 4 SUMMARY lines, 1 shard(s) exited non-zero", EXIT
+  1; a missing snapshot → "settle failed", EXIT 1, no settled.db; the good
+  path EXIT 0.
+- **W17 — text.** Corrected in place, each with ONE dated note: the
+  Conventions request-id sentence (the union's T4 text: a routed 500 the
+  throttle suppressed HAS its id in the request log; only the outer
+  catch-all's does not); the Graceful shutdown sentence (the ≈10.1 s corner
+  and a killed worker's open connection qualified); v108's "over 32
+  requests" (31) and its V3 limit's call-site labels (by function); the
+  search worker lifecycle section (u1, the two new UNPINNED slots, the
+  lookups half of its limit, "the closer's mutant runner"); main.dart's drain
+  comment (the search dispose after it adds up to ~5.1 s).
+- **Gate.** The replay (tool/replay/gate.sh on fresh snapshot-32 copies,
+  main and `--reverse-parents` cmp-identical): rows / recs / sections /
+  notes / calls (0) and the buckets BYTE-IDENTICAL to v108_*, 0 rows
+  differing, 0 person rows. The server suite on the live corpus +3,350 ~4
+  All tests passed (base +3,329 ~4; +21: static_asset_headers +6, the
+  wiring file +5, salt_database +1, nutrition_v109 +9 — the owner gate's
+  G4 test; its G1–G3 pins are rows inside existing tests); salt_shared +261
+  (base +254; the 7 W7 pins), the corpus golden green; the app suite +669
+  (= base). Every new or changed test file loads without the corpus (0
+  "Failed to load"); dart analyze clean (server with tool/replay,
+  salt_shared), flutter analyze clean (app); dart format 0 changed on the
+  changed files. The wiring file alone 100 of 100 idle (the fixer's loop).
+  Under load: the fixer's loop (45 busy processes at NORMAL priority) was
+  stopped by the orchestrator at ~59 min — it made the owner's machine
+  unusable — with 0 failure logs and no iteration count: NO result. The
+  owner gate's loop ran the file 100 times under 45 busy loops with the
+  loops AND the test at background QoS (`taskpolicy -b`: a band of ≈3 cores
+  on this 15-cpu machine), on a separate
+  checkout whose search_service.dart, wiring test and salt_database.dart are
+  md5-identical to this commit's: 99 of 100, a median 39 s per run (15 s
+  alone in the band). The one failure (run 83) is the test's 30 s default
+  timeout in "a stale request's timeout never kills the replacement",
+  before its scenario's second request — the first search was sent ≥ 29.7 s
+  in (the timeout fired inside the 300 ms wait after it) and the second
+  only after the tearDown's dispose, so setUp + the spawn took ≥ 29.7 s; a
+  spawn hung until the tearDown cannot give this log (`svc.dispose` is
+  registered only after the spawn returns, and the test's tearDowns are
+  synchronous) — in a run of 150 s that began 23 s before a full server
+  suite started in the foreground. The six runs over 120 s are the cold first one and the five
+  that began beside the start of a foreground 6–7-minute test run: of those
+  five, four passed; the 94 runs under 51 s all passed. Not an assertion,
+  no value the lifecycle code produced; not re-run. Not established: the
+  CPU share or macOS's background I/O throttling as the cause. GATE-P (person_sweeps/run.sh, 12 shards,
+  the tip's sweep scripts on both trees, base b3d19f0 vs the tip; calls 0
+  at every settle, a second pass moves 0): sw5 31,713 / sw6 37,400 / sw7
+  1,872 / sw8 56,868 / sw8r 5,358 / sw9 130 combos, 0 divergent 0 refused
+  both; sw10 156 (bare and typed) 0 divergent both; sw11 39,760, 200
+  divergent, 14,070 refused both; sw12 129, 52 both — every line set
+  identical base vs tip; sw13 190 = 180 + the 5 (b‴) un-skips + the 5 (b⁗)
+  gone confirms: base 10 divergent (all U and G), tip 0, every other line
+  identical. Mutants: every one listed above on a snapshot copy, restored
+  by cp + cmp + md5 from a signal trap, each killed by a value unless
+  stated.
+- **Deploy note.** No migration and no stamp moves (matcherVersion 97): a
+  deploy is `dart_frog build` and a restart; the stale sweep finds 0 rows.
+
 **Search worker lifecycle (2026-11-09, closed 2026-11-11, after v108 — the
 search_isolate_wiring_test flake the v108 section names as a follow-up, one
 test with two symptoms; no matcher change, no migration, no endpoint or
@@ -5258,10 +5707,12 @@ section cites symbols, grep commands and counts — never a line number.)**
   the fix — mutant_PA.log, which records neither the stall nor the fix: see
   the evidence README). `_SearchWorker.run` now raises the timeout itself,
   after the request is sent and through the same handler that evicts, when
-  `timeout <= Duration.zero` (that it comes AFTER the send is UNPINNED: a
-  check moved before the send passes the file — telling a busy worker's exit
-  from an idle one's would need a negative wait; the test's comment says
-  so). No production input changes: the only production caller
+  `timeout <= Duration.zero` (that it comes AFTER the send is EQUIVALENT by
+  measurement, not by construction: the immediate kill lands before the
+  worker dequeues the request — 0 of 40 zero-timeout evictions found the
+  worker busy, 12 of 12 at a 100 ms timeout — so a check moved before the
+  send is observably the same; no code orders the kill ahead of the
+  dequeue). No production input changes: the only production caller
   passes no timeout (`grep -rn "IsolateSearchService.spawn(" apps/server/lib`
   → 1 hit, bootstrap's, the 10 s default). Chosen over a test-only command
   that holds a worker: no new message type, no blocking code in the worker,
@@ -5362,15 +5813,29 @@ section cites symbols, grep commands and counts — never a line number.)**
   legitimate eviction; the dispose pin does not assert the exit arrived) —
   except one stated assumption: the dispose pin needs the worker to START
   the search within dispose()'s 2 s reply bound; a worker starved past it
-  is killed (`Isolate.immediate`, ahead of the queued search) at ~2.0 s and
+  is killed (ahead of the queued search — so would a `beforeNextEvent` kill
+  be: no evidence for the priority) at ~2.0 s and
   dispose() returns before the release, so `released` is false on the real
   code (never seen: the delta verifier's 200 of 200 idle and 200 of 200
   under load).
   UNPINNED, stated: that the non-positive timeout is raised AFTER the send
-  (above), and the connection's `detach` in `SaltDatabase.dispose()` —
+  (EQUIVALENT by measurement — above), the kill's priority (`Isolate.immediate`
+  vs `beforeNextEvent` differ only for a worker busy in DART code — card
+  hydration — past a bound; no test can aim at that window: the union's
+  `beforeNextEvent` mutant passes the file), a request sent in the turn a
+  worker crashes on its own (its exit not yet handled) waits out its full
+  timeout and the next one respawns (measured 1,005 ms at a 1 s timeout,
+  then served in 7 ms), and the connection's `detach` in `SaltDatabase.dispose()` —
   without it a graceful shutdown leaves `sqlite3_close_v2` attached to a
   closed handle, run at the isolate's exit: undefined behaviour with no
-  observable value (verifier B's MB6 passes the file).
+  observable value (verifier B's MB6 passes the file), that `run()` fails an
+  evicted channel BEFORE its reply port exists (v109 W9; by construction —
+  the owner gate's mutant opening a `ReceivePort()` on that path before the
+  throw passes the file, +17: a leaked port has no observable value), and
+  the figure of `dispose()`'s 1 s wait bound (v109 W12 (b)'s pin holds it
+  UNDER 2.5 s — the 4.5 s release less the 2 s reply bound; the owner gate's
+  1 s → 2 s mutant passes the file; the test's comment states the
+  assumption).
   The closer's gate: the file alone 100 of 100 idle and 100 of 100 under
   45 busy processes on 15 cores; the full server suite +3,329 ~4.
 - **A killed worker's SQLite connection is closed when its isolate exits.**
@@ -5404,10 +5869,14 @@ section cites symbols, grep commands and counts — never a line number.)**
   kill left a connection open (40 of 40 at 300 µs and at 1 ms, descriptors
   4 → 142); after, 0 of 40 at 1 ms.
   STATED, the limit: a statement is attached right after it is prepared, so
-  a kill that lands while one is being prepared for the first time — or
-  inside the two uncached card-hydration lookups (`_tagsFor`,
-  `_favoriteIdsAmong`) — leaves that statement unfinalized and the
-  connection open, as before. That is where a COLD worker spends its first
+  a kill that lands while one is being prepared for the first time leaves
+  that statement unfinalized and the connection open, as before — and a
+  connection left open with a statement mid-step keeps its READ
+  TRANSACTION: every later checkpoint stops at its frame and the WAL grows
+  until the process exits (measured for the lookups below: 12 → 37 MB, kept
+  after the writer's dispose). The two card-hydration lookups (`_tagsFor`,
+  `_favoriteIdsAmong`) were such a window until v109 W13 put them through
+  the prepared cache. That is where a COLD worker spends its first
   few hundred microseconds: 23 of 40 kills at a 300 µs timeout, 2 of the
   13 at 3 ms, 1 of 25 on a zero timeout. The same holds for the window
   between `sqlite3.open` and `closeConnection.attach` in `openReadOnly` (the
@@ -5475,9 +5944,19 @@ section cites symbols, grep commands and counts — never a line number.)**
   and text), then three closer / delta-verifier rounds — no
   executable line changed since the first (the second reworded two
   comments, `_SearchWorker.dispose()`'s and the dispose pin's); in the second a closer left a LIVE MUTANT in
-  the tree (found and restored by the verifier by md5; the mutant runner
-  now restores from a signal trap and refuses to start on a wrong md5);
+  the tree (found and restored by the verifier by md5; the closer's mutant
+  runner now restores from a signal trap and refuses to start on a wrong md5);
   the third left one sentence, corrected with the verifier's own wording.
+- **Corrected 2026-11-13 (v109 W11 / W12 / W13 / W17, Run 087/088).** In
+  place above: the zero-timeout slot u1 is EQUIVALENT by measurement (was
+  "unpinned … needs a negative wait"); two new UNPINNED slots (the kill's
+  priority; a request sent in the turn a worker crashes on its own); the
+  dispose pin's "`Isolate.immediate`, ahead of the queued search" is no
+  evidence for the priority; the lookups half of the w1 limit dropped (W13)
+  and the read-transaction consequence named for the windows that remain;
+  "the mutant runner" is the closer's. The pins this section lacked (the
+  crash arm, the 1 s bound, the `_disposed` guard, the eviction before the
+  send) are the v109 section's.
 
 **Matcher v108 (batch fix108; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 085/086 over v107, union V1–V13, the spec
@@ -5608,7 +6087,9 @@ symbols, grep commands and hit counts — never a line number.)**
   build/bin/server.dart, every request through the outermost first). Pins
   ('v108 V5 / V4'): ROW BY ROW against BARE `createStaticFileHandler` (the
   same cascade with and without the outermost; a real `requireGet` root
-  stand-in, an /api echo, the SPA fallback) over 32 requests — status,
+  stand-in, an /api echo, the SPA fallback) over 31 requests (corrected
+  2026-11-13, v109 W17: the table holds 6 rows × GET / HEAD + 19 single
+  rows; it read 32) — status,
   content-type and body (request ids normalised) equal; an ETag ⟺ bare
   served a file (its Last-Modified), equal to the body's md5 on GET (12 GET
   rows are files); `If-None-Match: *` → 304 exactly on those, bare's status
@@ -5646,9 +6127,12 @@ symbols, grep commands and hit counts — never a line number.)**
   ponytail note: a pick of a cached peel failing on another detail during a
   juice outage names the juice too — a re-open with no request). LIMIT:
   `grep -rn 'derivedFor(' apps/server/lib` → 8 (the definition + 7 call
-  sites: the compute's decided arms, the un-skip, the matches GET (cache
-  only), the GET's re-read, the two PUT paths — every one reaches the moved
-  fetch the same way); `grep -rn '_heldOnOf(' apps/server/lib` → 5 (the
+  sites — corrected 2026-11-13, v109 W17, by function: the compute's
+  decided arm, its orphan-edited arm, `applyRecipeToOthers` (the
+  apply-to-others), the matches GET (`matchesBody`, cache only), the PUT's
+  gate re-read (cache only), the PUT's carried-text path and its decision
+  path; no un-skip calls it (v108 named "the un-skip" and "the GET's
+  re-read") — every one reaches the moved fetch the same way); `grep -rn '_heldOnOf(' apps/server/lib` → 5 (the
   definition + countFoodFailure, the decided re-read, the engine cacheOnly
   arm, `unskippedRow` — each passes its recipe and line). Pins
   (nutrition_v108_test 'V3', 0536 line 3, the fixtures): (a) the juice
@@ -12835,7 +13319,15 @@ imported, updated, skipped, failed, log, started_at, finished_at}` —
   plus the dev-only `DEV_ALLOW_CORS`.
 - **Graceful shutdown**: SIGTERM/SIGINT (`docker stop`) drains in-flight
   requests (bounded, force-closed only past the bound), then closes SQLite
-  cleanly — the WAL checkpoints and the next boot needs no recovery. A slowloris
+  cleanly — the WAL checkpoints and the next boot needs no recovery, except
+  in two stated corners (corrected 2026-11-13, v109 W17): the ≈10.1 s worst
+  case ("Search worker lifecycle": a respawn in flight at the signal whose
+  new worker misses its shutdown reply) passes Docker's 10 s grace, and a
+  SIGKILL there skips the writer's close; and a search worker killed inside
+  a window its native finalizers do not cover (a cold worker's first
+  prepares, the open before the attach) keeps its connection — and any READ
+  TRANSACTION it held — until the process exits, so checkpoints stop at its
+  frame (v109 W13 closed the card-hydration lookups' half). A slowloris
   half-open socket is reaped by the initial close and never extends the drain.
 - `/data` must be a **local filesystem** (SQLite WAL is unsafe on
   NFS/SMB); the app assumes domain-root serving (sub-paths deferred).

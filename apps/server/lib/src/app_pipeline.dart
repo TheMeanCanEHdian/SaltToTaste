@@ -147,6 +147,7 @@ Handler buildOutermostMiddleware(
 Middleware untrustedProxyWarning(
   ServerConfig config, {
   Duration every = const Duration(hours: 1),
+  DateTime Function() now = DateTime.now,
 }) {
   DateTime? lastWarned;
   return (handler) => (context) {
@@ -155,10 +156,10 @@ Middleware untrustedProxyWarning(
         (headers['x-forwarded-for'] != null ||
             headers['x-forwarded-proto'] != null) &&
         !trustsForwardedHeaders(context)) {
-      final now = DateTime.now();
-      final last = lastWarned;
-      if (last == null || now.difference(last) >= every) {
-        lastWarned = now;
+      final at = now();
+      // v109 W5: the one window rule — a clock stepped back re-opens it.
+      if (windowOpen(lastWarned, at, every)) {
+        lastWarned = at;
         _log.warning(
           'TRUST_PROXY is on but the peer sending X-Forwarded-* '
           '(${clientIp(context)}) matches no TRUSTED_PROXIES entry '

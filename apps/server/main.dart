@@ -55,8 +55,12 @@ void _handleShutdownSignals(HttpServer server) {
     shuttingDown = true;
     _log.info('$signal received; draining requests');
     // Bounded well under Docker's 10s stop grace so the final WAL checkpoint
-    // still fits. drainConnections waits for in-flight requests to finish
-    // (idle/half-open sockets are reaped by its initial close()).
+    // usually still fits — the search dispose after the drain adds up to
+    // ~5.1 s (a respawn in flight, the shutdown reply, the exit wait), so the
+    // worst case is ≈10.1 s from the signal (stated in docs/API.md, "Search
+    // worker lifecycle"; v109 W17). drainConnections waits for in-flight
+    // requests to finish (idle/half-open sockets are reaped by its initial
+    // close()).
     await drainConnections(
       server,
       bound: const Duration(seconds: 5),

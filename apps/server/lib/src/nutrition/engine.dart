@@ -12656,13 +12656,23 @@ IngredientMatchRow withRenderedBacon(
 /// an `auto` or `confirmed` row, unheld, never under grams a person typed;
 /// its grams the parts' sum, each part rounded to 0.01 g and named by its
 /// `role`. Any other row carries no parts.
-IngredientMatchRow withParts(
+/// v109 W8 (Run 087/088 S4 / O3): the ONE place a pair row's second record
+/// is FETCHED — every caller passes its [provider] — so no row that would
+/// split is stored as a fresh partial: no cache holds the second record →
+/// it is fetched ([_cachedFood]); FDC answering "no such food" → the row is
+/// held `food_gone` ON that record (`held_on`: [SaltDatabase.unholdOn]
+/// re-opens it at the record's arrival, and a compute re-reads it cache-only,
+/// [_rereadsHold]); a provider failure propagates — the caller's own food
+/// failure (held `food_unavailable` on the record, [_heldOnOf]). Under
+/// [cacheOnly] (the matches GET) that failure leaves the row as stored.
+Future<IngredientMatchRow> withParts(
   SaltDatabase db,
+  NutritionProvider provider,
   Recipe recipe,
   IngredientLine line,
   IngredientMatchRow row, {
   double? raw,
-}) {
+}) async {
   final bacon = withRenderedBacon(recipe, line, row, raw: raw);
   if (bacon.parts != null || !_splits(bacon)) {
     return bacon;
@@ -12686,10 +12696,14 @@ IngredientMatchRow withParts(
   final rule = _pairOf(recipe, line, bacon.fdcId!);
   final second = rule?.second;
   if (rule != null && second != null) {
+    if (knownFood(db, second.fdcId, line: line) == null &&
+        await _cachedFood(db, provider, second.fdcId) == null) {
+      return bacon.copyWith(hold: foodGoneHold, heldOn: second.fdcId);
+    }
     final zest = rule.gramsOn(knownFood(db, rule.fdcId, line: line));
     final juice = second.grams(knownFood(db, second.fdcId, line: line));
-    // Either record not cached (never after the compute's own fetch,
-    // [_ruleRowFor]): held.
+    // The first record not cached (never after the caller's own fetch of
+    // the row's food): held.
     return zest == null || juice == null
         ? bacon.copyWith(hold: 'second_food')
         : split(
@@ -12714,9 +12728,9 @@ IngredientMatchRow withParts(
   return bacon;
 }
 
-/// [withParts]' gate (v108 V3: ONE predicate — [derivedFor]'s pair fetch
-/// reads it too): a row with a food, `auto` or `confirmed`, unheld, never
-/// under grams a person typed, grams above 0.
+/// [withParts]' gate: a row with a food, `auto` or `confirmed`, unheld,
+/// never under grams a person typed, grams above 0 (v109 W8: the pair fetch
+/// is inside [withParts], behind this one gate).
 bool _splits(IngredientMatchRow row) =>
     row.fdcId != null &&
     (row.status == 'auto' || row.status == 'confirmed') &&
@@ -12726,8 +12740,8 @@ bool _splits(IngredientMatchRow row) =>
 
 /// Rule B1's two-record rule of [line] when [fdcId] is its first record (a
 /// citrus peel: only a row on a peel record reads the rule — its regexes
-/// run per row), else null — the rule [withParts] splits by, [derivedFor]
-/// fetches the second record of and [_heldOnOf] names (v108 V3).
+/// run per row), else null — the rule [withParts] splits by and fetches the
+/// second record of, and [_heldOnOf] names (v108 V3, v109 W8).
 SecondFoodRule? _pairOf(Recipe recipe, IngredientLine line, int fdcId) {
   if (!_citrus.values.any((c) => c.peel.fdcId == fdcId)) {
     return null;
@@ -15032,9 +15046,7 @@ Future<NutritionProviderException?> _computePass(
     // the `all` scope asks again for a `food_unavailable` row, once per
     // pass ([retryUnavailable], S3).
     if (decided != null) {
-      final reread =
-          noRecordHolds.contains(decided.hold) &&
-          !(retryUnavailable && decided.hold == foodUnavailableHold);
+      final reread = _rereadsHold(decided.hold, retryUnavailable);
       final (:row, :food, note: _, :unavailable) = await derivedFor(
         db,
         reread ? cacheOnly : provider,
@@ -15188,8 +15200,10 @@ Future<NutritionProviderException?> _computePass(
                 (laid.status == 'auto' && laid.fdcId != null))
         ? laid.copyWith(position: position, itemKey: key)
         : null;
-    final lineProvider =
-        failed?.hold == foodUnavailableHold && !retryUnavailable
+    // v109 W8: the decided arm's rule ([_rereadsHold]) — a kept engine row
+    // held `food_gone` ON a pair's second record (an un-skip, a carried
+    // decision) is re-read from the caches too, never asked per compute.
+    final lineProvider = _rereadsHold(failed?.hold, retryUnavailable)
         ? cacheOnly
         : provider;
     try {
@@ -15415,8 +15429,9 @@ Future<NutritionProviderException?> _computePass(
         write(sub);
         continue;
       }
-      final picked = withParts(
+      final picked = await withParts(
         db,
+        lineProvider,
         recipe,
         eaten,
         IngredientMatchRow(
@@ -16592,9 +16607,13 @@ bool defatsSentence(String s) {
 /// negation word: no regex, nothing stored); each act one bounded regex,
 /// linear per negation word.
 /// ponytail: the memo is process-wide (the readers take a sentence, not
-/// its step index), cleared past [_spanTextCap] characters of keyed text —
-/// a recipe at the editor caps fits; move it onto the step index if the
-/// readers ever take one.
+/// its step index), keyed on the SENTENCE with every act's spans stored
+/// with it (v109 W16) and cleared past [_spanTextCap] characters of
+/// distinct sentence text — one section at the editor caps (120 steps of
+/// up to 10,000 characters) fits whatever its acts; a recipe whose
+/// sections together pass 2 MiB of distinct text is scanned again after
+/// the clear (cost only). Move it onto the step index if the readers ever
+/// take one.
 List<Match> _negatedSpans(String s, RegExp act) {
   if (!(s.contains('not') ||
       s.contains("n't") ||
@@ -16606,18 +16625,22 @@ List<Match> _negatedSpans(String s, RegExp act) {
       s.contains('refrain'))) {
     return const [];
   }
-  if (_spanMemo[act]?[s] case final known?) {
+  final acts = _spanMemo[s];
+  if (acts?[act] case final known?) {
     return known;
   }
-  if ((_spanText += s.length) > _spanTextCap) {
+  // v109 W16: a sentence's length is counted ONCE, when it is first stored
+  // (its acts' spans stored with it) — counted per act, several negated
+  // acts filled the 2 MiB inside one section's editor caps.
+  if (acts == null && (_spanText += s.length) > _spanTextCap) {
     _spanMemo.clear();
     _spanText = s.length;
   }
   _forbidsEvaluations++;
-  return (_spanMemo[act] ??= {})[s] = act.allMatches(s).toList();
+  return (_spanMemo[s] ??= Map.identity())[act] = act.allMatches(s).toList();
 }
 
-final Map<RegExp, Map<String, List<Match>>> _spanMemo = Map.identity();
+final Map<String, Map<RegExp, List<Match>>> _spanMemo = {};
 int _spanText = 0;
 const int _spanTextCap = 1 << 21;
 
@@ -16683,32 +16706,53 @@ int _forbidsEvaluations = 0;
 /// not pour off all the fat" is forbidden (no discard read — stated, reach
 /// 0). v108 V6: the bridge words never the act's own verb ("do not skim the
 /// broth then skim fat" keeps the real skim) and a list comma between them
-/// ("(do not skim the juices, onions, and fat)"). Bounded repetition:
-/// linear per negation word.
-RegExp _negatedAct(String verb, String object) => RegExp(
+/// ("(do not skim the juices, onions, and fat)"). v109 W6 (Run 087/088 O2,
+/// S2, S9): a comma before a CONTRAST word (only, just, but, then, instead,
+/// rather) ends the bridge — ", only the fat" is no list item (v108 read
+/// "do not skim the broth, only the fat." as no skim; v107 a skim); the
+/// exclusion reads [inflected] — ANY word beginning with the act's stem
+/// (`\w*`), followed by the particle of a two-word act ("skimmed",
+/// "pouring off", "spooned off", "scraped up"). For a two-word act a word
+/// on the stem WITHOUT its particle ("the drained fat", "the spoonful of
+/// fat") stays a bridge word (the owner gate's G1); for a one-word act
+/// every word on the stem ends the bridge ("the skimmed fat", "the skimpy
+/// fat" read a real skim — stated, reach 0). A bridge word may hold an
+/// apostrophe or a hyphen ("the soup's fat", "the pan-juice fat"). Bounded
+/// repetition: linear per negation word (the lookahead reads one word and
+/// its particle).
+RegExp _negatedAct(String verb, String inflected, String object) => RegExp(
   r"(?:\bnot|n't|n’t|\bnever|\bcannot|\bno need to|\bavoid|\bwithout|"
   r'\brefrain from)(?:\s+(?:to|ever|bother|first))?\s+(?:'
   '$verb)\\b(?:(?:\\s+(?:the|any|all|of|excess|off|out))*'
-  '(?:,?\\s+(?!(?:$verb)\\b)\\w+){0,3},?\\s+(?:$object)\\b'
+  r'(?:(?:,\s+(?!(?:only|just|but|then|instead|rather)\b)|\s+)'
+  "(?!(?:$inflected)\\b)[\\w'’-]+){0,3},?\\s+(?:$object)\\b"
   r'|(?:\s+it)?(?:\s*(?:[^\w\s]|$)|\s+(?:and|but)\b))',
 );
 final RegExp _forbidsReuse = _negatedAct(
+  r'scrap\w* up|deglaz\w*|leav\w*|reserv\w*',
   r'scrap\w* up|deglaz\w*|leav\w*|reserv\w*',
   '(?:browned )?bits|fond|fat|oil|drippings|grease|skillet|pan|pot',
 );
 final RegExp _forbidsSkim = _negatedAct(
   'skim(?:ming)?',
+  r'skim\w*',
   'fat|grease|drippings',
 );
 final RegExp _forbidsPourOff = _negatedAct(
   '(?:pour|spoon|drain)(?:ing)? off',
+  r'(?:pour|spoon|drain)\w* off',
   'fat|grease|drippings',
 );
 final RegExp _forbidsDiscard = _negatedAct(
   'discard(?:ing)?',
+  r'discard\w*',
   'oil|shortening|lard|fat',
 );
-final RegExp _forbidsWipe = _negatedAct('wip(?:e|ing)', 'skillet|pan|pot');
+final RegExp _forbidsWipe = _negatedAct(
+  'wip(?:e|ing)',
+  r'wip\w*',
+  'skillet|pan|pot',
+);
 
 /// v76 (batch M79, Q10 (b′); the planner's C8): the dry-heat cooking
 /// [recipe]'s own steps print — 'broiled' when a sentence heats a grill
@@ -17158,17 +17202,14 @@ Future<({IngredientMatchRow row, FdcFood food})?> _ruleRowFor(
   if (target == null) {
     return null;
   }
-  // v49 (M47 Q6): a two-part rule's second record, fetched once like the
-  // rule's own ([withParts] reads it from the caches).
-  if (rule.second case final second?
-      when knownFood(db, second.fdcId, line: line) == null) {
-    await _cachedFood(db, provider, second.fdcId);
-  }
+  // v49 (M47 Q6): a two-part rule's second record is fetched by
+  // [withParts] (v109 W8: its one fetch, every caller's).
   final outcome = engineOutcome(recipe, line, target, null, picked: true);
   return (
     food: target,
-    row: withParts(
+    row: await withParts(
       db,
+      provider,
       recipe,
       line,
       IngredientMatchRow(
@@ -19937,6 +19978,15 @@ class _CacheOnly implements NutritionProvider {
       throw NutritionProviderException('cache only: food $fdcId');
 }
 
+/// Whether a row held [hold] is RE-READ from the caches alone ([cacheOnly])
+/// by a compute: a no-record hold ([noRecordHolds]) — except a
+/// `food_unavailable` one under the `all` scope ([retryUnavailable]), which
+/// asks again once per pass. v109 W8: ONE rule, the decided arm's and the
+/// engine arm's (the engine arm read `food_unavailable` alone).
+bool _rereadsHold(String? hold, bool retryUnavailable) =>
+    noRecordHolds.contains(hold) &&
+    !(retryUnavailable && hold == foodUnavailableHold);
+
 /// Food detail through the cache; null when FDC has no such id.
 Future<FdcFood?> _cachedFood(
   SaltDatabase db,
@@ -20358,8 +20408,9 @@ Future<({IngredientMatchRow row, FdcFood food})?> _decidedLineRow(
   if (sub != null) {
     return (row: sub, food: food);
   }
-  final carriedRow = withParts(
+  final carriedRow = await withParts(
     db,
+    provider,
     recipe,
     eaten,
     IngredientMatchRow(
@@ -20494,7 +20545,7 @@ Future<({Set<int> foods, bool unavailable})> settleKeyInRecipe(
             (row.status == 'auto' && row.fdcId != null)
         ? row.copyWith(position: at, itemKey: itemKey)
         : null;
-    final lineProvider = failed?.hold == foodUnavailableHold
+    final lineProvider = _rereadsHold(failed?.hold, false)
         ? cacheOnly
         : provider;
     try {
@@ -20692,26 +20743,37 @@ Future<IngredientMatchRow> unskippedRow(
   // grams, never the raw weight over them — a v50 cured pork the steps
   // discard is 0 g, and B1 never touches it (G7: beef-braised-in-barolo|2
   // came back 63.22 g rendered).
-  out = withParts(
-    db,
-    recipe,
-    eaten,
-    out,
-    raw: out.fdcId != rawBaconFdcId
-        ? null
-        : (medium
-                  ? outcome
-                  : engineOutcome(
-                      recipe,
-                      eaten,
-                      onRow,
-                      derived,
-                      picked: !personal,
-                      decided: personal,
-                      confidence: out.confidence,
-                    ))
-              .grams,
-  );
+  // v109 W8 (O3): the pair's second record fetched as every caller fetches
+  // it ([withParts]); FDC failing it now is the kept engine row's outage
+  // above — held `food_unavailable` ON the record, never a fresh partial.
+  try {
+    out = await withParts(
+      db,
+      provider,
+      recipe,
+      eaten,
+      out,
+      raw: out.fdcId != rawBaconFdcId
+          ? null
+          : (medium
+                    ? outcome
+                    : engineOutcome(
+                        recipe,
+                        eaten,
+                        onRow,
+                        derived,
+                        picked: !personal,
+                        decided: personal,
+                        confidence: out.confidence,
+                      ))
+                .grams,
+    );
+  } on NutritionProviderException catch (error) {
+    if (error.scope != FailureScope.food) {
+      rethrow;
+    }
+    return unavailable();
+  }
   return subRecipeRowFor(
         recipe,
         position,
@@ -21076,24 +21138,19 @@ derivedFor(
     hold: outcome.hold,
     clearHold: !keepsHold,
   );
-  // v107 U4 (Run 083/084 S6): rule B1's second record (the peel's juice)
-  // fetched as the engine arm fetches it ([_ruleRowFor]) — a failure is
-  // this derivation's (held `food_unavailable` on the part, [_heldOnOf], so
-  // its arrival re-opens the row), never [withParts]' partial `second_food`
-  // under a fresh stamp. v108 V3 (Run 085/086 S5 S6 / O4 O5): fetched IFF
-  // [withParts] will read it — its own gate ([_splits]) on the very row it
-  // splits: a pick, typed grams, a held or a 0 g row never fetch.
-  if (_splits(split)) {
-    final second = _pairOf(recipe, eaten, split.fdcId!)?.second;
-    if (second != null && knownFood(db, second.fdcId, line: eaten) == null) {
-      try {
-        await _cachedFood(db, provider, second.fdcId);
-      } on NutritionProviderException catch (failure) {
-        return unavailableBy(failure);
-      }
-    }
+  // v107 U4 / v108 V3: rule B1's second record (the peel's juice) — v109
+  // W8: fetched by [withParts] itself (every caller's one step, behind its
+  // own gate [_splits]: a pick, typed grams, a held or a 0 g row never
+  // fetch). A failure is this derivation's (held `food_unavailable` on the
+  // part, [_heldOnOf], so its arrival re-opens the row); "no such food" is
+  // the row held `food_gone` ON the record — never [withParts]' partial
+  // `second_food` under a fresh stamp.
+  final IngredientMatchRow row;
+  try {
+    row = await withParts(db, provider, recipe, eaten, split);
+  } on NutritionProviderException catch (failure) {
+    return unavailableBy(failure);
   }
-  final row = withParts(db, recipe, eaten, split);
   // The sub-recipe rule gates the row as a confirm or pick writes it: not a
   // skip, nor a row a person typed grams on (they count the line, whatever
   // the amount now weighs), nor a food on a reference line's food
@@ -21255,6 +21312,9 @@ IngredientMatchRow withDerived(
   clearGramSource: row.gramSource == null,
   hold: row.hold,
   clearHold: row.hold == null,
+  // v109 W8: the record a derived no-record hold waits on ([withParts]'
+  // `food_gone` on a pair's second record); none derived keeps the stored.
+  heldOn: row.heldOn,
   // v41: a rendered row's parts and a composite row's share and stamp are
   // derived too (the child itself is the decision).
   parts: row.parts,
@@ -21696,42 +21756,45 @@ applyDecisionToOthers(
           resolution,
           decided: true,
         );
-        final row =
-            subRecipeRowFor(found.recipe, at!, line) ??
-            subRecipeRowFor(
-              found.recipe,
-              at,
-              line,
-              onFood: true,
-              grams: outcome.grams,
-            ) ??
-            // Rule B1 (v41, D12): a carried bacon decision re-runs the rule
-            // on the target's own steps.
-            withParts(
-              db,
-              found.recipe,
-              eaten,
-              IngredientMatchRow(
-                recipeId: found.recipe.id,
-                position: at,
-                raw: line.raw,
-                itemKey: itemKey,
-                fdcId: onFood.fdcId,
-                description: onFood.description,
-                dataType: onFood.dataType,
-                confidence: 1,
-                grams: outcome.grams,
-                gramSource: outcome.source,
-                status: 'auto',
-                hold: outcome.hold,
-              ),
-            );
         // Rule B1's part records resolved where the row's food is, as the
         // compute and the PUT's own line resolve them (RULE A: the totals
         // never fetch — v83 F2, ledger Q13: a part no cache held left the
         // target `underived`, its bacon row out of the label); a failure is
-        // the weigh's (above).
+        // the weigh's (above) — v109 W8: the pair's second record's too
+        // ([withParts] fetches it).
+        final IngredientMatchRow row;
         try {
+          row =
+              subRecipeRowFor(found.recipe, at!, line) ??
+              subRecipeRowFor(
+                found.recipe,
+                at,
+                line,
+                onFood: true,
+                grams: outcome.grams,
+              ) ??
+              // Rule B1 (v41, D12): a carried bacon decision re-runs the
+              // rule on the target's own steps.
+              await withParts(
+                db,
+                provider,
+                found.recipe,
+                eaten,
+                IngredientMatchRow(
+                  recipeId: found.recipe.id,
+                  position: at,
+                  raw: line.raw,
+                  itemKey: itemKey,
+                  fdcId: onFood.fdcId,
+                  description: onFood.description,
+                  dataType: onFood.dataType,
+                  confidence: 1,
+                  grams: outcome.grams,
+                  gramSource: outcome.source,
+                  status: 'auto',
+                  hold: outcome.hold,
+                ),
+              );
           await _resolveParts(db, provider, row);
         } on NutritionProviderException catch (error) {
           _log.info('apply-to-all target ${entry.key}#$at unavailable: $error');

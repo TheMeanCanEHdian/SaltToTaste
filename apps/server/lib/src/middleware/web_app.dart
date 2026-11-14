@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dart_frog/dart_frog.dart';
+import 'package:meta/meta.dart';
 
 /// Content-Security-Policy for the served Flutter web build.
 ///
@@ -137,17 +138,15 @@ Middleware spaFallback({String indexPath = 'public/index.html'}) {
 Middleware staticFileValidators({String publicDir = 'public'}) {
   final etags = <String, (DateTime, int, String)>{};
   String? root;
-  File? fileOf(List<String> segments) {
+  File? fileOf(Uri url) {
+    // v109 W1: a path no file can have is not resolved at all (O(1), before
+    // the root or the segments are read) — the request passes untouched.
+    if (url.path.length > _maxPathLength) {
+      return null;
+    }
     try {
       final base = root ??= Directory(publicDir).resolveSymbolicLinksSync();
-      var path = base;
-      for (final s in segments) {
-        if (s.isNotEmpty) {
-          path = s.startsWith('/')
-              ? s
-              : '${path.endsWith('/') ? path : '$path/'}$s';
-        }
-      }
+      final path = staticJoin(base, url.pathSegments);
       if (FileSystemEntity.typeSync(path) != FileSystemEntityType.file) {
         return null;
       }
@@ -163,7 +162,7 @@ Middleware staticFileValidators({String publicDir = 'public'}) {
   return (handler) {
     return (context) async {
       final request = context.request;
-      final file = fileOf(request.url.pathSegments);
+      final file = fileOf(request.url);
       if (file == null) {
         return handler(context);
       }
@@ -215,6 +214,35 @@ Middleware staticFileValidators({String publicDir = 'public'}) {
     };
   };
 }
+
+/// shelf_static's join of [segments] under [root] (`p.joinAll`'s POSIX
+/// rule: an empty part skipped, a part starting with `/` RESETS the path,
+/// one separator between parts) in ONE pass — v109 W1: v108's
+/// per-segment concatenation copied the whole path per segment (quadratic).
+@visibleForTesting
+String staticJoin(String root, List<String> segments) {
+  final joined = StringBuffer(root);
+  var slash = root.endsWith('/');
+  for (final s in segments) {
+    if (s.isEmpty) {
+      continue;
+    }
+    if (s.startsWith('/')) {
+      joined.clear();
+    } else if (!slash) {
+      joined.write('/');
+    }
+    joined.write(s);
+    slash = s.endsWith('/');
+  }
+  return '$joined';
+}
+
+/// v109 W1 (Run 087/088 S5 / O4): the longest request path `fileOf`
+/// resolves — Linux's PATH_MAX (macOS's is 1,024): no file under the root
+/// has a longer path, so a longer request is never joined (one 400 KB path
+/// of 200,000 segments stalled v108's quadratic join 9–17 s).
+const int _maxPathLength = 4096;
 
 /// The one byte range shelf_static parses without overflow (U3).
 final RegExp _usableRange = RegExp(r'^bytes=(\d{0,15})-\d{0,15}$');

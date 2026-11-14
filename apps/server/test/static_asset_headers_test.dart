@@ -13,14 +13,19 @@ import 'package:salt_server/src/db/salt_database.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart';
 import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/logging/log_store.dart';
+import 'package:salt_server/src/middleware/auth.dart';
 import 'package:salt_server/src/middleware/dev_cors.dart';
 import 'package:salt_server/src/middleware/error_handler.dart';
 import 'package:salt_server/src/middleware/request_context.dart';
+import 'package:salt_server/src/middleware/web_app.dart';
 import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:test/test.dart';
 
+import '../routes/api/v1/admin/logs.dart' as logs_route;
 import '../routes/api/v1/auth/login.dart' as login_route;
+import 'support/cost_bounds.dart' show backstopMs;
 
 /// The shipped web app is NOT served by the middleware chain.
 ///
@@ -59,6 +64,29 @@ const Set<String> _perResponse = {
   'accept-ranges',
   'x-request-id',
 };
+
+/// v109 W1: counts the File / Directory / type lookups made in its zone.
+final class _CountingIO extends IOOverrides {
+  int calls = 0;
+
+  @override
+  File createFile(String path) {
+    calls++;
+    return super.createFile(path);
+  }
+
+  @override
+  Directory createDirectory(String path) {
+    calls++;
+    return super.createDirectory(path);
+  }
+
+  @override
+  FileSystemEntityType fseGetTypeSync(String path, bool followLinks) {
+    calls++;
+    return super.fseGetTypeSync(path, followLinks);
+  }
+}
 
 String md5Hex(String s) => md5.convert(utf8.encode(s)).toString();
 
@@ -502,6 +530,34 @@ void main() {
           reason: spelling,
         );
       }
+      // v109 W3 (S6): the three spellings above collapse BEFORE fileOf (the
+      // join skips empty parts), so they cannot tell a map keyed on the
+      // resolved path from one keyed on the joined one. `<abs>%2F%2F` still
+      // differs after the join (`…/public//same.js`): only the RESOLVED key
+      // answers it the one entry's ETag (the mutant `File(path)`: a second
+      // entry, hashed from the rewritten bytes).
+      final abs = publicDir.resolveSymbolicLinksSync().replaceAll('/', '%2F');
+      // As spelled (the `raw` helper below is declared later in main).
+      final socket = await Socket.connect('127.0.0.1', server.port);
+      socket.write(
+        'GET /$abs%2F%2Fsame.js HTTP/1.1\r\nHost: x\r\n'
+        'Connection: close\r\n\r\n',
+      );
+      final head = (await utf8.decoder.bind(socket).join()).split(
+        '\r\n\r\n',
+      )[0];
+      socket.destroy();
+      expect(
+        (
+          head.split('\r\n').first,
+          RegExp(
+            r'^etag: (.*)$',
+            multiLine: true,
+            caseSensitive: false,
+          ).firstMatch(head)?.group(1),
+        ),
+        ('HTTP/1.1 200 OK', first.$2['etag']),
+      );
     });
 
     test('If-None-Match: * is a 304', () async {
@@ -1050,17 +1106,28 @@ void main() {
       () async {
         // v108 V11 (Run 085/086 O10): no chdir of the cwd (it is process-
         // wide — sibling suites' relative opens failed for ~2.2 ms):
-        // ONE uniquely named file under the REAL relative `public/` (made
-        // if absent; the file, and the directory if made here, removed).
+        // ONE file under the REAL relative `public/` (made if absent; the
+        // file, and the directory if made here, removed).
+        // v109 W14 (S8): the file's name is FIXED, not a per-run id, and it
+        // is removed if present at the START too — a run killed between the
+        // write and the tearDown leaves it in a SERVED directory (and moves
+        // the deploy kit's public hash); the next run cleans it, and a fixed
+        // name means nothing accumulates.
         final dir = Directory('public');
         final made = !dir.existsSync();
         if (made) {
           dir.createSync();
         }
-        final name = 'zz_v108_default_${newRequestId()}.js';
-        File('public/$name').writeAsStringSync('APP');
+        const name = 'zz_v109_default_public_dir_pin.js';
+        final file = File('public/$name');
+        if (file.existsSync()) {
+          file.deleteSync();
+        }
+        file.writeAsStringSync('APP');
         addTearDown(() {
-          File('public/$name').deleteSync();
+          if (file.existsSync()) {
+            file.deleteSync();
+          }
           if (made) {
             dir.deleteSync();
           }
@@ -1353,6 +1420,119 @@ void main() {
   // throws for a token outside its enum; the outermost catch's own log
   // text read it again (the first per window a bare shelf_io 500, no record
   // ever written). STATED synthesized requests (no browser sends them).
+  // v109 W1 (Run 087/088 S5 / O4, MED): v108 V5's join concatenated the
+  // whole path per segment — one anonymous 400 KB GET of 200,000 segments
+  // stalled the serving isolate 9 s (fix109 measured 8,973 ms; v107's join
+  // 70 ms). STATED synthesized requests (no browser sends them).
+  group('v109 W1 the bounded, linear join', () {
+    /// A bare static arm and the pipeline over it (the V5 rows' pair).
+    Future<(int, int)> pair() async {
+      final cascade = Cascade()
+          .add(createStaticFileHandler(path: publicDir.path))
+          .add((c) => Response(statusCode: HttpStatus.notFound))
+          .handler;
+      final bare = await serve(cascade, InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => bare.close(force: true));
+      final full = await serve(
+        buildOutermostMiddleware(cascade, publicDir: publicDir.path),
+        InternetAddress.loopbackIPv4,
+        0,
+      );
+      addTearDown(() => full.close(force: true));
+      return (bare.port, full.port);
+    }
+
+    // `url.path` (no leading slash) of exactly [length] characters that
+    // RESETS to main.dart.js: on macOS (PATH_MAX 1,024) no other spelling
+    // of that length names a file.
+    String resetTo(int length) {
+      final abs = publicDir.resolveSymbolicLinksSync().replaceAll('/', '%2F');
+      final tail = '$abs%2Fmain.dart.js';
+      return '/${'x' * (length - tail.length - 1)}/$tail';
+    }
+
+    test('(i) an over-long path is never resolved — 0 filesystem calls in '
+        'the validators — and answers as bare shelf_static', () async {
+      final (barePort, fullPort) = await pair();
+      final count = _CountingIO();
+      // The validators served INSIDE the overrides over a 404 stub (no
+      // static arm to count): every File / Directory / type lookup of
+      // fileOf is counted.
+      final counted = await IOOverrides.runWithIOOverrides(
+        () => serve(
+          buildOutermostMiddleware(
+            (c) => Response(statusCode: HttpStatus.notFound),
+            publicDir: publicDir.path,
+          ),
+          InternetAddress.loopbackIPv4,
+          0,
+        ),
+        count,
+      );
+      addTearDown(() => counted.close(force: true));
+      // Not vacuous: a path under the bound is resolved (counted).
+      await raw('/main.dart.js', port: counted.port);
+      expect(count.calls, greaterThan(0));
+      for (final path in [
+        '/${List.filled(200000, 'a').join('/')}',
+        // Over the bound, RESETTING to a real file: bare serves the file;
+        // the pipeline passes it untouched — the body, no ETag.
+        resetTo(4097),
+      ]) {
+        count.calls = 0;
+        await raw(path, port: counted.port);
+        // Base: the join (9 s), then the type lookup.
+        expect(count.calls, 0, reason: path.substring(0, 40));
+        final f = await raw(path, port: fullPort);
+        final b = await raw(path, port: barePort);
+        expect(
+          (f.$1, f.$2['content-type'], f.$3, f.$2['etag']),
+          (b.$1, b.$2['content-type'], b.$3, null),
+        );
+      }
+    });
+
+    test('(ii) the join is LINEAR: 200,000 one-character segments joined '
+        'once, and the longest path the bound admits 1,000 times', () {
+      final segments = List.filled(200000, 'a');
+      var sw = Stopwatch()..start();
+      expect(staticJoin('/r', segments).length, 2 + 200000 * 2);
+      // THE KILL. Measured (fix109): this join 3–7 ms; v108's quadratic one
+      // 10,165 ms (its mutant, killed here) — the bound is 70× the former.
+      expect(sw.elapsedMilliseconds, lessThan(backstopMs ~/ 20));
+      // The cap at the bound: 2,048 one-character segments (4,095
+      // characters, the most a request reaching the join holds) 1,000
+      // times. Measured: 41 ms (the quadratic join 449 ms — this shape
+      // alone does NOT separate them; the 200,000 one above does).
+      final longest = List.filled(2048, 'a');
+      sw = Stopwatch()..start();
+      for (var i = 0; i < 1000; i++) {
+        staticJoin('/r', longest);
+      }
+      expect(sw.elapsedMilliseconds, lessThan(backstopMs ~/ 10));
+      // The POSIX rule by value: an empty part skipped, a `/` part resets.
+      expect(staticJoin('/r', ['a', '', '/b/', 'c']), '/b/c');
+      expect(staticJoin('/r/', ['a']), '/r/a');
+    });
+
+    test('(iii) the bound by value: a path of exactly 4,096 characters naming '
+        "a file gets its ETag; 4,097 is bare's answer, no ETag", () async {
+      final (barePort, fullPort) = await pair();
+      final at = await raw(resetTo(4096), port: fullPort);
+      expect(
+        (at.$1, at.$2['etag']),
+        (HttpStatus.ok, '"${md5Hex('void main(){}')}"'),
+      );
+      final over = await raw(resetTo(4097), port: fullPort);
+      final bare = await raw(resetTo(4097), port: barePort);
+      expect(
+        (over.$1, over.$3, over.$2['etag']),
+        (bare.$1, bare.$3, null),
+      );
+      expect(over.$1, HttpStatus.ok);
+    });
+  });
+
   group('v108 V2 one gate for a method dart_frog cannot name', () {
     test('TRACE / PROPFIND / FOO on a file, a routed and an unknown path: '
         '405 with the envelope, Allow and the id, every time; GET '
@@ -1529,6 +1709,187 @@ void main() {
       }
       // A constant key 1, a type-only key 2, a frame-only key 2.
       expect(records, hasLength(3));
+    });
+  });
+
+  // v109 W4 (S1 / S11, Opus critic 3; the union's T1): the throttle keyed on
+  // the stack's TOP frame — every SqliteException is thrown at package:
+  // sqlite3's one `throwException`, so one failing site hid every other for
+  // 60 s. Now the first frame in this server's own code, its `#N` stripped.
+  group('v109 W4 the throttle key', () {
+    test('two unrelated SqliteExceptions in one window are TWO records; one '
+        'app line at two depths is ONE; another app line another', () {
+      // STATED synthesized (negative paths no corpus line reaches): a
+      // UNIQUE violation from execute and a missing column from prepare, on
+      // a temp in-memory DB — real statements, both thrown at package:
+      // sqlite3's `throwException`.
+      final records = <LogRecord>[];
+      final log = Logger.detached('v109w4')..level = Level.ALL;
+      final sub = log.onRecord.listen(records.add);
+      addTearDown(sub.cancel);
+      final throttle = SevereThrottle(now: () => DateTime.utc(2026, 11, 13));
+      final db = sqlite3.openInMemory()
+        ..execute('CREATE TABLE t (x UNIQUE)')
+        ..execute('INSERT INTO t VALUES (1)');
+      addTearDown(db.dispose);
+      (Object, StackTrace) grab(void Function() f) {
+        try {
+          f();
+        } catch (e, st) {
+          return (e, st);
+        }
+        throw StateError('no throw');
+      }
+
+      final unique = grab(() => db.execute('INSERT INTO t VALUES (1)'));
+      final column = grab(() => db.prepare('SELECT nope FROM t'));
+      for (final (e, st) in [unique, column, unique, column]) {
+        throttle.severe(log, 'm', null, e, st);
+      }
+      // Base (the stack's first line): 1.
+      expect(records, hasLength(2));
+      // closer 1 D2: a two-digit depth too (`#\d+`, not `#\d`).
+      for (final depth in [3, 7, 12]) {
+        throttle.severe(
+          log,
+          'm',
+          null,
+          StateError('d'),
+          StackTrace.fromString(
+            '#0      dep (package:dep/d.dart:1:1)\n'
+            '#$depth      f (package:salt_server/a.dart:9:5)',
+          ),
+        );
+      }
+      // The depth kept in the key: 5; only a one-digit depth stripped: 4.
+      expect(records, hasLength(3));
+      throttle.severe(
+        log,
+        'm',
+        null,
+        StateError('d'),
+        StackTrace.fromString(
+          '#0      dep (package:dep/d.dart:1:1)\n'
+          '#1      g (package:salt_server/b.dart:2:2)',
+        ),
+      );
+      // The package arm dropped (only file: frames own): 3.
+      expect(records, hasLength(4));
+      // A trace with NO own frame keys on its top frame (the V1 flood's: 0
+      // own frames of 39) — one site, one record.
+      for (var i = 0; i < 2; i++) {
+        throttle.severe(
+          log,
+          'm',
+          null,
+          StateError('d'),
+          StackTrace.fromString('#0      dep (package:dep/d.dart:1:1)'),
+        );
+      }
+      expect(records, hasLength(5));
+      // The owner gate's G3: the fallback is the TOP frame — not the type
+      // alone, not the bottom frame. The same type at two more top frames
+      // over ONE shared bottom frame is two more sites (7; keyed on the
+      // type: 5; on the bottom frame: 6), and the first trace's top frame
+      // again is still suppressed.
+      for (final top in ['e.dart:3:3', 'f.dart:4:4', 'd.dart:1:1']) {
+        throttle.severe(
+          log,
+          'm',
+          null,
+          StateError('d'),
+          StackTrace.fromString(
+            '#0      dep (package:dep/$top)\n'
+            '#1      run (dart:async/zone.dart:1:1)',
+          ),
+        );
+      }
+      expect(records, hasLength(7));
+    });
+  });
+
+  // v109 W5 (O1): v108 V1's backwards-clock rule applied to the throttle's
+  // two siblings — ONE rule (`windowOpen`). Base: each sibling read its own
+  // comparison and a clock stepped back 2 h silenced it for the step plus
+  // its window.
+  group('v109 W5 one window rule', () {
+    test('the untrusted-proxy warning: a 2 h BACKWARDS step re-opens it at '
+        'once', () async {
+      final config = ServerConfig.fromEnvironment(
+        environment: {
+          'DATA_DIR': tempDir.path,
+          'TRUST_PROXY': 'true',
+          'TRUSTED_PROXIES': '10.0.0.5',
+        },
+      );
+      final proxy = Logger('proxy');
+      final level = proxy.level;
+      proxy.level = Level.ALL;
+      final records = <LogRecord>[];
+      final sub = proxy.onRecord.listen(records.add);
+      addTearDown(() {
+        proxy.level = level;
+        return sub.cancel();
+      });
+      final t0 = DateTime.utc(2026, 11, 13, 12);
+      var t = t0;
+      final handler = ((RequestContext c) => Response())
+          .use(untrustedProxyWarning(config, now: () => t))
+          .use(provider<ServerConfig>((_) => config));
+      final served = await serve(handler, InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => served.close(force: true));
+      Future<void> hit(Duration at) async {
+        t = t0.add(at);
+        await raw(
+          '/x',
+          port: served.port,
+          headers: {'x-forwarded-for': '203.0.113.9'},
+        );
+      }
+
+      await hit(Duration.zero);
+      await hit(const Duration(minutes: 30));
+      expect(records, hasLength(1));
+      // Base: silent for 2 h + 1 h.
+      await hit(-const Duration(hours: 2));
+      expect(records, hasLength(2));
+      await hit(-const Duration(hours: 2) + const Duration(minutes: 1));
+      expect(records, hasLength(2));
+    });
+
+    test('the admin log-read audit: a 2 h BACKWARDS step records the read at '
+        'once', () {
+      final records = <LogRecord>[];
+      final sub = auditLog.onRecord.listen(records.add);
+      addTearDown(sub.cancel);
+      // An id no other test reads (the audit's map is process-wide).
+      const user = AuthUser(
+        id: 109005,
+        username: 'w5',
+        role: 'admin',
+        mustChangePassword: false,
+        scope: 'full',
+        via: 'session',
+      );
+      final t0 = DateTime.utc(2026, 11, 13, 12);
+      logs_route.auditRead(user, now: () => t0);
+      logs_route.auditRead(
+        user,
+        now: () => t0.add(const Duration(minutes: 5)),
+      );
+      expect(records, hasLength(1));
+      // Base: silent for 2 h + 10 min.
+      logs_route.auditRead(
+        user,
+        now: () => t0.subtract(const Duration(hours: 2)),
+      );
+      expect(records, hasLength(2));
+      logs_route.auditRead(
+        user,
+        now: () =>
+            t0.subtract(const Duration(hours: 2) - const Duration(minutes: 1)),
+      );
+      expect(records, hasLength(2));
     });
   });
 

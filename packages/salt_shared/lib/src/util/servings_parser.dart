@@ -289,12 +289,33 @@ final RegExp _recipeShare = RegExp(
 /// v107 U2: it STARTS with a digit or a fraction (or ".5" — v106's pinned
 /// written "(.5 recipe" kept), a space before "recipe",
 /// any case — "(2-recipe batch" and "(-recipe follows" are no written
-/// share (an amount's share reads), "(1E9 recipes" is one.
+/// share (an amount's share reads), "(1E9 recipes" is one. v109 W7 (Run
+/// 087 S3): a SPACED mixed number ("(1 ½", "(2 1/2") and a range after a
+/// number — a hyphen, an en dash or "to" between two such tokens ("(1 ½-2
+/// recipes)", "(1 ½ to 2 recipes)", "(1–2 recipes)") — are written shares
+/// too: one [_recipeShare] cannot read whole is no share, never the
+/// amount's. Linear per line (closer 1 D1): the range's FIRST number reads
+/// its tokens WITHOUT '-' ([_shareNumber]'s `hyphen: false`) — with the
+/// hyphen in both the token class and the separator, a "(1-1-…" run split
+/// at every '-' and rescanned the rest (quadratic: 1,017 characters × 100
+/// took 1.5 s). A bare "a-b" is still one token of the full class, so
+/// every spelling above reads as it did; only a range whose first number
+/// itself holds a hyphen ("(1-1 to 2 recipes") is no longer written.
 final RegExp _shareToken = RegExp(
-  '\\(\\s*(?:[0-9$_fractionChars]|\\.\\d)[0-9$_fractionChars.,/e+-]*'
-  '\\s+recipes?\\b',
+  '\\(\\s*(?:${_shareNumber(hyphen: false)}(?:\\s*[-–]\\s*|\\s+to\\s+))?'
+  '${_shareNumber(hyphen: true)}\\s+recipes?\\b',
   caseSensitive: false,
 );
+
+/// [_shareToken]'s numeric-looking token (v107 U2: it STARTS with a digit
+/// or a fraction, or ".5"), with an optional spaced second token — a mixed
+/// number's fraction (v109 W7); [hyphen] whether '-' is in its class.
+String _shareNumber({required bool hyphen}) {
+  final token =
+      '(?:[0-9$_fractionChars]|\\.\\d)'
+      '[0-9$_fractionChars.,/e+${hyphen ? '-' : ''}]*';
+  return '(?:$token(?:\\s+$token)?)';
+}
 
 /// The share of a child recipe a reference line counts (v41, sub-recipe
 /// routing): its own "(½ recipe" wins ("¼ cup Sauce Base (½ recipe; recipe

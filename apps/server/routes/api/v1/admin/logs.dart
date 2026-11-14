@@ -1,9 +1,11 @@
 import 'package:dart_frog/dart_frog.dart';
+import 'package:meta/meta.dart';
 import 'package:salt_server/src/handlers/admin_handlers.dart';
 import 'package:salt_server/src/handlers/auth_handlers.dart' show auditLog;
 import 'package:salt_server/src/http/method_guard.dart';
 import 'package:salt_server/src/logging/log_store.dart';
 import 'package:salt_server/src/middleware/auth.dart';
+import 'package:salt_server/src/middleware/error_handler.dart' show windowOpen;
 
 /// How often one actor's log reads are recorded on the audit channel.
 ///
@@ -40,7 +42,7 @@ Future<Response> onRequest(RequestContext context) async {
   // whole history, and requireCsrf gates mutating METHODS only. Above every
   // line below it, because the guard exists to stop the COST.
   requireNotCrossSite(context);
-  _auditRead(user);
+  auditRead(user);
   final store = context.read<LogStore>();
   final query = context.request.uri.queryParameters;
   final limit = (int.tryParse(query['limit'] ?? '') ?? 200).clamp(1, 1000);
@@ -58,18 +60,20 @@ Future<Response> onRequest(RequestContext context) async {
   );
 }
 
-/// Records that [user] read the server log, at most once per [_auditWindow].
+/// Records that [user] read the server log, at most once per [_auditWindow]
+/// ([windowOpen], v109 W5: a clock stepped back re-opens it; [now] is the
+/// clock, a test's fake).
 ///
 /// No filter text is echoed: `q` is caller-chosen and the record must stay
 /// something a caller cannot write through. Actor and target are the whole
 /// point — the access line says only `GET /api/v1/admin/logs -> 200`.
-void _auditRead(AuthUser user) {
-  final now = DateTime.now().toUtc();
-  final last = _lastAudited[user.id];
-  if (last != null && now.difference(last) < _auditWindow) {
+@visibleForTesting
+void auditRead(AuthUser user, {DateTime Function() now = DateTime.now}) {
+  final at = now().toUtc();
+  if (!windowOpen(_lastAudited[user.id], at, _auditWindow)) {
     return;
   }
-  _lastAudited[user.id] = now;
+  _lastAudited[user.id] = at;
   auditLog.warning(
     'Server log read by ${user.username} (id ${user.id}); repeats within '
     '${_auditWindow.inMinutes} minutes are not recorded again.',

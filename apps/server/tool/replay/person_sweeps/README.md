@@ -121,3 +121,21 @@ identical; sw13 180 = 175 + 5 picks — base 5 divergent (all Q, `pick-asks,pick
 against control 0 / 0 / 3 / 3 / 0, the pick held `food_unavailable` with no grams), tip 0 divergent (0142|8 8.00 g,
 0536|3 24.00 g, 0860|2 18.00 g, 0861|5 12.00 g, 0989|1 8.00 g, each `overridden`, unheld, derived; calls == control);
 every non-Q line identical base vs tip.
+
+v109 (batch fix109, 2026-11-13; docs/API.md "Matcher v109"): run.sh REFUSES a broken sweep (W15) — it clears `sw_*.tsv`
+with the settled DB at the start (a reused workdir's earlier shard output never survives), requires the settle to exit 0
+and leave a non-empty settled.db, waits each shard's pid and keeps its status, and requires exactly N SUMMARY lines —
+otherwise exit 1 with a message naming the logs (measured: a planted stale `sw_7.tsv` removed, EXIT 0; a shard killed →
+"FAILED: 3 of 4 SUMMARY lines, 1 shard(s) exited non-zero", EXIT 1; a missing snapshot → "settle failed", EXIT 1, no
+settled.db). sw13 gains (b‴) THE UN-SKIP ON A PAIR LINE (tags `U|…`: PUT skipped, the juice dropped, PUT un-skip under
+NoNet, compute ×3, the juice ARRIVING through `cachedFood`; classes unskip-asks / -partial / -not-reopened) and (b⁗) THE
+CONFIRM WITH A GONE JUICE (tags `G|…`: the juice dropped, PUT confirmed and compute ×4 under `Gone` — FDC answers "no such
+food" for the juice, NoNet's fault for any other id; classes gone-asks / -partial / -not-reopened), each judged against a
+CONTROL as (b″) is (the same drop, the row skipped, the same computes; "asks" = more than control + the PUT's one ask).
+GATE-P base b3d19f0 (a worktree) vs the tip, the tip's sweep scripts on both, 12 shards, fresh snapshot-32 copies, calls
+0 at every settle, second pass moved 0: sw5 31,713 / sw6 37,400 / sw7 1,872 / sw8 56,868 / sw8r 5,358 / sw9 130 combos,
+0 divergent 0 refused both; sw10 156 (bare and typed) 0 divergent both; sw11 39,760, 200 divergent, 14,070 refused
+both; sw12 129, 52 both; every line set identical base vs tip. sw13 190 = 180 + 5 un-skips + 5 gone confirms — base 10
+divergent (all U `unskip-asks`: calls 3 / 6 vs control 0 / 3; all G `gone-asks,gone-partial`, 0536|3 also
+`gone-not-reopened`: the partial `second_food` / underived, calls 5 / 8), tip 0 (U: `food_unavailable` ON the juice;
+G: `food_gone` ON the juice; calls = control + 1; the arrival reads stale); every other sw13 line identical.
