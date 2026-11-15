@@ -23,11 +23,41 @@ import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes;
 final Logger _log = Logger('proxy');
 
 /// v110 X1: the longest `url.path` (no leading slash, no query) the server
-/// reads — Linux's PATH_MAX. A longer one is a 414 at the very top of
+/// reads, in ENCODED characters (a percent-escape counts three; v111 Y7:
+/// the figure is Linux's PATH_MAX, but this counts the URL's characters,
+/// not a file path's bytes). A longer one is a 414 at the very top of
 /// [buildOutermostMiddleware]. No validated path parameter comes near it
 /// (the longest legitimate path is a tag style's, 558); only a hand-edited
 /// recipe slug could (docs/API.md, Conventions).
 const int maxRequestPathLength = 4096;
+
+/// v111 Y6 (the launcher's GAP 4, unionY/b B1): dart:io builds the requested
+/// URI as `X-Forwarded-Proto` (else the socket's scheme) + `X-Forwarded-Host`
+/// (else `Host`) + the request-line target, re-parsed, with no trust check —
+/// and shelf routes on it, so `GET /` + `Host: h/main.dart.js?` was served
+/// the file. Refused (400 `bad_request`, after the 414, before anything
+/// else) when a `host` / `x-forwarded-host` value holds a character that
+/// ends a URI authority (`/`, `?`, `#`, `\`), or a comma piece of the
+/// `x-forwarded-proto` value is not a scheme token. The RAW values (shelf
+/// joins repeated lines with `,`); a comma list of hosts, an underscore, a
+/// trailing dot, a bracketed IPv6 literal pass. `x-forwarded-proto` is read
+/// PIECE by piece (owner gate): two lines, each a scheme, are answered as
+/// before — dart:io routes on the first line, and the joined `https,http`
+/// moved no path. Not logged (as the 414).
+bool _movesThePath(Map<String, String> headers) {
+  bool endsAuthority(String? v) =>
+      v != null &&
+      (v.contains('/') ||
+          v.contains('?') ||
+          v.contains('#') ||
+          v.contains(r'\'));
+  final proto = headers['x-forwarded-proto'];
+  return endsAuthority(headers['host']) ||
+      endsAuthority(headers['x-forwarded-host']) ||
+      (proto != null && !proto.split(',').every(_schemeToken.hasMatch));
+}
+
+final RegExp _schemeToken = RegExp(r'^[A-Za-z][A-Za-z0-9+.-]*$');
 
 /// Wraps the ENTIRE handler dart_frog's generated entry point builds —
 /// `Cascade().add(createStaticFileHandler()).add(buildRootHandler())` — so
@@ -120,19 +150,31 @@ Handler buildOutermostMiddleware(
   // ~20 ms per 400 KB path), no method read, no validator, no route. The
   // same headers as every other answer here: [securityHeaders], no-cache,
   // a fresh id in the envelope and the header. Not logged (as the 405).
-  final refused = securityHeaders()((_) {
-    final id = newRequestId();
-    return errorResponse(
-      statusCode: HttpStatus.requestUriTooLong,
-      code: ApiErrorCodes.uriTooLong,
-      message: 'Request path too long.',
-      requestId: id,
-      headers: {
-        requestIdHeader: id,
-        HttpHeaders.cacheControlHeader: 'no-cache',
-      },
-    );
-  });
+  // v111 Y6: the 400 below shares this construction ([refusal]).
+  Handler refusal(int statusCode, String code, String message) =>
+      securityHeaders()((_) {
+        final id = newRequestId();
+        return errorResponse(
+          statusCode: statusCode,
+          code: code,
+          message: message,
+          requestId: id,
+          headers: {
+            requestIdHeader: id,
+            HttpHeaders.cacheControlHeader: 'no-cache',
+          },
+        );
+      });
+  final refused = refusal(
+    HttpStatus.requestUriTooLong,
+    ApiErrorCodes.uriTooLong,
+    'Request path too long.',
+  );
+  final badHeader = refusal(
+    HttpStatus.badRequest,
+    ApiErrorCodes.badRequest,
+    'Malformed Host or forwarded header.',
+  );
   // v107 U9: the request id minted ONCE per request, before the try —
   // provided to everything below (the catch's 500 and the static arm's 404
   // envelope read it) and stamped on every response that has none (the
@@ -140,6 +182,9 @@ Handler buildOutermostMiddleware(
   return (context) async {
     if (context.request.url.path.length > maxRequestPathLength) {
       return refused(context);
+    }
+    if (_movesThePath(context.request.headers)) {
+      return badHeader(context);
     }
     final id = newRequestId();
     final response = await secured(context.provide(() => RequestId(id)));

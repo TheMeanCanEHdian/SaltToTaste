@@ -248,23 +248,26 @@ void main() {
   // held ON its juice (169098), as the matches GET serves it (`held_on`;
   // the server's pin: nutrition_v110_test X3). STATED synthesized hold (the
   // juice's 404 / outage is synthesized, as the server's W8 pins).
-  IngredientMatch onJuice(String hold) => IngredientMatch.fromJson({
-    'position': 3,
-    'raw':
-        '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
-        'plus ¼ cup juice (2 oranges)',
-    'candidates': const <Object?>[],
-    'match': {
-      'fdc_id': 169103,
-      'description': 'Orange peel, raw',
-      'confidence': 1,
-      'grams': 24.0,
-      'gram_source': 'portion',
-      'status': 'confirmed',
-      'hold': hold,
-      'held_on': 169098,
-    },
-  });
+  // v111 Y4 S5: [status] `auto` is the un-skip's shape — served with no
+  // grams (the server's nutrition_v111_test Y4 S6 / T10 X3 outage block).
+  IngredientMatch onJuice(String hold, {String status = 'confirmed'}) =>
+      IngredientMatch.fromJson({
+        'position': 3,
+        'raw':
+            '10 (3-inch) strips orange peel, sliced thin lengthwise (¼ cup), '
+            'plus ¼ cup juice (2 oranges)',
+        'candidates': const <Object?>[],
+        'match': {
+          'fdc_id': 169103,
+          'description': 'Orange peel, raw',
+          'confidence': 1,
+          'grams': status == 'auto' ? null : 24.0,
+          'gram_source': status == 'auto' ? null : 'portion',
+          'status': status,
+          'hold': hold,
+          'held_on': 169098,
+        },
+      });
 
   testWidgets("v110 X3: the hold's label names the line's second food when "
       'the row is held ON it (held_on)', (tester) async {
@@ -299,6 +302,72 @@ void main() {
       );
       expect(find.textContaining('cannot count a food'), findsNothing);
     }
+  });
+
+  // v111 Y4 S5 (unionY/c C2): the un-skip's AUTO row held ON the juice
+  // reads the line's second food too (both sites survived a narrowing to
+  // `status != 'auto'`).
+  testWidgets("v111 Y4 S5: an AUTO row held ON the juice (the un-skip's "
+      "shape) names the line's second food", (tester) async {
+    for (final (hold, label, serves) in [
+      (
+        foodGoneHold,
+        "USDA no longer serves this line's second food",
+        'no longer serves',
+      ),
+      (
+        foodUnavailableHold,
+        "USDA kept failing to send this line's second food",
+        'cannot serve now',
+      ),
+    ]) {
+      await pump(tester, onJuice(hold, status: 'auto'));
+      expect(find.textContaining(label), findsOneWidget, reason: hold);
+      expect(
+        find.textContaining(
+          "cannot count this line's second food, which USDA $serves",
+        ),
+        findsOneWidget,
+        reason: hold,
+      );
+      expect(find.textContaining('this food'), findsNothing, reason: hold);
+    }
+  });
+
+  // v111 Y2: a held row served with NO `held_on` (0040 Wilted Spinach
+  // Salad line 5's bacon held on its own part: the server serves no key
+  // since v111 — nutrition_v111_test Y2) reads "this food". STATED
+  // synthesized hold (the server's outage on the part is synthesized).
+  testWidgets('v111 Y2: a held row with held_on ABSENT reads "this food"', (
+    tester,
+  ) async {
+    final m = IngredientMatch.fromJson({
+      'position': 5,
+      'raw':
+          '10 ounces (about 8 slices) thick-cut bacon, cut into ½-inch '
+          'pieces',
+      'candidates': const <Object?>[],
+      'match': {
+        'fdc_id': 168277,
+        'description': 'Pork, cured, bacon, unprepared',
+        'confidence': 1,
+        'grams': null,
+        'gram_source': null,
+        'status': 'auto',
+        'hold': foodUnavailableHold,
+      },
+    });
+    expect(m.heldOn, isNull);
+    await pump(tester, m);
+    expect(
+      find.textContaining('USDA kept failing to send this food'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('cannot count a food USDA cannot serve now'),
+      findsOneWidget,
+    );
+    expect(find.textContaining('second food'), findsNothing);
   });
 
   test('the stale banner names its cause (v28, Run 058 S15): a decision '

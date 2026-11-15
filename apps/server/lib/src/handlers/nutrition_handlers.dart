@@ -1297,8 +1297,25 @@ String _refusalOf(
 
 /// v110 X3: whether [row]'s hold waits on another record than its food
 /// (`held_on`, a pair's juice) — the matches GET serves `held_on` then.
-bool _heldOnOther(IngredientMatchRow row) =>
-    row.heldOn != null && row.heldOn != row.fdcId;
+/// v111 Y2: ONLY a pair's second record — `held_on` is no stored part (the
+/// pair's parts-less rows), or the part stored under it is the `juice`; a
+/// rule B1 bacon row held on one of its own parts reads "this food" (v109).
+/// (`partsOf` carries no role: the role is read here.)
+bool _heldOnOther(IngredientMatchRow row) {
+  final on = row.heldOn;
+  if (on == null || on == row.fdcId) {
+    return false;
+  }
+  for (final part
+      in row.parts == null
+          ? const <dynamic>[]
+          : jsonDecode(row.parts!) as List<dynamic>) {
+    if ((part as Map<String, dynamic>)['fdc_id'] == on) {
+      return part['role'] == 'juice';
+    }
+  }
+  return true;
+}
 
 /// The position of the line of [lines] reading [raw] nearest [position]
 /// (the earlier on a tie), or null when none does.

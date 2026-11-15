@@ -13,6 +13,18 @@ final Logger _log = Logger('edit');
 /// app, as opposed to imported ones which keep their import source.
 const String manualSourceSlug = 'my-recipes';
 
+/// v111 Y5 (1): the longest slug the editor mints an id from (`manual-
+/// <yyyymmdd>-<slug>[-<n>]`), cut before [_availableId] and
+/// [SaltDatabase.availableSlug] read it — a 250-character title folds to a
+/// slug of up to 750 (`½` → `1-2`), and the id is a FILE NAME: NAME_MAX is
+/// 255 bytes, and the longest names derived from an id add `.yaml.tmp` (9,
+/// `writeAtomically`), `.conflict-<yyyyMMddTHHmmss>[-<n>].yaml.tmp` (34;
+/// 36 with `-2`…`-9`, 37 with `-10`…`-99`: `_conflictPathFor`) and
+/// `-<yyyyMMdd-HHmmss>-<8 hex>.<jpg|png|webp>.tmp` (33 / 34, image_ingest) —
+/// every name fits for an id of at most 218. 16 (`manual-YYYYMMDD-`) + 190
+/// + a two-digit `-<n>` = 209, so every derived name is at most 246 bytes.
+const int maxMintedSlugLength = 190;
+
 /// Recipe-document keys a client submission may set.
 ///
 /// Everything else (`id`, `slug`, `schema_version`, `extraction`) is
@@ -72,7 +84,10 @@ EditResult createRecipe(
   var recipe = _recipeFromMap(merged);
   _validateRecipe(recipe);
 
-  final desiredSlug = slugify(recipe.title);
+  final full = slugify(recipe.title);
+  final desiredSlug = full.length <= maxMintedSlugLength
+      ? full
+      : full.substring(0, maxMintedSlugLength).replaceFirst(RegExp(r'-+$'), '');
   if (desiredSlug.isEmpty) {
     throw const ValidationException(
       'Title must contain at least one letter or digit.',
@@ -82,8 +97,20 @@ EditResult createRecipe(
   final slug = db.availableSlug(desiredSlug, ownerId: id);
   recipe = _normalized(recipe).copyWith(id: id, slug: slug);
 
-  db.upsertSource(slug: manualSourceSlug, name: 'My Recipes', type: 'manual');
-  _store(db, config, recipe, sourceSlug: manualSourceSlug, previousHash: null);
+  db.transaction(() {
+    db.upsertSource(
+      slug: manualSourceSlug,
+      name: 'My Recipes',
+      type: 'manual',
+    );
+    _store(
+      db,
+      config,
+      recipe,
+      sourceSlug: manualSourceSlug,
+      previousHash: null,
+    );
+  });
   _log.info('Created recipe ${recipe.id}');
   return (recipe: recipe, sourceSlug: manualSourceSlug, changed: true);
 }
@@ -229,6 +256,9 @@ void deleteRecipe(
 /// Encodes, hashes, upserts, and exports [recipe] (whose slug is already
 /// final). A hand-edited library file that would be overwritten is preserved
 /// as a `.conflict-<timestamp>.yaml` copy by [exportRecipeYaml].
+/// v111 Y5 (2): the upsert and the export in ONE transaction — an export
+/// that throws (an I/O failure: the 500) leaves the database as it was (a
+/// create: no row; an update: the old row).
 void _store(
   SaltDatabase db,
   ServerConfig config,
@@ -237,18 +267,20 @@ void _store(
   required String? previousHash,
 }) {
   final canonical = RecipeYamlCodec.encode(recipe);
-  db.upsertRecipe(
-    recipe,
-    sourceSlug: sourceSlug,
-    contentHash: contentHashOfText(canonical),
-  );
-  exportRecipeYaml(
-    config: config,
-    sourceSlug: sourceSlug,
-    recipeId: recipe.id,
-    canonical: canonical,
-    previousHash: previousHash,
-  );
+  db.transaction(() {
+    db.upsertRecipe(
+      recipe,
+      sourceSlug: sourceSlug,
+      contentHash: contentHashOfText(canonical),
+    );
+    exportRecipeYaml(
+      config: config,
+      sourceSlug: sourceSlug,
+      recipeId: recipe.id,
+      canonical: canonical,
+      previousHash: previousHash,
+    );
+  });
 }
 
 /// `manual-<yyyymmdd>-<slug>`, suffixed `-2`, `-3`, ... until unused.

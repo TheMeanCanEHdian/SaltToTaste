@@ -16,6 +16,10 @@ abstract final class ApiErrorCodes {
   /// The request path is longer than the server reads (HTTP 414; v110 X1).
   static const String uriTooLong = 'uri_too_long';
 
+  /// A `Host` / `X-Forwarded-Host` that would move the routed path, or an
+  /// `X-Forwarded-Proto` that is no scheme (HTTP 400; v111 Y6).
+  static const String badRequest = 'bad_request';
+
   /// An unhandled server error; details appear only in the server logs
   /// (HTTP 500).
   static const String internal = 'internal';

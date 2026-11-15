@@ -139,3 +139,15 @@ both; sw12 129, 52 both; every line set identical base vs tip. sw13 190 = 180 + 
 divergent (all U `unskip-asks`: calls 3 / 6 vs control 0 / 3; all G `gone-asks,gone-partial`, 0536|3 also
 `gone-not-reopened`: the partial `second_food` / underived, calls 5 / 8), tip 0 (U: `food_unavailable` ON the juice;
 G: `food_gone` ON the juice; calls = control + 1; the arrival reads stale); every other sw13 line identical.
+
+v111 (batch fix111, 2026-11-15; docs/API.md "Matcher v111"): sw13 gains (b⁶) THE PEEL STAND-IN (Y1), the mirror of (b⁵):
+per (b′) row, its PEEL's (the row's own record) detail dropped alone (every search answer listing it kept), the stamp
+cleared, compute ×3 under NoNet, the peel ARRIVING through `cachedFood`, one compute (classes peel-counted / -asks /
+-not-reopened / -not-healed / -vacuous; tags `K|…`), judged against a CONTROL (the same drop, the row skipped, compute
+×3). GATE-P base 5beedc4 (a worktree) vs the tip, the tip's sweep scripts on both, 12 shards, fresh snapshot-32 copies,
+calls 0 at every settle, second pass moved 0: sw5 31,713 / sw6 37,400 / sw7 1,872 / sw8 56,868 / sw8r 5,358 / sw9 130
+combos, 0 divergent 0 refused both; sw10 156 (bare and typed) 0 divergent both, sw10.tsv cmp-identical; sw11 39,760, 0
+divergent, 14,070 refused both; sw12 129, 52 both; every line set identical base vs tip. sw13 200 = 195 + 5 K — base 5
+divergent (all K `peel-counted,peel-not-reopened`: the unheld NULL-grams row, calls 0), tip 0 (K: held
+`food_unavailable` on the row's OWN record, held_on null, calls 3 = control 0 + one per compute; the arrival reads
+stale; one compute heals the stored pair — 68.92 / 86.00 / 63.69 / 22.15 / 129.84 g); every other sw13 line identical.

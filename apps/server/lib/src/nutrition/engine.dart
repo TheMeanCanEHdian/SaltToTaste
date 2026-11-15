@@ -14946,13 +14946,17 @@ Future<NutritionProviderException?> _computePass(
     // typed grams kept as the decision, derived grams none.
     final typed = row.gramSource == GramSource.override.name;
     if (fresh()) {
+      // v111 Y1 (c): `held_on` AS COMPUTED — null clears a stored one (a
+      // row held ON the juice whose juice arrived and whose peel failed).
+      final heldOn = _heldOnOf(db, row, recipe, lines[position]);
       db.replaceIngredientMatchIfUnchanged(
         row.copyWith(
           hold: foodUnavailableHold,
           clearGrams: !typed,
           clearGramSource: !typed,
           derivedSeq: derivedKey,
-          heldOn: _heldOnOf(db, row, recipe, lines[position]),
+          heldOn: heldOn,
+          clearHeldOn: heldOn == null,
         ),
         over: over,
         layoutSeq: seq,
@@ -17190,7 +17194,15 @@ List<RankedCandidate> _movedFirst(
 /// [secondFoodRuleOf] counts it: on the rule's record, ranked under the
 /// rule's words, with the rule's grams — what a fresh compute writes, and
 /// what an un-skip of an engine row moves to. Null when no rule applies, or
-/// FDC has no such record; a provider failure fetching it propagates.
+/// FDC has no such record and no cache lists it; a provider failure
+/// fetching it propagates.
+/// v111 Y1 (a): the target is the rule record's DETAIL ([_cachedFood]) — a
+/// cached search hit listing it ([knownFood]'s stand-in, no portions) gave
+/// the pair line no grams and an unheld, fresh row. FDC answering "no such
+/// food" while a search hit lists it: the row on that stand-in, held
+/// `food_gone` on its OWN record (no `held_on`), as a decided row whose own
+/// food FDC no longer serves ([derivedFor]) — re-read cache-only
+/// ([_rereadsHold]), re-opened by the record's arrival.
 Future<({IngredientMatchRow row, FdcFood food})?> _ruleRowFor(
   SaltDatabase db,
   NutritionProvider provider,
@@ -17202,15 +17214,15 @@ Future<({IngredientMatchRow row, FdcFood food})?> _ruleRowFor(
   if (rule == null) {
     return null;
   }
-  final target =
-      knownFood(db, rule.fdcId, line: line) ??
-      await _cachedFood(db, provider, rule.fdcId);
+  final detail = await _cachedFood(db, provider, rule.fdcId);
+  final target = detail ?? knownFood(db, rule.fdcId, line: line);
   if (target == null) {
     return null;
   }
   // v49 (M47 Q6): a two-part rule's second record is fetched by
   // [withParts] (v109 W8: its one fetch, every caller's).
   final outcome = engineOutcome(recipe, line, target, null, picked: true);
+  final gone = detail == null;
   return (
     food: target,
     row: await withParts(
@@ -17233,10 +17245,10 @@ Future<({IngredientMatchRow row, FdcFood food})?> _ruleRowFor(
             dataType: target.dataType,
           ),
         ]).first.confidence,
-        grams: outcome.grams,
-        gramSource: outcome.source,
+        grams: gone ? null : outcome.grams,
+        gramSource: gone ? null : outcome.source,
         status: 'auto',
-        hold: outcome.hold,
+        hold: gone ? foodGoneHold : outcome.hold,
       ),
     ),
   );
@@ -21219,7 +21231,11 @@ int? _heldOnOf(
   }
   final own = row.fdcId;
   final eaten = weighedLine(recipe, line);
-  if (own == null || knownFood(db, own, line: eaten) == null) {
+  // v111 Y1 (b): the own record is its DETAIL too — with both details
+  // uncached a failure on the peel is the row's own (held_on null), never
+  // pinned on the juice. (The parts loop above stays on [knownFood]: it is
+  // [_resolveParts]' test.)
+  if (own == null || _foodFromCache(db, own) == null) {
     return null;
   }
   final second = _pairOf(recipe, eaten, own)?.second?.fdcId;

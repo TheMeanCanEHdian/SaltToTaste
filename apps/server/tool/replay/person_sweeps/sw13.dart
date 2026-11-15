@@ -41,6 +41,12 @@
 //     the row skipped, compute ×3 — + one ask per compute), 'standin-not-reopened' (arrived still derived or fresh),
 //     'standin-not-healed' (healed not the stored pair: no hold, two parts, fresh). Tags 'S|…'. Divergent on the BASE
 //     only.
+// (b⁶) v111 Y1 — THE PEEL STAND-IN, the mirror of (b⁵): for each (b′) row, its PEEL's (the row's own record) DETAIL
+//     dropped alone (every search answer listing it kept), the stamp cleared and compute ×3 under NoNet; then the peel
+//     ARRIVES and one compute. Classes 'peel-counted' (the held pass is not `food_unavailable` on the row's OWN record
+//     — held_on null: the base's unheld NULL-grams stand-in row), 'peel-asks' (more than the CONTROL — the same drop,
+//     the row skipped, compute ×3 — + one ask per compute), 'peel-not-reopened', 'peel-not-healed'. Tags 'K|…'.
+//     Divergent on the BASE only.
 // Base vs tip: the COMBO / ROW lines are diffed (run.sh on each tree). args: settle <snap> <out-db> |
 // sweep <settled-db> <workdir> <shard> <nshards>
 // ignore_for_file: avoid_print, public_member_api_docs, lines_longer_than_80_chars
@@ -752,6 +758,93 @@ Future<void> main(List<String> a) async {
     } catch (e) {
       errs++;
       out.writeln('ERR	$tag	$e');
+    }
+    db.dispose();
+    done++;
+  }
+  // (b⁶) the PEEL stand-in: the row's own record's detail dropped, its search answers kept.
+  for (final (id, pos, _) in picks) {
+    k++;
+    if (k % n != shard) continue;
+    var db = fresh();
+    final path = '$work/db_$shard.db';
+    final stored = db
+        .ingredientMatchesFor(id)
+        .firstWhere((m) => m.position == pos);
+    final peel = stored.fdcId!;
+    final tag = 'K|$id|$pos|$peel';
+    try {
+      db.dispose();
+      String drop() {
+        final c = raw.sqlite3.open(path);
+        final detail =
+            c.select('SELECT response FROM fdc_food_cache WHERE fdc_id = ?', [
+                  peel,
+                ]).first['response']
+                as String;
+        c.execute('DELETE FROM fdc_food_cache WHERE fdc_id = ?', [peel]);
+        c.dispose();
+        return detail;
+      }
+
+      // The CONTROL: the recipe's OTHER rows under the same drop.
+      drop();
+      db = SaltDatabase.open(path);
+      calls = 0;
+      final skipRecipe = nutritionRecipeOf(db, id)!.recipe;
+      await applyMatchOverride(db, NoNet(), skipRecipe, pos, {
+        'raw': nutritionLines(skipRecipe)[pos].raw,
+        'skipped': true,
+      });
+      for (var p = 0; p < 3; p++) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final control = calls;
+      db.dispose();
+      fresh().dispose();
+      final detail = drop();
+      db = SaltDatabase.open(path);
+      String pass(String name) {
+        final r = db
+            .ingredientMatchesFor(id)
+            .firstWhere((m) => m.position == pos);
+        return '$name:${r.status}:${r.fdcId}:${g(r.grams)}:${r.hold}:${r.heldOn}:${r.derivedSeq != null}:'
+            '${nutritionIsFresh(db, nutritionRecipeOf(db, id)!.recipe) ? 'fresh' : 'stale'}:${r.parts == null ? 0 : (jsonDecode(r.parts!) as List).length}';
+      }
+
+      final standIn = knownFood(db, peel) != null;
+      calls = 0;
+      db.clearDerivedSeq(id, [pos]);
+      for (var p = 0; p < 3; p++) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final held = pass('held');
+      final asked = calls;
+      await cachedFood(db, Serve(detail), peel);
+      final arrived = pass('arrived');
+      await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      final healed = pass('healed');
+      final h = held.split(':');
+      final bad = <String>[
+        if (!standIn) 'peel-vacuous',
+        if (h[4] != 'food_unavailable' || h[5] != 'null') 'peel-counted',
+        if (asked > control + 3) 'peel-asks',
+        if (!arrived.contains(':false:stale')) 'peel-not-reopened',
+        if (healed !=
+            'healed:${stored.status}:${stored.fdcId}:${g(stored.grams)}:null:null:${stored.derivedSeq != null}:fresh:2')
+          'peel-not-healed',
+      ];
+      out.writeln(
+        'COMBO\t$tag\tstandin=$standIn\t$held\t$arrived\t$healed\tcalls=$asked\tcontrol=$control',
+      );
+      out.writeln('ROW\t$tag\thealed\t${state(db, id)}');
+      if (bad.isNotEmpty) {
+        div++;
+        out.writeln('DIV\t$tag\t${bad.join(',')}');
+      }
+    } catch (e) {
+      errs++;
+      out.writeln('ERR\t$tag\t$e');
     }
     db.dispose();
     done++;

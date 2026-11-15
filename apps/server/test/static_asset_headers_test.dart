@@ -676,11 +676,15 @@ void main() {
     Map<String, String> headers = const {},
     int? port,
     String method = 'GET',
+    String body = '',
+    String? host = 'x',
   }) async {
     final socket = await Socket.connect('127.0.0.1', port ?? server.port);
     socket.write(
-      '$method $path HTTP/1.1\r\nHost: x\r\nConnection: close\r\n'
-      '${headers.entries.map((e) => '${e.key}: ${e.value}\r\n').join()}\r\n',
+      '$method $path HTTP/1.1\r\n${host == null ? '' : 'Host: $host\r\n'}'
+      'Connection: close\r\n'
+      '${headers.entries.map((e) => '${e.key}: ${e.value}\r\n').join()}'
+      '\r\n$body',
     );
     final out = await utf8.decoder.bind(socket).join();
     socket.destroy();
@@ -1501,9 +1505,10 @@ void main() {
       // 10,165 ms (its mutant, killed here) — the bound is 70× the former.
       expect(sw.elapsedMilliseconds, lessThan(backstopMs ~/ 20));
       // The cap at the bound: 2,048 one-character segments (4,095
-      // characters, the most a request reaching the join holds) 1,000
-      // times. Measured: 41 ms (the quadratic join 449 ms — this shape
-      // alone does NOT separate them; the 200,000 one above does).
+      // characters — v111 Y7: the most a request reaching the join holds
+      // is 4,096, `maxRequestPathLength`) 1,000 times. Measured: 41 ms
+      // (the quadratic join 449 ms — this shape alone does NOT separate
+      // them; the 200,000 one above does).
       final longest = List.filled(2048, 'a');
       sw = Stopwatch()..start();
       for (var i = 0; i < 1000; i++) {
@@ -1637,6 +1642,12 @@ void main() {
         ('GET', const {}, '/${'a' * 4097}'),
         // Every method: an over-bound TRACE is 414, not 405 (STATED).
         ('TRACE', const {}, slashes(4097)),
+        // v111 Y3 (Run 091/092 S4 / O5): and a body-carrying POST, OPTIONS
+        // and a token dart_frog cannot name (a bound narrowed by method
+        // passed every row above).
+        ('POST', const {'content-length': '2'}, slashes(4097)),
+        ('OPTIONS', const {}, slashes(4097)),
+        ('FOO', const {}, slashes(4097)),
       ];
       for (final (method, headers, path) in over) {
         final (status, h, body) = await raw(
@@ -1644,6 +1655,7 @@ void main() {
           headers: headers,
           method: method,
           port: port,
+          body: method == 'POST' ? '{}' : '',
         );
         final why = '$method $headers ${path.substring(path.length - 20)}';
         expect(status, HttpStatus.requestUriTooLong, reason: why);
@@ -1685,6 +1697,8 @@ void main() {
       for (final path in [
         '/${List.filled(200000, 'a').join('/')}',
         slashes(4097),
+        // v111 Y3 (Run 091/092 S4 / O6): the ROUTES arm's prefix too.
+        '/api/v1/recipes/${'a' * 4097}',
       ]) {
         entered = 0;
         count.calls = 0;
@@ -1696,6 +1710,237 @@ void main() {
         );
       }
     });
+  });
+
+  // v111 Y6 (the launcher's GAP 4, unionY/b B1): dart:io builds the
+  // requested URI from X-Forwarded-Proto + X-Forwarded-Host (else Host) +
+  // the request-line target, and shelf routes on it — `GET /` + `Host:
+  // h/main.dart.js?` was served the file, `h/api/v1/recipes?` the route's
+  // 401, `h/healthz?` /healthz, and an over-bound request LINE + such a
+  // header 200 (its bytes became query). v111: a Host / X-Forwarded-Host
+  // holding `/`, `?`, `#` or `\`, or an X-Forwarded-Proto that is no scheme
+  // token, is 400 `bad_request` after the 414 and before anything else.
+  // Each table on the PRODUCTION bind (anyIPv6) and on loopback IPv4.
+  // STATED synthesized requests (no browser sends them; the union's rows).
+  group('v111 Y6 a header that moves the routed path is refused', () {
+    final a4100 = 'a' * 4100;
+    // (line, method, host, headers, body): host null = no Host line.
+    final refuse = <(String, String, String?, Map<String, String>, String)>[
+      ('/', 'GET', 'localhost/main.dart.js?', const {}, ''), // R1
+      (
+        '/',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': 'localhost/main.dart.js?'},
+        '',
+      ), // R2
+      (
+        '/',
+        'GET',
+        'localhost',
+        {'x-forwarded-proto': 'http://localhost/main.dart.js?'},
+        '',
+      ), // R3
+      (
+        '/main.dart.js',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': 'localhost/r/abc?'},
+        '',
+      ), // R8
+      (
+        '/',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': 'localhost/api/v1/recipes?'},
+        '',
+      ), // R9
+      (
+        '/',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': 'localhost/healthz?'},
+        '',
+      ), // R10
+      (
+        '/$a4100',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': 'localhost/main.dart.js?'},
+        '',
+      ), // R12
+      (
+        '/api/v1/recipes?q=a',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': 'localhost/api/v1/recipes?q=zz&'},
+        '',
+      ), // R19
+      // A backslash moves the path as a slash does (base: the file).
+      ('/', 'GET', r'localhost\main.dart.js', const {}, ''),
+      (
+        '/',
+        'GET',
+        'localhost',
+        {'x-forwarded-host': r'localhost\main.dart.js'},
+        '',
+      ),
+      // `?` and `#` in a Host that X-Forwarded-Host overrides (alone, with
+      // no `/`, either is a bare pre-pipeline 500 — the path is empty).
+      ('/', 'GET', 'localhost?x', {'x-forwarded-host': 'localhost'}, ''),
+      ('/', 'GET', 'localhost#x', {'x-forwarded-host': 'localhost'}, ''),
+      // TWO X-Forwarded-Proto lines (the CRLF inside the value writes the
+      // second line on the raw socket; shelf joins them with `,`): every
+      // piece must be a scheme token — the first line is the one dart:io
+      // routes on, the second is refused for the rule's sake.
+      (
+        '/',
+        'GET',
+        'localhost',
+        {
+          'x-forwarded-proto':
+              'http://localhost/main.dart.js?\r\nX-Forwarded-Proto: https',
+        },
+        '',
+      ),
+      (
+        '/',
+        'GET',
+        'localhost',
+        {
+          'x-forwarded-proto':
+              'https\r\nX-Forwarded-Proto: http://localhost/main.dart.js?',
+        },
+        '',
+      ),
+      // Every method: a body-carrying POST and OPTIONS.
+      ('/', 'POST', 'localhost/main.dart.js?', {'content-length': '2'}, '{}'),
+      (
+        '/',
+        'OPTIONS',
+        'localhost',
+        {'x-forwarded-host': 'localhost/main.dart.js?'},
+        '',
+      ),
+    ];
+    final pass = <(String?, Map<String, String>)>[
+      ('localhost', const {}),
+      ('localhost:8080', const {}),
+      ('127.0.0.1:8080', const {}),
+      ('[::1]:8080', const {}),
+      ('example.com.', const {}),
+      ('my_host.example', const {}),
+      ('EXAMPLE.COM', const {}),
+      ('xn--bcher-kva.example', const {}),
+      ('localhost', {'x-forwarded-host': 'a.example, b.example'}),
+      ('localhost', {'x-forwarded-host': 'a.example,b.example'}),
+      ('localhost', {'x-forwarded-proto': 'http'}),
+      ('localhost', {'x-forwarded-proto': 'https'}),
+      ('localhost', {'x-forwarded-proto': 'HTTPS'}),
+      // Two X-Forwarded-Proto lines, each a scheme (a proxy chain that ADDS
+      // its line): answered as at v110 — the fix batch's joined-value rule
+      // refused it (owner gate).
+      ('localhost', {'x-forwarded-proto': 'https\r\nX-Forwarded-Proto: http'}),
+    ];
+
+    for (final bind in [
+      InternetAddress.anyIPv6,
+      InternetAddress.loopbackIPv4,
+    ]) {
+      test('${bind.type.name}: the refuse table is a 400 bad_request (the '
+          'envelope, a fresh id, no-cache, the security headers) with the '
+          'inner handler never entered and 0 file-system calls; the pass '
+          'table is answered as before; the 414 stays first', () async {
+        var entered = 0;
+        var routed = '';
+        final count = _CountingIO();
+        final counted = await IOOverrides.runWithIOOverrides(
+          () => serve(
+            buildOutermostMiddleware((c) {
+              entered++;
+              routed = c.request.uri.path;
+              return Response(statusCode: HttpStatus.notFound);
+            }, publicDir: publicDir.path),
+            bind,
+            0,
+          ),
+          count,
+        );
+        addTearDown(() => counted.close(force: true));
+        final (_, notAllowed, _) = await raw(
+          '/main.dart.js',
+          method: 'TRACE',
+          port: counted.port,
+        );
+        Map<String, String> fixed(Map<String, String> h) => {
+          for (final e in h.entries)
+            if (!{
+              'date',
+              'content-length',
+              'x-request-id',
+              'allow',
+            }.contains(e.key))
+              e.key: e.value,
+        };
+        for (final (line, method, host, headers, body) in refuse) {
+          entered = 0;
+          count.calls = 0;
+          final (status, h, out) = await raw(
+            line,
+            method: method,
+            host: host,
+            headers: headers,
+            body: body,
+            port: counted.port,
+          );
+          final short = line.length > 30 ? line.substring(0, 30) : line;
+          final why = '$method $short $host $headers';
+          expect(
+            (status, entered, count.calls),
+            (HttpStatus.badRequest, 0, 0),
+            reason: why,
+          );
+          expect(h['cache-control'], 'no-cache', reason: why);
+          expect(fixed(h), fixed(notAllowed), reason: why);
+          final error = (jsonDecode(out) as Map)['error'] as Map;
+          expect(
+            (error['code'], error['request_id']),
+            ('bad_request', h['x-request-id']),
+            reason: why,
+          );
+          expect(h['x-request-id'], matches(RegExp(r'^[0-9a-f]{16}$')));
+        }
+        for (final (host, headers) in pass) {
+          entered = 0;
+          routed = '';
+          final (status, _, _) = await raw(
+            '/',
+            host: host,
+            headers: headers,
+            port: counted.port,
+          );
+          // The path the inner handler was ROUTED: the request line's `/`,
+          // unmoved (it answers 404 for any path, so the status alone could
+          // not tell a moved one; the hand-edit verifier's VA2).
+          expect(
+            (status, entered, routed),
+            (HttpStatus.notFound, 1, '/'),
+            reason: '$host $headers',
+          );
+        }
+        // THE ORDER: an over-bound header-derived path that also holds a
+        // `/` is the 414 (R11).
+        entered = 0;
+        final (over, _, overBody) = await raw(
+          '/',
+          host: 'localhost',
+          headers: {'x-forwarded-host': 'localhost/$a4100'},
+          port: counted.port,
+        );
+        expect((over, entered), (HttpStatus.requestUriTooLong, 0));
+        expect(overBody, contains('uri_too_long'));
+      });
+    }
   });
 
   group('v108 V2 one gate for a method dart_frog cannot name', () {

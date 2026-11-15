@@ -130,7 +130,65 @@ temporary password with `must_change_password`: until the user calls
   QUERY, which `url.path` excludes. STATED: a recipe SLUG has no validator —
   a hand-edited YAML slug over ~4,060 ASCII characters (corpus max 82) would
   414 on its own slug routes and its `/r/<slug>` deep link; the recipe stays
-  reachable by id.)
+  reachable by id.) (Corrected 2026-11-15, v111 Y5 / Y7: "a recipe id ≤ 250
+  (a file name)" was FALSE — no cap existed: the editor minted a 266-character
+  id from a 250-character title and a 766-character one from 250 `½`, each
+  POST a 500 that left the row behind. Since v111 an editor-minted id is ≤ 209
+  (`maxMintedSlugLength`, the slug cut at 190) and an imported one ≤ 218
+  (`maxRecipeIdLength` in `isSafeRecipeId`). The image path's 518 counts
+  UNENCODED characters. The bound reads the HEADER-derived `url.path` (dart:io
+  builds it from `X-Forwarded-Host` / `Host` + the request line): a header
+  that would move the path is a 400 `bad_request` since v111 Y6, below. Over
+  the bound the residual is MEASURED (in-process, one run each, a small
+  request on another connection ~6 ms after the big one): it waits about the
+  414's own time — 69.1 ms behind a 400 KB path (the 414 74.6 ms), 51.4 ms
+  behind 1 MB (the 414 56.7 ms); the union's run 66.0 / 51.3 ms. dart:io's
+  parse blocks the isolate for the request's own parse time and bounds it at
+  1 MiB. The v110 deploy record's "/healthz at +50 ms … 1 ms" was sent after
+  the 414 had answered.)
+- A Host or forwarded header that would MOVE the routed path is refused
+  (v111 Y6, 2026-11-15): dart:io builds the requested URI as
+  `X-Forwarded-Proto` (else the socket's scheme) + `X-Forwarded-Host` (else
+  `Host`) + the request-line target, with no trust check, and shelf routes
+  on it — `GET /` + `Host: h/main.dart.js?` was served the file, `h/api/v1/
+  recipes?` the route's 401, `h/healthz?` /healthz, and an over-bound
+  request LINE + such a header 200 (its bytes became query). Nothing was
+  reachable at the app that the client could not request directly; it
+  defeats path rules, limits, logs and caches IN FRONT of the app. Now: a
+  `host` or `x-forwarded-host` value holding `/`, `?`, `#` or `\`, or an
+  `x-forwarded-proto` value with a comma-separated piece that is not a
+  scheme token (`^[A-Za-z][A-Za-z0-9+.-]*$`), is a **400 `bad_request`** —
+  after the 414
+  (an over-bound header-derived path is still the 414), before the request
+  id is provided, the method read or anything else; the uniform envelope
+  with a fresh id, `no-cache`, the security headers; any method; NOT
+  logged. The RAW values are read (shelf joins repeated lines with `,`);
+  `x-forwarded-proto` piece by piece.
+  Answered as before: Host `localhost`, `localhost:8080`, `127.0.0.1:8080`,
+  `[::1]:8080`, `example.com.`, `my_host.example`, `EXAMPLE.COM`,
+  `xn--bcher-kva.example`; `X-Forwarded-Host: a.example, b.example` (two
+  lines too); `X-Forwarded-Proto` `http`, `https`, `HTTPS`, `javascript`,
+  and TWO `X-Forwarded-Proto` lines each a scheme (`https` then `http`, a
+  proxy chain that adds its own line: dart:io routes on the first, no path
+  moves — the fix batch's rule read the joined `https,http` and refused it;
+  narrowed in the owner gate, pinned).
+  Refused that routed nothing before (measured, STATED): an absolute-form
+  request line with such a header (dart:io ignores the header there); a
+  `Host` with `?` or `#` that an `X-Forwarded-Host` overrides; a SECOND
+  `X-Forwarded-Proto` line that is no scheme (the first is the one that
+  routes).
+  **Deployment fact:** the proxy in front must send `Host`, an ORIGIN-FORM
+  request target, and never a comma LIST of `X-Forwarded-Proto` values in
+  ONE line (`https,http` and `https, http`: a bare pre-pipeline 500 at v110
+  and at v111, both binds — measured in the hand-edit verify).
+  STATED, PRE-EXISTING, NOT CHANGED (the hand-edit verify's VA3; measured
+  in-process at v110 and at v111, both binds): the check reads HEADERS only.
+  A request target that is not origin-form is joined as text onto
+  `scheme://host`, so `GET @x/main.dart.js` routes `/main.dart.js` (host
+  `x`) and `GET .x/main.dart.js` routes `/main.dart.js` (host
+  `localhost.x`) with every header passing. Nothing is reached that `GET
+  /main.dart.js` does not reach; a proxy that forwarded such a target would
+  let it past its own path rules (whether any proxy does: not measured).
   (Corrected 2026-11-13, v109 W17: v108 read "a 500 the SEVERE throttle
   suppressed" unqualified — false for the ROUTES arm, whose `errorHandler`
   sits inside `requestLogger`: 29 suppressed routed 500s of the V1 trigger
@@ -144,6 +202,21 @@ temporary password with `must_change_password`: until the user calls
   *`, `GET *`, a relative target (`GET main.dart.js`), a path-less absolute
   one (`GET http://x#a`, `GET http://x?/../main.dart.js`) and an
   `X-Forwarded-Host` holding `#` (500, not the 400 an earlier record named).
+  (Added 2026-11-15, v111 Y6, measured in-process on BOTH binds: an ABSENT
+  `Host` on the production bind (`InternetAddress.anyIPv6`: the fallback
+  authority `:::8080` does not parse) → bare 500 with a stderr stack — on an
+  IPv4 loopback bind the same request is a 200; an `X-Forwarded-Host` of
+  `h/x#` or holding `%FF` → bare 400; a `Host` / `X-Forwarded-Host` holding
+  `?` or `#` with no `/` before it (an empty path) → bare 500; a malformed
+  `X-Forwarded-Proto` (`ht tp`; a comma LIST from chained proxies in ONE
+  line) → bare 500, `http:` → bare 400. Not changed: `main.dart`'s bind and
+  `run()` stay; owning the listen loop is the owner's backlog decision.)
+- Bare shelf_static serves a static file to EVERY method the 405 gate lets
+  through — `POST` and `OPTIONS` included, the whole file with its ETag
+  (STATED 2026-11-15, v111 Y7; measured in-process: `POST /main.dart.js` and
+  `OPTIONS /main.dart.js` → 200 text/javascript; pinned since v106 in
+  static_asset_headers_test.dart 'a POST with a matching If-None-Match is
+  never a 304').
   No in-app fix exists: dart_frog 1.2.6's `serve` is `shelf_io.serve` over
   `RequestContext._` (private), and its `toShelfHandler` /
   `toShelfMiddleware` are not exported, so nothing of ours runs before
@@ -163,6 +236,7 @@ temporary password with `must_change_password`: until the user calls
   | `not_found` | 404 | Resource (or route) does not exist |
   | `method_not_allowed` | 405 | Route exists; HTTP method not supported |
   | `uri_too_long` | 414 | The request path (`url.path`, the query excluded) is longer than 4,096 characters — refused before anything reads the request (v110 X1) |
+  | `bad_request` | 400 | A `Host` / `X-Forwarded-Host` holding `/`, `?`, `#` or `\` (it would move the routed path), or an `X-Forwarded-Proto` that is no scheme token — refused right after the 414 check (v111 Y6) |
   | `unauthorized` | 401 | Missing/expired/revoked credential — sign in |
   | `forbidden` | 403 | Authenticated but not permitted (role or scope) |
   | `csrf` | 403 | Cookie-authed request that cannot prove it is not cross-site: a mutation missing `X-Requested-With: SaltToTaste`, or a [side-effectful GET](#cross-site-gets) missing both that header and a same-origin `Sec-Fetch-Site` |
@@ -241,9 +315,15 @@ editable keys `title` (required), `servings`, `category`, `tags`, `times`,
 `background`, `prep_notes`, `ingredients`, `steps`, `subsections`,
 `techniques`, `images`, `notes`, plus `source.name`/`source.url`.
 Server-owned fields are generated: id `manual-<yyyymmdd>-<slug>`, slug from
-the title (uniqued), `schema_version`, `serves` (parsed from `servings`);
+the title (uniqued; since v111 Y5 CUT to 190 characters, a trailing `-`
+trimmed — a 250-character title is legal and its id is at most 209, so every
+file name derived from it fits 255 bytes), `schema_version`, `serves`
+(parsed from `servings`);
 steps are renumbered sequentially; tags are lowercased and de-duplicated.
 The canonical YAML is exported to `library/my-recipes/recipes/<id>.yaml`.
+The row and the export are ONE transaction (v111 Y5): an export that fails
+(an I/O error → `500`) leaves no row and no reserved slug — and an update's
+failed export (`PUT`) keeps the old row.
 
 → `201` with the detail body (below). Invalid shapes/values → `422` with a
 field-naming message.
@@ -378,7 +458,15 @@ without attaching it. → `201 {"reference": "images/<file>"}`.
 `{"last_scan": {…} | null}` — the report of the most recent reconciliation
 scan (also runs at every server start). Report fields: `started_at`,
 `elapsed_ms`, `files_seen`, `updated_from_disk`, `added`, `re_exported`,
-`skipped` (`[{file, reason}]`), `conflict_files`.
+`skipped` (`[{file, reason}]`), `conflict_files`, and — only when > 0 —
+`export_failed` (int, v111 Y5: missing exports the self-heal could not write,
+e.g. an id from before v111 over the file-name limit; the scan goes on, the
+report is persisted, ONE SEVERE record per scan names up to 8 ids). A
+library file named by an id over 218 characters is skipped
+(`unsafe file name`), as an import of such an `id:` fails (v111 Y5) —
+including the own file of a row stored before v111 with such an id, which
+is then re-exported on every scan and never reconciled from a hand edit
+(STATED; no such row on any measured library).
 
 ### `GET /api/v1/admin/recipe_review?issue=&page=&limit=` (admin)
 
@@ -670,7 +758,8 @@ Reconcile the YAML library with the database now: a cleanly hand-edited
 file **wins** (imported, then normalized back to canonical form), a
 malformed file is skipped with a reason (the database version stays), a
 missing export is re-materialized, and a hand-dropped new file is imported.
-→ `200 {"last_scan": {…}}`.
+→ `200 {"last_scan": {…}}` — also when a missing export cannot be written
+(`export_failed`, v111 Y5; it was a 500 that left the report unpersisted).
 
 ### `GET | POST /api/v1/backups` (admin; POST full scope)
 
@@ -2208,9 +2297,14 @@ food caches, so every compute re-reads a `food_gone` row's food from the
 caches (no request) and derives it again the moment one holds it (a search
 answer listing it again: 0857's flour counts its 248 g, the matches GET and
 the row agreeing). **`match.held_on`** (v110 X3): the FDC id a `food_gone` /
-`food_unavailable` hold waits on, served ONLY when it is not the row's own
-`fdc_id` — a zest-plus-juice row (rule B1) held on its JUICE while the row
-shows the peel; the key is absent otherwise (no other body changed). The
+`food_unavailable` hold waits on, served ONLY when it is a PAIR's second
+record (the juice) — a zest-plus-juice row (rule B1) held on its JUICE while
+the row shows the peel; the key is absent otherwise (no other body changed).
+(Corrected 2026-11-15, v111 Y2: v110 served it for ANY record other than the
+row's food, so a rule B1 BACON row held on one of its own parts — 0040 line
+5, held on 168322 — read "this line's second food"; since v111 a parts row's
+hold reads "this food": the key is served when `held_on` is no stored part,
+or the part stored under it has role `juice`.) The
 app's hold label and its how-it-finishes line then name "this line's second
 food". Two confirms are refused (422) on such a hold, each message naming
 "this line's second food": a confirm of the stored held row, and a confirm
@@ -5243,6 +5337,407 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v111 (batch fix111; matcherVersion 97 UNCHANGED — the fixes of
+dual-fleet review Run 091/092 over v110, union Y1–Y9, the spec
+.claude/diag/2026-11-15/review091/union_Y.md, the rulings in fix111_brief.md
+(the orchestrator's, under the owner's standing authorization 2026-10-07);
+Y6 and Y5 lie outside the matcher and are flagged to the owner; Y8 (the
+kits) is the orchestrator's. No migration; NO corpus row moves — the replay
+on snapshot 32 is byte-identical to the v110 set, calls 0. ONE new error
+code, 400 `bad_request` (Y6); ONE optional report field, `export_failed`
+(Y5). This section cites symbols, grep commands and hit counts — never a
+line number.)**
+- **Y1 (MED) — the rule row's target is its DETAIL.** v110 X2 moved the
+  pair row's SECOND record to its detail; `_ruleRowFor`'s target still read
+  `knownFood` FIRST — a cached SEARCH hit, no portions — so with the peel's
+  detail uncached and a search answer listing it, 0536 line 3 was stored
+  `auto`, UNHELD, grams NULL, FRESH, 0 asks, never re-opened (591.13 for
+  603.92 kcal per serving, re-measured here; the four other pair rows alike
+  in unionY/a A1). Reach on a fresh
+  library (unionY/a A1, a simulation from snapshot 32's recorded answers): 0
+  in corpus id order and in the bulk job's order; all five pair rows after
+  an admin's food search or in a subset order. Base == v109 (not a
+  regression). (a) FIX: `_ruleRowFor` reads `await _cachedFood(db, provider,
+  rule.fdcId)` FIRST and falls to `knownFood`'s stand-in ONLY when FDC
+  answers "no such food" — then the row is built on the stand-in HELD
+  `food_gone` on its OWN record (no `held_on`, grams none), the state
+  `derivedFor` writes for a decided row whose own food FDC no longer serves:
+  re-read cache-only by `_rereadsHold` (ONE ask at the transition, 0 after),
+  out of the totals by the hold, re-opened by `unholdOn` at the record's
+  arrival. MEASURED (the union's A3 probe from the main checkout, base vs
+  tip, 0536 line 3, the peel's detail dropped, an "orange peel" answer
+  cached): compute + FDC serving — base 0 asks, NULL grams, fresh 591.13 →
+  tip 1 ask, 86.0 g (zest 24 + juice 62), fresh 603.92; a FOOD failure —
+  base the NULL row fresh → tip 1 ask, the failure returned, the row as
+  stored (86.0) stale, the next compute heals; a GLOBAL failure — tip
+  thrown, the row as stored; GONE — base the unheld NULL row fresh, 0 asks →
+  tip 1 ask, `food_gone`, held_on null, stale after that compute (the
+  shipped engine shape of a no-record hold: `underivedSql`'s `auto` arm),
+  fresh after the next, 0 asks; the confirm arm IDENTICAL in all four; the
+  un-skip's PUT IDENTICAL (held `food_unavailable`), its next compute base
+  the unheld NULL row fresh → tip the hold kept, fresh, 0 asks; the matches
+  GET 0 asks in every case. (b) O8, a v110 REGRESSION vs v109:
+  `_heldOnOf`'s own-record test read `knownFood`, so with BOTH details
+  uncached and the PEEL failing, a confirm's hold was pinned on the juice
+  (held_on 169098, "this line's second food"); FIX: the test reads
+  `_foodFromCache` — v109's output again (held_on null, "this food"). (c) A
+  RE-HOLD WRITES held_on AS COMPUTED (Opus critic 1, reproduced):
+  `IngredientMatchRow.copyWith` keeps `heldOn` on a null argument, and
+  `countFoodFailure` passed `_heldOnOf(…)`, which answers null for "the
+  row's own record" — a row held ON the juice whose juice then ARRIVED and
+  whose PEEL then failed under the `all` scope stayed `held_on: 169098`,
+  served and worded "second food" (the confirm arm at base; with (a) the
+  engine arm too). FIX: `copyWith` gains `clearHeldOn` (default false — no
+  caller's meaning moves) and `countFoodFailure` writes `heldOn: heldOn,
+  clearHeldOn: heldOn == null`. LIMIT: `grep -rn 'heldOn:'
+  apps/server/lib/src` → 8: the row reader; `copyWith`'s own field; withParts'
+  `food_gone` ON the juice (always non-null); `countFoodFailure` (CHANGED);
+  the two cache-only re-read arms (`markDerivedIfUnchanged(heldOn: (id:
+  heldOn))`, already set-or-clear); the un-skip's `unavailable()` (`out` is
+  built with `clearHold: true`, so its held_on is already null); `withDerived`
+  (a carrier of `derivedFor`'s rows — its one re-hold that could carry a
+  stale value, the own-food-gone arm, MEASURED unreached: on A6's gone
+  variant the confirm arm's `onCache` is the peel's stand-in and `gramsFor`'s
+  404 arm caches it — STATED below). `grep -rn '_ruleRowFor(' apps/server/lib`
+  → 4 (the definition; the compute's engine arm under `lineProvider`; the
+  decided-key row; the un-skip). `grep -rn 'knownFood(' apps/server/lib` →
+  31 (was 32: the own-record test moved); `grep -rn '_foodFromCache('
+  apps/server/lib` → 19 (was 18).
+  STATED, NOT CHANGED: `withParts`' zest read (`rule.gramsOn(knownFood(db,
+  rule.fdcId, line: line))`) — moving it changes nothing on any probed path
+  (unionY/a A4 (a): after (a) the target is the detail or FDC has none);
+  `_heldOnOf`'s PARTS LOOP stays on `knownFood` — it is `_resolveParts`' own
+  test ("the part it failed to fetch"), and moving it alone BREAKS (A4 (c):
+  held_on names a part never asked; the failing part's arrival no longer
+  re-opens) — pinned (Y4 S7 (b)); `gramsFor`'s 404 arm caches the search hit
+  AS the food (intended since 13030d0), so a cached "detail" can be a
+  stand-in: a RETIRED juice's pair row ends `second_food` (the peel alone,
+  fresh) once another line's `gramsFor` has cached it, or `food_gone` ON the
+  juice then `second_food` in the other order (Opus critic 2, reproduced
+  A5); no field tells a stand-in row from a real detail (one key set; 64
+  portion-less rows of 1,142, at least 51 real details) and both measured
+  candidates never heal — the fix needs a marker (a migration): BACKLOG.
+  MEASURED, NOT BUILT: (d) a confirm WITH `apply_to_all` on the UNHELD pair,
+  the juice's detail dropped (both caches, and the stand-in state), a FOOD
+  outage on the juice: ACCEPTED, 1 ask, the row (confirmed, hold null,
+  held_on null, 86.0 g, both parts) stale — IDENTICAL to the plain confirm in
+  both states (the decided arm's v36 outage: the stored pair kept underived,
+  never a fresh partial), held `food_unavailable` ON the juice after 3
+  computes either way — one rule already. (e) The half rule's twin: on a
+  fresh library simulated from snapshot 32 (the union's harness + 175206 and
+  1075 line 1, in a scratch worktree), 1075 line 1 (chickpeas 2644288) is
+  stored with its two parts (drained 2644288 240.26 g + undrained 175206
+  425.24 g = 665.5 g, fresh, 692.1 kcal) in corpus id order AND in the bulk
+  job's order (1,342: 144 sections first); the twin first listed by 0026
+  Harira ("chickpeas") and first fetched by 0340 Pasta e Ceci in both —
+  STATED.
+  Pins (nutrition_v111_test, corpus-gated; the dropped details and the
+  provider faults STATED synthesized negative paths, as v110 X2's): Y1 (a)
+  serving (asks [169103], 86.0 g, parts [169103, 169098], 603.92, fresh; the
+  GET 0 asks), a FOOD and a GLOBAL failure (1 ask; returned / thrown; the row
+  as stored, stale; the heal), GONE (1 ask → `food_gone`, held_on null, parts
+  none, 591.13; computes 2 and 3 ask 0; the body's hold and NO `held_on` key;
+  the arrival re-opens; the heal), the un-skip's next compute (0 asks, the
+  hold kept, fresh, 591.13; the arrival heals), a DENSITY row (0142 line 8,
+  lemon peel 167749: serving 1 ask → the stored pair, 68.92 g, the kcal as
+  before; gone 1 ask → `food_gone`, no more asks); Y1 (b) O8 and its control
+  (the stored row, the body, the 422 "USDA could not serve this food — pick
+  another food or skip the line.") on the orange rule AND on the density
+  pair 0142 line 8 (owner gate: the own-record test narrowed to the orange
+  peel 169103 survived the orange row alone — now (confirmed, 167749,
+  `food_unavailable`, held_on null) expected, held_on 167747 actual); Y1 (c) A6 on the engine and confirm arms
+  × `retryUnavailable` false / true (held ON the juice first — not vacuous;
+  then held_on null, no key, the plain 422; asks 3 / 0). Mutants (each by a
+  value): the read order swapped back (Expected [169103] Actual []); the gone
+  arm left unheld (`food_gone` expected, null actual); the gone arm asking
+  again (the engine arm's `_ruleRowFor` under `provider` for `lineProvider`:
+  Expected 1 Actual 2); the stand-in fallback dropped (`food_gone` expected,
+  null actual); the own-record test back on `knownFood` (held_on null
+  expected, 169098 actual); the clear removed (held_on null expected, 169098
+  actual).
+- **Y2 (LOW, a v110 regression) — "second food" only for a PAIR's second
+  record.** `_heldOnOther` read `held_on != null && held_on != fdc_id`
+  alone, and `_heldOnOf`'s parts loop stamps a rule B1 BACON row with its own
+  uncached part: 0040 Wilted Spinach Salad line 5 (row 168277, parts 168322 +
+  172345) held on 168322 was served `held_on: 168322`, refused "USDA could
+  not serve this line's second food" and labelled so by the app (v109: no
+  key, "this food"). FIX (nutrition_handlers.dart `_heldOnOther`): also
+  `held_on` is no stored part, OR the part stored under it has role `juice`
+  — the role read by one `jsonDecode` of `parts` there (`partsOf` carries no
+  role). The app reads the key's presence: no app change. LIMIT: `grep -rn
+  '_heldOnOther(' apps/server/lib` → 4 (the definition, the body key, the
+  action-table gate, the `apply_to_all` refusal — all three readers move
+  together). BEFORE / AFTER (the union's C1 probe from the main checkout;
+  v109 from unionY/c C1 (ii)): 1a the pair gone confirmed, 1b the un-skip's
+  auto row, 1c the pair held ON its juice with its parts kept — the key and
+  "second food" at base and tip; 2 the bacon row — base key 168322 + "this
+  line's second food" → tip NO key + "USDA could not serve this food — pick
+  another food or skip the line." (= v109); O8 — moved by Y1 (b); the half
+  rule's five shapes unheld or unsplit, identical. Pins: nutrition_v111_test
+  'Y2' (the bacon row in v103 U5's state: no key, the plain 422; state 1c:
+  the key 169098, "second food"); match_wording_test 'v111 Y2' (a held row
+  with `held_on` ABSENT reads "USDA kept failing to send this food" and
+  "cannot count a food USDA cannot serve now"). Mutants: the predicate back
+  to `!= fdc_id` and the role test as `true` (the bacon pin: Expected false
+  Actual true); the role test as `false` (state 1c: Expected 169098 Actual
+  null).
+- **Y4 (LOW) — pins for the fleets' surviving mutants.** S5
+  (match_wording_test 'v111 Y4 S5'): an AUTO row held ON the juice (the
+  un-skip's shape, no grams), both holds — the label and the explanation name
+  the line's second food; the two app sites narrowed to `status != 'auto'`
+  die ("Found 0 widgets"). S6 (nutrition_v111_test): the `apply_to_all`
+  refusal under `food_unavailable` is reached ONLY by an UN-SKIP carrying
+  `apply_to_all` (a held row's confirm is answered by the gate first) — 422
+  "this line's second food", the row stays skipped; narrowed to `food_gone`
+  it dies. S7 (a): `_heldOnOf`'s pair arm on the two DENSITY juices (0142
+  line 8 → 167747; 0989 line 1 → 168156); narrowed to the orange juice it
+  dies. S7 (b): the parts loop on 0040 line 5 held on its kept-fat part
+  172345 with 168322 a search-listed stand-in names 172345 (and its arrival
+  re-opens the recipe) — the loop on `_foodFromCache` names 168322 and dies.
+- **Y6 (LOW at the app; PRE-EXISTING; neither fleet — the launcher's GAP 4)
+  — a header that moves the routed path is a 400 `bad_request`.** See
+  Conventions. FIX (app_pipeline.dart): `buildOutermostMiddleware`'s 414
+  construction becomes one local `refusal(statusCode, code, message)`
+  (`refused` = the 414, `badHeader` = 400 `ApiErrorCodes.badRequest`
+  "Malformed Host or forwarded header."); the returned handler checks the
+  414, THEN `_movesThePath(context.request.headers)` (a `host` /
+  `x-forwarded-host` value holding `/`, `?`, `#` or `\`, or an
+  `x-forwarded-proto` value with a comma piece not matching
+  `^[A-Za-z][A-Za-z0-9+.-]*$`), THEN mints the id. salt_shared: `ApiErrorCodes.badRequest = 'bad_request'` and
+  its wire-value pin; the app's one switch over the codes has a default arm —
+  no change. LIMIT: `grep -rn '_movesThePath' apps/server/lib` → 2;
+  `grep -rn 'ApiErrorCodes.badRequest' apps/server/lib` → 1. MEASURED base
+  vs tip in-process on loopback IPv4 AND anyIPv6 (the union's raw-socket
+  harness + 22 rows): REFUSED (base → tip) `Host: h/main.dart.js?` 200 the
+  file → 400; the same via `X-Forwarded-Host` and via `X-Forwarded-Proto:
+  http://h/main.dart.js?`; → the SPA shell, → an API route's 401, →
+  /healthz, an over-bound request line + such a header (200 the file), a
+  header-set query (401) — each 400; a backslash (`Host:
+  localhost\main.dart.js` — base 200 THE FILE) → 400; a POST with a body and
+  OPTIONS → 400. ANSWERED AS BEFORE: the pass table in Conventions. THE
+  ORDER: `X-Forwarded-Host: localhost/<4,100 a>` → 414 (the 414 first).
+  MOVED THOUGH NO PATH MOVED (STATED): an absolute-form request line with
+  such a header (200 → 400), a `Host` with `?` / `#` that `X-Forwarded-Host`
+  overrides (200 → 400). OWNER GATE (a hand edit, verified in two rounds —
+  the hand-edit verify, below): the batch's rule read the JOINED `x-forwarded-proto` value, so TWO lines each a scheme
+  (`https` then `http` — 200 at v110: dart:io routes on the first line)
+  were refused though no path moved, a refusal with no measured harm behind
+  it — narrowed to every comma PIECE a scheme token
+  (`proto.split(',').every(_schemeToken.hasMatch)`): that request is
+  answered as at v110, and a line that is no scheme is refused in either
+  position (first: the one that routes; second: for the rule's sake — it
+  routed nothing). Never reaching the app (unchanged both trees): the
+  pre-pipeline rows in Conventions. Pins (static_asset_headers_test 'v111
+  Y6', corpus-free, ONE test per bind): the refuse table (16 rows: the
+  batch's 14 and the two two-line `X-Forwarded-Proto` rows) → (400, the
+  inner handler entered 0, the file system 0), `no-cache`, the 405's fixed
+  headers, the envelope's code and id; the pass table (14 rows: the batch's
+  13 and two `X-Forwarded-Proto` lines each a scheme) → the inner handler's
+  404, entered once, ROUTED `/` (the path is asserted since the hand-edit
+  verify's VA2: the inner handler answers 404 for any path, so the status
+  could not tell a moved one); the order row → (414, 0). Mutants (each by a value, each failing BOTH bind
+  tests): the check without `host` (R1 → (404, 1, 4) for (400, 0, 0)),
+  without `x-forwarded-host` (R2), the proto rule dropped (R3), `/` alone
+  (the backslash row), without `?` (`Host: localhost?x` + XFH), without `#`
+  (`Host: localhost#x` + XFH), without `\` (the backslash row), the check
+  ABOVE the 414 (the order row: (414, 0) for (400, 0)), skipping POST (the
+  POST row), skipping OPTIONS (the OPTIONS row). Owner mutants of the
+  narrowing (each failing BOTH bind tests): the joined rule back (the
+  two-line pass row: (400, 0, no path) for (404, 1, `/`)); `any` for `every` (the row
+  whose FIRST line is `http://localhost/main.dart.js?`: (404, 1, 4) for
+  (400, 0, 0) — the moved path's four file-system calls); the first piece
+  alone (the row whose SECOND line is that value: (404, 1, 2) for (400, 0,
+  0) — the unmoved `/`).
+- **Y3 (LOW) — the 414's unpinned reach.** 'v110 X1' (i) gains a
+  body-carrying POST, OPTIONS and an unknown token over the bound; (ii) a
+  ROUTES-arm path (`/api/v1/recipes/<4,097 a>`). Mutants: the bound skipped
+  for POST (Expected 414 Actual 200), for OPTIONS (Expected 414 Actual 200),
+  for a path starting `api/` ((404, 1, 1) for (414, 0, 0)).
+- **Y5 (MED; PRE-EXISTING) — a recipe id with no length cap broke every
+  later scan.** The editor minted `manual-<yyyymmdd>-<slugify(title)>` from a
+  title of up to 250 CHARACTERS (`½` folds to three): 266 / 766 characters;
+  `_store` upserted the row, THEN the export opened `<id>.yaml.tmp` over
+  NAME_MAX (255 bytes) — a 500, the row KEPT, and every later reconciliation
+  scan THREW at it (the report never persisted, later rows never
+  self-healed, `POST /library/rescan` a 500, one SEVERE per boot). FIX: (1)
+  `maxMintedSlugLength` = 190 (recipe_edit_service.dart; its doc carries the
+  suffix lengths re-derived from the code: `writeAtomically`'s `.yaml.tmp` 9;
+  `_conflictPathFor`'s `.conflict-<yyyyMMddTHHmmss>[-<n>].yaml.tmp` 34 / 36 /
+  37; image_ingest's `-<yyyyMMdd-HHmmss>-<8 hex>.<ext>.tmp` 33 / 34 → every
+  name fits for an id ≤ 218): `createRecipe` cuts `slugify(title)` to 190 (a
+  trailing `-` trimmed) BEFORE `_availableId` and `availableSlug` read it —
+  an id ≤ 209 (16 + 190 + a two-digit `-<n>`), every derived name ≤ 246
+  bytes; no new refusal. (2) `SaltDatabase.transaction` (public over
+  `_inTransaction`, which now JOINS an open transaction — SQLite cannot nest
+  BEGIN, and no caller nested one before): `_store` runs the upsert and the
+  export in it, `createRecipe` the source row and `_store` — an export that
+  throws leaves NO row and no reserved slug (a create) or the OLD row (an
+  update); the answer stays the 500. (3) `scanLibrary`'s self-heal catches a
+  `FileSystemException` PER ROW: the id goes to `ScanReport.exportFailed`,
+  the loop continues, ONE SEVERE per scan names the count and up to 8 ids,
+  the report is persisted; `export_failed` (int) is served only when > 0. (4)
+  MEASURED: an imported `id:` of 247–300 characters STORED a row whose export
+  could not be written (the import counted it failed; the scan's own add of
+  `<id>.yaml` stored it and THREW on every scan) → `isSafeRecipeId`
+  (salt_shared) gains `maxRecipeIdLength` = 218: the importer refuses it
+  (failed, nothing stored), the scan skips it ("unsafe file name"), the
+  legacy importer refuses it (by reading — the same check). Corpus max id 97.
+  STATED (closer1 D2, MEASURED, not ruled): the bound also moves a row
+  STORED before v111 with a 219–246-character id (the base editor minted one
+  from a 203–230-character ASCII title, and its export fitted). At v111 the
+  scan skips that row's own file (`unsafe file name`), so the self-heal
+  RE-EXPORTS it on EVERY scan, and a hand edit of the file is never
+  reconciled: after one, every scan counts `export_failed` 1 (and its
+  SEVERE) — the conflict copy's name is over NAME_MAX. Measured on a
+  230-character `manual-` row with its export: base — two scans "0
+  re-exported, 0 skipped", the hand edit "1 updated from disk", the title
+  edited; v111 — two scans "1 re-exported, 1 skipped", the hand edit "0
+  updated from disk … 1 skipped, 1 failed", the stored title unchanged.
+  Reach 0: snapshot 32's longest id is 97 (0 of 1,198 over 218); no person
+  uses the app (no compatibility work for past rows).
+  LIMIT: `grep -rn 'maxMintedSlugLength' apps/server/lib` → 3 (the constant,
+  the length test, the cut); `grep -rn 'maxRecipeIdLength' packages/salt_shared/lib`
+  → 3 (the constant, the doc, the check); `grep -rn 'isSafeRecipeId(' apps
+  packages --include='*.dart' | grep -v test` → 4 (the definition and the
+  three importers); `grep -rn 'transaction(' apps/server/lib` → 3 (the
+  method and the two editor uses). Pins (recipe_id_cap_test, NEW,
+  corpus-free; title-only recipes, a read-only library directory and a
+  planted pre-v111 row STATED synthesized): 'a'×250 → 201, the id exactly
+  16 + 190, the served slug 'a'×190 (owner gate), the export written; '½'×250 → 201, ≤ 206 (its cut ends in
+  '1', so its no-trailing-dash check is vacuous); 'a'×189 + ' ' + 'b'×60
+  → 201, the id exactly 16 + 189 = 'a'×189 (the cut ended in '-': the trim
+  pinned, closer1 D1);
+  'a'×200 + 'b' → `<id>-2`; the rescan 200 and persisted; a read-only
+  directory → a create 500 with NO row and the slug free, an update 500 with
+  the old hash and title; a planted 262-character row + a later row's
+  export deleted → the rescan 200, `export_failed` 1, `re_exported` the
+  later row, persisted; `isSafeRecipeId` 218 true / 219 false, a library
+  file named by a 247-character id skipped. Mutants: the cut removed (201
+  expected, 500 actual), the cut at 191 (206 expected, 207 actual), the
+  rollback removed (the row stays), the per-row catch removed (200
+  expected, 500 actual), the id bound removed (false expected, true
+  actual), the trailing-dash trim removed (205 expected, 206 actual).
+  Owner gate (three of its mutants survived the batch's pins; each now
+  killed by a value): `availableSlug` reading the UNCUT slug (the served
+  slug 'a'×190 expected, 'a'×250 actual); `createRecipe` without its outer
+  transaction (a NEW test: a FIRST create whose export throws, on a fresh
+  database with a read-only library directory, leaves no `my-recipes`
+  source row and no recipe — `sourceExists` false expected, true actual);
+  the scan's SEVERE removed (test (3) now reads the records: exactly ONE,
+  logger `library`, "Library scan: 1 missing export(s) could not be
+  written: <id>", its error a `FileSystemException` — one expected, none
+  actual). And its killed ones: `_store` without its own transaction (the
+  update's hash moved), the catch narrowed to `PathNotFoundException` (200
+  expected, 500 actual), `export_failed` always served (the key absent
+  expected), the id bound + 1 (219: false expected, true actual).
+- **Y9 (LOW) — ONE corpusless pin for the bridge.** Every v110 server pin
+  for X2 / X3 / X4 skips without the corpus. nutrition_v111_test 'v111 Y9
+  (corpusless)', OUTSIDE the corpus-gated group, reads `defatsSentence` on a
+  sentence alone (STATED synthesized negative-path re-texts, X4's): "Do not
+  skim the foam - just fat." and the `--`, `'`, `’` tokens a REAL skim; "the
+  soup's fat", "the pan-juice fat", "the 'nduja fat" still negated. Without
+  the corpus the file reports `+1 ~11: All tests passed!`. Mutant: the
+  lookahead `(?=[\w'’-]*\w)` dropped → dies corpusless (Expected true Actual
+  false). X2 / X3 need a recipe and stay corpus-gated (STATED).
+- **Y7 (docs)** — dated notes in place: Conventions (the X1 reach's "recipe
+  id ≤ 250" corrected, the image figure UNENCODED, the bound reads the
+  header-derived `url.path`, the residual MEASURED — re-measured here
+  in-process, one run each: a small request ~6 ms behind the over-bound one
+  waits 69.1 ms behind 400 KB, 51.4 ms behind 1 MB, about the 414's own
+  74.6 / 56.7 ms; the v110 deploy record's "/healthz at +50 ms" was sent
+  after the 414 answered), the pre-pipeline list's new rows and the
+  deployment fact, bare shelf_static answering any method; v110's X1, X2
+  and X3 bullets; the `match.held_on` paragraph; the create and scan
+  sections. Text: the static test's "4,095" comment and app_pipeline.dart's
+  "PATH_MAX" doc (it counts ENCODED characters).
+- **The gate (fix111).** The replay on fresh snapshot-32 copies, main and
+  `--reverse-parents` cmp-identical: rows, recs, sections, notes and calls
+  (0) and the buckets byte-identical to the v110 set — at step zero (the
+  unchanged base), after Y1 (a), (b), (c), after Y2 and on the final tree;
+  0 person rows; matcherVersion 97. Suites on the BATCH's final tree (with
+  the corpus; the owner gate, below, added two tests): server +3,381 ~4 (base +3,363 ~4 — measured in a base worktree as
+  +3,362 ~5, its one extra skip the gitignored snapshot 19 a worktree lacks;
+  the 18 new tests exactly: nutrition_v111 12, recipe_id_cap 4, 'v111 Y6' 2),
+  salt_shared +265 (the new code's wire value an added expect), the app +673
+  (+671 and the two new widget tests); every new or changed test file loads
+  without the corpus (0 "Failed to load"; nutrition_v111 `+1 ~11`). GATE-P
+  base 5beedc4 vs the tip, one sweep at a time, 12 shards, the tip's sweep
+  scripts on both: sw5 31,713, sw6 37,400, sw7 1,872, sw8 56,868, sw8r 5,358,
+  sw9 130, sw11 39,760 (14,070 refused both), sw12 129 (52 divergent both —
+  as carried), sw10 156 + 156 typed — every line set identical base vs tip;
+  sw13 200 (the new (b⁶) peel stand-in, 5 combos) — base 5 divergent (all
+  `peel-counted,peel-not-reopened`), tip 0; every other sw13 line identical.
+  34 mutants of this batch, each killed by a value (above). No migration;
+  the deploy needs no stamp move and no sweep (matcherVersion unchanged).
+- **The owner gate (2026-11-15).** ONE hand code edit (Y6's
+  `x-forwarded-proto` rule read piece by piece, above) and hand pins. 20 own
+  mutants, one per ruled slot and NARROWED (per rule record, per arm, per
+  reader, per piece): against the batch's pins and the three new header
+  rows 14 killed by a value, 6 SURVIVED — none a code defect. Four pinned by
+  hand at once, each then killed by a value: Y1 (b) on the density pair, and
+  Y5's served slug, first-create source row and SEVERE record (each above).
+  The other two I believed EQUIVALENT and sent to a verifier to REFUTE
+  before writing so (the hand-edit verify, round 1: two agents — A the code
+  edit, the pins and the two equivalences; B every hand sentence against the
+  logs): (1) `_ruleRowFor`'s target spelled `knownFood(…) ?? detail` with
+  the detail still awaited FIRST — NOT REFUTED: after the await a non-null
+  detail is `_foodFromCache`'s own decode, or the record `_cachedFood` has
+  just put under that id, and `knownFood` reads `_foodFromCache` first; the
+  JSON round trip carries every field; a null detail gives the stand-in in
+  both spellings; the one difference is the `knownFoodReads` test counter.
+  STATED equivalent. (2) The gone row keeping `outcome.grams` — REFUTED: a
+  portion-less stand-in resolves grams on 105 of the 115 corpus rule lines
+  (the verifier's scan of the 1,198 recipes; by rule record 167747 ×49,
+  748967 ×43, 168156 ×11, 169098 ×5, 167749 ×4, 2709168 ×2, 169103 ×1 —
+  grams on every line of 167747 and 168156 (the lemon and lime juices, by
+  density), 748967 (the whole egg, by piece) and 2709168 (the whole lemon,
+  ×2; its gram source not recorded)), and both gone pins sat among the 10
+  lines where it gives none; under the mutant a `food_gone` row stored 15.230404 g
+  `density` (0859 line 15) and 84.0 g `piece` (0866 line 7) and the matches
+  body served them (the totals did not move: a held row is out of them).
+  PINNED: nutrition_v111_test 'Y1 (a) GONE on a rule record whose stand-in
+  RESOLVES grams' (0859 line 15 on the lemon juice 167747, 0866 line 7 on
+  the egg 748967: one ask; `food_gone`, held_on, grams and gram_source null;
+  the body's hold, grams and gram_source alike) — the mutant dies there
+  ((167747, `food_gone`, null, null, null) expected, 15.230404 `density`
+  actual). STATED with it, MEASURED on both trees (the pin's state — the
+  record's detail uncached, a search answer listing it, FDC answering "no
+  such food"; owner_gate/zz_gone_probe_test.dart →
+  gone_probe_{base,tip}.out; re-measured by round 2's verifier with its own
+  probe, every value the same): v110 stored 0859 line
+  15 as (auto, 167747, no hold, 15.230404 g `density`) with NO request,
+  fresh, 511.45 kcal per serving unchanged — counted on the search hit;
+  v111 asks once and holds it (`food_gone`, no grams), 510.34. 0866 line 7:
+  v110 (auto, 748967, 84.0 g `piece`), 498.97 unchanged; v111 `food_gone`,
+  483.43. So in the GONE state v111 holds EVERY rule row — also the 105
+  lines v110 counted on the hit: a behaviour change of this batch. Reach 0
+  on the corpus and the live library: it needs FDC to stop serving one of
+  the seven rule records AND that record's detail uncached, and no code
+  evicts `fdc_food_cache` — a library first built after such a retirement.
+  Kept as built (a held row shows in the review queue and asks once);
+  counting on the hit instead would ask FDC at every compute or cache the
+  hit AS the food — the stand-in marker question (BACKLOG, Y1 above;
+  flagged to the owner). The verifier's other findings, applied: the 'v111 Y6' pass rows assert the
+  routed path (VA2); the non-origin-form target STATED in Conventions (VA3,
+  pre-existing); six text corrections. Round 2 (the DELTA, two agents): A
+  PASS, 0 defects — three mutants of its own on the new pin, each killed by
+  a value; the measurement above re-measured; the routed-path assertion
+  shown non-vacuous. B four LOW text defects (the docs-reading log named no
+  file; the probe's source was not on file; record 2709168 is the whole
+  lemon, not a juice; a round-2 result written ahead of its verdict) —
+  applied. All 20 mutants re-run on the final code and tests: 19 killed by
+  a value, 1 the stated equivalent. The gate (run_gate.sh, its exit status
+  the judge's, 27 steps) on that tree, the docs as of round 1's
+  corrections; the docs edited after it (the measured GONE statement, round
+  2's corrections), so the ten docs-reading test files re-run on the final
+  docs — server +211 ~1, app +11, salt_shared +1, all passed
+  (owner_gate/docs_tests.log names the files and the docs' md5): the
+  replay identical to the v110 set and to the verifier's final set, main ==
+  rev, calls 0; server +3,383 ~4 (the batch's +3,381 and the two new tests:
+  recipe_id_cap 5, nutrition_v111 13), salt_shared +265, the app +673; the
+  five changed test files load without the corpus (0 "Failed to load";
+  nutrition_v111 `+1 ~12`).
+
 **Matcher v110 (batch fix110; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 089/090 over v109, union X1–X8, the spec
 .claude/diag/2026-11-14/review089/union_X.md, the rulings in fix110_brief.md
@@ -5284,13 +5779,19 @@ never a line number.)**
   12 + 15 + 5 + 1 + 32 + 7); a tag name is ≤ 60
   after the trim (`tag.length > 60` refused) and the app sends it
   `Uri.encodeComponent`ed — ≤ 540 encoded, `url.path` ≤ 558; a recipe id is
-  a file name (`_safeRecipeId`, ≤ 250); an image path names two on-disk
-  entries (≤ 518); search text is in the QUERY (`url.path` excludes it).
+  a file name (`_safeRecipeId`, ≤ 250) [Corrected 2026-11-15, v111 Y5: no
+  cap existed — an editor-minted id is ≤ 209 since v111 (the slug cut), an
+  imported one ≤ 218 (`isSafeRecipeId`)]; an image path names two on-disk
+  entries (≤ 518 UNENCODED characters); search text is in the QUERY (`url.path` excludes it).
   STATED: the recipe SLUG has no validator (a hand-edited YAML slug over
   ~4,060 ASCII characters — corpus max 82 — would 414 on its slug routes and
   its SPA deep link; reachable by id); no slug cap in this batch. STATED:
   over the bound the residual is dart:io's own parse of the request line
-  (no in-app seam; the SDK bounds a request line + headers at 1 MiB).
+  (no in-app seam; the SDK bounds a request line + headers at 1 MiB)
+  [Added 2026-11-15, v111 Y7: MEASURED in-process, one run each — a small
+  request ~6 ms after the over-bound one waits about the 414's own time:
+  69.1 ms behind 400 KB, 51.4 ms behind 1 MB; the bound reads the
+  HEADER-derived `url.path` (v111 Y6)].
   Pins (static_asset_headers_test 'v110 X1', raw sockets through the REAL
   outermost over a static + 404 cascade): (i) the slash spelling at
   `url.path` 4,096 — GET and HEAD × plain / IMS garbage / 20-digit Range →
@@ -5402,7 +5903,11 @@ never a line number.)**
   the peel (the row's own first record) 2 — `withParts`' zest and
   `_ruleRowFor`'s target, the shipped stand-in rule (a stand-in giving no
   zest grams holds `second_food`, never counts; snapshot 32 holds all five
-  peels' details); the half rule's liquid twin 1 (grams from the share
+  peels' details) [Corrected 2026-11-15, v111 Y1: FALSE for `_ruleRowFor`'s
+  target — with the peel's detail uncached and a search answer listing it,
+  the pair line was stored `auto`, UNHELD, grams NULL, fresh, 0 asks (0536
+  591.13 for 603.92 kcal); since v111 the target is the DETAIL — see the
+  Matcher v111 block]; the half rule's liquid twin 1 (grams from the share
   table); parts and nutrient siblings, read for nutrients only, 7; the
   row's own food 20 (the lazy-compute stand-in by design; where portions
   are needed `gramsFor` fetches or a guard reads the detail, as
@@ -5456,7 +5961,9 @@ never a line number.)**
   was served nowhere). FIX: the matches body's `match` gains `held_on`
   ONLY when the row's hold waits on another record than its food
   (`_heldOnOther`: `held_on != null && held_on != fdc_id`; absent
-  otherwise — no existing body changes); `_refusalOf` takes `heldOnOther`
+  otherwise — no existing body changes) [Corrected 2026-11-15, v111 Y2: a
+  bacon parts row held on its own part matched too — "this line's second
+  food" on 0040 line 5; since v111 a PAIR's second record only]; `_refusalOf` takes `heldOnOther`
   and its two no-record messages say "this line's second food" — read by
   the action-table gate (a confirm on the stored held row) and the
   `apply_to_all` refusal (a confirm + `apply_to_all` whose derivation ends

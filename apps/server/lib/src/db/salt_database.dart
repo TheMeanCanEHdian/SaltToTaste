@@ -306,7 +306,19 @@ class SaltDatabase {
     }
   }
 
+  /// v111 Y5 (2): [action] in ONE transaction — every write inside it rolls
+  /// back when it throws (the editor's upsert + export, [upsertRecipe]'s own
+  /// transaction joined).
+  void transaction(void Function() action) => _inTransaction(action);
+
   void _inTransaction(void Function() action) {
+    // v111 Y5 (2): inside an open transaction ([transaction]) the action
+    // joins it — the outer one commits or rolls back (SQLite cannot nest a
+    // BEGIN; no caller nested one before).
+    if (!_db.autocommit) {
+      action();
+      return;
+    }
     _db.execute('BEGIN IMMEDIATE');
     try {
       action();
@@ -3723,6 +3735,7 @@ class IngredientMatchRow {
     String? parts,
     bool clearParts = false,
     int? heldOn,
+    bool clearHeldOn = false,
   }) => IngredientMatchRow(
     recipeId: recipeId,
     position: position ?? this.position,
@@ -3745,8 +3758,9 @@ class IngredientMatchRow {
         ? null
         : (childStamp ?? this.childStamp),
     parts: clearParts ? null : (parts ?? this.parts),
-    // Cleared with the hold it explains (migration 022).
-    heldOn: clearHold ? null : (heldOn ?? this.heldOn),
+    // Cleared with the hold it explains (migration 022); [clearHeldOn]
+    // alone: a re-hold whose record is the row's own (v111 Y1 (c)).
+    heldOn: clearHold || clearHeldOn ? null : (heldOn ?? this.heldOn),
   );
 }
 

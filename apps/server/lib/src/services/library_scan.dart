@@ -62,6 +62,10 @@ class ScanReport {
   /// lost to an in-app save and await operator review.
   final List<String> conflictFiles = [];
 
+  /// v111 Y5 (3): recipe ids whose missing export could not be written (an
+  /// I/O failure, e.g. a name over NAME_MAX) — the scan goes on.
+  final List<String> exportFailed = [];
+
   /// JSON shape stored in settings and returned by the library endpoints.
   Map<String, Object?> toJson() => {
     'started_at': startedAt.toIso8601String(),
@@ -74,6 +78,7 @@ class ScanReport {
       for (final entry in skipped) {'file': entry.file, 'reason': entry.reason},
     ],
     'conflict_files': conflictFiles,
+    if (exportFailed.isNotEmpty) 'export_failed': exportFailed.length,
   };
 
   /// One-line log summary.
@@ -81,7 +86,8 @@ class ScanReport {
   String toString() =>
       '$filesSeen file(s): ${updatedFromDisk.length} updated from disk, '
       '${added.length} added, ${reExported.length} re-exported, '
-      '${skipped.length} skipped, ${conflictFiles.length} conflict file(s)';
+      '${skipped.length} skipped, ${conflictFiles.length} conflict file(s)'
+      '${exportFailed.isEmpty ? '' : ', ${exportFailed.length} failed'}';
 }
 
 /// Reconciles the YAML library under `config.libraryDir` with the database
@@ -104,6 +110,7 @@ ScanReport scanLibrary({
   }
 
   // Self-heal: re-export any recipe whose library file disappeared.
+  (FileSystemException, StackTrace)? exportError;
   for (final row in db.listRecipeHashes()) {
     if (seenIds.contains(row.id)) {
       continue;
@@ -126,14 +133,32 @@ ScanReport scanLibrary({
     if (found == null) {
       continue;
     }
-    exportRecipeYaml(
-      config: config,
-      sourceSlug: row.sourceSlug,
-      recipeId: row.id,
-      canonical: RecipeYamlCodec.encode(found.recipe),
-      previousHash: row.contentHash,
-    );
+    // v111 Y5 (3): one row's export failing (an I/O failure) is counted
+    // and the self-heal goes on — it threw out of the scan, and the report
+    // was never persisted.
+    try {
+      exportRecipeYaml(
+        config: config,
+        sourceSlug: row.sourceSlug,
+        recipeId: row.id,
+        canonical: RecipeYamlCodec.encode(found.recipe),
+        previousHash: row.contentHash,
+      );
+    } on FileSystemException catch (error, stackTrace) {
+      report.exportFailed.add(row.id);
+      exportError ??= (error, stackTrace);
+      continue;
+    }
     report.reExported.add(row.id);
+  }
+  if (exportError case (final error, final stackTrace)) {
+    final ids = report.exportFailed;
+    _log.severe(
+      'Library scan: ${ids.length} missing export(s) could not be written: '
+      '${ids.take(8).join(', ')}${ids.length > 8 ? ', …' : ''}',
+      error,
+      stackTrace,
+    );
   }
 
   report.elapsedMs = stopwatch.elapsedMilliseconds;
