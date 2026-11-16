@@ -348,6 +348,21 @@ final _beyond = [
     '200.26',
     _browning('beef', butter: true),
   ),
+  // RE-PIN (M99 batch, v112, the W1 dependent; was in `_unmoved`, 14.00 g
+  // `portion`, capped): the recipe's heaviest counted meat row, read by its
+  // STORED grams, is now 0002|1's kept breast, 318.42 g (W1-C) — 0.015195 ×
+  // 318.42 ÷ lipid 1.00 = 4.84 g, below the whole 14.00 g. 14.00 → 4.84,
+  // 126.00 → 43.56 (2710180, 900 kcal): S1 "Heat the oil"; T S3 skim.
+  (
+    _classic,
+    0,
+    '1 tablespoon vegetable oil',
+    2710180,
+    '14.00',
+    '4.84',
+    '43.56',
+    _browning('chicken'),
+  ),
 ];
 
 /// Rows the arm does not move (file, position, raw, grams, source,
@@ -379,8 +394,9 @@ const _unmoved = [
   // Admitted (S3.0 "Heat the oil in the skillet" before S4.0) but capped:
   // 1,020.58 g strip steak keeps 15.51 g of fat ≥ its 14.00 g — no entry.
   (_poivre, 7, '1 tablespoon vegetable oil', '14.00', 'portion', true),
-  // Admitted and capped (closer 1, verify1 D4: the row as it was).
-  (_classic, 0, '1 tablespoon vegetable oil', '14.00', 'portion', true),
+  // RE-PIN (M99 batch, v112): classic-chicken-noodle-soup|0 (admitted and
+  // capped here, closer 1, verify1 D4: 14.00 g `portion`) moved to
+  // `_beyond` — its heaviest counted meat row is now the kept breast.
   // A C4 row (`_panFatLines`): admitted by the text, the C4 arm's 23.14 g.
   (_saltimbocca, 5, '4 tablespoons olive oil', '23.14', 'discarded', true),
   // RE-PIN (M97 batch, v100): was in `_beyond` (20.68 g `discarded`, D1
@@ -508,14 +524,15 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 }
 
 void main() {
-  test('matcherVersion 97 (v96 set it to 91, batch M94: the browning fat)', () {
+  test('matcherVersion 98 (v96 set it to 91, batch M94: the browning fat)', () {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
     // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
     // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
-    expect(matcherVersion, 97);
+    // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
+    expect(matcherVersion, 98);
   });
 
   test("the share from the figures the flag prints (2705972's inputFoods: "
@@ -617,7 +634,8 @@ void main() {
 
     // RE-PIN (M97 batch, v100): "the 7 beyond" → 5; broiled|12 is not
     // (the roux guard).
-    test('the trigger on the REAL steps: every row of the 15 and the 5 '
+    // RE-PIN (M99 batch, v112): 5 → 6 (classic-chicken-noodle-soup|0).
+    test('the trigger on the REAL steps: every row of the 15 and the 6 '
         'beyond is a line `browningFatLinesOf` names; the two K-1 negatives, '
         'the sauce butter and the roux-bound gravy butter are not; a capped '
         'line and a C4 line are', () {
@@ -675,7 +693,8 @@ void main() {
 
     // RE-PIN (M97 batch, v100): "the 7 rows" → 5 (gravy|20 is the shallow
     // plan's, broiled|12 the roux guard's).
-    test('D1 RULED (verify1 D1, ACCEPT 2026-10-30): the 5 rows beyond the '
+    // RE-PIN (M99 batch, v112): 5 → 6 (classic-chicken-noodle-soup|0).
+    test('D1 RULED (verify1 D1, ACCEPT 2026-10-30): the 6 rows beyond the '
         "15 the brief's trigger admits — the replay's figures", () {
       for (final (file, position, raw, fdcId, whole, grams, kcal, basis)
           in _beyond) {
@@ -708,9 +727,9 @@ void main() {
     // roux-bound butter (RX-1), back at the engine's 28.36 g `density`.
     test('rows the arm leaves as they were (the v95 rows): the K-1 negatives '
         'skillet-roasted|2 84.00 g and brick|2 32.53 g, the sauce butter '
-        'steak-au-poivre|0 56.72 g, two admitted lines the rule leaves whole '
-        '(steak-au-poivre|7, classic-chicken-noodle-soup|0 — no entry, '
-        'closer 1, verify1 D4), the C4 row saltimbocca|5 at its own '
+        'steak-au-poivre|0 56.72 g, an admitted line the rule leaves whole '
+        '(steak-au-poivre|7 — no entry, closer 1, verify1 D4; v112: '
+        'classic-chicken-noodle-soup|0 moved to the rows beyond), the C4 row saltimbocca|5 at its own '
         "arm's 23.14 g and the roux-bound broiled-chicken-with-gravy|12 at "
         '28.36 g', () {
       for (final (file, position, _, grams, source, _) in _unmoved) {
@@ -973,77 +992,103 @@ void main() {
         expect(db.nutritionFor(id)!.totalsJson, totals, reason: file);
       }
     });
-    test("a person's Confirm of a browning line is the plan's grams (closer "
-        "1, verify1 D2: `_browningFatAt` in `derivedFor`, M78 verify2 D2's "
-        'form) — the stored row, the derivation and the GET agree: '
-        'short-ribs|2 24.12 g, bulalo|0 16.82 g, maple|11 18.95 g '
-        '`discarded` with the browning basis; a line the rule leaves whole '
-        '(classic-chicken-noodle-soup|0) 14.00 g `portion`; the per serving '
-        'unmoved', () async {
-      for (final (file, position, grams, source, basis, perServing) in [
-        (_shortRibs, 2, '24.12', 'discarded', _browning('beef'), '648.25'),
-        (_bulalo, 0, '16.82', 'discarded', _browning('beef'), '373.83'),
-        (_maple, 11, '18.95', 'discarded', _browning('pork'), '430.70'),
-        (_classic, 0, '14.00', 'portion', null, null),
-      ]) {
-        final corpus = loadCorpusRecipe(file);
-        final recipe = await _compute(
-          db,
-          fdc,
-          corpus.copyWith(
-            id: '${corpus.id}-v96-confirm',
-            slug: '${corpus.slug}-v96-confirm',
-          ),
-        );
-        final line = nutritionLines(recipe)[position];
-        await applyMatchOverride(db, fdc, recipe, position, {
-          'raw': line.raw,
-          'confirmed': true,
-        });
-        final stored = rowIn(recipe.id, position);
-        final derived = (await derivedFor(
-          db,
-          fdc,
-          recipe,
-          position,
-          line,
-          stored,
-        )).row;
-        final item =
-            ((await matchesBody(db, fdc, recipe))['items']! as List)
-                    .cast<Map<String, Object?>>()
-                    .singleWhere((i) => i['position'] == position)['match']!
-                as Map<String, Object?>;
-        final reason = '$file|$position';
-        for (final form in <(Object?, String?, Object?)>[
-          (stored.status, stored.grams?.toStringAsFixed(2), stored.gramSource),
-          (
-            derived.status,
-            derived.grams?.toStringAsFixed(2),
-            derived.gramSource,
-          ),
-          (
-            item['status'],
-            (item['grams'] as num?)?.toStringAsFixed(2),
-            item['gram_source'],
-          ),
-        ]) {
-          expect(form, ('confirmed', grams, source), reason: reason);
-        }
-        if (basis != null) {
-          expect(item['gram_basis'], basis, reason: reason);
-        } else {
-          expect(item['gram_basis'], isNot(contains(_basis)), reason: reason);
-        }
-        if (perServing != null) {
-          expect(
-            db.nutritionFor(recipe.id)!.caloriesPerServing?.toStringAsFixed(2),
-            perServing,
-            reason: reason,
+    test(
+      "a person's Confirm of a browning line is the plan's grams (closer "
+      "1, verify1 D2: `_browningFatAt` in `derivedFor`, M78 verify2 D2's "
+      'form) — the stored row, the derivation and the GET agree: '
+      'short-ribs|2 24.12 g, bulalo|0 16.82 g, maple|11 18.95 g '
+      '`discarded` with the browning basis; (v112) '
+      'classic-chicken-noodle-soup|0 4.84 g `discarded` (was a line the '
+      'rule left whole, 14.00 g `portion`); a line the rule leaves whole '
+      '(steak-au-poivre|7) 14.00 g `portion`; the per serving unmoved',
+      () async {
+        for (final (file, position, grams, source, basis, perServing)
+            in <(String, int, String, String, String?, String?)>[
+              (
+                _shortRibs,
+                2,
+                '24.12',
+                'discarded',
+                _browning('beef'),
+                '648.25',
+              ),
+              (_bulalo, 0, '16.82', 'discarded', _browning('beef'), '373.83'),
+              (_maple, 11, '18.95', 'discarded', _browning('pork'), '430.70'),
+              // RE-PIN (M99 batch, v112): the plan's 4.84 g on the kept breast
+              // (was 14.00 g `portion`, the basis no browning text).
+              (_classic, 0, '4.84', 'discarded', _browning('chicken'), null),
+              // closer 1 (verify1 D3): a line the rule leaves whole, re-pointed
+              // from classic|0 (moved above) to steak-au-poivre|7 — admitted
+              // and capped (`_unmoved`: 1,020.58 g strip steak keeps 15.51 g
+              // ≥ its 14.00 g), 14.00 g `portion`, no browning basis.
+              (_poivre, 7, '14.00', 'portion', null, null),
+            ]) {
+          final corpus = loadCorpusRecipe(file);
+          final recipe = await _compute(
+            db,
+            fdc,
+            corpus.copyWith(
+              id: '${corpus.id}-v96-confirm',
+              slug: '${corpus.slug}-v96-confirm',
+            ),
           );
+          final line = nutritionLines(recipe)[position];
+          await applyMatchOverride(db, fdc, recipe, position, {
+            'raw': line.raw,
+            'confirmed': true,
+          });
+          final stored = rowIn(recipe.id, position);
+          final derived = (await derivedFor(
+            db,
+            fdc,
+            recipe,
+            position,
+            line,
+            stored,
+          )).row;
+          final item =
+              ((await matchesBody(db, fdc, recipe))['items']! as List)
+                      .cast<Map<String, Object?>>()
+                      .singleWhere((i) => i['position'] == position)['match']!
+                  as Map<String, Object?>;
+          final reason = '$file|$position';
+          for (final form in <(Object?, String?, Object?)>[
+            (
+              stored.status,
+              stored.grams?.toStringAsFixed(2),
+              stored.gramSource,
+            ),
+            (
+              derived.status,
+              derived.grams?.toStringAsFixed(2),
+              derived.gramSource,
+            ),
+            (
+              item['status'],
+              (item['grams'] as num?)?.toStringAsFixed(2),
+              item['gram_source'],
+            ),
+          ]) {
+            expect(form, ('confirmed', grams, source), reason: reason);
+          }
+          if (basis != null) {
+            expect(item['gram_basis'], basis, reason: reason);
+          } else {
+            expect(item['gram_basis'], isNot(contains(_basis)), reason: reason);
+          }
+          if (perServing != null) {
+            expect(
+              db
+                  .nutritionFor(recipe.id)!
+                  .caloriesPerServing
+                  ?.toStringAsFixed(2),
+              perServing,
+              reason: reason,
+            );
+          }
         }
-      }
-    });
+      },
+    );
     test("a person's typed grams on a browning line stand (the plan weighs "
         'only an engine row, `_m52Engine`: no `override` row) — '
         'short-ribs|2 typed 30 g: stored, derived and on the GET 30.00 g '

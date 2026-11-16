@@ -480,7 +480,8 @@ void hashes() {
 // (was b6e8c416…; the bump alone gives 20aeb87b…) — the fix104 tree gives
 // this literal.
 const _kibbehHash =
-    '54550d5fb2430b48ad599780aebccca0904ab63dfa0a7ff44e6d85ce9cab0735';
+    // RE-PIN (M99 batch, v112): matcherVersion 98 alone (was 54550d5f…).
+    '5256f4fcb555bb37724b1f5c4afdfdb0d51f02bc155379011f073621255383e3';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person

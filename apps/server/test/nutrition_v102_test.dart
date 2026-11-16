@@ -195,7 +195,10 @@ void main() {
 /// engine row under a fresh stamp; the next compute moved it).
 void picks() {
   for (final (file, at, food, sib, grams, energy) in [
-    (_classic, 7, 170000, 2, '0.00', '3145.66'),
+    // RE-PIN (M99 batch, v112): 0002's whole bird keeps its breast meat (|1
+    // 2,373.60 → 378.92 kcal) and its browning oil follows (|0 126.00 → 43.56):
+    // E −2,077.11 (was 3145.66).
+    (_classic, 7, 170000, 2, '0.00', '1068.55'),
     ('0249-roast-fresh-ham.yaml', 11, 746775, 2, '0.00', '5372.14'),
     (
       '0351-pasta-with-hearty-italian-meat-sauce-sunday-gravy.yaml',
@@ -231,7 +234,10 @@ void picks() {
 /// sibling takes confidence 1 in the PUT (base: .9367; m3, m4).
 void confirms() {
   for (final (file, at, sib, energy) in [
-    (_classic, 2, 7, '3143.46'),
+    // RE-PIN (M99 batch, v112): 0002's whole bird keeps its breast meat (|1
+    // 2,373.60 → 378.92 kcal) and its browning oil follows (|0 126.00 → 43.56):
+    // E −2,077.11 (was 3143.46).
+    (_classic, 2, 7, '1066.35'),
     (_hearty, 2, 12, '2005.15'),
   ]) {
     test('P2: $file|$at Confirm → |$sib 790646 confidence .9367 → 1, E '
@@ -336,7 +342,7 @@ void lineHeld() {
 /// un-skip) is settled too (base: |7 stored 170000, the compute 790646).
 void shared() {
   test('P5: 0002|7 pick 170000, skip |7, un-skip |7, Confirm |2 → |2 '
-      '`confirmed` 170000, |7 `auto` 170000, E 3145.66 (mutant m1)', () async {
+      '`confirmed` 170000, |7 `auto` 170000, E 1068.55 (mutant m1)', () async {
     final db = _db();
     final id = await _compute(db, _classic);
     await cachedFood(db, _fx, 170000);
@@ -350,7 +356,8 @@ void shared() {
       (170000, 'confirmed'),
     );
     expect((_row(db, id, 7).fdcId, _row(db, id, 7).status), (170000, 'auto'));
-    expect(_energy(db, id), '3145.66');
+    // RE-PIN (M99 batch, v112): E −2,077.11, 0002|1 and |0 (was 3145.66).
+    expect(_energy(db, id), '1068.55');
     expect(none.calls, 0);
     await _settled(db, id);
   });
@@ -483,7 +490,7 @@ void receipts() {
 /// P9 (R2; critic's cold case): an un-skip whose decided-key derivation
 /// FDC cannot serve (170000 never cached, NoNet) reads the totals
 /// underived — the next compute asks again (base: fresh with |7 on no
-/// grams, E 3101.66) (m11).
+/// grams, E 3101.66 — 1024.55 at v112, M99) (m11).
 void unskip() {
   test(
     'P9: 0002|7 pick 170000 uncached, skip, un-skip → stale '
@@ -499,7 +506,8 @@ void unskip() {
       final s = _row(db, id, 7);
       expect((s.fdcId, s.grams, s.status), (170000, null, 'auto'));
       expect(_row(db, id, 2).fdcId, 790646);
-      expect(_energy(db, id), '3101.66');
+      // RE-PIN (M99 batch, v112): E −2,077.11, 0002|1 and |0 (was 3101.66).
+      expect(_energy(db, id), '1024.55');
       expect(nutritionIsFresh(db, _rec(db, id)), isFalse);
       expect(
         staleReasonOf(db, _rec(db, id), db.nutritionFor(id)!, ResolverMemo(db)),

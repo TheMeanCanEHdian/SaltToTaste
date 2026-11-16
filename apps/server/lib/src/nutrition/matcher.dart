@@ -163,7 +163,7 @@ const Map<String, String> _synonyms = {
 /// one row), the cubed Granny Smith cup (132.68 g, the brown-betty print; the
 /// stuffing section's row and its host's routed line), the reach of a
 /// decision = the compute's, each reference line's resolved identity hashed.
-const int matcherVersion = 97;
+const int matcherVersion = 98;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

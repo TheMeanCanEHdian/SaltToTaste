@@ -429,7 +429,8 @@ void main() {
           // and U2's term gives this literal.
           // RE-PIN (fix104 batch, v104): matcherVersion 97 and U8's `routes`
           // term (was 369273da…; the bump alone gives b5ebf75c…).
-          '8b0dc1c8f763ab131680a005aee1abefdc5c8deb095b8b52bf4008b2548b910b',
+          // RE-PIN (M99 batch, v112): matcherVersion 98 alone (was 8b0dc1c8…).
+          'e1dce5f01452c1a0a0e81a5ed9c2640ae17edbd954e61bf73410a68498edc8b8',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

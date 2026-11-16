@@ -7834,12 +7834,21 @@ bool skinDiscarded(Recipe recipe, IngredientLine line) {
   // plan weighs every browning line per plan pass, and each weighing
   // rescanned every skin sentence (a recompute at the caps with a skin
   // sentence per chunk, 4.7 s, 14 × f912190).
+  // v112 (M99 W1-B): and the parts its prep keeps ([wholeBirdKept]) — the
+  // answers keyed by both.
+  final kept = _birdKeptOf(recipe, line);
   final skin = _skinFactsOf(recipe);
-  return skin.answers[item] ??= () {
+  return skin.answers[(item, kept)] ??= () {
     _count('skinScans');
-    return !skin.kept && skin.facts.any((fact) => _skinOffFor(item, fact));
+    return !skin.kept &&
+        skin.facts.any((fact) => _skinOffFor(item, kept, fact));
   }();
 }
+
+/// v112 (M99 W1-B): the parts [line]'s whole bird keeps ([wholeBirdKept]),
+/// or null — a part-scoped skin sentence trips them ([_skinOffFor]).
+String? _birdKeptOf(Recipe recipe, IngredientLine line) =>
+    wholeBirdKept(line.raw, line.prep, () => _strainAt(recipe) != null)?.kept;
 
 /// One skin sentence's facts — none depends on the item (v103, Run 075 S5,
 /// U7): the part it takes the skin from ([_skinPart]), whether it takes
@@ -7859,13 +7868,18 @@ typedef _SkinFact = ({
 /// runs once per sentence here — an item's scan reads the facts alone
 /// (base: `_skinPart`'s lazy gap ran per sentence per distinct item,
 /// 170.7 s for 400 items × 1,200 sentences).
-({List<_SkinFact> facts, bool kept, Map<String, bool> answers}) _skinFactsOf(
-  Recipe recipe,
-) => _stepIndexOf(recipe).memo(#skinSentences, () {
-  final sentences = [
-    for (final sentence in _stepIndexOf(recipe).allSentences)
-      if (_skinWord.hasMatch(sentence)) sentence,
+({
+  List<_SkinFact> facts,
+  bool kept,
+  Map<(String, String?), bool> answers,
+})
+_skinFactsOf(Recipe recipe) => _stepIndexOf(recipe).memo(#skinSentences, () {
+  final all = _stepIndexOf(recipe).allSentences;
+  final at = [
+    for (final (i, sentence) in all.indexed)
+      if (_skinWord.hasMatch(sentence)) i,
   ];
+  final sentences = [for (final i in at) all[i]];
   return (
     facts: [
       for (final sentence in sentences)
@@ -7882,15 +7896,51 @@ typedef _SkinFact = ({
           );
         }(),
     ],
-    kept: sentences.any(_skinKept.hasMatch),
-    answers: <String, bool>{},
+    kept: _skinVetoed(recipe, all, [
+      for (final (k, i) in at.indexed)
+        if (_skinKept.hasMatch(sentences[k])) i,
+    ]),
+    answers: <(String, String?), bool>{},
   );
 });
 
-bool _skinOffFor(String item, _SkinFact fact) =>
+/// v112 (M99 W1-B): whether a sentence at [vetoes] (flat indexes into
+/// [all]) vetoes the skin trip ([_skinKept]) — not one a LATER sentence of
+/// [all] renders the skin of ([_skinRendered]) when the first strain that
+/// discards the solids ([_strainAt]) comes after that render: the skin set
+/// aside to be rendered and strained out is not eaten (coq au Riesling,
+/// 0127). Read inside [_skinFactsOf]'s memo: once per index.
+bool _skinVetoed(Recipe recipe, List<String> all, List<int> vetoes) {
+  if (vetoes.isEmpty) return false;
+  final rendered = all.lastIndexWhere(_skinRendered.hasMatch);
+  final strained = rendered >= 0 && _strainedAfter(recipe, rendered);
+  return vetoes.any((k) => !(strained && k < rendered));
+}
+
+/// Whether [recipe]'s strain ([_strainAt]) stands after the sentence at
+/// flat index [at].
+bool _strainedAfter(Recipe recipe, int at) {
+  final strain = _strainAt(recipe);
+  if (strain == null) return false;
+  final sentences = _stepIndexOf(recipe).sentences;
+  var flat = strain.$2;
+  for (var i = 0; i < strain.$1; i++) {
+    flat += sentences[i].length;
+  }
+  return flat > at;
+}
+
+/// v112 (M99 W1-B): a sentence that renders the skin — coq au Riesling's own
+/// phrase, the one corpus sentence that does (the owner gate: the design's
+/// other spellings reach no corpus sentence and are not built).
+final RegExp _skinRendered = RegExp(r'\bskin is rendered\b');
+
+/// v112 (M99 W1-B): a part-scoped fact trips a whole bird whose [kept]
+/// parts ([_birdKeptOf]) name the part.
+bool _skinOffFor(String item, String? kept, _SkinFact fact) =>
     fact.off &&
     (fact.part != null
-        ? item.contains(fact.part!)
+        ? item.contains(fact.part!) || (kept?.contains(fact.part!) ?? false)
         // v103 (Run 075 S2, U14): a part-less sentence taking the skin
         // "from" another food ("Remove the skin from the roasted peppers")
         // trips nothing; no "from" object trips as before.
@@ -7904,6 +7954,7 @@ bool _skinOffFor(String item, _SkinFact fact) =>
 String? skinKeptPart(Recipe recipe, IngredientLine line) {
   if (!skinDiscarded(recipe, line)) return null;
   final item = (line.item ?? line.raw).toLowerCase();
+  final kept = _birdKeptOf(recipe, line);
   // v101 (Run 073 S4, U4): once per index and item, counted
   // (`skinKeptScans`) — v98 P8's half: a part-less skin sentence ("Remove
   // and discard the skin.") trips every line, and each line's grams
@@ -7912,10 +7963,13 @@ String? skinKeptPart(Recipe recipe, IngredientLine line) {
   // v103 (U7): over the skin sentences' facts ([_skinFactsOf]) — a
   // tripping sentence names "skin", so the scan of every sentence read
   // the same ones.
-  return _stepIndexOf(recipe).memo(('skinKeptPart', item), () {
+  // v112 (M99 W1-B): Key: item, kept ([_birdKeptOf]).
+  return _stepIndexOf(recipe).memo(('skinKeptPart', item, kept), () {
     _count('skinKeptScans');
     for (final fact in _skinFactsOf(recipe).facts) {
-      if (_skinOffFor(item, fact) && fact.leftOn != null) return fact.leftOn;
+      if (_skinOffFor(item, kept, fact) && fact.leftOn != null) {
+        return fact.leftOn;
+      }
     }
     return null;
   });
@@ -17414,6 +17468,12 @@ GramResolution? lineGrams(
       recipe != null &&
       produceYields.containsKey(food?.fdcId) &&
       stepsPeelIn(recipe, line);
+  // v112 (M99 W1-A, W1-C): the part of a whole bird its prep keeps.
+  final birdPart = wholeBirdKept(
+    line.raw,
+    line.prep,
+    () => recipe != null && _strainAt(recipe) != null,
+  )?.part;
   GramResolution? on(FdcFood? record) => resolveGrams(
     amounts: line.amounts,
     food: record,
@@ -17424,6 +17484,7 @@ GramResolution? lineGrams(
     shellEaten: shellEaten,
     canLiquidEaten: canLiquidEaten,
     stepsPeel: stepsPeel,
+    birdPart: birdPart,
   );
   if (food != null && freshHerbLine(line.raw, food.description)) {
     return _freshHerbGrams(line, food, normalized, on(food));

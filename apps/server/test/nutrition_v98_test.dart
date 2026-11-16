@@ -119,7 +119,8 @@ void main() {
       // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
       // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
       // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
-      expect(matcherVersion, 97);
+      // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
+      expect(matcherVersion, 98);
     },
   );
 
@@ -382,10 +383,13 @@ void main() {
       late final fdc = FixtureProvider(
         pending: {...pendingSearches, 'thyme or dried'},
       );
+      // RE-PIN (M99 batch, v112): the line is no longer left whole — the
+      // plan sizes it from the kept breast (0002|1, 318.42 g): 4.84 g
+      // `discarded` (was 14.00 g `portion`); the one-plan GET is unchanged.
       test('the real corpus: classic-chicken-noodle-soup|0 "1 tablespoon '
-          'vegetable oil" (a browning line left whole) confirmed through the '
+          'vegetable oil" (a browning line, v112 4.84 g) confirmed through the '
           'PUT — the GET plans ONCE (base bdd0c5e: 2) and serves the stored '
-          'row, 14.00 g `portion`', () async {
+          'row, 4.84 g `discarded`', () async {
         final db = _db();
         final recipe = await _compute(db, fdc, loadCorpusRecipe(_classic));
         expect(browningFatLinesOf(recipe), {0});
@@ -396,7 +400,11 @@ void main() {
         final stored = _rowIn(db, recipe.id, 0);
         expect(
           (stored.status, stored.grams?.toStringAsFixed(2), stored.gramSource),
-          ('confirmed', '14.00', 'portion'),
+          (
+            'confirmed',
+            '4.84',
+            'discarded',
+          ), // RE-PIN (v112): was 14.00 portion
         );
         m52PlanRuns = 0;
         final item =
@@ -411,7 +419,11 @@ void main() {
             (item['grams'] as num?)?.toStringAsFixed(2),
             item['gram_source'],
           ),
-          ('confirmed', '14.00', 'portion'),
+          (
+            'confirmed',
+            '4.84',
+            'discarded',
+          ), // RE-PIN (v112): was 14.00 portion
         );
       });
       test(

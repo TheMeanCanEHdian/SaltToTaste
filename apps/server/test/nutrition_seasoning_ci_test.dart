@@ -99,7 +99,8 @@ void main() {
     // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
     // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
     // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
-    expect(matcherVersion, 97); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
+    expect(matcherVersion, 98); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -250,7 +251,8 @@ void main() {
       // RE-PIN (fix104 batch, v104): matcherVersion 97 alone (was
       // b1ace3e0…; U8's `routes` term does not reach this recipe — the
       // tree with the term dropped gives the same literal).
-      '85e8f40444a8999b2073e579adfbfd64d2fd56504dea5b860a358211b5018d59',
+      // RE-PIN (M99 batch, v112): matcherVersion 98 alone (was 85e8f404…).
+      '9971fe636774b56c29e47f69300304f752279e332799a9e14d0cb6585d820ea3',
     );
   });
 

@@ -128,7 +128,8 @@ void main() {
     });
 
     test('the skin signal trips exactly the 13 thigh and leg lines plan Q4 '
-        'names, and none of its non-trips', () {
+        "names and (v112) coq au Riesling's rendered-skin bird, and none of "
+        'its non-trips', () {
       bool trips(String file, int position) {
         final recipe = loadCorpusRecipe(file);
         return skinDiscarded(recipe, nutritionLines(recipe)[position]);
@@ -290,6 +291,11 @@ const List<(String, int)> _skinTrips = [
   ('0566-chicken-biryani.yaml', 11),
   ('0634-barbecued-pulled-chicken.yaml', 3),
   ('1179-chicken-and-spiced-freekeh-with-cilantro-and-preserved-lemon.yaml', 0),
+  // RE-PIN (M99 batch, v112, W1-B): coq au Riesling's whole bird trips (was
+  // a non-trip below) — its skin is set aside, RENDERED ("skin is
+  // rendered") and strained out with the solids, so the veto does not fire,
+  // and the breast fact trips the pieces its prep keeps.
+  ('0127-coq-au-riesling.yaml', 0),
 ];
 
 /// Skin lines the signal must leave alone: the other 11 bone-in thighs and
@@ -313,9 +319,8 @@ const List<(String, int)> _skinNonTrips = [
   ('0125-braised-chicken-with-mustard-and-herbs.yaml', 1),
   ('0137-one-hour-broiled-chicken-and-pan-sauce.yaml', 0),
   ('0121-crispy-skinned-chicken-breasts-with-vinegar-pepper-pan-sauce.yaml', 0),
-  // Skin set aside and rendered (coq au Riesling), taken "if desired" (the
-  // multicooker chicken in a pot).
-  ('0127-coq-au-riesling.yaml', 0),
+  // Skin taken "if desired" (the multicooker chicken in a pot). (v112: the
+  // skin set aside and rendered — coq au Riesling — moved to the trips.)
   ('1177-multicooker-chicken-in-a-pot-with-lemon-herb-sauce.yaml', 7),
   // v43 (Y3): Hearty Chicken Noodle Soup's breast line (0002|9, "remove
   // the skin and bones from the reserved cooked chicken and discard") left

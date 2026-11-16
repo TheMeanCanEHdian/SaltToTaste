@@ -147,19 +147,24 @@ void main() {
       },
     );
 
-    test('E1 non-trip: a step taking the skin "from the breast pieces" '
-        'does not trip a whole-bird line (0002); "from the chicken thighs" '
-        'still trips a thigh line (0455)', () {
+    // RE-PIN (M99 batch, v112, W1-B/W1-C): 0002's whole bird keeps only its
+    // breast (its prep, the stock strained), so "the skin … from the breast
+    // pieces" trips it (was a non-trip: 171447, 1,104.00 g).
+    test('E1: a step taking the skin "from the breast pieces" trips a '
+        'whole bird that keeps only its breast (0002, v112); "from the '
+        'chicken thighs" still trips a thigh line (0455)', () {
       final soup = loadCorpusRecipe('0002-classic-chicken-noodle-soup.yaml');
       final bird = nutritionLines(soup)[1];
       expect(bird.raw, startsWith('1 (4-pound) whole chicken, breast removed'));
-      expect(skinDiscarded(soup, bird), isFalse);
+      expect(skinDiscarded(soup, bird), isTrue); // RE-PIN (v112): was false.
       // RE-PIN (v83 closer 1, verify1 D2): read as the row is weighed —
       // 0002|1 is a `weight` row (v82: 171447, 1,104.00 g) — so the skin
       // gate decides, never the gram source; the value is unchanged.
+      // RE-PIN (M99 batch, v112): the skin gate now trips, so a decision on
+      // the moved row records the skin-on record bought (was 171052).
       expect(
         decisionRecordOf(soup, bird, 171052, gramSource: 'weight'),
-        171052,
+        171447,
       );
       final provencal = loadCorpusRecipe('0455-chicken-provencal.yaml');
       final thighs = nutritionLines(provencal).firstWhere(
@@ -221,10 +226,13 @@ _pins = [
     171052,
     // RE-PIN (M48): 788.00 → 738.75 g, the printed 3½–4 lb range at its
     // midpoint (was its top); the basis names the range.
-    '738.75',
+    // RE-PIN (M99 batch, v112, W1-A): 738.75 → 648.24 g, the kept pieces'
+    // AH-102 meat share 0.3811 (1,700.97 g × 0.3811; was the ready-to-cook
+    // 0.434 with the wings in it).
+    '648.24',
     'counted',
     null,
-    'from the printed weight (3½–4 lb, the midpoint) × 0.43 edible (USDA ready-to-cook yield)',
+    'from the printed weight (3½–4 lb, the midpoint) × 0.38 edible · approximate (derived from USDA AH-102 items 583–586: the breast, thighs and drumsticks (27, 19, 17 of the carcass) × their meat 65/59/55 %; the wings and back are not counted)',
   ),
   (
     '0004-pressure-cooker-chicken-noodle-soup.yaml',
@@ -240,15 +248,19 @@ _pins = [
   // takes "the skin and bones from the breast pieces" of a whole bird —
   // a part the line's item does not name — so it stays on 171447 at v39's
   // whole-bird yield.
+  // RE-PIN (M99 batch, v112, W1-C): the prep keeps the breast alone and
+  // Step 3 strains the rest out, so the breast fact trips (171052) and the
+  // breast's AH-102 meat share weighs it: 1,814.37 g × 0.1755 = 318.42 g
+  // (was 171447, 1,104.00 g at the ready-to-cook 0.608).
   (
     '0002-classic-chicken-noodle-soup.yaml',
     1,
     '1 (4-pound) whole chicken, breast removed, split, and reserved; remaining chicken cut into 2-inch pieces',
-    171447,
-    '1104.00',
+    171052,
+    '318.42',
     'counted',
     null,
-    'from the printed weight × 0.61 edible (USDA ready-to-cook yield)',
+    'from the printed weight × 0.18 edible · approximate (derived from USDA AH-102 items 583–584: the breast, 27 of the carcass, × its meat 65 %; the rest of the bird is strained out with the stock)',
   ),
   // E1 pieces: v43 (Y2) AH-102's derived pieces meat figure (v40: the whole
   // bird's 0.43 per pound).

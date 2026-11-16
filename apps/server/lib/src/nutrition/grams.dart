@@ -2376,6 +2376,36 @@ const Map<String, Ah102Part> ah102Parts = {
         "derived from USDA AH-102 items 584–586 by 583's carcass "
         'shares: pieces (breast, thigh, drumstick), raw → meat 60.5 %',
   ),
+  // v112 (M99 W1-A): a whole bird cut into breast pieces, thighs and
+  // drumsticks with the wings and back left out of the dish
+  // ([wholeBirdKept]) — the listed parts' share of the carcass (583), each
+  // at its own yield (584–586).
+  'chicken whole pieces': (
+    skin: (27 * 74 + 19 * 70 + 17 * 63) / 100 / 100,
+    skinFlag:
+        'derived from USDA AH-102 items 583–586: the breast, thighs and '
+        'drumsticks (27, 19, 17 of the carcass) × their meat and skin '
+        '74/70/63 %; the wings and back are not counted',
+    meat: (27 * 65 + 19 * 59 + 17 * 55) / 100 / 100,
+    meatFlag:
+        'derived from USDA AH-102 items 583–586: the breast, thighs and '
+        'drumsticks (27, 19, 17 of the carcass) × their meat 65/59/55 %; '
+        'the wings and back are not counted',
+  ),
+  // v112 (M99 W1-C): a whole bird whose breast alone is kept, the rest
+  // strained out of a stock ([wholeBirdKept]).
+  'chicken whole breast': (
+    skin: 27 * 74 / 100 / 100,
+    skinFlag:
+        'derived from USDA AH-102 items 583–584: the breast, 27 of the '
+        'carcass, × its meat and skin 74 %; the rest of the bird is '
+        'strained out with the stock',
+    meat: 27 * 65 / 100 / 100,
+    meatFlag:
+        'derived from USDA AH-102 items 583–584: the breast, 27 of the '
+        'carcass, × its meat 65 %; the rest of the bird is strained out '
+        'with the stock',
+  ),
   'turkey whole': (
     skin: 78 / 85 * 0.71,
     skinFlag:
@@ -2529,16 +2559,65 @@ String birdPartOf(String raw, FdcFood food) {
 /// [food]'s [ah102Parts] yield for the bird part [raw] buys — the meat
 /// figure on a meat-only record, else meat and skin — or null (not a bird
 /// record of [ah102Records], or a part the handbook gives no figure for).
-({double share, String flag})? ah102YieldOf(FdcFood food, String raw) {
+/// v112: [part] (a [wholeBirdKept] part) in place of the line's own.
+({double share, String flag})? ah102YieldOf(
+  FdcFood food,
+  String raw, {
+  String? part,
+}) {
   final record = ah102Records[food.fdcId];
-  final part = record == null
+  final row = record == null
       ? null
-      : ah102Parts['${record.species} ${birdPartOf(raw, food)}'];
-  if (part == null) return null;
+      : ah102Parts['${record.species} ${part ?? birdPartOf(raw, food)}'];
+  if (row == null) return null;
   return record!.meatOnly
-      ? (share: part.meat, flag: part.meatFlag)
-      : (share: part.skin, flag: part.skinFlag);
+      ? (share: row.meat, flag: row.meatFlag)
+      : (share: row.skin, flag: row.skinFlag);
 }
+
+/// v112 (M99 W1-A, W1-C; rule (e): the line's PREP, never the raw line):
+/// what the recipe keeps of the whole bird [raw] buys — `whole pieces` for a
+/// prep "cut into N pieces (…)" whose list names breast pieces, thighs and
+/// drumsticks and nothing else (the wings and back are not in the dish),
+/// `whole breast` for "breast removed, …, and reserved; remaining chicken
+/// cut into …" when [strained] (the recipe strains the rest out with the
+/// stock) — with the parts kept (`kept`, the skin reader's scope); else
+/// null.
+({String part, String kept})? wholeBirdKept(
+  String raw,
+  String? prep,
+  bool Function() strained,
+) {
+  if (prep == null || !_wholeBirdLine.hasMatch(raw)) return null;
+  final lower = prep.toLowerCase();
+  final list = _cutIntoPieces.firstMatch(lower)?.group(1);
+  if (list != null) {
+    final kinds = {
+      for (final piece in list.split(','))
+        _keptPiece.firstMatch(piece.trim())?.group(1),
+    };
+    return kinds.length == 3 && !kinds.contains(null)
+        ? (part: 'whole pieces', kept: list)
+        : null;
+  }
+  return _breastReserved.hasMatch(lower) && strained()
+      ? (part: 'whole breast', kept: 'breast')
+      : null;
+}
+
+/// [wholeBirdKept]'s list: "cut into 8 pieces (4 breast pieces, 2 thighs,
+/// 2 drumsticks; see this page)" → the pieces before any ";".
+final RegExp _cutIntoPieces = RegExp(r'^cut into \d+ pieces \(([^;)]*)');
+
+/// One kept piece of [_cutIntoPieces]' list.
+final RegExp _keptPiece = RegExp(
+  r'^\d+ (breast|thigh|drumstick)(?:s| pieces?)?$',
+);
+
+/// [wholeBirdKept]'s breast-only prep (0002).
+final RegExp _breastReserved = RegExp(
+  r'^breast removed\b[^;]*\breserved; remaining chicken cut into\b',
+);
 
 /// v43 (the owner's 2026-10-06 ruling Y10): a bone-in beef, pork or lamb
 /// record whose cut USDA AH-102 (1975) Table 1 names reads the handbook's
@@ -3048,6 +3127,7 @@ GramResolution? resolveGrams({
   bool shellEaten = false,
   bool canLiquidEaten = false,
   bool stepsPeel = false,
+  String? birdPart,
 }) => _resolveLine(
   amounts: amounts,
   food: food,
@@ -3060,6 +3140,7 @@ GramResolution? resolveGrams({
   shellEaten: shellEaten,
   canLiquidEaten: canLiquidEaten,
   stepsPeel: stepsPeel,
+  birdPart: birdPart,
 );
 
 /// [first] × [share] edible, flagged approximate by [flag].
@@ -3084,6 +3165,7 @@ GramResolution? _resolveLine({
   required bool shellEaten,
   required bool canLiquidEaten,
   required bool stepsPeel,
+  required String? birdPart,
 }) {
   final parsed = raw == null
       ? amounts
@@ -3200,11 +3282,17 @@ GramResolution? _resolveLine({
       food != null &&
       raw != null &&
       buysRefuse(raw);
+  // v112 (M99 W1-A, W1-C): a whole bird whose prep keeps only some of its
+  // parts ([wholeBirdKept]) reads that AH-102 row, never the ready-to-cook
+  // yield — on a record whose species has the row.
+  final kept = refuse && birdPart != null
+      ? ah102YieldOf(food, raw, part: birdPart)
+      : null;
   final yieldFactor = refuse
       ? edibleYieldOf(
           food,
           raw: raw,
-          wholeBird: wholeBirdYield,
+          wholeBird: wholeBirdYield && kept == null,
           shellEaten: shellEaten,
         )
       : null;
@@ -3261,7 +3349,7 @@ GramResolution? _resolveLine({
     // ([ah102YieldOf]) — pieces on the meat-only broiler 171052 too; the v40
     // wing flag stays on the whole bird.
     final part = classed
-        ? ah102YieldOf(food, raw) ?? ah102Meats[food.fdcId]
+        ? kept ?? ah102YieldOf(food, raw) ?? ah102Meats[food.fdcId]
         : null;
     final byClass = classed && part == null
         ? boneInClassYields[food.fdcId]

@@ -5339,6 +5339,225 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v112 (batch M99, prep52 P1 — poultry edible share; matcherVersion
+97 → 98. The spec .claude/diag/2026-11-16/prep52/design_v2.md "P1 — poultry
+edible share" (W1-A, W1-B, W1-C, the W1 dependent), the rulings in the M99
+brief (the orchestrator's, under the owner's standing authorization
+2026-10-07). Blind accuracy audit 7's largest error, coq au Riesling +63.7 %
+a serving: a whole chicken "cut into 8 pieces (4 breast pieces, 2
+drumsticks, 2 thighs), wings and back reserved" was counted at the full
+ready-to-cook yield on the meat-and-skin record, though the steps render
+its skin, reserve the wings and back and strain the solids out. No
+migration. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **W1-A — a whole bird whose PREP keeps breast pieces, thighs and
+  drumsticks.** `wholeBirdKept` (grams.dart; `grep -c 'wholeBirdKept('
+  grams.dart` → 1, engine.dart → 2) reads the line's `prep` field (rule
+  (e): never the raw line — the coming measurement / item / alternative
+  fields do not replace `prep`), on a line the shipped `_wholeBirdLine`
+  already reads as a whole bird: "cut into N pieces (<list>)" whose list,
+  before any ";", names breast pieces, thighs and drumsticks — all three,
+  nothing else — is `whole pieces`; the wings and back are not in the
+  dish. `ah102Parts` gains `'chicken whole pieces'` (`grep -c "'chicken
+  whole pieces'" grams.dart` → 1): meat and skin (27×74 + 19×70 + 17×63) /
+  10⁴ = **0.4399**, meat (27×65 + 19×59 + 17×55) / 10⁴ = **0.3811** —
+  USDA AH-102 item 583's carcass shares (breast 27, thighs 19, drumsticks
+  17) × items 584 / 586 / 585 (meat and skin 74 / 70 / 63 %, meat 65 / 59 /
+  55 %), as transcribed in .claude/diag/2026-10-06/ah102_poultry.md. The
+  part reaches the grams path as `resolveGrams`' `birdPart` (`grep -c
+  birdPart grams.dart` → 7, engine.dart → 2; only `lineGrams` passes it, as
+  `stepsPeel`): where the record's species has the row (`ah102YieldOf`'s
+  new `part`), the ready-to-cook share is not read and the row is.
+- **W1-B — a skin set aside, RENDERED and strained out is not eaten.**
+  `_skinFactsOf`'s recipe-wide veto (`_skinKept`) is now `_skinVetoed`
+  (`grep -c '_skinVetoed(' engine.dart` → 2): a vetoing skin sentence does
+  not veto when a LATER sentence renders the skin (`_skinRendered`: `skin
+  is rendered`, coq's own phrase — the one corpus sentence that renders a
+  skin; the design's other spellings, `skin has rendered` and `render(s|ed)
+  (the) (chicken) skin`, reach no sentence of the 1,198 recipes and were
+  removed at the owner gate, the replay byte-identical before and after)
+  and the recipe's strain (`_strainAt`, shipped) comes after that render
+  (`_strainedAfter`) — the LAST such sentence, and a strictly later one:
+  within one sentence the order is not read, so a render that also sets
+  the skin aside, or stands in the strain's own sentence, lifts nothing
+  (v111's outcome, pinned). And `_skinOffFor` lets a part-scoped skin fact trip
+  a whole bird whose KEPT parts name the part (`_birdKeptOf` →
+  `wholeBirdKept`'s `kept`: the A list, or C's breast); `skinDiscarded`'s
+  answers and `skinKeptPart`'s memo are keyed by (item, kept). Coq: the S1
+  sentence "Remove skin from chicken breast pieces, drumsticks, and thighs
+  and set aside." no longer vetoes ("… skin is rendered …" later in S1,
+  S3's strain after it), its breast fact trips the kept pieces, and
+  `_skinOffFood` moves 171447 → 171052 (the shipped `_skinlessRecords`
+  move: no new figure).
+- **W1-C — a whole bird whose breast alone is kept, the rest strained
+  out.** `wholeBirdKept`'s second shape: prep "breast removed, …,
+  reserved; remaining chicken cut into …" in a recipe whose steps strain
+  (`_strainAt`, read only for this shape) is `whole breast`; `ah102Parts`
+  gains `'chicken whole breast'`: meat and skin 27×74 / 10⁴ = **0.1998**,
+  meat 27×65 / 10⁴ = **0.1755** (AH-102 583–584). With W1-B's part rule
+  the breast-skin sentence trips it → 171052. RULE (f), a STATED outcome
+  changed: the edible-yields paragraph said "classic chicken noodle soup's
+  whole bird, whose step discards "the skin and bones from the breast
+  pieces" only, stays on 171447 at 1,104 g" (`grep -c 'stays on 171447 at
+  1,104 g' docs/API.md` → 2: that paragraph, corrected in place with a
+  dated note, and this quotation of it). The
+  measured reason: S3 strains the stock and discards the solids — only the
+  breast meat is eaten, so 1,104 g of meat and skin was counted for 318 g
+  of breast meat.
+- **The five moved rows** (the replay on snapshot 32; by hand, the printed
+  weight × the share = grams, × the record's kcal per 100 g in the
+  engine's order — 171447 215, 171052 119 (nutrient 208), 2710180 900):
+  coq-au-riesling|0 171447 1,242.00 g 2,670.30 kcal → 171052 2,041.17 ×
+  0.3811 = **777.89 g**, 925.69; moroccan-chicken-with-olives-and-lemon|8
+  171052 738.75 g 879.11 → 1,700.97 × 0.3811 = **648.24 g**, 771.41;
+  chicken-with-40-cloves-of-garlic|1 171447 1,035.00 g 2,225.25 → 1,700.97
+  × 0.4399 = **748.26 g**, 1,608.75; classic-chicken-noodle-soup|1 171447
+  1,104.00 g 2,373.60 → 171052 1,814.37 × 0.1755 = **318.42 g**, 378.92;
+  and the DEPENDENT classic-chicken-noodle-soup|0 "1 tablespoon vegetable
+  oil" 14.00 g `portion` 126.00 → **4.84 g** `discarded`, 43.56 — the
+  ruled `_browningFatPlan` proxy ("the recipe's heaviest counted meat
+  row", v96, read by its STORED grams) now sizes it from the kept breast:
+  0.015195 × 318.42 ÷ 1.00 = 4.84, below its whole (v111: share 1.198,
+  left whole). Σ −4,545.93 kcal; per serving coq 827.13 → 390.98,
+  moroccan 373.24 → 346.31, 40-cloves 769.10 → 614.97, classic 523.91 →
+  177.72. chicken-with-40-cloves-of-garlic|4 does NOT move (its first
+  mention, S1's pie plate, heats nothing: no plan row), nor does
+  moroccan|10 (no plan row before or after).
+- **The class (R7, measured on the replay against v111_rows.tsv):** of
+  prep52's census (pA/census_poultry.tsv), the 23 other ready-to-cook
+  whole-bird rows, the 82 AH-102 part rows, the 3 Cornish rows and the 73
+  other poultry rows differ 0; the five other vetoed skin-off recipes
+  (butternut squash soup, braised chicken with mustard and herbs,
+  grill-roasted boneless turkey breast, porchetta-style turkey breast, the
+  multicooker chicken in a pot) differ 0 on every row.
+- **Pins** (nutrition_v112_test.dart, 21 tests): the five rows and the two
+  non-moving oils in their real recipes (record, source, grams, energy,
+  basis); the look-alikes unchanged (perfect-roast-chicken|2 1,035.00 g,
+  broiled-chicken-with-gravy|0 1,104.00 g, grill-roasted boneless turkey
+  breast|1, porchetta-style turkey breast|8, braised chicken with
+  mustard|2); STATED synthesized negative paths, corpusless: ten pieces
+  naming the wings keep 0.608, and so do eight pieces naming THREE kinds
+  one of them wings (the "no other kind" gate alone), two lines of one
+  item — the coq shape and the bare bird — answer apart under a breast-skin
+  sentence (the trip, and its "leaving skin on the wings"), a C-shape line
+  with no strain keeps 0.608 and trips nothing, a render with no strain,
+  a bacon "beginning to render", a strain before the render and a render
+  before the veto stay vetoed, a wing-skin sentence trips no kept piece,
+  a pieces prep on chicken parts and on a whole turkey weighs as the line
+  without it; and the owner gate's (each a STATED synthesized negative
+  path inside those tests, each the killer of one surviving mutant): a
+  list that does not open the prep ("trimmed and cut into 8 pieces (…)"),
+  a list of two kinds, and a piece with words after its kind ("2
+  drumsticks and 2 wings") keep 0.608; the C shape without its
+  "; remaining chicken cut into …" clause keeps 0.608 and trips nothing
+  even where the steps strain; a skin rendered again AFTER the strain, a
+  render that sets the skin aside in its own sentence, a render in the
+  strain's own sentence, and bacon fat that "is rendered" stay vetoed;
+  and, from the verifier of the owner's hand edits: "pigskin is rendered"
+  lifts nothing, 0127's skin sentence with its three kinds re-ordered
+  thighs-first and its skin discarded (not set aside) trips as breast-first
+  does, and with no vetoing sentence the strain is never read
+  (`memo:strainAt` uncounted);
+  RULE C on the caps (400 lines × 120 steps of S1's sentence):
+  `memo:skinSentences` 1, `memo:strainAt` 1 on the true path and the C
+  shape, none on the quiet path, `skinScans` 400, `memo:skinKeptPart` 400
+  on the true path only — counts exact, the clock a backstop (519 / 98 /
+  100 ms). Re-pins (RE-PIN comments, equalities): matcherVersion 98 in 18
+  files and four hash literals (the version alone); v40's moroccan|8 and
+  classic|1 rows and its E1 sentence test (now a trip; a decision on the
+  moved row records 171447); v39_meat's skin signal (coq moved to the
+  trips); v96 (classic|0 moved from the rows left whole to the rows beyond:
+  5 → 6) and its Confirm test (classic|0 4.84 g `discarded`; the line the
+  rule leaves whole re-pointed to steak-au-poivre|7, 14.00 g `portion`);
+  v98 P3 (4.84 g `discarded`); v102's 0002 energies (E −2,077.11).
+- **Mutants** (each on a snapshot copy, killed by a value): m1 the A shape
+  gate removed (every whole bird with a prep reads pieces — perfect-roast,
+  broiled and classic die); m2 wings allowed in the list; m3 the pieces
+  shares swapped; m4 the render arm without the strain; m5 the veto
+  exemption removed; m6 the part scope read from the raw line; m7 C's
+  strain gate removed; m8 C's share 0.65; m12 the render arm widened to any
+  "render"; m13 the browning plan reading the browned line's own weigh for
+  its stored grams; plus the `_wholeBirdLine` guard removed and the
+  "render before the veto" order dropped; and (closer 1) wings added to
+  `_keptPiece`, the kept half of `skinDiscarded`'s answer key and of the
+  `skinKeptPart` memo key dropped, and the browning plan's cap removed
+  (steak-au-poivre|7 confirmed 15.51 g `discarded`). The OWNER GATE: 16
+  own mutants, each one site NARROWED (never a rule removed), run against
+  v112, v40, v39_meat, v43_poultry, v101 and v103 — 6 killed by a value
+  (the breast's meat-and-skin share 74 → 70: 362.51 g read 342.92; the
+  skin reader's strain callback always true; the pieces' thigh meat 59 →
+  70: coq 777.89 read 820.55; the list read past its ";": 40-cloves 748.26
+  read 1,035.00; the classed arm without the kept row: coq read 2,041.16;
+  any kept part tripping) and 10 SURVIVED the batch's pins, none a row
+  defect: seven are now pinned by the negative paths above
+  (`_cutIntoPieces` without its `^`; `kinds.length >= 2`; `_keptPiece`
+  without its `$`; `_breastReserved` cut after "reserved"; the FIRST render
+  for the last; `k <= rendered`; `flat >= at` — each re-run and killed by
+  its own new value), two were the render pattern's unreached arms
+  (removed with their arms; three mutants on the pattern as shipped — its
+  "skin" dropped, any "render", any "skin" — are killed by a value), and
+  one — the kept list read as `'breast'` alone — the owner first STATED as
+  reaching only the limit below (the replay under it is byte-identical).
+  THE VERIFIER OF THE OWNER'S HAND EDITS (two agents, on the edits, not
+  the batch) REFUTED that: under it 0127's skin sentence with its three
+  kinds named thighs-first and its skin discarded does not trip, where
+  v112 is exact — it is now killed by that sentence's pin (expected true,
+  read false). The same
+  verifier re-spelled 8 mutants, each killed by the pin written for it
+  and by no other, and ran 8 of its own: 5 killed by a value, 3 SURVIVED —
+  the pattern's leading word boundary (now pinned: "pigskin is rendered",
+  read true for false), `_skinVetoed`'s early return (a cost gate, now
+  pinned: `memo:strainAt` read 1 for uncounted) and the pattern's trailing
+  word boundary (STATED: no English word continues "rendered", and no
+  corpus sentence differs); the whole server suite passed unchanged
+  (+3,404 ~4) under each of the two mutants then stated. STATED
+  equivalent, re-measured: the ready-to-cook skip keyed on `birdPart`
+  instead of the part row found — of the 7 cached records that publish a
+  "yield from 1 lb ready-to-cook" portion, the two whole-bird records are
+  171052 and 171447, both chicken with both rows, and the replay under it
+  is byte-identical; it would differ only on a whole-bird record that
+  publishes the portion and has no kept-parts row — one outside
+  `ah102Records`, or one whose species has no such row (the whole turkey
+  171081 publishes no such portion) — none cached.
+- **STATED limits.** The giblets: the A and C derivations apply AH-102's
+  carcass shares (no neck or giblets) to the printed weight as Y4 applies
+  FDC's 0.608; a line that buys the giblets with the bird keeps a small
+  high bias (≤ 14 %, AH-102 581). The backbone (design §5 W1-F): 8 rows
+  discard a backbone or reserve it to a strained stock; no source gives a
+  backbone strip's share — the bound, AH-102 583/587 (the full back 19.0 %
+  of meat and skin), ≤ −3,301.4 kcal over the 8 rows, ≤ 11.5–18.9 % a
+  serving. The shapes: only the corpus's own two shapes are read (four
+  lines: three pieces lists and one breast-reserved prep) — a
+  list anywhere but at the head of the prep, a list of fewer than the
+  three kinds, a piece with trailing words and a breast "reserved" with no
+  "remaining chicken" clause weigh as v111 (pinned). The skin's part:
+  `_skinPart` reads the first part named right after a sentence's "skin
+  … from" (the part word, or one within three words of "from (the)"), and
+  any kept kind it reads moves the whole line to the meat-only record
+  (thighs first as breast first — pinned). Coq's sentence names all three kinds
+  and classic's breast is the one part kept, so both are exact; a
+  sentence naming only ONE of three kept kinds would over-deduct (no
+  corpus recipe; not pinned). The REST bucket the auditors contested stays as RULED (turkey
+  breasts 0.668 from AH-102 2591/2593, thighs 0.70 from 586, pieces 0.698
+  from 584–586, giblets discarded −2 %). Coq's 2 tablespoons of reserved
+  rendered fat are counted by no line: against audit 7's blind calibrator
+  (R56, 2,020.9 kcal a batch, 505.2 a serving at the low end) v112's
+  390.98 reads −22.6 % where v111 read +63.7 % — of the 456.98 kcal
+  between them, 249.18 is the engine's ruled alcohol retention on the
+  Riesling (the calibrator counted the wine whole), 231.40 that reserved
+  fat (the calibrator's 25.8 g of bacon grease 172345), and the chicken
+  line itself now stands +57.99 kcal (+6.7 %) above the calibrator's
+  729.2 g on the same record 171052; against the calibrator less that
+  retention (1,771.72 kcal a batch) the recipe reads −11.7 % (a
+  step-measured fat with no ingredient line: backlog, the class not yet
+  counted). The browned food that is strained
+  or poached: the proxy sizes classic|0 from the breast, which was never
+  browned (the browned pieces are strained out) — NOT re-ruled (a "no
+  film" rule would take 4.84 g more off it and 6.72 g off hearty|0, ≈ −104
+  kcal over the library).
+- **Deploy note.** matcherVersion 98 stales every recipe; a zero-request
+  sweep recomputes (171052 and 171447 are cached details). No migration.
+
 **Matcher v111 (batch fix111; matcherVersion 97 UNCHANGED — the fixes of
 dual-fleet review Run 091/092 over v110, union Y1–Y9, the spec
 .claude/diag/2026-11-15/review091/union_Y.md, the rulings in fix111_brief.md
@@ -12845,7 +13064,11 @@ discarded except the wings; the bird's meat-only yield)"` at 788 g. A step
 that takes the skin "from the <part>" (breast, thigh,
 leg, wing, drumstick) trips only a line whose item names that part:
 classic chicken noodle soup's whole bird, whose step discards "the skin
-and bones from the breast pieces" only, stays on 171447 at 1,104 g;
+and bones from the breast pieces" only, stays on 171447 at 1,104 g
+(Changed 2026-11-16, matcher v112: its prep keeps the breast alone and
+the steps strain the rest of the bird out with the stock — "discard the
+solids" — so the breast fact trips it, 171052 at the breast's AH-102
+meat share, 318.42 g; see "Matcher v112");
 Chicken Provençal's "from the chicken thighs" still trips. The breast is NOT
 enabled: 171077 "Chicken, broiler or fryers, breast, skinless, boneless,
 meat only, raw" publishes only "oz" 113 g, "package" 926 g and "piece"
