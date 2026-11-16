@@ -210,7 +210,9 @@ temporary password with `must_change_password`: until the user calls
   `?` or `#` with no `/` before it (an empty path) → bare 500; a malformed
   `X-Forwarded-Proto` (`ht tp`; a comma LIST from chained proxies in ONE
   line) → bare 500, `http:` → bare 400. Not changed: `main.dart`'s bind and
-  `run()` stay; owning the listen loop is the owner's backlog decision.)
+  `run()` stay; owning the listen loop was put to the owner and RULED
+  2026-11-16: LEFT as documented — no code; a checklist item for the first
+  real deployment.)
 - Bare shelf_static serves a static file to EVERY method the 405 gate lets
   through — `POST` and `OPTIONS` included, the whole file with its ETag
   (STATED 2026-11-15, v111 Y7; measured in-process: `POST /main.dart.js` and
@@ -5341,7 +5343,8 @@ invariant the dual-fleet review found broken on a non-corpus input:
 dual-fleet review Run 091/092 over v110, union Y1–Y9, the spec
 .claude/diag/2026-11-15/review091/union_Y.md, the rulings in fix111_brief.md
 (the orchestrator's, under the owner's standing authorization 2026-10-07);
-Y6 and Y5 lie outside the matcher and are flagged to the owner; Y8 (the
+Y6 and Y5 lie outside the matcher and are flagged to the owner (RULED
+2026-11-16: both KEPT as shipped); Y8 (the
 kits) is the orchestrator's. No migration; NO corpus row moves — the replay
 on snapshot 32 is byte-identical to the v110 set, calls 0. ONE new error
 code, 400 `bad_request` (Y6); ONE optional report field, `export_failed`
@@ -5717,7 +5720,8 @@ line number.)**
   Kept as built (a held row shows in the review queue and asks once);
   counting on the hit instead would ask FDC at every compute or cache the
   hit AS the food — the stand-in marker question (BACKLOG, Y1 above;
-  flagged to the owner). The verifier's other findings, applied: the 'v111 Y6' pass rows assert the
+  flagged to the owner — RULED 2026-11-16: KEEP the hold as built, the
+  marker stays backlog). The verifier's other findings, applied: the 'v111 Y6' pass rows assert the
   routed path (VA2); the non-origin-form target STATED in Conventions (VA3,
   pre-existing); six text corrections. Round 2 (the DELTA, two agents): A
   PASS, 0 defects — three mutants of its own on the new pin, each killed by
