@@ -654,7 +654,10 @@ void main() {
         // (the replay 1,098.56 → 1,097.92): was 522.5, 1032.78, 1098.56.
         // RE-PIN (M86 batch, v90, 958: the guacamole's 2710824 avocados,
         // 2346387 sour cream): was 1032.49, 1097.92.
-        (_nachos, 6, _guacamole, 522.3, 954.71, 1077.42, 'complete'),
+        // RE-PIN (M100 batch, v113, S14′): the nachos' own |0 tortilla chips
+        // on "Tortilla chips, plain" 2708202 (472; was the flavored 2708204,
+        // 519): −106.59 a batch (the replay 1,077.42 → 1,050.77): was 1077.42.
+        (_nachos, 6, _guacamole, 522.3, 954.71, 1050.77, 'complete'),
         // RE-PIN (M47 batch, v49): the lemon tart's strained zest line counts
         // its juice (Q6; was 399.33), the fruit tart's kiwis 150 g (Q12; was
         // 547.59, partial).

@@ -665,20 +665,25 @@ void main() {
       );
     });
 
+    // RE-PIN (M100 batch, v113): the vehicle line is now "4 marrow bones
+    // (see this page)" (synthesized from simple-pot-au-feu|2's "1½ pounds
+    // marrow bones", a stated exception; "Caribou, bone marrow, raw (Alaska
+    // Native)" 169800 at 0.487) — the curry leaves are a zero flavouring
+    // since v113 (L368) and never reach the ranking (was 2706388).
     test(
       'P1, P8: a pick BELOW the gate whose detail IS cached and gives no '
       'grams is the sub-recipe too — its grams say something about the '
-      'food ("15 curry leaves (see this page)" on "Beef curry" at 0.465, '
-      "v14a A5's synthesized line — red plums until matcher v21 and "
-      'niçoise olives until v31 rose over the gate — the detail cached '
-      'portion-less)',
+      'food ("4 marrow bones (see this page)" on 169800 at 0.487, '
+      "v14a A5's synthesized line — red plums until matcher v21, "
+      'niçoise olives until v31 and curry leaves until v113 left the '
+      'ranking — the detail cached portion-less)',
       () async {
-        final db = tempDb()..fdcFoodCachePut(2706388, await stripped(2706388));
+        final db = tempDb()..fdcFoodCachePut(169800, await stripped(169800));
         await matchAndCompute(
           db,
           FixtureProvider(),
           recipeOf(db: db, [
-            ['15 curry leaves (see this page)'],
+            ['4 marrow bones (see this page)'],
           ]),
         );
         expect(rowAt(db, 0).description, subRecipeNote);
@@ -708,16 +713,19 @@ void main() {
       }
     });
 
+    // RE-PIN (M100 batch, v113): the vehicle is "4 marrow bones (see this
+    // page)" on 169800 (was the curry leaves on 2706388, a zero flavouring
+    // since v113 L368) — as P8 above.
     test(
       'E11: an un-skip gates a marked count on its food as the compute '
-      'does — the below-gate curry-leaves pick (A5; plums until matcher '
-      'v21, olives until v31) comes back held while its '
-      'detail is uncached, and the 0 g sub-recipe once a cached detail '
-      'gives it no grams (cached portion-less: a stated exception)',
+      'does — the below-gate marrow-bones pick (A5; plums until matcher '
+      'v21, olives until v31, curry leaves until v113) comes back held '
+      'while its detail is uncached, and the 0 g sub-recipe once a cached '
+      'detail gives it no grams (cached portion-less: a stated exception)',
       () async {
         final db = tempDb();
         final r = recipeOf(db: db, [
-          ['15 curry leaves (see this page)'],
+          ['4 marrow bones (see this page)'],
         ]);
         await matchAndCompute(db, FixtureProvider(), r);
         Future<IngredientMatchRow> skipAndBack() async {
@@ -727,8 +735,8 @@ void main() {
         }
 
         var row = await skipAndBack();
-        expect((row.status, row.fdcId, row.grams), ('auto', 2706388, null));
-        db.fdcFoodCachePut(2706388, await stripped(2706388));
+        expect((row.status, row.fdcId, row.grams), ('auto', 169800, null));
+        db.fdcFoodCachePut(169800, await stripped(169800));
         row = await skipAndBack();
         expect((row.status, row.description), ('confirmed', subRecipeNote));
       },

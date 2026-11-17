@@ -1741,7 +1741,10 @@ void main() {
         10,
       )); // = replay; 390.64
       // RE-PIN (M82 batch, v84): was 534.48 (the replay 534.48 → 536.79).
-      expect(of(_steaks), ('complete', '536.79', 18)); // = replay; 555.87
+      // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 — its
+      // cached hit's 146 kcal here (the replay, the detail's 146.437: 536.79
+      // → 479.29): was 536.79.
+      expect(of(_steaks), ('complete', '478.68', 18)); // replay 479.29; 555.87
       // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its two
       // minced basil tablespoons on SR's chopped 2.65 g (replay 235.29 →
       // 235.26).

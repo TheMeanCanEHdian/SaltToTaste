@@ -163,7 +163,7 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    "matcherVersion 98 (v94 set it to 89, batch M92: three recipes' totals move)",
+    "matcherVersion 99 (v94 set it to 89, batch M92: three recipes' totals move)",
     () {
       // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
       // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
@@ -174,7 +174,8 @@ void main() {
       // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
       // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
       // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
-      expect(matcherVersion, 98);
+      // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
+      expect(matcherVersion, 99);
     },
   );
 
@@ -418,8 +419,11 @@ void main() {
       () {
         for (final (file, position, fdcId, grams, kcal) in const [
           (_braised, 2, 171093, '1817.11', '2852.86'),
-          (_braised, 3, 171533, '1360.78', '2190.85'),
-          (_crowd, 12, 171533, '2254.35', '3629.51'),
+          // RE-PIN (M100 batch, v113, W6): the drumsticks and thighs and
+          // the leg quarters land the leg record 171493 (144 kcal; was
+          // 171533 at 2190.85 / 3629.51), grams unchanged.
+          (_braised, 3, 171493, '1360.78', '1959.52'),
+          (_crowd, 12, 171493, '2254.35', '3246.27'),
           (_crowd, 16, 171093, '3331.37', '5230.25'),
           (_confit, 5, 171533, '1487.78', '2395.33'),
         ]) {
@@ -447,10 +451,19 @@ void main() {
     test('the totals deduct (v93 → v94 per serving): braised-turkey 575.75 → '
         '536.07 (|2 −233.43, |3 −163.40), the crowd 568.27 → 553.24 (|12 '
         '−270.69; |16 gross), confit 510.86 → 481.09 (|5 −178.65); the '
-        "thigh's saturated share above 1 adds", () {
+        "thigh's saturated share above 1 adds; v113 (W6): |3 and |12 on the "
+        "leg record 171493 deduct nothing (its roasted pair 171494's tracer "
+        'keeps 101.2 % of the energy; no [braisedKept] key)', () {
       for (final (file, perServing, energy, fat, saturated) in const [
-        (_braised, '536.07', '5360.70', '260.03', '92.23'),
-        (_crowd, '553.24', '9958.24', '526.32', '189.69'),
+        // RE-PIN (M100 batch, v113, W6): |3 and the crowd's |12 sit on the
+        // leg record 171493, which is no [braisedKept] key (its own roasted
+        // pair, SR 171494, keeps 1.011629 of the energy and 1.023440 of the
+        // fat by the tracer: nothing to deduct — nutrition_v113_test) — their
+        // rows' −163.40 / −270.69 deductions are gone; the rows fall −231.33 /
+        // −383.24 (was 536.07 / 5360.70 / 260.03 / 92.23 and 553.24 /
+        // 9958.24 / 526.32 / 189.69).
+        (_braised, '529.28', '5292.76', '246.22', '87.47'),
+        (_crowd, '546.98', '9845.70', '503.45', '181.80'),
         (_confit, '481.09', '2886.52', '116.58', '35.99'),
       ]) {
         final n = db.nutritionFor(recipes[file]!.id)!;

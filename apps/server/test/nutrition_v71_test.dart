@@ -1507,19 +1507,22 @@ const List<_Row> _unmoved = [
     '2852.86',
     "from the printed weight (5–7 lb, the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: a breast sold with its upper back (rib) attached — the breast's meat and skin, 87 % (85–89) of its 33 of 43 parts, 66.8 %; the back is not counted)",
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493, unflagged (was
+  // 171533 "Turkey, retail parts, thigh, meat and skin, raw", 2190.85, the
+  // "approximation (counted as …)" flag).
   (
     '0162-slow-roasted-turkey-with-gravy.yaml',
     null,
     7,
     '4 pounds turkey drumsticks and thighs, trimmed',
-    171533,
-    'Turkey, retail parts, thigh, meat and skin, raw',
+    171493,
+    'Turkey, all classes, leg, meat and skin, raw',
     '1.000000',
     '1360.78',
     'auto',
     null,
-    '2190.85',
-    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '1959.52',
+    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79))',
   ),
   (
     '0162-slow-roasted-turkey-with-gravy.yaml',
@@ -1676,19 +1679,20 @@ const List<_Row> _unmoved = [
     '2852.86',
     "from the printed weight (5–7 lb, the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: a breast sold with its upper back (rib) attached — the breast's meat and skin, 87 % (85–89) of its 33 of 43 parts, 66.8 %; the back is not counted)",
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493 (was 171533, the flag dropped: they ARE the leg).
   (
     '0172-braised-turkey.yaml',
     null,
     3,
     '4 pounds turkey drumsticks and thighs, trimmed',
-    171533,
-    'Turkey, retail parts, thigh, meat and skin, raw',
+    171493,
+    'Turkey, all classes, leg, meat and skin, raw',
     '1.000000',
     '1360.78',
     'auto',
     null,
-    '2190.85',
-    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '1959.52',
+    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79))',
   ),
   // RE-PIN (M73 batch, v73): the porcini flag (pD C4).
   (
@@ -3324,19 +3328,25 @@ const List<_Row> _unmoved = [
     '30.59',
     'discarded in cooking — only the dip on the food counted · approximation (dip: 1.17 g per g of the coat\'s carbohydrate — USDA FNDDS 2710785 "Breading or batter as ingredient in food": 15 g egg and 120 g water in 287 g at 40.1 g carbohydrate per 100 g; the dip\'s excess not counted)',
   ),
+  // RE-PIN (M100 batch, v113, W9a): the raw cube steaks on raw top round
+  // 2646173, flagged (was the cooked FNDDS 2705826 "Beef, steak, cube" at
+  // 0.923333, 1590.41); grams unchanged.
+  // The fresh compute here reads 2646173's cached SEARCH HIT (958 rounded
+  // to 146; a weight line fetches no detail): 1241.71 — the replay on
+  // snapshot 33, which caches the detail (146.437), 1245.42.
   (
     '0304-chicken-fried-steaks.yaml',
     null,
     7,
     '6 (5-ounce) cube steaks, pounded ⅓ inch thick',
-    2705826,
-    'Beef, steak, cube',
-    '0.923333',
+    2646173,
+    'Beef, round, top round, boneless, choice, raw',
+    '1.000000',
     '850.49',
     'auto',
     null,
-    '1590.41',
-    '6 × 142 g (printed weight)',
+    '1241.71',
+    '6 × 142 g (printed weight) · approximation (counted as Beef, round, top round, boneless, choice, raw)',
   ),
   (
     '0304-chicken-fried-steaks.yaml',
@@ -8472,22 +8482,26 @@ void main() {
           '445.45',
         ), // 1,211.70 → 455.70 (the batch)
         // RE-PIN (M82 batch, v84): was 586.18 (the replay 586.18 → 587.62).
+        // RE-PIN (M100 batch, v113, W6): |7 on the leg record 171493 (the
+        // replay 587.62 → 564.49): was 587.62.
         (
           '0162-slow-roasted-turkey-with-gravy.yaml',
           null,
           'complete',
-          '587.62',
+          '564.49',
         ), // 608.72 → 586.18
         // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
         // RE-PIN (M83 batch, v85): was 579.95 — B5: the porcini |11 strained
         // out by its own word (the replay 579.95 → 575.75).
         // RE-PIN (M92 batch, v94): was 575.75 — Q8 (b″): |2 and |3 on the roasted
         // turkey pairs, deducted (the replay 575.75 → 536.07).
+        // RE-PIN (M100 batch, v113, W6): was 536.07 — |3 on the leg record
+        // 171493, no longer deducted (the replay 536.07 → 529.28).
         (
           '0172-braised-turkey.yaml',
           null,
           'complete',
-          '536.07',
+          '529.28',
         ), // 601.81 → 578.50
         (
           '0235-maple-glazed-pork-tenderloin.yaml',

@@ -405,22 +405,28 @@ void main() {
       expect((row.fdcId, row.grams, row.description), (null, 0, subRecipeNote));
     });
 
+    // RE-PIN (M100 batch, v113): the vehicle is "4 marrow bones (see this
+    // page)" (synthesized from simple-pot-au-feu|2's "1½ pounds marrow
+    // bones"); "15 curry leaves" is a zero flavouring since v113 (L368) and
+    // never reaches the ranking (was "Beef curry" at 0.465).
     test(
       'A5: a marked count whose pick is below the gate was never fetched, '
       'so it is HELD in check on the pick, never zeroed as a confirmed '
-      'sub-recipe ("15 curry leaves (see this page)" on "Beef curry" at '
-      '0.465 — "6 red plums" until matcher v21 rewrote them onto "Plums, '
-      'raw" over the gate, and "12 nicoise olives" until v31 ranked the '
-      'olives over it (Q7): no corpus marked count picks below the gate — '
-      'a synthesized line from the Palak Dal line, a stated exception)',
+      'sub-recipe ("4 marrow bones (see this page)" on "Caribou, bone '
+      'marrow, raw (Alaska Native)" at 0.487 — "6 red plums" until matcher '
+      'v21 rewrote them onto "Plums, raw" over the gate, "12 nicoise '
+      'olives" until v31 ranked the olives over it (Q7), "15 curry leaves" '
+      'until v113 made them a zero flavouring: no corpus marked count '
+      'picks below the gate — a synthesized line from the pot-au-feu line, '
+      'a stated exception)',
       () async {
         final db = tempDb();
-        const raw = '15 curry leaves (see this page)';
+        const raw = '4 marrow bones (see this page)';
         expect(isSubRecipeReference(raw), isTrue);
         final fixtures = FixtureProvider();
         await matchAndCompute(db, fixtures, recipeOf(db: db, [raw]));
         final row = db.ingredientMatchesFor('r').single;
-        expect(row.description, 'Beef curry');
+        expect(row.description, 'Caribou, bone marrow, raw (Alaska Native)');
         expect((row.grams, row.status), (null, 'auto'));
         expect(belowConfidenceGate(row.confidence), isTrue);
         expect(bucketOf(row), MatchBucket.check);

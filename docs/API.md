@@ -2843,7 +2843,10 @@ the same words (171081); `salmon steaks`, `skin-on side of salmon` (read
 `salmon steaks`) → `fish salmon raw` (2706284, a search hit: a weight line
 needs no detail); `turkey drumsticks and thighs`, `turkey leg quarters`
 (read `bone-in turkey thighs`) → `turkey retail parts thigh meat and skin
-raw` (171533, flagged below). The fresh half ham ("bone-in half ham with
+raw` (171533, flagged below) (Changed 2026-11-16, matcher v113: both read
+the cached `turkey leg quarters` answer under `turkey all classes leg meat
+and skin raw` → FDC's leg record 171493, the leg quarters flagged, the
+drumsticks and thighs not — "Matcher v113", W6). The fresh half ham ("bone-in half ham with
 skin", reads `meaty smoked ham shank or 2 3 smoked ham hocks`) → `pork
 fresh leg ham shank half separable lean and fat raw` (168226) since
 matcher v32: its detail, read in the live step, publishes no refuse yield
@@ -2988,7 +2991,9 @@ F7, the strained kombu line shows it at 0 g), raw cashews (170162:
 it). FDC has no record of three foods, whose lines stay a person's: the
 `candied ginger` search answers tea, pickled, raw and ground ginger,
 ginger ale and candies — no candied or crystallized ginger (never the
-raw root); `freekeh` answers nothing; `farro` answers only 2710828
+raw root); `freekeh` answers nothing (Changed 2026-11-16, matcher v113:
+cracked freekeh counts on SR 170688 "Bulgur, dry", a flagged stand-in by
+class at the record's own 140 g cup — "Matcher v113", W3); `farro` answers only 2710828
 "Farro, pearled, dry, raw" (a 45 g racc, no cup), not whole farro, so
 `whole farro` keeps its v21 words (the owner's label figure is the way
 on).
@@ -5338,6 +5343,446 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v113 (batch M100, prep52 P2 — record choice; matcherVersion
+98 → 99. The spec .claude/diag/2026-11-16/prep52/design_v2.md "P2 — record
+choice" (W6, W2a, W2b, W9a, W9b, W7a, W7b, S14′, L368, and W3 on OQ1), the
+rulings in the M100 brief (the orchestrator's, under the owner's standing
+authorization 2026-10-07; W3 ruled yes). Blind accuracy audit 7: "sweet
+Italian sausage" on the lean-links record (−39.3 % a serving, the sample's
+second-largest error), raw cube steaks on a COOKED FNDDS record, yogurt
+cheese on cream cheese, plain tortilla chips on the flavored record, freekeh
+not counted (−36.0 %). Rank-as entries ([_rankAs], read by `rankAsFor` →
+`lineSearchFor`'s first branch: a CACHED answer ranked under the record's
+own words), flagged stand-ins (`approximationRecords`), one dock token, one
+zero flavouring in two spellings and one `ah102Records` entry — no new
+reader, no raw-line grammar. Replayed on SNAPSHOT 33 (the L55 live step
+cached the four details this batch lands for the first time: 172934,
+2646173, 170903, 2708202), both orders byte-identical, calls 0. No
+migration. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **W6 — the turkey leg quarters and the drumsticks and thighs on FDC's
+  leg record.** Both `_rankAs` entries now read the cached `turkey leg
+  quarters` answer under `turkey all classes leg meat and skin raw` →
+  171493 "Turkey, all classes, leg, meat and skin, raw" (208 = 144; `grep
+  -c "'turkey all classes leg meat and skin raw'" matcher.dart` → 2); no
+  cached `turkey drumsticks and thighs` answer holds 171493, so both read
+  that one. `ah102Records` gains `171493: (species: 'turkey', meatOnly:
+  false)` (grams.dart; without it the rows fall to the gross weight — no
+  yield table holds 171493), so the grams stay AH-102's (item 2595 leg
+  quarter 0.71, item 2596 leg 0.75). `approximationRecords`: `'turkey leg
+  quarters': 171493` (flagged: a quarter carries a back portion the leg
+  record does not describe), `'turkey drumsticks and thighs'` removed (they
+  ARE the leg). RULE (f), a RULED rewrite changed: the v30 ruling read
+  "turkey drumsticks and thighs, and turkey leg quarters, as turkey thigh
+  meat and skin (171533; FDC's leg record 171493 has no cached detail —
+  their weight is the gross weight, labelled approximate too)" — that
+  ruling and the v30 rank-as sentence are each corrected in place with a
+  dated note (`grep -c '(Changed 2026-11-16, matcher v113' docs/API.md` →
+  4: the v30 rank-as note, W3's, the v94 reach note of W6's recipe-level
+  dependent, and this sentence's own quote of the command; the v30
+  ruling's note wraps its date across two lines and is not counted). The
+  measured reason: both premises are gone —
+  171493's detail is cached (since the v32 live step; portion "leg, bone
+  removed" 816 g) and the cached `turkey leg quarters` answer ranks it
+  first, and the grams have not been gross since v43 (AH-102 2595 / 2596).
+  The matcher.dart comments of the v30 entries are corrected too.
+- **W2a — the sweet, mixed and link spellings of Italian sausage on the
+  mild raw pork record.** Their own cached answers rank SR 172952
+  "Sausage, Italian, sweet, links" (208 = 149: protein 16.13, fat 8.42 — a
+  lean links product) first (`sweet italian sausage` holds that one
+  candidate); the shipped `'hot italian sausage'` entry already lands SR
+  171631 "Sausage, Italian, pork, mild, raw" (290: protein 13.9, fat
+  24.26). Seven `_rankAs` entries read that cached `hot italian sausage`
+  answer under `sausage italian pork raw` (`grep -c "'sausage italian pork
+  raw'" matcher.dart` → 8, the shipped one with them): `sweet italian
+  sausage`, `hot italian sausage links`, `hot or sweet italian sausage`,
+  `sweet or hot italian sausage` (the corpus's), and the numbers no corpus
+  line prints, `sweet italian sausage link`, `sweet italian sausage links`,
+  `hot italian sausage link` (pinned equal to a printed sibling's entry).
+  Unflagged: "sweet" and "mild" name the same fresh Italian pork sausage.
+- **W2b — bulk pork sausage on the unprepared link/patty.** The cached
+  `bulk pork sausage` answer holds only SR 167694 "Sausage, turkey and pork,
+  fresh, bulk, patty or link, cooked" (307, a COOKED blend for a raw
+  weight) and an FNDDS patty; `'bulk pork sausage': ('pork sausage', 'pork
+  sausage link patty unprepared')` → SR 172934 "Pork sausage, link/patty,
+  unprepared" (288), the cached `pork sausage` answer's only candidate with
+  all five words. Unflagged.
+- **W9a — raw cube steaks on raw top round, flagged.** The cached `cube
+  steaks` answer holds FNDDS 2705826 "Beef, steak, cube" (187; "1 oz
+  yields 20 g" — cooked) and cooked round records only; the L55 searches
+  `cubed steak` and `beef cubed steak raw` hold no raw cube steak.
+  `'cube steaks'` and `'cube steak'` read the cached `boneless long-cut
+  beef shanks` answer under `beef round top round boneless raw` →
+  Foundation 2646173 "Beef, round, top round, boneless, choice, raw" (no
+  208; 958 = 146.437), flagged in `approximationRecords` ("counted as Beef,
+  round, top round, boneless, choice, raw"). The printed raw weight stays
+  (850.49 g), so the fried-food readers that size the coat and the oil
+  from the raw beef (`_countryFried`, FNDDS 2705842) do not move: a yield
+  read (×20/28.35) would have cut them 29 % against their own per-raw
+  figures. Check: the FNDDS record's own yield gives 187 × 20 / 28.35 =
+  131.9 kcal per raw 100 g; the stand-in's 146.437 is 11.0 % above it.
+- **W9b — the bare `ground beef` on its siblings' 80 % lean record.** The
+  one corpus line ("12 ounces ground beef, preferably 80 percent lean
+  ground chuck"; the steps brown it and keep the fat) landed FNDDS 2705854
+  "Beef, ground" (261, a dish record) on its own answer.
+  `'ground beef': ('80 percent lean ground beef', '80 percent lean ground
+  beef')` reads exactly what its four siblings read — the shipped
+  `'80 percent lean ground chuck'` REWRITE's answer and words — →
+  Foundation 2514744 "Beef, ground, 80% lean meat / 20% fat, raw" (958 =
+  247.813), unflagged. A DESIGN CORRECTION, measured: the design's entry
+  `('80 percent lean ground chuck', '80 percent lean ground chuck')` reads
+  the chuck key's OWN cached answer, which the siblings never read (the
+  rewrite sends them elsewhere), and landed SR 172598 "Game meat, bison,
+  chuck, shoulder clod, separable lean only, raw" — a hit with no cached
+  detail: 0 kcal, the recipe partial — on the replay.
+- **W7a — low-fat yogurt cheese on strained low-fat Greek yogurt,
+  flagged.** "8 ounces (1 cup) low-fat yogurt cheese" (the prep note: "also
+  called labne", 2 cups low-fat yogurt drained to 1 cup): its own cached
+  answer holds SR 170886 "Yogurt, plain, low fat" (index 0) and SR 169079
+  "Cheese, cream, low fat" (index 5, 208); the head noun `cheese` ranked the
+  cream cheese first. `'low-fat yogurt cheese': ('plain greek yogurt',
+  'yogurt greek plain lowfat')` → SR 170903 "Yogurt, Greek, plain, lowfat"
+  (73), the cached `plain greek yogurt` answer's index 0, flagged ("counted
+  as Yogurt, Greek, plain, lowfat"): a strained yogurt for a strained
+  yogurt, the degree differs; true yogurt cheese is no USDA food.
+- **W7b — strained whole-milk yogurt on whole-milk Greek yogurt.** "1 cup
+  plain whole-milk strained yogurt" landed Foundation 2259793 "Yogurt,
+  plain, whole milk" (UNSTRAINED, 958 = 77.3185) on its own answer;
+  `'plain whole-milk strained yogurt': ('whole-milk greek yogurt',
+  'whole-milk greek yogurt')` → Foundation 2259794 "Yogurt, Greek, plain,
+  whole milk" (958 = 94.5071), the spanakopita sibling's landing,
+  unflagged; the cup's density grams (243.69) unchanged.
+- **S14′ — `flavored` an unasked modified form.** The cached `tortilla
+  chips` answer: index 0 FNDDS 2708204 "Tortilla chips, flavored" (519),
+  index 1 FNDDS 2708202 "Tortilla chips, plain" (472) — a tie at 0.923
+  broken by FDC's order. `_modifiedFormTokens` gains `'flavored'` (`grep -c
+  "^  'flavored',$" matcher.dart` → 1): the −0.06 dock for a form the query
+  does not ask for, so the flavored record reads 0.863 and the plain one
+  lands. A query naming `flavored` is exempt (the dock is query-gated):
+  on the recorded answer `flavored tortilla chips` ranks 2708204 first at
+  0.990, `lime-flavored tortilla chips` first too, at 0.7275, and
+  `unflavored tortilla chips` — another token — the plain record (the
+  owner gate's probe, each confidence pinned; synthesized queries: the corpus's own lines naming the word reach
+  the ranker without it — the gelatin and oyster-sauce lines under their
+  `_queryRewrites`).
+  MEASURED, beyond the design's claim that no head noun moves: of every
+  corpus row's normalized item (base eed6f10 vs v113, `headNounOf`),
+  exactly one head changes — `oyster-flavored sauce` read `flavored` (the
+  identity tail `sauce` stepped back onto it) and reads `oyster` now that
+  `flavored` is a modified form; its 7 rows stay on FNDDS 2707150 "Oyster
+  sauce" (the line's search query, the rewrite's, read `oyster` on both).
+  The bundt cake's contract golden moves one ALTERNATIVE's confidence (FNDDS
+  2705609 "Coffee creamer, powder, sugar free, flavored" 0.398 → 0.338 in
+  `others`; packages/salt_shared/test/fixtures/contract/nutrition_matches.json,
+  regenerated with UPDATE_CONTRACT_GOLDENS=1; the app suite re-run).
+- **L368 — the curry leaves a zero flavouring.** "15 curry leaves, roughly
+  torn (optional)" (palak-dal|9) sat on FNDDS 2706388 "Beef curry" at
+  0.465, below the gate, no grams (the recipe partial): the cached `curry
+  leaves` answer holds other plants' leaves and curry DISHES, no curry leaf.
+  `_zeroNutrientFlavourings` gains `'curry leaves'` and `'curry leaf'` (the
+  set does not singularize; `grep -c "^  'curry lea" matcher.dart` → 2). The
+  design's planners conflicted — one built the zero, one would only have
+  stated the hold ("the hold is right"); ruled BUILD: the makrut precedent
+  is the same class (an eaten aromatic leaf FDC lacks: "'makrut lime leaf'
+  join `_zeroNutrientFlavourings` (the explicit list kept)"), and the
+  objection was to inventing a mass — the zero rule invents none (0 g, a
+  stated gap). The wrong "Beef curry" record is no longer shown;
+  palak-dal partial → complete.
+- **W3 — cracked freekeh on dry bulgur, flagged (OQ1, ruled yes).** RULE
+  (f), a STATED line changed: "`freekeh` answers nothing" (the v38
+  paragraph; corrected in place with a dated note). The cached `freekeh` answer is EMPTY, `cracked
+  freekeh` holds only cracked-wheat breads (SR 172672 "Bread,
+  cracked-wheat" at 0.14, no grams), `wheat durum` holds SR 169721 "Wheat,
+  durum" as a search hit only (208 = 339, read from that cached answer).
+  The measured reason: the line is 37.8 % of the recipe at the stand-in,
+  the audit's calibrators read the recipe −36 / −38 %, and the cached dry
+  wheat class is tight (bulgur 342, hard white 342, soft white 340, hard
+  red spring 329, farro pearled 344.005 by 958, durum 339).
+  `'cracked freekeh'` and `'freekeh'` read the cached `medium-grind
+  bulgur` answer under `bulgur dry` → SR 170688 "Bulgur, dry" (342),
+  flagged ("counted as Bulgur, dry"), weighed by the record's own `cup`
+  portion, 140 g (1½ cups = 210.00 g), and flagged approximate a second
+  time, as the crystallized-ginger precedent (v76: SR 167781 "Candied
+  fruit") is: engine `trimStandInFlagOf` gains `170688 when` the raw line
+  names `freekeh` (`grep -c "170688 when raw" engine.dart` → 1) — "approximate
+  (FDC holds no freekeh — a stand-in by class: SR 170688 Bulgur, dry (342
+  kcal); weighed at bulgur's own cup, 140 g — freekeh's cup is
+  unpublished)"; the six bulgur rows on 170688 print no `freekeh` and say
+  nothing (red-lentil-kibbeh|7 "1 cup · USDA portion", pinned). (Closer
+  round 1, verifier D1: the fixer's tree flagged the record only, so
+  "USDA portion" asserted bulgur's cup for freekeh unqualified.) The recipe
+  partial → complete.
+- **The 21 moved rows** (the replay on snapshot 33 against v112_rows.tsv,
+  exactly the brief's list; grams unchanged but W3's and L368's (no grams →
+  the zero row's 0.00 g); by hand, grams × the
+  record's kcal per 100 g in the engine's order, nutrient 208, else 958,
+  else 957): W6 turkey-and-gravy-for-a-crowd|12 171533 2,254.35 g 3,629.51
+  kcal → 171493 × 1.44 = **3,246.27**; slow-roasted-turkey-with-gravy|7
+  and braised-turkey|3 171533 1,360.78 g 2,190.85 → 171493 **1,959.52**
+  each. W2a 172952 → 171631 (× 2.90): pasta-frittata-with-sausage-and-hot-
+  peppers|6 226.80 g 337.93 → **657.71**; pasta-with-hearty-italian-meat-
+  sauce-sunday-gravy|3 453.59 g 675.85 → **1,315.42**;
+  sausage-meatballs-and-spaghetti|13 340.19 g 506.89 → **986.56**;
+  italian-sausage-with-grapes-and-balsamic-vinegar|1 680.39 g 1,013.78 →
+  **1,973.13**; orecchiette-with-broccoli-rabe-and-sausage (1132)|1 and
+  ricotta-calzones-with-sausage-and-broccoli-rabe|5 226.80 g 337.93 →
+  **657.71** each. W2b 167694 → 172934 (× 2.88):
+  crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|8 340.19 g
+  1,044.40 → **979.76**; baked-bread-stuffing-with-sausage-dried-cherries-
+  and-pecans|3 and french-style-chicken-and-stuffing-in-a-pot|9 453.59 g
+  1,392.53 → **1,306.34** each. W9a chicken-fried-steaks|7 2705826 850.49
+  g 1,590.41 → 2646173 × 1.46437 = **1,245.42**, flagged. W9b
+  classic-stuffed-bell-peppers|5 2705854 340.19 g 887.91 → 2514744 ×
+  2.47813 = **843.04**. W7a light-new-york-cheesecake|5 169079 226.80 g
+  471.74 → 170903 × 0.73 = **165.56**, flagged. W7b
+  clbr-turkish-poached-eggs-with-yogurt-and-spiced-butter|0 2259793 243.69
+  g 188.41 → 2259794 × 0.945071 = **230.30**. S14′ 2708204 → 2708202 (×
+  4.72): best-ground-beef-chili|5 and black-bean-burgers|11 28.35 g 147.13
+  → **133.81** each; cheesy-nachos-with-guacamole-and-salsa|0 226.80 g
+  1,177.07 → **1,070.48**. L368 palak-dal-spinach-dal-with-cumin-and-
+  mustard-seeds|9 2706388, no grams → the flavouring row (no record, 0.00
+  g `unmeasured`, `confirmed` — the engine's rule status, as the makrut
+  rows'). W3 chicken-and-spiced-freekeh-with-cilantro-and-preserved-
+  lemon|10 172672, no grams → 170688 210.00 g `portion` × 3.42 =
+  **718.20**, flagged twice (the record and the grams). Σ +1,885.83 kcal over the rows.
+- **The two status changes**: palak-dal (400.64 a serving, unchanged) and
+  chicken-and-spiced-freekeh (295.47 → 475.02) `partial` → `complete`;
+  french-style-chicken-and-stuffing-in-a-pot stays `partial` (838.75 →
+  817.20). Per serving (the replay): crowd 553.24 → 546.98, slow-roasted
+  587.62 → 564.49, braised-turkey 536.07 → 529.28, pasta-frittata 403.88 →
+  457.17, sunday-gravy 890.52 → 970.47, sausage-meatballs 618.19 → 738.11,
+  sausage-with-grapes 397.79 → 637.63, orecchiette (1132) 434.04 → 487.34,
+  calzones 758.18 → 811.48, crisp-skin turkey 1,041.94 → 1,035.47,
+  bread stuffing 599.56 → 590.94, chicken-fried-steaks 536.79 → 479.29,
+  stuffed peppers 597.00 → 585.78, cheesecake 366.54 → 341.02, Turkish
+  eggs 174.84 → 185.31, beef chili 394.93 → 393.26, bean burgers 364.18 →
+  361.95, nachos 1,077.42 → 1,050.77.
+- **A recipe-level dependent, through a RULED mechanism — RULE (f), a
+  ruled reach changed (stated; an owner flag):** the v94 braised-pair
+  deduction `braisedKept` is keyed on the RECORD (`grep -c "171533: {"
+  engine.dart` → 1; `_lineOrderGated` = {171093, 171533}), and 171493 is
+  no key: braised-turkey|3's −163.40 and the crowd's |12 −270.69 (v94's
+  reach paragraph, "the fat the fat separator takes off the legs";
+  corrected in place with a dated note) are no longer taken — the rows
+  fall −231.33 / −383.24 but the recipes only −67.94 / −112.55 a batch
+  (529.28 / 546.98 a serving). No row moves for it (the deduction lives in
+  the totals). The MEASURED reason no key is added: the leg's own
+  same-cut pair is cached — SR 171494 "Turkey, all classes, leg, meat and
+  skin, cooked, roasted", a hit in the cached `turkey leg quarters` answer
+  (E 208, P 27.9, F 9.82, sat 3.06, mono 2.87, poly 2.72) — and v94's
+  tracer on 171493's detail (E 144, P 19.54, F 6.72, sat 2.06, mono 2.06,
+  poly 1.83) keeps 1.011629 of the energy and 1.023440 of the fat (sat
+  1.040, mono 0.976, poly 1.041): the doctrine deducts NOTHING from the leg
+  record (an entry would ADD 1.16 %, +22.79 / +37.75 kcal). The thigh
+  record's −7.5 % came from its fattier raw composition (F 9.16 against
+  the leg's 6.72), and the leg record's raw energy (1,959.52 / 3,246.27)
+  is already below v112's deducted thigh energy (2,027.45 / 3,358.82).
+  The design expected "the recipe-level −429.31" to stay (P2 W6 "Stays");
+  it modelled the rows, not the deduction — corrected here. (Closer round
+  1, verifier D2: the verifier's proposed `braisedKept` entry 171493 →
+  171494 was measured and REFUTED by its own figures.) OWNER FLAG: the fat
+  the separator takes is now counted at the leg record's gross; a
+  deduction for it would need a figure no cached record gives. Pinned
+  (nutrition_v113_test): the pair's two shares from the fixtures, no
+  171493 key, `braisedKeptOf` null on braised-turkey|3 at 171493 and
+  0.925419 for the same line at 171533.
+- **The class (R6, measured on the replay against v112_rows.tsv;
+  scratchpad m100/tools/r6.py):** rows whose raw names a sausage
+  (sausage, kielbasa, chorizo, andouille, linguiça) 32, moved 9 — exactly
+  W2a's six and W2b's three (the smoked, andouille, kielbasa, Spanish and
+  Mexican chorizo rows 0); turkey rows 33, moved 3 (W6's); the oxtail and
+  kielbasa rows 6, moved 0; rows on a record whose description holds
+  `flavored` 3, moved 3 (the chips); bulgur 7 and whole farro 2, moved 0;
+  yogurt 29, moved 2 (W7a, W7b); gelatin 34 and oyster-flavored sauce 7,
+  moved 0; every replay row whose line names `flavored` (42) moved 0.
+  Sections, notes and
+  calls byte-identical to v112 (calls 0, 0 bytes); both orders
+  byte-identical; the attribution's one "person row" is the flavouring
+  row's engine `confirmed` status (no decision exists); the buckets move
+  only as the rows explain (check 118 → 116: the curry and freekeh rows
+  left the below-gate bucket; counted +2; complete 1,055 → 1,057, partial
+  143 → 141).
+- **Pins** (nutrition_v113_test.dart, 52 tests; the landed details seeded
+  into each test database from the fixtures, as snapshot 33 caches them):
+  the 21 rows in their real recipes (record, status, hold, source, the
+  stored confidence, grams, energy, basis — the flag text or its absence;
+  the confidence since closer round 1, verifier D3: 24 of the 28
+  "expected-equivalent" rank-word survivors moved a ruled row's stored
+  confidence on the replay, one — `'ground beef'`'s words narrowed to
+  `80 percent lean ground chuck` — to 0.3825, below the gate, the stuffed
+  peppers partial); the three statuses and classic-stuffed-bell-peppers
+  `complete`; the freekeh flag's absence on red-lentil-kibbeh|7; W6's
+  leg pair (above); the
+  look-alikes unchanged (chicken-fried-steaks|0 coat 96.71 g / 353.96 and
+  |8 oil 84.11 g / 756.99, turkey-thigh-confit|5 171533 1,487.78 g,
+  juicy-grilled-turkey-burgers|0 174518, 0345's hot Italian sausage
+  171631, andouille 174584, kielbasa 173879, Mexican chorizo 173859, the
+  oxtails 2705843 1,024.00 g, an 80 percent lean ground chuck sibling
+  2514744, plain low-fat yogurt 170886, plain Greek yogurt 2259794,
+  oyster-flavored sauce 2707150, unflavored gelatin 169599, bulgur 170688,
+  whole farro 2710828 with no grams, red curry paste `unmatched` with no
+  record); corpusless: the new keys, the unprinted numbers EQUAL to a
+  printed sibling's entry, the flags and their absence, `ah102Records[171493]`,
+  both curry spellings zero flavourings and no veto, the (answer, words)
+  of the sweet-or-hot, ground beef and W7b entries, W3's grams flag on a
+  synthesized `1 cup freekeh` (the unprinted `'freekeh'` key's line) and
+  its absence on a bulgur line and on 172672, the recorded
+  `tortilla chips` answer ranking 2708202 at 0.923333 over 2708204 at
+  0.863333 — and, the owner gate's, 2708204 first under a query naming
+  `flavored` (0.990000; 0.727500 under the hyphenated `lime-flavored`) and
+  the plain record under `unflavored` — the head nouns. nutrition_v21_test's rank-as table gains the
+  six W2a rows. The fixtures gain, copied verbatim from snapshot 33 by
+  `tool/record_fdc_fixtures.dart --from-db` on a copy, the details 171493,
+  172934, 2646173, 170903, 2708202 and the searches `turkey leg quarters`,
+  `pork sausage`, `whole-milk greek yogurt` (the sweep-audit count:
+  compared 553 → 558, differ 422 → 426, measured). Re-pins (RE-PIN
+  comments, equalities): matcherVersion 99 in 18 files and four hash
+  literals (the bump alone — base eed6f10 with 99 gives each); W6 in v30
+  (rows and the flagged map), v43_poultry, v59, v71, v73, v94 (|3 and
+  |12 on 171493; the per-serving and totals figures with the lost
+  `braisedKept` deduction); W2a in v69, v96, v100, v102; W2b in v96; W9a in
+  v55, v61, v71, v82 (a fresh test database reads 2646173's cached SEARCH
+  HIT, 958 rounded to 146: 1,241.71 kcal, the recipe 2,872.1 — the replay,
+  which caches the detail, 1,245.42); S14′ in v41, v103 and the contract
+  golden; L368 in v37 (the class 18 → 19 lines), v73 (curry leaves left the
+  negatives) and the sub-recipe vehicle of v14a A5 / v15 P8 / E11 (now "4
+  marrow bones (see this page)", synthesized from simple-pot-au-feu|2, on
+  169800 at 0.487 — the curry leaves no longer reach the ranking); W3 in
+  v37 / v38 (cracked freekeh left the dry lists).
+- **Mutants** (106, each on a snapshot copy of matcher.dart / grams.dart,
+  one site NARROWED, run against nutrition_v113_test.dart; m100/mut/:
+  gen.py, run1.sh, results.txt, classified.tsv): 39 killed by a LANDING
+  pin (each key dropped where a corpus line reads it; each entry pointed
+  at its own answer for sweet, hot or sweet, bulk pork, cube steaks, yogurt
+  cheese and cracked freekeh; W6's old answer; the sweet entry's words
+  `sausage italian sweet links`; W9a's `beef chuck roast boneless raw`;
+  W9b's design answer (the bison); W7a's words without `lowfat`; W3's words
+  each dropped; every flag dropped or moved; `ah102Records[171493]` dropped
+  (grams gross: 3,175.14 / 1,814.37) and its `meatOnly` flipped (the meat figures: 2,032.09 / 1,288.20); the flag
+  kept on the drumsticks and thighs; `flavored` dropped, `plain` docked
+  instead, the stem `flavor` docked; the curry leaves dropped; both
+  spellings moved to `noFdcRecordItems`); 39 killed only by a corpusless
+  TABLE pin (the unprinted keys and spellings dropped or narrowed — the
+  key-set and sibling-equality pins; matcherVersion 98; and, landing
+  unchanged, each rank word of the leg quarters, sweet, hot links and cube
+  steaks entries dropped, the hot links entry on its own answer, the leg
+  quarters on the v30 words); 28 SURVIVED — every one a rank-word or
+  answer narrowing whose landing on the corpus is unchanged: each word of
+  the mixed sausage spellings and of bulk pork sausage dropped, sweet or
+  hot on its own answer, yogurt cheese without `yogurt` / `greek` /
+  `plain`, every W7b narrowing (its own answer, `yogurt plain whole milk`,
+  each word), every W9b narrowing (its own answer, each word). These and
+  the table-only word drops are EXPECTED-EQUIVALENT claims handed to the
+  verifier to refute by a run (R9) — not counted as kills. Verifier round 1
+  REFUTED 24 of the 28 by the replay (each kept the record and moved the
+  ruled row's stored confidence: the sausages 0.98 → 0.94, bulk pork 1.00 →
+  0.96, stuffed peppers 0.97 → 0.6825 / 0.945, yogurt 1.00 → 0.95 / 0.99)
+  and added three of its own (bulk pork's words `pork sausage unprepared`
+  → 0.92; `'ground beef'`'s words `80 percent lean ground chuck` → 0.3825,
+  the recipe partial; the W7b answer `plain greek yogurt`, replay-identical).
+  Closer round 1 (m100/out/c1/mut: run.sh, results.txt, logs/): the
+  confidence and stuffed-peppers status pins kill the 26 by a value; the
+  five answer or word narrowings whose landing AND confidence are unchanged
+  (sweet or hot, ground beef and W7b each on its own answer, W7b's
+  `yogurt plain whole milk`, W7b on `plain greek yogurt`) are killed by a
+  corpusless value pin of the three entries' (answer, words) — the
+  probe's only difference was the offered runners-up. The closer's own: the
+  freekeh flag's record 170689, its gate removed, its word narrowed to
+  `cracked freekeh` or `freekeh,` (the last two by the synthesized
+  `1 cup freekeh` pin), and a `braisedKept` key 171493 at the tracer's
+  1.011629 — each killed by a value. 0 survivors.
+- **The owner gate** (scratchpad m100/owner, archived with the batch). The
+  replay re-run by the owner on a fresh copy of snapshot 33: both orders
+  byte-identical, every TSV and the buckets cmp-identical to verifier
+  round 3's, exactly the 21 rows and the two statuses. The five new
+  fixture details and three searches each compared with snapshot 33's
+  cache row: equal, and no shipped fixture entry changed. 33 own mutants,
+  each ONE site moved to its NEAREST NEIGHBOUR rather than dropped (a rank
+  word set naming the same answer's cooked, smoked, nonfat, fruit, 90 %
+  lean or flank record, or the old sweet-links words; an entry pointed at
+  another cached answer; each flag id on the neighbouring record; the
+  `ah102Records` key on the roasted pair 171494; the flag put back on the
+  drumsticks and thighs at 171493; `flavored` moved to the base-form set,
+  −0.25 for −0.06; the thigh's `braisedKept` shares copied onto 171493;
+  the printed curry key narrowed to `fresh curry leaves`; the freekeh
+  flag's 140 g written 182 g; each unprinted key narrowed alone; and two
+  that KEEP the landing and move one rank word — `mild` added to the
+  sweet entry, `patty` dropped from bulk pork's — killed by the
+  stored-confidence pins, 0.980000 expected / 1.000000 read and 1.000000 /
+  0.960000: bulk pork's by those pins ALONE, the sweet entry's also by
+  the unprinted-key sibling pin): 33 killed by a value, the three files'
+  md5s clean after each. One more SURVIVED the whole file and left the replay
+  byte-identical — the dock applied to `flavored` whatever the query asks
+  (the query gate skipped for that one token): the block's "a query
+  naming `flavored` is exempt" had no pin. Pinned (above); the mutant
+  re-run: killed, 0.990000 expected, 0.930000 read. The hand-edit
+  verifier narrowed it once more — the gate skipped for a hyphenated
+  `-flavored` query alone — and that passed the owner's first pin, which
+  read only the hyphenated query's first record (docked, the flavored
+  record still ranks first): each query's confidence is pinned now, the
+  mutant re-run and killed, 0.727500 expected, 0.667500 read. One hand edit to
+  lib code, a COMMENT (matcher.dart, `_modifiedFormTokens`): it named
+  `unflavored gelatin` and `oyster-flavored sauce` as queries the gate
+  exempts — neither reaches the ranker holding the token (`unflavored` is
+  another token, and both lines rank under a rewrite).
+- **Calibration, the audit's own recipes** (seven of the 21 moved recipes
+  are in audit 7's sample; the blind calibrator's batch as returned ÷ the
+  low end of the printed servings, against the engine's kcal a serving; at
+  the engine's energy order — audit 7's correction of 2026-11-16 — R51
+  reads −38.3 % → −1.1 % and R01 +0.5 % → +0.1 %, the other five as here):
+  chicken-and-spiced-freekeh (R14) −36.0 % → **+2.9 %**;
+  italian-sausage-with-grapes (R51) −39.3 % → **−2.6 %**;
+  light-new-york-cheesecake (R09) +6.7 % → **−0.8 %**;
+  best-ground-beef-chili (R01) +0.1 % → −0.4 %; palak-dal (R32) +0.1 %,
+  unchanged (the status only). Two read AWAY. chicken-fried-steaks (R31)
+  −5.6 % → −15.7 %: the whole move is the steak row (−344.99), and the
+  calibrator priced the printed RAW weight on FNDDS 2705831 "Beef, steak,
+  round" (166 kcal; a search hit, protein 29.72 g per 100 g — a cooked
+  record; raw top round holds 21.475): its line reads 1,411.8 kcal, v112's
+  1,590.41, v113's 1,245.42 — and the audit's own adjudication of that
+  line reads "State WRONG, confirmed. Better record: 2646173 top round
+  raw", the record v113 lands. turkey-and-gravy-for-a-crowd (R25) −6.7 % →
+  −7.8 %: the calibrator's leg-quarter line is on 171493, the record v113
+  now lands; what differs is its grams (2,540.1 g, an unsourced 20 % bone
+  share: 3,657.7 kcal — against AH-102's 2,254.35 g, 3,246.27). The other
+  14 recipes are outside the sample.
+- **STATED limits ("Stays").** The leg quarter's back portion is the leg
+  record's composition (flagged); the AH-102 figures are the
+  fryer-roaster class (since v43). The fat the steps blot from the sausage
+  (0424, unquantified) stays counted; a hot Italian line counts on the
+  MILD record (no raw hot record cached). Bulk pork sausage: no flag (the
+  unprepared link/patty is the sold raw form). The cube steak: the raw
+  top round stands in (no raw cube-steak record cached). A future bare
+  `ground beef` line lands 80/20. Yogurt cheese's degree of straining.
+  Tortilla-chip variety (472–497). The curry leaves' own energy (a gram or
+  two), as Panang's makrut leaves. Freekeh's own cup; the whole farro keeps
+  its STATED label gap. The browning-fat plan and the fried-food readers
+  are unchanged (W2a / W2b land "Sausage," / "Pork sausage," records, no
+  `_brownedRecords`; W6, W9a, W9b keep their grams).
+- **Person paths** (no person-path code changes): GATE-P on base eed6f10
+  (a detached worktree) and on v113, the tip's sweep scripts, 12 shards,
+  fresh snapshot-33 copies, calls 0 — sw5 31,757, sw6 37,444, sw7 1,875,
+  sw8 56,943, sw8r 5,358, sw9 130: 0 divergent, 0 refused, identical
+  combo lines on both; sw10 156 bare and typed, 1 divergent on BOTH (the
+  v112 row moroccan|8 against snapshot 33's stored v111 row), its other
+  lines differing only in the kcal a serving of three moved recipes (beef
+  chili, french-style, freekeh); sw11 39,816 combos, 200 divergent on
+  both, the DIV lines identical (classes calls-only 200), refused 12,844 →
+  12,772: 72 pick-another combos on the cream cheese lines of 0118 and
+  0692 now find another cached-detail candidate in the offered list (the
+  dock moved FNDDS 2705761 "Cream cheese, regular, flavored" down it) and
+  run OK; sw12 131 / 54 divergent on both, lines identical; sw13 200, 0
+  divergent on both, 8 ROW lines differing only by the moved rows (the
+  nachos' chips, the turkey dressing's sausage). Closer round 1 moved no
+  person path (one basis flag, test pins, docs): GATE-P not re-run; its
+  replay differs from the fixer's only by the freekeh row's basis.
+- **Deploy note.** matcherVersion 99 stales every recipe; a zero-request
+  sweep recomputes once the live caches hold snapshot 33's L55 rows (the
+  chain's single deploy seeds them: the 8 food rows, the 4 search rows and
+  their index rows — 172934, 2646173, 170903, 2708202 are details there;
+  171493, 171631, 2514744, 2259794, 170688 were cached before). No
+  migration.
 
 **Matcher v112 (batch M99, prep52 P1 — poultry edible share; matcherVersion
 97 → 98. The spec .claude/diag/2026-11-16/prep52/design_v2.md "P1 — poultry
@@ -9891,7 +10336,11 @@ is not served — and a served breast is never deducted.
   lines named in S4): |2 breast 1,817.11 g −233.43 kcal, |3 drumsticks
   and thighs 1,360.78 g −163.40; batch 5,757.53 → 5,360.70, 575.75 →
   536.07 a serving (10). turkey-and-gravy-for-a-crowd (S4's fat separator):
-  |12 leg quarters 2,254.35 g −270.69 (named in S2); |16's two breasts,
+  |12 leg quarters 2,254.35 g −270.69 (named in S2)
+  (Changed 2026-11-16, matcher v113: |3 and |12 land the leg record 171493, whose own roasted
+  pair 171494 keeps 101.2 % of the energy by the tracer — no key, neither
+  deducts; braised-turkey 529.28 and the crowd 546.98 a serving; see
+  "Matcher v113", W6's recipe-level dependent); |16's two breasts,
   first named in S6, roasted on a rack, "Pour any juices from sheet into
   bowl" for the gravy — SERVED, gross (the recipe-wide gate alone would take
   427.96 more); 10,228.93 → 9,958.24, 568.27 → 553.24 (18).
@@ -13405,7 +13854,11 @@ sirloin (2727574: "1½ pounds beef flap meat, trimmed" is `"from 1 1/2
 pound · approximation (counted as Beef, top sirloin steak, raw)"`) and
 turkey drumsticks and thighs, and turkey leg quarters, as turkey thigh
 meat and skin (171533; FDC's leg record 171493 has no cached detail —
-their weight is the gross weight, labelled approximate too), since
+their weight is the gross weight, labelled approximate too) (Changed
+2026-11-16, matcher v113: both premises are gone — 171493's detail is
+cached and the grams have read AH-102 2595 / 2596 since v43; the leg
+quarters count on the leg record 171493, flagged, the drumsticks and
+thighs on it unflagged — "Matcher v113", W6), since
 matcher v31 (the CP10 rulings) star anise as anise seed (171316), and
 every Q7 stand-in above not marked exact — the brined olives as black
 olives (2710090), the sweet and fortified wines as dessert wines (2710692,

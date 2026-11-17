@@ -163,7 +163,10 @@ const Map<String, String> _synonyms = {
 /// one row), the cubed Granny Smith cup (132.68 g, the brown-betty print; the
 /// stuffing section's row and its host's routed line), the reach of a
 /// decision = the compute's, each reference line's resolved identity hashed.
-const int matcherVersion = 98;
+/// v99: matcher v113 (batch M100) — record choice: rank-as and approximation
+/// entries, the 'flavored' dock, the curry-leaf zero flavouring, the turkey
+/// leg record in `ah102Records`.
+const int matcherVersion = 99;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -607,6 +610,12 @@ const Set<String> _zeroNutrientFlavourings = {
   // leaf" fell through to the FDC ranking.
   'vanilla beans',
   'makrut lime leaf',
+  // v113 (M100 L368): FDC holds no curry leaf (the cached 'curry leaves'
+  // answer: other plants' leaves and curry DISHES) — palak-dal|9 showed
+  // FNDDS 2706388 "Beef curry" below the gate, no grams. An eaten aromatic
+  // leaf, the makrut precedent: counted 0, a stated gap. Both numbers.
+  'curry leaves',
+  'curry leaf',
 };
 
 /// v37 (Z14): whether [raw] is the tail of the line above that the corpus
@@ -1384,6 +1393,88 @@ const Map<String, (String, String)> _rankAs = {
   'ground chicken': ('ground chicken', 'chicken ground raw'),
   'ground veal': ('ground veal', 'veal ground raw'),
   'hot italian sausage': ('hot italian sausage', 'sausage italian pork raw'),
+  // v113 (M100 W2a): the sweet, mixed and link spellings on the same mild
+  // raw pork record 171631 (290 kcal) — their own answers rank SR 172952
+  // "Sausage, Italian, sweet, links" (149 kcal, a lean links product)
+  // first; "sweet" and "mild" name the same fresh sausage. Unflagged. The
+  // link numbers no corpus line prints are pinned as keys.
+  'sweet italian sausage': ('hot italian sausage', 'sausage italian pork raw'),
+  'sweet italian sausage link': (
+    'hot italian sausage',
+    'sausage italian pork raw',
+  ),
+  'sweet italian sausage links': (
+    'hot italian sausage',
+    'sausage italian pork raw',
+  ),
+  'hot italian sausage link': (
+    'hot italian sausage',
+    'sausage italian pork raw',
+  ),
+  'hot italian sausage links': (
+    'hot italian sausage',
+    'sausage italian pork raw',
+  ),
+  'hot or sweet italian sausage': (
+    'hot italian sausage',
+    'sausage italian pork raw',
+  ),
+  'sweet or hot italian sausage': (
+    'hot italian sausage',
+    'sausage italian pork raw',
+  ),
+  // v113 (M100 W2b): raw bulk sausage on SR 172934 "Pork sausage,
+  // link/patty, unprepared" (288 kcal) — its own answer holds only the
+  // COOKED turkey-and-pork blend 167694 and an FNDDS patty; 172934 is the
+  // cached 'pork sausage' answer's only candidate with all five words.
+  // Unflagged.
+  'bulk pork sausage': ('pork sausage', 'pork sausage link patty unprepared'),
+  // v113 (M100 W9a): raw cube steaks — their own answer holds the COOKED
+  // FNDDS 2705826 "Beef, steak, cube" ("1 oz yields 20 g") and cooked round
+  // records only, and no cached search ('cubed steak', 'beef cubed steak
+  // raw', the L55 step) holds a raw cube steak. A stand-in by class, flagged
+  // ([approximationRecords]): Foundation 2646173 "Beef, round, top round,
+  // boneless, choice, raw" (958: 146.437 kcal), the only candidate of the
+  // cached 'boneless long-cut beef shanks' answer with all five words. The
+  // printed raw weight stays, so the fried-food readers' per-raw coat and
+  // oil are unchanged.
+  'cube steaks': (
+    'boneless long-cut beef shanks',
+    'beef round top round boneless raw',
+  ),
+  'cube steak': (
+    'boneless long-cut beef shanks',
+    'beef round top round boneless raw',
+  ),
+  // v113 (M100 W9b): the one bare 'ground beef' line ("…, preferably 80
+  // percent lean ground chuck"; the steps brown it and keep the fat) on its
+  // siblings' raw Foundation 2514744 (80 % lean), read as they read it (the
+  // '80 percent lean ground chuck' rewrite's answer and words) — its own
+  // answer ranks FNDDS 2705854 "Beef, ground" (a cooked dish record) first.
+  // Unflagged.
+  'ground beef': ('80 percent lean ground beef', '80 percent lean ground beef'),
+  // v113 (M100 W7a): "low-fat yogurt cheese" (labne: low-fat yogurt
+  // drained to half) on SR 170903 "Yogurt, Greek, plain, lowfat" (73 kcal),
+  // the cached 'plain greek yogurt' answer's top under these words — its own
+  // answer's head noun 'cheese' ranked low-fat CREAM cheese 169079 (208).
+  // A strained yogurt for a strained yogurt; the degree differs, so flagged
+  // ([approximationRecords]): true yogurt cheese is no USDA food.
+  'low-fat yogurt cheese': ('plain greek yogurt', 'yogurt greek plain lowfat'),
+  // v113 (M100 W7b): a STRAINED whole-milk yogurt on Foundation 2259794
+  // "Yogurt, Greek, plain, whole milk" (the spanakopita sibling's landing),
+  // not the unstrained 2259793 its own answer ranks first. Unflagged.
+  'plain whole-milk strained yogurt': (
+    'whole-milk greek yogurt',
+    'whole-milk greek yogurt',
+  ),
+  // v113 (M100 W3, OQ1 ruled yes): FDC holds no freekeh (the cached
+  // 'freekeh' answer is empty, 'cracked freekeh' holds cracked-wheat breads
+  // only) — a stand-in by class, the crystallized-ginger precedent: dry
+  // bulgur, SR 170688 "Bulgur, dry" (342 kcal), the cached 'medium-grind
+  // bulgur' answer's top, weighed by its own cup (140 g); flagged
+  // ([approximationRecords]): freekeh's cup is unpublished.
+  'cracked freekeh': ('medium-grind bulgur', 'bulgur dry'),
+  'freekeh': ('medium-grind bulgur', 'bulgur dry'),
   'dried black beans': ('black beans', 'beans black mature seeds raw'),
   'dried chickpeas': ('chickpeas', 'chickpeas mature seeds raw'),
   'dried white beans': ('navy beans', 'beans navy mature seeds raw'),
@@ -1396,8 +1487,8 @@ const Map<String, (String, String)> _rankAs = {
   // §AX_bone_in_parts). The weight stays the printed gross weight;
   // `buysRefuse` reads a published refuse yield (the Boston butt × 0.76) or
   // labels it approximate. Flagged approximations ([approximationRecords]):
-  // flap meat → top sirloin, turkey drumsticks/thighs and leg quarters →
-  // turkey thigh meat and skin.
+  // flap meat → top sirloin (v113: the turkey leg quarters → the leg
+  // record, below; their v30 thigh record is gone).
   '7-pound first-cut beef standing rib roast': (
     'beef rib whole raw',
     'beef rib whole ribs 6-12 separable lean and fat trimmed to 1 8 fat '
@@ -1469,13 +1560,19 @@ const Map<String, (String, String)> _rankAs = {
   // it): a weight line needs none.
   'salmon steaks': ('salmon steaks', 'fish salmon raw'),
   'skin-on side of salmon': ('salmon steaks', 'fish salmon raw'),
+  // v113 (M100 W6; changes the v30 ruling, rule f): both on FDC's leg
+  // record 171493 "Turkey, all classes, leg, meat and skin, raw" — its
+  // detail is cached since the v32 live step and the cached 'turkey leg
+  // quarters' answer holds it; no 'turkey drumsticks and thighs' answer
+  // does, so both read that one. The grams stay AH-102's (2595 / 2596,
+  // [ah102Records]).
   'turkey drumsticks and thighs': (
-    'bone-in turkey thighs',
-    'turkey retail parts thigh meat and skin raw',
+    'turkey leg quarters',
+    'turkey all classes leg meat and skin raw',
   ),
   'turkey leg quarters': (
-    'bone-in turkey thighs',
-    'turkey retail parts thigh meat and skin raw',
+    'turkey leg quarters',
+    'turkey all classes leg meat and skin raw',
   ),
   // v32 (the live step, 2026-10-03): each target ranked first in an answer
   // snapshot 13 holds, enabled once its detail was read and its check held.
@@ -2415,6 +2512,14 @@ const Set<String> _modifiedFormTokens = {
   // "Rice, white, long-grain, precooked or instant" took 'long-grain or
   // basmati rice' once brown was docked (audit 4).
   'instant',
+  // v113 (M100 S14′): plain 'tortilla chips' tied FNDDS 2708204 "Tortilla
+  // chips, flavored" with 2708202 "Tortilla chips, plain" at 0.923 and took
+  // the flavored one by FDC's order. The dock is query-gated: a query
+  // holding the token 'flavored' exempts the record. No corpus line ENDS in
+  // 'flavored'; the gelatin and oyster-sauce lines rank under their
+  // [_queryRewrites], which do not hold the word ('unflavored' is another
+  // token).
+  'flavored',
 };
 
 /// Added meat qualifiers a generic query didn't ask for: "sausage"/"bacon"
@@ -3126,11 +3231,20 @@ const Map<String, int> approximationRecords = {
   'fingerling potatoes': 2346402,
   'tapioca starch': 169717,
   // v30 (Q7 bone-in parts, ruled): flap meat (bottom sirloin) as top
-  // sirloin; turkey drumsticks and thighs, and leg quarters, as turkey thigh
-  // meat and skin (the leg record 171493 has no cached detail).
+  // sirloin. (Changed 2026-11-16, matcher v113, M100 W6: the turkey leg
+  // quarters count on the leg record 171493, whose detail is now cached —
+  // flagged, a quarter carries a back portion the leg record does not
+  // describe; the drumsticks and thighs ARE the leg, unflagged.)
   'beef flap meat': 2727574,
-  'turkey drumsticks and thighs': 171533,
-  'turkey leg quarters': 171533,
+  'turkey leg quarters': 171493,
+  // v113 (M100 W9a; [_rankAs]): raw cube steak on raw top round.
+  'cube steaks': 2646173,
+  'cube steak': 2646173,
+  // v113 (M100 W7a; [_rankAs]): yogurt cheese on strained low-fat yogurt.
+  'low-fat yogurt cheese': 170903,
+  // v113 (M100 W3; [_rankAs]): freekeh on dry bulgur.
+  'cracked freekeh': 170688,
+  'freekeh': 170688,
   // v32 (the live step: detail 169744 read, cup 172 g): cooked wheat
   // berries as cooked khorasan wheat.
   'cooked wheat berries': 169744,

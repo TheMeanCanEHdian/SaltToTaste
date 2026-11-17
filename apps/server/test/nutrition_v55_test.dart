@@ -402,14 +402,19 @@ const List<(String, int, String, int, String, String, String)> _unchanged = [
     '1444.69',
   ),
   // Item-keyed, never title-keyed (a "Chicken-Fried" beef steak; pancetta).
+  // RE-PIN (M100 batch, v113, W9a): on raw top round 2646173 (was the cooked
+  // FNDDS 2705826 at 0.923333, 1590.41); grams unchanged.
+  // The fresh compute here reads 2646173's cached SEARCH HIT (958 rounded
+  // to 146; a weight line fetches no detail): 1241.71 — the replay on
+  // snapshot 33, which caches the detail (146.437), 1245.42.
   (
     '0304-chicken-fried-steaks.yaml',
     7,
     '6 (5-ounce) cube steaks, pounded ⅓ inch thick',
-    2705826,
-    '0.923333',
+    2646173,
+    '1.000000',
     '850.49',
-    '1590.41',
+    '1241.71',
   ),
   (
     '0349-rigatoni-with-beef-and-onion-ragu.yaml',

@@ -1327,8 +1327,14 @@ void main() {
     // vegetable broth' (0546) and 'anise seeds' (0280 garlicky-roasted-
     // shrimp, P10′'s recipe) — no detail: compared 553 and differ 422
     // unchanged (measured).
-    expect(compared, 553);
-    expect(differ, 422);
+    // RE-PIN (M100 batch, v113): its pins recorded from snapshot 33 five
+    // details — 171493 (turkey leg), 172934 (pork sausage, unprepared),
+    // 2646173 (top round, raw), 170903 (Greek yogurt, lowfat), 2708202
+    // (tortilla chips, plain) — and three searches ('turkey leg quarters',
+    // 'pork sausage', 'whole-milk greek yogurt'), four differing in some
+    // digit: compared 553 -> 558, differ 422 -> 426 (measured).
+    expect(compared, 558);
+    expect(differ, 426);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

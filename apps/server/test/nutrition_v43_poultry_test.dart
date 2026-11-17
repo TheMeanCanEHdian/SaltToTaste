@@ -384,23 +384,29 @@ const List<(String, int, String, int, String, String)> _pins = [
     '1487.78',
     'from 4 pound × 0.82 edible · approximate (USDA AH-102 item 2598: turkey thigh, raw, fryer-roaster class → meat and skin 82 % (77–85))',
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493 — the same AH-102
+  // item 2596 grams, unflagged (was 171533 with "approximation (counted as
+  // Turkey, retail parts, thigh, meat and skin, raw)").
   (
     '0172-braised-turkey.yaml',
     3,
     '4 pounds turkey drumsticks and thighs, trimmed',
-    171533,
+    171493,
     '1360.78',
-    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79))',
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493 — the same AH-102
+  // item 2595 grams, flagged as the leg record (was 171533, flagged as the
+  // thigh).
   (
     '0163-turkey-and-gravy-for-a-crowd.yaml',
     12,
     '4 (1½- to 2-pound) turkey leg quarters, trimmed',
-    171533,
+    171493,
     // RE-PIN (M48): 2576.40 → 2254.35 g, the printed 1½–2 lb range at its
     // midpoint (was its top); the basis names the range.
     '2254.35',
-    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, all classes, leg, meat and skin, raw)',
   ),
   (
     '0309-juicy-grilled-turkey-burgers.yaml',

@@ -583,7 +583,9 @@ void plans() {
     expect(loadCorpusRecipe(steaks).steps[1].text, contains(dip));
     // RE-PIN (M82 batch, v84): 0304's garlic |11 (C3a, 6.00 → 5.60 g) and
     // flour |12 (C5a, 22.62 → 26.58 g) — the replay's rows: was 3206.9.
-    expect(await steaksWith((t) => t), ('850.485', '3220.7'));
+    // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
+    // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
+    expect(await steaksWith((t) => t), ('850.485', '2872.1'));
   });
 
   test("F4 (the fleet's, STATED): one more dip sentence appended to S2 — "
@@ -598,7 +600,9 @@ void plans() {
       ),
       // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
       // 3206.9.
-      ('850.485', '3220.7'),
+      // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
+      // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
+      ('850.485', '2872.1'),
     );
   });
 
@@ -614,7 +618,9 @@ void plans() {
       ),
       // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
       // 3206.9.
-      ('850.485', '3220.7'),
+      // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
+      // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
+      ('850.485', '2872.1'),
     );
   });
 
@@ -633,7 +639,9 @@ void plans() {
       ),
       // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
       // 3206.9.
-      ('850.485', '3220.7'),
+      // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
+      // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
+      ('850.485', '2872.1'),
     );
   });
 
@@ -649,7 +657,9 @@ void plans() {
       ),
       // RE-PIN (M82 batch, v84): 0304's garlic and flour, as above: was
       // 3206.9.
-      ('850.485', '3220.7'),
+      // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
+      // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
+      ('850.485', '2872.1'),
     );
   });
 

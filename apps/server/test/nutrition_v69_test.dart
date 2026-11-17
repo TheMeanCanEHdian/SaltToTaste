@@ -5877,7 +5877,10 @@ void main() {
           // RE-PIN (M97 batch, v100): was 889.41 — |20's meatball oil is the
           // shallow-fry plan's 11.19 g on the pieces' raw 736.23 g (the
           // replay 889.33 → 890.52).
-          '890.60',
+          // RE-PIN (M100 batch, v113, W2a): |3 "1 pound hot Italian sausage
+          // links" on 171631 (290 kcal; was 172952, 149): the replay 890.52 →
+          // 970.47.
+          '970.55',
         ), // replay complete 1039.31 → complete 1039.44
         (
           // RE-PIN (M82 batch, v84): was 886.16 (the replay 886.19 → 872.92).
@@ -5911,7 +5914,10 @@ void main() {
           // RE-PIN (M85 batch, v87): was 627.50 (the replay 627.68 → 626.31).
           // RE-PIN (M86 batch, v90, 958: 2514745 pork, 2346386 cream, 2685581
           // tomatoes): was 626.13.
-          '617.79',
+          // RE-PIN (M100 batch, v113, W2a): |13's sweet Italian sausage on
+          // 171631 (290 kcal; was 172952, 149) — the replay 618.19 → 738.11:
+          // was 617.79.
+          '737.71',
         ), // replay complete 640.73 → complete 640.71
         (
           // RE-PIN (M82 batch, v84): was 677.93 (the replay 677.88 → 677.74).

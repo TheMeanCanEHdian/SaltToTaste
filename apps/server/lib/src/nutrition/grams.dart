@@ -2512,6 +2512,10 @@ const Map<int, ({String species, bool meatOnly})> ah102Records = {
   171081: (species: 'turkey', meatOnly: false),
   171093: (species: 'turkey', meatOnly: false),
   171533: (species: 'turkey', meatOnly: false),
+  // v113 (M100 W6): the leg record the leg quarters and the drumsticks and
+  // thighs now land ([approximationRecords]); without it they fall to the
+  // gross weight (no yield table holds 171493).
+  171493: (species: 'turkey', meatOnly: false),
   174518: (species: 'turkey', meatOnly: true),
   171497: (species: 'turkey', meatOnly: true),
 };

@@ -18787,6 +18787,11 @@ String? gramBasisFor(
 /// cooking (gross).
 /// ponytail: the domestic-lamb clause is the two racks' prep notes (the
 /// only rows on 174377); another recipe's needs its own read.
+/// v113 (batch M100 W3, the brief's R1 / R7; the 167781 precedent): a
+/// freekeh line on SR 170688 "Bulgur, dry" (matcher `_rankAs`, W3) says
+/// FDC holds no freekeh and that its grams are bulgur's own cup (freekeh's
+/// cup is unpublished). Keyed on the line's own word [re-point → `item`]; the
+/// bulgur lines on 170688 say nothing.
 String? trimStandInFlagOf(
   String raw,
   int? fdcId, {
@@ -18891,6 +18896,10 @@ String? trimStandInFlagOf(
           '¼ cup of the product as sold, 30 g — FDC Branded 2132938 and three '
           'others; nine ¼-cup labels print 28–50 g, every printed volume '
           '0.47–1.01 g/mL)',
+    170688 when raw.toLowerCase().contains('freekeh') =>
+      'approximate (FDC holds no freekeh — a stand-in by class: SR 170688 '
+          "Bulgur, dry (342 kcal); weighed at bulgur's own cup, 140 g — "
+          "freekeh's cup is unpublished)",
     _ => null,
   };
 }

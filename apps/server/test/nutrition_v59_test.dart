@@ -236,15 +236,16 @@ const List<_Row> _p7b = [
 /// skewered for smoke over no food, the bacon pan-browned with no stated
 /// pour-off, and oven-fried bacon (`steps: []` — waits for Q18).
 const List<_Row> _kept = [
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493 (was 171533, flagged as it).
   (
     _crowd,
     12,
     '4 (1½- to 2-pound) turkey leg quarters, trimmed',
-    171533,
+    171493,
     '1.000000',
     '2254.35',
-    '3629.51',
-    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '3246.27',
+    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, all classes, leg, meat and skin, raw)',
   ),
   (
     _burgers,
@@ -676,7 +677,9 @@ void main() {
         // vegetables and liquid … Press the solids … Discard the vegetables"
         // strains its onions, celery, carrots and garlic (−225.44 / 10).
         // RE-PIN (M82 batch, v84): was 586.18 (the replay 586.18 → 587.62).
-        (_slowRoasted, '587.62'), // v58 583.42
+        // RE-PIN (M100 batch, v113, W6): was 587.62 — |7 on the leg record
+        // 171493 (the replay 587.62 → 564.49).
+        (_slowRoasted, '564.49'), // v58 583.42
         // RE-PIN (M71 batch, v71, R-E5): 578.50 (was 601.81) — the same
         // strain: onions, celery, carrots, garlic, bay, parsley (−233.14 /
         // 10; the porcini |11 stays, its head 'mushroom' never named).
@@ -685,12 +688,16 @@ void main() {
         // out by its own word, 14.17 g → 0 (the replay 579.95 → 575.75).
         // RE-PIN (M92 batch, v94): was 575.75 — Q8 (b″): |2 and |3 on the roasted turkey
         // pairs, deducted (the replay 575.75 → 536.07).
-        (_braised, '536.07'), // v58 576.52
+        // RE-PIN (M100 batch, v113, W6): was 536.07 — |3 on the leg record
+        // 171493, no longer deducted (the replay 536.07 → 529.28).
+        (_braised, '529.28'), // v58 576.52
         (_grillroasted, '482.28'), // v58 440.12
         // RE-PIN (M82 batch, v84): was 566.13 (the replay 566.13 → 568.27).
         // RE-PIN (M92 batch, v94): was 568.27 — Q8 (b″): |12's legs deducted, |16's served
         // breast gross (the replay 568.27 → 553.24).
-        (_crowd, '553.24'), // v58 540.37
+        // RE-PIN (M100 batch, v113, W6): was 553.24 — |12 on the leg record
+        // 171493, no longer deducted (the replay 553.24 → 546.98).
+        (_crowd, '546.98'), // v58 540.37
         // RE-PIN (M82 batch, v84): was 618.09 (the replay 618.09 → 621.31).
         // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
         // 621.31.

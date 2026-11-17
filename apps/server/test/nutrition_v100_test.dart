@@ -334,14 +334,15 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    'P18: matcherVersion 98 (v100 set it to 94, batch M97: the shallow-fry reader and '
+    'P18: matcherVersion 99 (v100 set it to 94, batch M97: the shallow-fry reader and '
     'the roux guard)',
     () {
       // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
       // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
       // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
       // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
-      expect(matcherVersion, 98);
+      // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
+      expect(matcherVersion, 99);
     },
   );
 
@@ -4502,7 +4503,9 @@ void main() {
     test('the three recipes per serving on the fixtures (replay: gravy 889.33 '
         '→ 890.52, spaghetti 862.32 → 884.87, broiled 686.70 → 700.46)', () {
       for (final (file, perServing) in const [
-        (_gravy, '890.60'),
+        // RE-PIN (M100 batch, v113, W2a): |3's links on 171631 (the replay
+        // 890.52 → 970.47): was 890.60.
+        (_gravy, '970.55'),
         (_spaghetti, '884.71'),
         (_broiled, '700.46'),
       ]) {

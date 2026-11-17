@@ -2703,19 +2703,20 @@ const List<_Row> _unmoved = [
     '2852.86',
     "from the printed weight (5–7 lb, the midpoint) × 0.67 edible · approximate (derived from USDA AH-102 items 2591 and 2593, fryer-roaster class: a breast sold with its upper back (rib) attached — the breast's meat and skin, 87 % (85–89) of its 33 of 43 parts, 66.8 %; the back is not counted)",
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493 (was 171533, the flag dropped: they ARE the leg).
   (
     '0172-braised-turkey.yaml',
     null,
     3,
     '4 pounds turkey drumsticks and thighs, trimmed',
-    171533,
-    'Turkey, retail parts, thigh, meat and skin, raw',
+    171493,
+    'Turkey, all classes, leg, meat and skin, raw',
     '1.000000',
     '1360.78',
     'auto',
     null,
-    '2190.85',
-    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '1959.52',
+    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79))',
   ),
   (
     '0172-braised-turkey.yaml',
@@ -3742,13 +3743,16 @@ const List<(String, String?, String, String, String, String)> _totals = [
   // strained out, −41.96 kcal a batch (the replay 579.95 → 575.75).
   // RE-PIN (M92 batch, v94): was 575.75, 5757.53 — Q8 (b″): |2 and |3 on the
   // roasted turkey pairs, −396.83 kcal a batch (the replay 575.75 → 536.07).
+  // RE-PIN (M100 batch, v113, W6): was 536.07, 5360.70 — |3 on the leg record
+  // 171493 (no [braisedKept] key: its −163.40 deduction gone; the row
+  // −231.33), −67.94 a batch (the replay 536.07 → 529.28).
   (
     '0172-braised-turkey.yaml',
     null,
     'complete',
     'complete',
-    '536.07',
-    '5360.70',
+    '529.28',
+    '5292.76',
   ),
   // RE-PIN (M82 batch, v84): was 480.50, 1922.00 (the replay 480.50 → 480.49).
   (
@@ -3816,11 +3820,12 @@ const List<(String, String?, String, String, String, String)> _totals = [
 ];
 
 // The flavourings' negatives: real normalized items of corpus lines (thai
-// basil leaves 6 lines, palak-dal|9's curry leaves, goan-pork-vindaloo|6's
-// loose black tea), pinned real by the census test.
+// basil leaves 6 lines, goan-pork-vindaloo|6's loose black tea), pinned real
+// by the census test. RE-PIN (M100 batch, v113, L368): palak-dal|9's 'curry
+// leaves' left the list — a zero flavouring since v113 (pinned isTrue in
+// the C3 test below and in nutrition_v113_test.dart).
 const _leafAndTeaNegatives = [
   'thai basil leaves',
-  'curry leaves',
   'loose black tea',
 ];
 
@@ -3828,6 +3833,9 @@ void main() {
   test('pD C3: the two flavourings are the NORMALIZED items the corpus '
       'lines print (plural) — the decision keys (singular) are not', () {
     expect(isZeroNutrientFlavouring('makrut lime leaves'), isTrue);
+    // RE-PIN (M100 batch, v113, L368): was isFalse (a negative below) — the
+    // curry leaves are a zero flavouring, both numbers.
+    expect(isZeroNutrientFlavouring('curry leaves'), isTrue);
     expect(
       isZeroNutrientFlavouring('ground lapsang souchong tea leaves'),
       isTrue,

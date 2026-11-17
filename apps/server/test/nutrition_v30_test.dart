@@ -103,11 +103,9 @@ void main() {
           if (approximationRecords.containsKey(item))
             item: approximationRecords[item],
       },
-      {
-        'beef flap meat': 2727574,
-        'turkey drumsticks and thighs': 171533,
-        'turkey leg quarters': 171533,
-      },
+      // RE-PIN (M100 batch, v113, W6): the leg quarters on the leg record
+      // 171493; the drumsticks and thighs unflagged (were both 171533).
+      {'beef flap meat': 2727574, 'turkey leg quarters': 171493},
     );
   });
 
@@ -312,34 +310,40 @@ const List<(String, int, String, int, String?, String, String?)> _rows = [
     'counted',
     'from the printed weight',
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493, unflagged (was
+  // 171533, "approximation (counted as Turkey, retail parts, thigh, …)").
   (
     '0172-braised-turkey.yaml',
     3,
     '4 pounds turkey drumsticks and thighs, trimmed',
-    171533,
+    171493,
     '1360.78',
     'counted',
-    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79))',
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493, unflagged (was
+  // 171533, "approximation (counted as Turkey, retail parts, thigh, …)").
   (
     '0162-slow-roasted-turkey-with-gravy.yaml',
     7,
     '4 pounds turkey drumsticks and thighs, trimmed',
-    171533,
+    171493,
     '1360.78',
     'counted',
-    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    'from 4 pound × 0.75 edible · approximate (USDA AH-102 item 2596: turkey leg, raw, fryer-roaster class → meat and skin 75 % (70–79))',
   ),
+  // RE-PIN (M100 batch, v113, W6): on the leg record 171493, flagged as it
+  // (was 171533, "counted as Turkey, retail parts, thigh, …").
   (
     '0163-turkey-and-gravy-for-a-crowd.yaml',
     12,
     '4 (1½- to 2-pound) turkey leg quarters, trimmed',
-    171533,
+    171493,
     // RE-PIN (M48): 2576.40 → 2254.35 g, the printed 1½–2 lb range at its
     // midpoint (was its top); the basis names the range.
     '2254.35',
     'counted',
-    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, retail parts, thigh, meat and skin, raw)',
+    '4 × 794 g (printed 1½–2 lb, the midpoint) × 0.71 edible · approximate (USDA AH-102 item 2595: turkey leg quarter, raw, fryer-roaster class → meat and skin 71 % (69–73)) · approximation (counted as Turkey, all classes, leg, meat and skin, raw)',
   ),
   (
     '0249-roast-fresh-ham.yaml',

@@ -250,7 +250,10 @@ void u2() {
     expect(_row(db, nachos.id, 6).childShare, closeTo(1 / 6, 1e-9));
     expect(
       db.nutritionFor(nachos.id)!.caloriesPerServing,
-      closeTo(878.52, 0.01),
+      // RE-PIN (M100 batch, v113, S14′): |0's tortilla chips on the plain
+      // record 2708202 (472; was the flavored 2708204, 519): −106.59 / 4
+      // (was 878.52).
+      closeTo(851.88, 0.01),
     );
   });
 }

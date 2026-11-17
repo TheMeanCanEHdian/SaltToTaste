@@ -200,13 +200,15 @@ void picks() {
     // E −2,077.11 (was 3145.66).
     (_classic, 7, 170000, 2, '0.00', '1068.55'),
     ('0249-roast-fresh-ham.yaml', 11, 746775, 2, '0.00', '5372.14'),
+    // RE-PIN (M100 batch, v113, W2a): 0351|3's hot Italian sausage links on
+    // 171631 (290 kcal; was 172952, 149): E +639.57 (was 7272.38).
     (
       '0351-pasta-with-hearty-italian-meat-sauce-sunday-gravy.yaml',
       0,
       748608,
       20,
       '11.19',
-      '7272.38',
+      '7911.95',
     ),
     ('0402-italian-wedding-soup.yaml', 15, 170000, 0, '0.00', '1774.88'),
   ]) {

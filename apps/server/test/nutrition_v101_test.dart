@@ -481,7 +481,8 @@ void hashes() {
 // this literal.
 const _kibbehHash =
     // RE-PIN (M99 batch, v112): matcherVersion 98 alone (was 54550d5f…).
-    '5256f4fcb555bb37724b1f5c4afdfdb0d51f02bc155379011f073621255383e3';
+    // RE-PIN (M100 batch, v113): matcherVersion 99 alone (was 5256f4fc…).
+    '52587053d1455590db139336ebb7a8707b6037f73a9b275da1cebbfd4edb43f1';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person

@@ -194,7 +194,9 @@ void main() {
   // the class (rainbow-cake|8).
   // RE-PIN (M73 batch, v73, pD C3): 18 lines (was 15) — makrut lime leaves
   // ×2 and the Lapsang tea join.
-  test('the flavourings class reaches exactly its 18 library lines; the '
+  // RE-PIN (M100 batch, v113, L368): 19 lines (was 18) — palak-dal's curry
+  // leaves join.
+  test('the flavourings class reaches exactly its 19 library lines; the '
       'held liquid smoke stays held (census of the corpus)', () {
     final reached = <String>[];
     final held = <String>[];
@@ -269,7 +271,9 @@ void main() {
       // RE-PIN (M79 batch, v79): 'crystallized ginger' left the dry list —
       // M79 (Q9 (a)) ranks it as SR 167781 "Candied fruit", flagged
       // (nutrition_v79_test).
-      'cracked freekeh',
+      // RE-PIN (M100 batch, v113): 'cracked freekeh' left the dry list —
+      // M100 W3 (OQ1) ranks it as SR 170688 "Bulgur, dry", flagged
+      // (nutrition_v113_test).
     ];
     for (final item in dryRankAs) {
       expect(rankAsFor(item), isNull, reason: item);
@@ -1020,6 +1024,13 @@ const List<(String, int, String)> _flavourings = [
     '0615-oven-barbecued-spareribs.yaml',
     10,
     '¼ cup finely ground Lapsang Souchong tea leaves (from about 10 tea bags, or ½ cup loose tea leaves ground to a powder in a spice grinder)',
+  ),
+  // RE-PIN (M100 batch, v113, L368): palak-dal's curry leaves join the class
+  // (they sat on FNDDS 2706388 "Beef curry" below the gate, no grams).
+  (
+    '0109-palak-dal-spinach-dal-with-cumin-and-mustard-seeds.yaml',
+    9,
+    '15 curry leaves, roughly torn (optional)',
   ),
 ];
 

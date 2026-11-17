@@ -437,11 +437,16 @@ const _totals = [
   // replay 1024.04 → 889.33 (-134.71); fixtures 1024.12 → 889.41.
   // RE-PIN (M97 batch, v100): |20 the shallow plan's 11.19 g — replay 889.33
   // → 890.52 (+1.19); fixtures 889.41 → 890.60.
-  (_gravy, 'complete', '890.60'),
+  // RE-PIN (M100 batch, v113, W2a): |3's links on 171631 — replay 890.52 →
+  // 970.47; fixtures 890.60 → 970.55.
+  (_gravy, 'complete', '970.55'),
   // replay 1341.15 → 1315.68 (-25.47); fixtures 1341.14 → 1315.67, partial (the replay complete).
   (_bouillabaisse, 'partial', '1315.67'),
   // replay 844.03 → 838.75 (-5.28); fixtures 844.08 → 838.79.
-  (_frenchStyle, 'partial', '838.79'),
+  // RE-PIN (M100 batch, v113, W2b): |9's bulk pork sausage on 172934 (288
+  // kcal; was the cooked blend 167694, 307) — replay 838.75 → 817.20;
+  // fixtures 838.79 → 817.25.
+  (_frenchStyle, 'partial', '817.25'),
   // replay 1078.95 → 1007.22 (-71.73); fixtures 1078.93 → 1007.20.
   (_daube, 'complete', '1007.20'),
   // replay 781.09 → 748.67 (-32.42); fixtures 781.09 → 748.68.
@@ -524,7 +529,7 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 }
 
 void main() {
-  test('matcherVersion 98 (v96 set it to 91, batch M94: the browning fat)', () {
+  test('matcherVersion 99 (v96 set it to 91, batch M94: the browning fat)', () {
     // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
     // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
     // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
@@ -532,7 +537,8 @@ void main() {
     // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
     // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
     // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
-    expect(matcherVersion, 98);
+    // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
+    expect(matcherVersion, 99);
   });
 
   test("the share from the figures the flag prints (2705972's inputFoods: "
