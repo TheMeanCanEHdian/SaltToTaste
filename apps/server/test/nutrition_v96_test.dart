@@ -448,9 +448,13 @@ const _totals = [
   // fixtures 838.79 → 817.25.
   (_frenchStyle, 'partial', '817.25'),
   // replay 1078.95 → 1007.22 (-71.73); fixtures 1078.93 → 1007.20.
-  (_daube, 'complete', '1007.20'),
+  // RE-PIN (M102 batch, v115): its |10 unbleached flour on 789951 (the
+  // v115 replay 1,007.22 → 1,006.28): was 1007.20.
+  (_daube, 'complete', '1006.25'),
   // replay 781.09 → 748.67 (-32.42); fixtures 781.09 → 748.68.
-  (_irish, 'complete', '748.68'),
+  // RE-PIN (M102 batch, v115): its unbleached flour on 789951 (the v115
+  // replay 748.67 → 748.20): was 748.68.
+  (_irish, 'complete', '748.21'),
   // replay 837.79 → 813.57 (-24.22); fixtures 837.85 → 813.63.
   (_rootPotRoast, 'complete', '813.63'),
   // replay 573.06 → 569.06 (-4.00).
@@ -460,7 +464,9 @@ const _totals = [
   // replay 708.99 → 661.14 (-47.85); fixtures 708.87 → 661.01.
   (_albondigas, 'complete', '661.01'),
   // replay 767.89 → 767.25 (-0.64); fixtures 767.91 → 767.27.
-  (_bestStew, 'complete', '767.27'),
+  // RE-PIN (M102 batch, v115): its |7 unbleached flour on 789951 (the
+  // v115 replay 767.25 → 766.78): was 767.27.
+  (_bestStew, 'complete', '766.80'),
   // replay 700.46 → 686.70 (-13.76).
   // RE-PIN (M97 batch, v100): |12 back to the engine's 28.36 g (the roux
   // guard) — replay 686.70 → 700.46 (+13.76).
@@ -530,7 +536,7 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 
 void main() {
   test(
-    'matcherVersion 100 (v96 set it to 91, batch M94: the browning fat)',
+    'matcherVersion 101 (v96 set it to 91, batch M94: the browning fat)',
     () {
       // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
@@ -541,7 +547,8 @@ void main() {
       // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
       // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
       // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-      expect(matcherVersion, 100);
+      // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+      expect(matcherVersion, 101);
     },
   );
 
@@ -1148,7 +1155,9 @@ void main() {
         'and a full compute after the PUT writes nothing', () async {
       for (final (file, meat, fat, planned, whole, perServing) in [
         (_shortRibs, 0, 2, '24.12', '28.00', '83.18'),
-        (_irish, 0, 1, '20.39', '42.00', '166.10'),
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+        // test's compute): was 166.10.
+        (_irish, 0, 1, '20.39', '42.00', '165.62'),
       ]) {
         final corpus = loadCorpusRecipe(file);
         final recipe = await _compute(

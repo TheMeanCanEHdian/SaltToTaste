@@ -407,11 +407,14 @@ const List<_Row> _daube = [
   (
     '0456-daube-provencal.yaml',
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (daube-provencal|10,
+    // 789951 47.25 g, 169.15 kcal): was record 789890, kcal 172.93, confidence
+    // 0.950000.
     '⅓ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     '47.25',
-    '172.93',
+    '169.15',
     '1/3 cup ≈ 79 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (

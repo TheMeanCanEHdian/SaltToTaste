@@ -868,7 +868,9 @@ void main() {
         // the corpus's printed cup (was 642.9, 3056.69, 382.09).
         // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
         // 3056.05, 382.01.
-        (642.7, 3054.47, 381.81),
+        // RE-PIN (M102 batch, v115: the dough's 354.37 g of unbleached flour
+        // on 789951, × 3.58 for × 3.66 = −28.35): was 3054.47, 381.81.
+        (642.7, 3026.12, 378.27),
       );
       expect((child.kind, child.parentKind), ('dough', 'pie'));
       expect(

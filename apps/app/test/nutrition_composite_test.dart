@@ -355,7 +355,10 @@ void main() {
       // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream, the
       // pie's 2346411 blueberries and 1750342 Granny Smith): the golden's
       // 562.97 — was 571 (571.43).
-      expect(find.text('563'), findsOneWidget);
+      // RE-PIN (M102 batch, v115: the dough's unbleached flour on 789951,
+      // −28.35 a dough, ÷ 8 servings): the golden's 559.43 — was 563
+      // (562.97).
+      expect(find.text('559'), findsOneWidget);
       expect(
         find.text(
           'Includes 1 recipe: All-Butter Double-Crust Pie Dough '
@@ -375,11 +378,13 @@ void main() {
       // RE-PIN (M90 batch, v89, sugar): the dough 3,056.05 kcal (was 3,057).
       // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): the
       // dough 3,054.47 kcal (was 3,056).
-      expect(find.text('· 1 recipe · 643 g · 3,054 kcal'), findsOneWidget);
+      // RE-PIN (M102 batch, v115: the dough's unbleached flour on 789951):
+      // the dough 3,026.12 kcal, 378.27 a serving (was 3,054, +382).
+      expect(find.text('· 1 recipe · 643 g · 3,026 kcal'), findsOneWidget);
       expect(
         find.text(
           'amount: from the recipe All-Butter Double-Crust Pie Dough: 643 g, '
-          '3,054 kcal · +382 kcal per serving',
+          '3,026 kcal · +378 kcal per serving',
         ),
         findsOneWidget,
       );
@@ -470,9 +475,12 @@ void main() {
         // was 3,057, 3,520, 3,649.
         // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
         // 3,056 kcal.
-        '3,054 kcal · +382 / serving',
-        '3,519 kcal · +440 / serving',
-        '3,648 kcal · +456 / serving',
+        // RE-PIN (M102 batch, v115: each dough's unbleached flour on
+        // 789951): was 3,054 / +382, 3,519 / +440, 3,648 / +456 (the golden's
+        // 3026.12 / 378.27, 3490.34 / 436.29, 3619.7 / 452.46).
+        '3,026 kcal · +378 / serving',
+        '3,490 kcal · +436 / serving',
+        '3,620 kcal · +452 / serving',
         'The line says "1 recipe". All-Butter Double-Crust Pie Dough makes '
             'enough for one 9-inch pie, so the share is 1.',
         'Share',

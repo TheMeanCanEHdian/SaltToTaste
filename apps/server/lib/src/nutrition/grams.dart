@@ -152,7 +152,9 @@ const List<(String, double)> _densities = [
   // portion-less flour records (Foundation 789890 and 790085 publish only
   // a 30 g racc) — "1 cup (5 ounces) all-purpose flour" (199 of its 203
   // prints) and "(5½ ounces)" whole-wheat (12 of 16), flagged
-  // ([_approximateDensities]).
+  // ([_approximateDensities]). (Changed 2026-11-17, matcher v115: a line
+  // naming `unbleached` lands Foundation 789951, which publishes the same
+  // lone 30 g racc; the key is the item, so it weighs the same.)
   ('all-purpose flour', 5 * 28.3495 / 236.588),
   // v89 (batch M90, prep51 Q6 (b), the v49 tapioca form): six keys weigh
   // the corpus's printed cup AHEAD of the record's own volume figure

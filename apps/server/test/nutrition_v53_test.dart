@@ -73,9 +73,11 @@ _rows = [
     '0148-crispy-fried-chicken.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (crispy-fried-chicken|8,
+    // 789951 152.13 g, 544.63 kcal): was record 789890, grams 144.06.
     '4 cups (20 ounces) unbleached all-purpose flour',
-    789890,
-    '144.06',
+    789951,
+    '152.13',
     'discarded',
     null,
     // RE-PIN (M58 batch, v57, S): the stand-in named (was without it).
@@ -99,9 +101,12 @@ _rows = [
     '0254-crunchy-oven-fried-fish.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|0, 174924 65.94 g, 175.40 kcal): was grams
+    // 65.12.
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
-    '65.12',
+    '65.94',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge's excess not counted)",
@@ -112,9 +117,12 @@ _rows = [
     '0254-crunchy-oven-fried-fish.yaml',
     null,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|5, 789951 57.17 g, 204.67 kcal): was record
+    // 789890, grams 57.01.
     '¼ cup plus 5 tablespoons unbleached all-purpose flour',
-    789890,
-    '57.01',
+    789951,
+    '57.17',
     'discarded',
     null,
     'discarded in cooking — only "plus 5 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge\'s excess not counted)',
@@ -156,9 +164,11 @@ _rows = [
     '0255-fish-and-chips.yaml',
     null,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|2,
+    // 789951 100.36 g, 359.29 kcal): was record 789890, grams 96.56.
     '1½ cups unbleached all-purpose flour',
-    789890,
-    '96.56',
+    789951,
+    '100.36',
     'discarded',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
@@ -173,9 +183,11 @@ _rows = [
     '0255-fish-and-chips.yaml',
     null,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|3,
+    // 169698 26.76 g, 101.96 kcal): was grams 25.75.
     '½ cup cornstarch',
     169698,
-    '25.75',
+    '26.76',
     'discarded',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
@@ -297,9 +309,11 @@ _rows = [
     '0304-chicken-fried-steaks.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-fried-steaks|0,
+    // 789951 102.13 g, 365.63 kcal): was record 789890, grams 96.71.
     '3 cups unbleached all-purpose flour',
-    789890,
-    '96.71',
+    789951,
+    '102.13',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 8.79 g carbohydrate per 100 g of the raw beef — USDA FNDDS 2705842 recipe: 20 g breading per 90.99 g raw beef steak; the dredge's excess not counted)",
@@ -354,9 +368,12 @@ _rows = [
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     null,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (stuffed-chicken-cutlets-with-ham-and-cheddar|10, 789951 30.25 g, 108.30
+    // kcal): was record 789890, grams 28.64.
     '¾ cup unbleached all-purpose flour',
-    789890,
-    '28.64',
+    789951,
+    '30.25',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
@@ -456,9 +473,11 @@ _rows = [
     '0288-maryland-crab-cakes.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (maryland-crab-cakes|8,
+    // 789951 35.44 g, 126.88 kcal): was record 789890, grams 33.62.
     '¼ cup unbleached all-purpose flour',
-    789890,
-    '33.62',
+    789951,
+    '35.44',
     'discarded',
     null,
     // RE-PIN (M58 batch, v57, S): the stand-in named (was without it).
@@ -495,9 +514,11 @@ _rows = [
     '0149-easier-fried-chicken.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (easier-fried-chicken|8,
+    // 789951 48.16 g, 172.41 kcal): was record 789890, grams 45.60.
     '2 cups unbleached all-purpose flour',
-    789890,
-    '45.60',
+    789951,
+    '48.16',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
@@ -522,9 +543,11 @@ _rows = [
     '0418-chicken-piccata.yaml',
     null,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-piccata|3,
+    // 789951 29.56 g, 105.82 kcal): was record 789890, grams 27.99.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '27.99',
+    789951,
+    '29.56',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast (no record for a sautéed flour dusting; read as the baked breaded breast, the lightest coat USDA prints; FNDDS 2706416 Veal Marsala's 62.5 g flour per 617.60 g raw veal, 7.82, counts the dish's whole flour, sauce included, and is not read); the dredge's excess not counted)",
@@ -582,9 +605,11 @@ _rows = [
     '0407-eggplant-parmesan.yaml',
     null,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|5,
+    // 789951 35.79 g, 128.13 kcal): was record 789890, grams 35.07.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '35.07',
+    789951,
+    '35.79',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050 recipe: 13.2 g batter (4 g flour, 0.5 g dried egg, 8.3 g water, 0.3 g dry milk, 0.1 g baking powder; 3.28 g carbohydrate) per 41.4 g raw eggplant (a crumb coat read on a batter figure; 8.3 g of the 13.2 g batter is water and carries no carbohydrate); the dredge's excess not counted)",
@@ -636,9 +661,12 @@ _rows = [
     '0206-crunchy-baked-pork-chops.yaml',
     null,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-baked-pork-chops|2, 174924 82.35 g, 219.05 kcal): was grams
+    // 81.33.
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
     174924,
-    '81.33',
+    '82.35',
     'discarded',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge's excess not counted)",
@@ -649,9 +677,14 @@ _rows = [
     '0206-crunchy-baked-pork-chops.yaml',
     null,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-baked-pork-chops|10, 789951 69.24 g, 247.88 kcal): was record
+    // 789890.
     '¼ cup plus 6 tablespoons unbleached all-purpose flour',
-    789890,
-    '69.04',
+    789951,
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+    // replay): was 69.04.
+    '69.24',
     'discarded',
     null,
     'discarded in cooking — only "plus 6 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 6.61 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705871 recipe: 10 g breading per 108.38 g raw pork chop; the dredge\'s excess not counted)',

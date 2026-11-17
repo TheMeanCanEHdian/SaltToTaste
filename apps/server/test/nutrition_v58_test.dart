@@ -655,7 +655,11 @@ void main() {
         // RE-PIN (M90 batch, v89, cornstarch): the tempura's ½ cup cornstarch
         // at the print, 56.70 g (was 63.89): C = 164.36 + 51.75 + 0.48 =
         // 216.59 g, u = 28.65 % — was 238.53, 29.52 %, 223.14 g.
-        expect(oil().grams?.toStringAsFixed(2), '234.60');
+        // RE-PIN (M102 batch, v115): the tempura's flour names `unbleached` —
+        // 789951's 73.2 %: C = 212.62 × 73.2 % (155.64) + 51.75 + 0.48 =
+        // 207.87 g, u = 30.32 × 207.87 / 229.20 = 27.50 % (this test's
+        // compute): was 234.60, 28.65 %, 216.59 g.
+        expect(oil().grams?.toStringAsFixed(2), '229.37');
         final basis = gramBasisFor(db, line, oil(), recipe: stored);
         expect(
           basis,
@@ -667,16 +671,18 @@ void main() {
         expect(
           basis,
           contains(
-            "28.65 % of the raw cauliflower's weight — USDA FNDDS 2710042 "
+            "27.50 % of the raw cauliflower's weight — USDA FNDDS 2710042 "
             'recipe: 12 g oil per 39.58 g raw cauliflower, scaled to the '
-            "recipe's batter (216.59 g of 229.20 g carbohydrate))",
+            "recipe's batter (207.87 g of 229.20 g carbohydrate))",
           ),
         );
         expect(
           db.nutritionFor(stored.id)!.caloriesPerServing?.toStringAsFixed(2),
           // RE-PIN (M90 batch, v89, cornstarch): was 446.29.
           // RE-PIN (M86 batch, v90, 958: 2685573 cauliflower): was 442.94.
-          '440.28',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951
+          // (this test's compute): was 440.28.
+          '437.14',
         );
         final before = rows();
         final kcal = db.nutritionFor(stored.id)!.caloriesPerServing;

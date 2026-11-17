@@ -2863,14 +2863,17 @@ const List<_Row> _unmoved = [
     '0172-braised-turkey.yaml',
     null,
     15,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (braised-turkey|15,
+    // 789951 26.58 g, 95.15 kcal): was record 789890, description 'ed,
+    // bleached', kcal 97.27, confidence 0.950000.
     '3 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '26.58',
     'auto',
     null,
-    '97.27',
+    '95.15',
     '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -3751,8 +3754,12 @@ const List<(String, String?, String, String, String, String)> _totals = [
     null,
     'complete',
     'complete',
-    '529.28',
-    '5292.76',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+    // replay): was 529.28.
+    '529.06',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 5292.76.
+    '5290.64',
   ),
   // RE-PIN (M82 batch, v84): was 480.50, 1922.00 (the replay 480.50 → 480.49).
   (

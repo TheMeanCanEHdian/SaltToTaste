@@ -555,7 +555,9 @@ const List<_Host> _hosts = [
     <String>[],
     'recipe',
     '1145.93',
-    'from the recipe Golden Cornbread: 1146 g, 2,454 kcal',
+    // RE-PIN (M102 batch, v115): the cornbread's unbleached flour on 789951
+    // (the replay 2,454.01 → 2,437.00 kcal): was 2,454 kcal.
+    'from the recipe Golden Cornbread: 1146 g, 2,437 kcal',
   ),
   // D2: the batter oil — cornstarch and cornmeal (v88: 73.30 g, 659.70 kcal → 591.66 kcal).
   (
@@ -636,7 +638,7 @@ const List<_Host> _hosts = [
 ];
 
 void main() {
-  test('matcherVersion 100 (v89 set it to 84, batch M90: rows move)', () {
+  test('matcherVersion 101 (v89 set it to 84, batch M90: rows move)', () {
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
@@ -653,7 +655,8 @@ void main() {
     // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-    expect(matcherVersion, 100);
+    // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+    expect(matcherVersion, 101);
   });
 
   test("the six keys' figures are the corpus's printed cups, oz × 28.3495 ÷ "

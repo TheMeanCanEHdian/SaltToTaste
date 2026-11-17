@@ -226,13 +226,19 @@ const List<_Row> _reach = [
   (
     _lighter,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (lighter-chicken-parmesan|3, 789951 30.93 g, 110.73 kcal): was record
+    // 789890, grams 29.29, kcal 107.20, confidence 0.950000.
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (lighter-chicken-parmesan|3, 789951 30.93 g, 110.73 kcal): was record
+    // 789890.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     // RE-PIN (M88 batch, v88): was 45.83 g, 167.74 kcal — the dredge's own share f_d;
     // the flag names 2706442's two inputs (the v88 replay's row).
-    '29.29',
-    '107.20',
+    '30.93',
+    '110.73',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
@@ -286,13 +292,20 @@ const List<_Row> _reach = [
   (
     _nutCrusted,
     9,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (nut-crusted-chicken-breasts-with-lemon-and-thyme|9, 789951 38.50 g,
+    // 137.83 kcal): was record 789890, grams 36.45, kcal 133.41, confidence
+    // 0.950000.
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (nut-crusted-chicken-breasts-with-lemon-and-thyme|9, 789951 38.50 g,
+    // 137.83 kcal): was record 789890.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     // RE-PIN (M88 batch, v88): was 74.54 g, 272.82 kcal — the dredge's own share f_d;
     // the flag names 2706442's two inputs (the v88 replay's row).
-    '36.45',
-    '133.41',
+    '38.50',
+    '137.83',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate) (no record for a nut crust; read as FNDDS 2706442's crumb crust by mass); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
@@ -417,11 +430,14 @@ const List<_Row> _texts = [
   (
     _fishChips,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|2,
+    // 789951 100.36 g, 359.29 kcal): was record 789890, grams 96.56, kcal
+    // 353.41, confidence 0.950000.
     '1½ cups unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '96.56',
-    '353.41',
+    789951,
+    '0.983333',
+    '100.36',
+    '359.29',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -431,11 +447,13 @@ const List<_Row> _texts = [
   (
     _fishChips,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|3,
+    // 169698 26.76 g, 101.96 kcal): was grams 25.75, kcal 98.11.
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '25.75',
-    '98.11',
+    '26.76',
+    '101.96',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -445,11 +463,13 @@ const List<_Row> _texts = [
   (
     _fishChips,
     4,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|4,
+    // 170932 0.42 g, 1.34 kcal): was grams 0.41, kcal 1.30.
     '½ teaspoon cayenne pepper',
     170932,
     '1.000000',
-    '0.41',
-    '1.30',
+    '0.42',
+    '1.34',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -459,11 +479,13 @@ const List<_Row> _texts = [
   (
     _fishChips,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|5,
+    // 171329 0.55 g, 1.55 kcal): was grams 0.53, kcal 1.49.
     '½ teaspoon paprika',
     171329,
     '0.900000',
-    '0.53',
-    '1.49',
+    '0.55',
+    '1.55',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -473,11 +495,13 @@ const List<_Row> _texts = [
   (
     _fishChips,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|8,
+    // 172804 2.14 g, 1.09 kcal): was grams 2.06, kcal 1.05.
     '1 teaspoon baking powder',
     172804,
     '0.850000',
-    '2.06',
-    '1.05',
+    '2.14',
+    '1.09',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -487,11 +511,13 @@ const List<_Row> _texts = [
   (
     _fishChips,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|10,
+    // 2710616 160.58 g, 69.05 kcal): was grams 154.50, kcal 66.44.
     '1½ cups (12 ounces) cold beer',
     2710616,
     '0.565000',
-    '154.50',
-    '66.44',
+    '160.58',
+    '69.05',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -500,11 +526,14 @@ const List<_Row> _texts = [
   (
     _tempura,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|2,
+    // 789951 107.04 g, 383.20 kcal): was record 789890, grams 102.73, kcal
+    // 375.99, confidence 0.950000.
     '1½ cups (7½ ounces) unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '102.73',
-    '375.99',
+    789951,
+    '0.983333',
+    '107.04',
+    '383.20',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
@@ -513,11 +542,13 @@ const List<_Row> _texts = [
   (
     _tempura,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|3,
+    // 169698 28.54 g, 108.74 kcal): was grams 27.39, kcal 104.36.
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '27.39',
-    '104.36',
+    '28.54',
+    '108.74',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
@@ -526,11 +557,13 @@ const List<_Row> _texts = [
   (
     _tempura,
     4,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|4,
+    // 2710704 112.76 g, 260.48 kcal): was grams 108.23, kcal 250.01.
     '1 cup vodka',
     2710704,
     '0.990000',
-    '108.23',
-    '250.01',
+    '112.76',
+    '260.48',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
@@ -539,11 +572,13 @@ const List<_Row> _texts = [
   (
     _tempura,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|5,
+    // 748967 25.17 g, 37.25 kcal): was grams 24.16, kcal 35.76.
     '1 large egg',
     748967,
     '0.920000',
-    '24.16',
-    '35.76',
+    '25.17',
+    '37.25',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
@@ -552,10 +587,12 @@ const List<_Row> _texts = [
   (
     _tempura,
     6,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|6,
+    // 2710539 119.10 g, 0.00 kcal): was grams 114.31.
     '1 cup seltzer water',
     2710539,
     '0.923333',
-    '114.31',
+    '119.10',
     '0.00',
     'auto',
     null,
@@ -590,10 +627,12 @@ const List<_Row> _negatives = [
   (
     '0114-breaded-chicken-cutlets.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (breaded-chicken-cutlets|2, 174924 33.52 g, 89.16 kcal): was grams 32.54.
     '3 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '32.54',
+    '33.52',
     null,
     'auto',
     null,
@@ -603,10 +642,13 @@ const List<_Row> _negatives = [
   (
     '0114-breaded-chicken-cutlets.yaml',
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (breaded-chicken-cutlets|3, 789951 26.19 g, 93.76 kcal): was record
+    // 789890, grams 25.43, confidence 0.950000.
     '¾ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '25.43',
+    789951,
+    '0.983333',
+    '26.19',
     null,
     'auto',
     null,
@@ -724,10 +766,13 @@ const List<_Row> _negatives = [
   (
     '0420-chicken-francese.yaml',
     9,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-francese|9,
+    // 789951 27.09 g, 96.98 kcal): was record 789890, grams 25.66, confidence
+    // 0.950000.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '25.66',
+    789951,
+    '0.983333',
+    '27.09',
     null,
     'auto',
     null,
@@ -775,10 +820,13 @@ const List<_Row> _negatives = [
   (
     '0304-chicken-fried-steaks.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-fried-steaks|0,
+    // 789951 102.13 g, 365.63 kcal): was record 789890, grams 96.71, confidence
+    // 0.950000.
     '3 cups unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '96.71',
+    789951,
+    '0.983333',
+    '102.13',
     null,
     'auto',
     null,
@@ -877,13 +925,18 @@ const List<_Row> _negatives = [
   (
     '0122-chicken-kiev.yaml',
     11,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-kiev|11, 789951
+    // 41.25 g, 147.68 kcal): was record 789890, grams 39.06, kcal 142.96,
+    // confidence 0.950000.
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-kiev|11, 789951
+    // 41.25 g, 147.68 kcal): was record 789890.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     // RE-PIN (M88 batch, v88): was 73.34 g, 268.42 kcal — the dredge's own share f_d;
     // the flag names 2706442's two inputs (the v88 replay's row).
-    '39.06',
-    '142.96',
+    '41.25',
+    '147.68',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
@@ -919,10 +972,13 @@ const List<_Row> _negatives = [
   (
     '0418-chicken-piccata.yaml',
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-piccata|3,
+    // 789951 29.56 g, 105.82 kcal): was record 789890, grams 27.99, confidence
+    // 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '27.99',
+    789951,
+    '0.983333',
+    '29.56',
     null,
     'auto',
     null,
@@ -932,10 +988,13 @@ const List<_Row> _negatives = [
   (
     '0421-chicken-saltimbocca.yaml',
     1,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-saltimbocca|1,
+    // 789951 27.09 g, 96.98 kcal): was record 789890, grams 25.66, confidence
+    // 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '25.66',
+    789951,
+    '0.983333',
+    '27.09',
     null,
     'auto',
     null,
@@ -1030,10 +1089,13 @@ const List<_Row> _negatives = [
   (
     '0148-crispy-fried-chicken.yaml',
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (crispy-fried-chicken|8,
+    // 789951 152.13 g, 544.63 kcal): was record 789890, grams 144.06,
+    // confidence 0.950000.
     '4 cups (20 ounces) unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '144.06',
+    789951,
+    '0.983333',
+    '152.13',
     null,
     'auto',
     null,
@@ -1155,10 +1217,13 @@ const List<_Row> _negatives = [
   (
     '0206-crunchy-baked-pork-chops.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-baked-pork-chops|2, 174924 82.35 g, 219.05 kcal): was grams
+    // 81.33.
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
     174924,
     '0.914286',
-    '81.33',
+    '82.35',
     null,
     'auto',
     null,
@@ -1168,10 +1233,15 @@ const List<_Row> _negatives = [
   (
     '0206-crunchy-baked-pork-chops.yaml',
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-baked-pork-chops|10, 789951 69.24 g, 247.88 kcal): was record
+    // 789890, confidence 0.950000.
     '¼ cup plus 6 tablespoons unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '69.04',
+    789951,
+    '0.983333',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+    // replay): was 69.04.
+    '69.24',
     null,
     'auto',
     null,
@@ -1206,10 +1276,13 @@ const List<_Row> _negatives = [
   (
     '0254-crunchy-oven-fried-fish.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|0, 174924 65.94 g, 175.40 kcal): was grams
+    // 65.12.
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '65.12',
+    '65.94',
     null,
     'auto',
     null,
@@ -1219,10 +1292,13 @@ const List<_Row> _negatives = [
   (
     '0254-crunchy-oven-fried-fish.yaml',
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|5, 789951 57.17 g, 204.67 kcal): was record
+    // 789890, grams 57.01, confidence 0.950000.
     '¼ cup plus 5 tablespoons unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '57.01',
+    789951,
+    '0.983333',
+    '57.17',
     null,
     'auto',
     null,
@@ -1259,10 +1335,13 @@ const List<_Row> _negatives = [
   (
     '0149-easier-fried-chicken.yaml',
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (easier-fried-chicken|8,
+    // 789951 48.16 g, 172.41 kcal): was record 789890, grams 45.60, confidence
+    // 0.950000.
     '2 cups unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '45.60',
+    789951,
+    '0.983333',
+    '48.16',
     null,
     'auto',
     null,
@@ -1275,10 +1354,12 @@ const List<_Row> _negatives = [
   (
     '0407-eggplant-parmesan.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|2,
+    // 174924 91.62 g, 243.71 kcal): was grams 89.79.
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     '0.914286',
-    '89.79',
+    '91.62',
     null,
     'auto',
     null,
@@ -1291,10 +1372,12 @@ const List<_Row> _negatives = [
   (
     '0407-eggplant-parmesan.yaml',
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|3,
+    // 170848 14.32 g, 56.13 kcal): was grams 14.03.
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     170848,
     '1.000000',
-    '14.03',
+    '14.32',
     null,
     'auto',
     null,
@@ -1306,10 +1389,13 @@ const List<_Row> _negatives = [
   (
     '0407-eggplant-parmesan.yaml',
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|5,
+    // 789951 35.79 g, 128.13 kcal): was record 789890, grams 35.07, confidence
+    // 0.950000.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '35.07',
+    789951,
+    '0.983333',
+    '35.79',
     null,
     'auto',
     null,
@@ -1332,10 +1418,13 @@ const List<_Row> _negatives = [
   (
     '0466-fish-meuniere-with-browned-butter-and-lemon.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (fish-meuniere-with-browned-butter-and-lemon|0, 789951 27.09 g, 96.98
+    // kcal): was record 789890, grams 25.66, confidence 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '25.66',
+    789951,
+    '0.983333',
+    '27.09',
     null,
     'auto',
     null,
@@ -1382,10 +1471,13 @@ const List<_Row> _negatives = [
   (
     '0288-maryland-crab-cakes.yaml',
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (maryland-crab-cakes|8,
+    // 789951 35.44 g, 126.88 kcal): was record 789890, grams 33.62, confidence
+    // 0.950000.
     '¼ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '33.62',
+    789951,
+    '0.983333',
+    '35.44',
     null,
     'auto',
     null,
@@ -1433,11 +1525,14 @@ const List<_Row> _negatives = [
   (
     '0315-oven-fried-onion-rings.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (oven-fried-onion-rings|0, 789951 70.87 g, 253.71 kcal): was record
+    // 789890, kcal 259.38, confidence 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     '70.87',
-    '259.38',
+    '253.71',
     'auto',
     null,
     "discarded in cooking — only the part the recipe keeps and the coat on the food counted · approximation (coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042 recipe: 50 g breading per 39.58 g raw cauliflower (no record for onions; read as Fried cauliflower); the dredge's excess not counted)",
@@ -1536,10 +1631,13 @@ const List<_Row> _negatives = [
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (parmesan-crusted-chicken-cutlets|2, 789951 18.47 g, 66.12 kcal): was
+    // record 789890, grams 17.49, confidence 0.950000.
     '5 tablespoons unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '17.49',
+    789951,
+    '0.983333',
+    '18.47',
     null,
     'auto',
     null,
@@ -1591,10 +1689,13 @@ const List<_Row> _negatives = [
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (pork-schnitzel-breaded-pork-cutlets|0, 174924 37.57 g, 99.94 kcal): was
+    // grams 36.69.
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
     174924,
     '0.914286',
-    '36.69',
+    '37.57',
     null,
     'auto',
     null,
@@ -1604,10 +1705,13 @@ const List<_Row> _negatives = [
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     1,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (pork-schnitzel-breaded-pork-cutlets|1, 789951 19.02 g, 68.09 kcal): was
+    // record 789890, grams 18.57, confidence 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '18.57',
+    789951,
+    '0.983333',
+    '19.02',
     null,
     'auto',
     null,
@@ -1640,9 +1744,12 @@ const List<_Row> _negatives = [
   (
     '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (skillet-chicken-and-rice-with-peas-and-scallions|2, 789951  g, 0.00
+    // kcal): was record 789890, confidence 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     null,
     null,
     'auto',
@@ -1715,13 +1822,19 @@ const List<_Row> _negatives = [
   (
     '0118-stuffed-chicken-cutlets-with-ham-and-cheddar.yaml',
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (stuffed-chicken-cutlets-with-ham-and-cheddar|10, 789951 30.25 g, 108.30
+    // kcal): was record 789890, grams 28.64, kcal 104.82, confidence 0.950000.
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (stuffed-chicken-cutlets-with-ham-and-cheddar|10, 789951 30.25 g, 108.30
+    // kcal): was record 789890.
     '¾ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
+    789951,
+    '0.983333',
     // RE-PIN (M88 batch, v88): was 46.76 g, 171.14 kcal — the dredge's own share f_d;
     // the flag names 2706442's two inputs (the v88 replay's row).
-    '28.64',
-    '104.82',
+    '30.25',
+    '108.30',
     'auto',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 31.25 g flour and 81 g dry crumbs per 680.4 g raw chicken breast — USDA FNDDS 2706442 recipe: flour (Foundation 789890) and dry crumbs (SR 174928) as separate inputs, 3.55 g flour carbohydrate and 11.905 g dry crumbs per 100 g raw (the dredge sized by the flour, the crumbs by their dry mass; a fresh bread brought to dry crumbs by carbohydrate); the record's 18.75 g grated Parmesan follows its mozzarella and sauce — a topping, not read; the dredge's excess not counted)",
@@ -2074,9 +2187,9 @@ void main() {
     // the shrimp's cornstarch still counts whole and neither recipe writes a
     // dip (the test's point, unchanged).
     test("R1's reach (closer 3, D1): two budgets size no dip — "
-        "maryland-crab-cakes' flour (its budget binds at v84's 5 oz cup: "
-        "f 0.949) and crispy-salt-and-pepper-shrimp's cornstarch (whole, B "
-        'above Σ) — and neither recipe writes a dip, so W, off B or off Σ, '
+        "maryland-crab-cakes' flour (whole since v115: 789951's 25.94 g of "
+        "carbohydrate under B's 25.99) and crispy-salt-and-pepper-shrimp's "
+        'cornstarch (whole, B above Σ) — and neither recipe writes a dip, so W, off B or off Σ, '
         'has nothing to size', () {
       const crab = '0288-maryland-crab-cakes.yaml';
       const shrimp = '0279-crispy-salt-and-pepper-shrimp.yaml';
@@ -2089,8 +2202,12 @@ void main() {
       // cakes' budget now binds (f 0.949) and the flour no longer counts
       // whole: 33.62 g (the v84 replay's row; v82 30.16, whole at 0.51).
       // Was 23.32 and the whole line.
-      expect((g2(bc), g2(flour * cho(wheat))), ('25.99', '27.39'));
-      expect(g2(rowOf(crab, 8).grams!), '33.62');
+      // RE-PIN (M102 batch, v115): the line names `unbleached` — 789951's
+      // 73.2 % puts the ¼ cup's carbohydrate at 35.44 × 0.732 = 25.94 g,
+      // UNDER B's 25.99: the budget no longer binds and the flour counts
+      // whole, 35.44 g (the v115 replay's row): was '27.39', '33.62'.
+      expect((g2(bc), g2(flour * cho(wheat))), ('25.99', '25.94'));
+      expect(g2(rowOf(crab, 8).grams!), '35.44');
       // 3 of the 5 tablespoons are tossed with the shrimp and eaten whole;
       // the "remaining 2 tablespoons" dredge the jalapeños ("Shaking off
       // excess cornstarch") — 3.94 on 1½ pounds of shrimp over those 2.
@@ -2157,7 +2274,9 @@ void main() {
       // RE-PIN (M82 batch, v84): was 42.21.
       // RE-PIN (M88 batch, v88): was 46.18 — the dredge's own share f_d, as
       // the real recipe's |3.
-      expect(g2(rowIn(noCrumb, 3).grams!), '29.29');
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+      // v115 replay): was 29.29.
+      expect(g2(rowIn(noCrumb, 3).grams!), '30.93');
       // The real recipe: the Parmesan joins.
       // RE-PIN (M82 batch, v84): was 19.22 (the replay 298.97 → 297.64).
       // RE-PIN (M85 batch, v87): was 17.94 — the budget re-solves on the
@@ -2395,7 +2514,9 @@ void main() {
       // RE-PIN (M88 batch, v88): was 566.32 (the replay 566.38 → 516.05: the
       // dredge split).
       // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 515.98.
-      expect(of(_nutCrusted), ('complete', '527.89', 13)); // 575.56; 360.45
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+      // test's compute): was 527.89.
+      expect(of(_nutCrusted), ('complete', '529.00', 13)); // 575.56; 360.45
       // RE-PIN (M70 batch, v69, pE Q6): 235.22 (was 235.25) — its minced
       // basil on SR's chopped 2.65 g (replay 235.29 → 235.26).
       // RE-PIN (M80 batch, v80, M80-2): 298.93 (was 235.22; the v80 replay
@@ -2406,7 +2527,9 @@ void main() {
       // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50).
       // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
       // 288.46.
-      expect(of(_lighter), ('complete', '294.42', 12)); // 298.97; 232.29
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+      // test's compute): was 294.42.
+      expect(of(_lighter), ('complete', '295.00', 12)); // 298.97; 232.29
       // RE-PIN (M70 batch, v69, pE Q6): 486.48 (was 486.52) — its chopped
       // basil tablespoons on SR's 2.65 g (replay 486.50 → 486.46).
       // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 486.48.
@@ -2421,7 +2544,9 @@ void main() {
       // RE-PIN (M82 batch, v84): was 532.09 (the replay 532.09 → 541.73).
       expect(of(_onionRings), (
         'complete',
-        '541.73',
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 541.73.
+        '540.32',
         10,
       )); // = replay; 217.86, 3
     });

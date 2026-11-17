@@ -1333,7 +1333,11 @@ void main() {
     // (tortilla chips, plain) — and three searches ('turkey leg quarters',
     // 'pork sausage', 'whole-milk greek yogurt'), four differing in some
     // digit: compared 553 -> 558, differ 422 -> 426 (measured).
-    expect(compared, 558);
+    // RE-PIN (M102 batch, v115): its pins recorded from snapshot 33 the
+    // detail of 789951 (all-purpose flour, enriched, unbleached — a hit in
+    // 'all-purpose flour'; the search was already in the fixtures):
+    // compared 558 -> 559, differ 426 unchanged (measured).
+    expect(compared, 559);
     expect(differ, 426);
   });
 

@@ -996,6 +996,8 @@ const List<_Row> _parents = [
     '0154-classic-roast-turkey.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (classic-roast-turkey|8,
+    // 1571.90 g, 1165.31 kcal): was kcal 1168.15, basis 1,168.
     '1 recipe Giblet Pan Gravy (recipe follows)',
     null,
     '',
@@ -1003,14 +1005,17 @@ const List<_Row> _parents = [
     '1571.90',
     'auto',
     null,
-    '1168.15',
-    'from the recipe Giblet Pan Gravy: 1572 g, 1,168 kcal',
+    '1165.31',
+    'from the recipe Giblet Pan Gravy: 1572 g, 1,165 kcal',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 1566.60 g, 1148.85 kcal (the v84 replay's row).
   (
     '0158-classic-roast-stuffed-turkey.yaml',
     null,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (classic-roast-stuffed-turkey|10,  1571.90 g, 1165.31 kcal): was kcal
+    // 1168.15, basis 1,168.
     '1 recipe Giblet Pan Gravy (this page (optional)',
     null,
     '',
@@ -1018,8 +1023,8 @@ const List<_Row> _parents = [
     '1571.90',
     'auto',
     null,
-    '1168.15',
-    'from the recipe Giblet Pan Gravy: 1572 g, 1,168 kcal',
+    '1165.31',
+    'from the recipe Giblet Pan Gravy: 1572 g, 1,165 kcal',
   ),
   // RE-PIN (M82 batch, v84, C3a): was 829.50 g, 219.14 kcal (the v84 replay's row).
   (
@@ -5479,11 +5484,15 @@ void main() {
       // 716.10, 1,258.02 → 1,259.95): was 1148.85, 714.17, 1258.02.
       expect(
         totalsOf(_classicTurkey, section: _gravy),
-        ('complete', '1168.15', '1168.15'),
+        // RE-PIN (M102 batch, v115): the gravy's unbleached flour on 789951
+        // (the v115 replay): was 1168.15, 1168.15.
+        ('complete', '1165.31', '1165.31'),
       );
       // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
       // 716.10.
-      expect(totalsOf(_classicTurkey).$2, '715.58');
+      // RE-PIN (M102 batch, v115): its gravy's unbleached flour on 789951
+      // (the v115 replay 715.58 → 715.30): was '715.58'.
+      expect(totalsOf(_classicTurkey).$2, '715.30');
       // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, the
       // stuffing's 1750342 apples): was '1259.95'.
       // RE-PIN (fix103 batch, v103, U3: the stuffing's apples at the edible
@@ -5492,7 +5501,9 @@ void main() {
       // RE-PIN (fix104 batch, v104, U2: the stuffing's apples at the cubed
       // cup, 353.80 → 265.35 g; the replay 1,251.73 → 1,247.04): was
       // '1251.73'.
-      expect(totalsOf(_stuffedTurkey).$2, '1247.04');
+      // RE-PIN (M102 batch, v115): its gravy's unbleached flour on 789951
+      // (the v115 replay 1,247.04 → 1,246.76): was '1247.04'.
+      expect(totalsOf(_stuffedTurkey).$2, '1246.76');
     });
 
     test("2: a host-only edit of the bird's printed weight (12–14 → 16–18 lb) "
@@ -5586,7 +5597,9 @@ void main() {
           _g2(n.caloriesPerServing!),
           _g2(batchTotalsOf(n)['energy']!),
         ),
-        ('complete', '1279.31', '1279.31'),
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+        // test's compute): was 1279.31.
+        ('complete', '1276.48', '1276.48'),
       );
     });
 
@@ -5706,7 +5719,9 @@ void main() {
           '0034-lighter-corn-chowder.yaml',
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2346402 potatoes): was 369.93.
-          '368.69',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951
+          // (this test's compute): was 368.69.
+          '368.21',
         ), // replay complete 366.73 → complete 366.69
         (
           // RE-PIN (M82 batch, v84): was 587.77 (the replay 587.70 → 584.30).
@@ -5766,7 +5781,9 @@ void main() {
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
           // '716.10'.
-          '715.58',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+          // v115 replay): was 715.58.
+          '715.30',
         ), // replay complete 678.04 → complete 714.17
         (
           // RE-PIN (M82 batch, v84): was 1258.02 (the replay 1258.02 → 1259.95).
@@ -5777,7 +5794,9 @@ void main() {
           // RE-PIN (fix103 batch, v103, U3: the stuffing's apples at the
           // edible cup): was '1257.01'.
           // RE-PIN (fix104 batch, v104, U2: the cubed cup): was '1251.73'.
-          '1247.04',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+          // v115 replay): was 1247.04.
+          '1246.76',
         ), // replay complete 1221.89 → complete 1258.02
         (
           // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
@@ -5984,7 +6003,9 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 2680.10.
           // RE-PIN (M85 batch, v87): was 2681.73 (the replay 2681.63 → 2679.58).
           // RE-PIN (M86 batch, v90, 958: 2685581 tomatoes): was 2679.67.
-          '2657.45',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951
+          // (this test's compute): was 2657.45.
+          '2639.02',
         ), // replay complete 2680.08 → complete 2680.00
         (
           // RE-PIN (M82 batch, v84): was 773.03 (the replay 773.03 → 772.11).
@@ -6027,7 +6048,9 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 454.01.
           // RE-PIN (M85 batch, v87): was 452.38 (the replay 452.38 → 451.58).
           // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 451.58.
-          '445.95',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+          // v115 replay): was 445.95.
+          '446.91',
         ), // replay partial 453.66 → partial 454.01
         (
           // RE-PIN (M82 batch, v84): was 475.17 (the replay 475.12 → 483.43).
@@ -6058,7 +6081,9 @@ void main() {
           // the dredge split).
           // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
           // 288.46.
-          '294.42',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951
+          // (this test's compute): was 294.42.
+          '295.00',
         ), // replay complete 235.29 → complete 235.26
         (
           // RE-PIN (M82 batch, v84): was 246.13 (the replay 246.13 → 252.03).

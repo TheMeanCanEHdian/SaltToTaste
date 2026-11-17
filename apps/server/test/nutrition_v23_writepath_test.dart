@@ -637,7 +637,9 @@ void main() {
         excluding: (recipeId: 'zz', position: 0),
       );
       expect((res.lines, res.moved, res.decided, res.gone), (1, 1, 0, 0));
-      expect(db.ingredientMatchesFor(a.id)[8].fdcId, 789890);
+      // RE-PIN (M102 batch, v115): line 8 names `unbleached` — the engine's
+      // own row, left for its compute, is 789951 (was 789890).
+      expect(db.ingredientMatchesFor(a.id)[8].fdcId, 789951);
       expect(db.ingredientMatchesFor('0000').single.fdcId, 168913);
     }, skip: skipIfNoCorpus);
   });

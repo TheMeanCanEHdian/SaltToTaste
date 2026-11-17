@@ -1373,9 +1373,11 @@ _rows = [
     '0255-fish-and-chips.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|8,
+    // 172804 2.14 g, 1.09 kcal): was grams 2.06.
     '1 teaspoon baking powder',
     172804,
-    '2.06',
+    '2.14',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -1386,9 +1388,11 @@ _rows = [
     '0255-fish-and-chips.yaml',
     null,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|3,
+    // 169698 26.76 g, 101.96 kcal): was grams 25.75.
     '½ cup cornstarch',
     169698,
-    '25.75',
+    '26.76',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
@@ -1399,9 +1403,11 @@ _rows = [
     '0255-fish-and-chips.yaml',
     null,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|10,
+    // 2710616 160.58 g, 69.05 kcal): was grams 154.50.
     '1½ cups (12 ounces) cold beer',
     2710616,
-    '154.50',
+    '160.58',
     null,
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",

@@ -432,7 +432,8 @@ void main() {
           // RE-PIN (M99 batch, v112): matcherVersion 98 alone (was 8b0dc1c8…).
           // RE-PIN (M100 batch, v113): matcherVersion 99 alone (was e1dce5f0…).
           // RE-PIN (M101 batch, v114): matcherVersion 100 alone (was eb2cc499…).
-          'a74825f058371b23bff3a808298e381cd5d701c5fa94c424ab917748422349b8',
+          // RE-PIN (M102 batch, v115): matcherVersion 101 alone (was a74825f0…).
+          '401304f98bc0506f063e8eb929290ff01ae3922741a3128fcff02e5344d10e35',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

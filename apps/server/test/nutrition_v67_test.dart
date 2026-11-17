@@ -690,7 +690,9 @@ void main() {
       // RE-PIN (M82 batch, v84): was 588.82 (the replay 588.82 → 590.30).
       // RE-PIN (M90 batch, v89): the replay 590.30 → 589.45: was 590.30.
       // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 589.45.
-      expect(of(_onion), ('complete', '589.02'));
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+      // v115 replay): was 589.02.
+      expect(of(_onion), ('complete', '588.78'));
       // RE-PIN (M70 batch, v69, Q1 flat (b′)): 794.35 (was 729.93).
       // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
       // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.

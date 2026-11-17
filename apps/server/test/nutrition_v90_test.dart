@@ -119,11 +119,13 @@ const Map<String, (String, String)> _totals = {
   // a6 R23 on the search hit's 48.8 (the v90 replay's detail: 154.06 →
   // 137.67; calibrator 2's own 958 re-hand 137.67, audit 6).
   _brussels: ('complete', '137.71'),
-  _onionRings: ('complete', '541.73'), // a6 R03, no 958 row: v89 541.73
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 541.73.
+  _onionRings: ('complete', '540.32'), // a6 R03, no 958 row: v89 541.73
 };
 
 void main() {
-  test('matcherVersion 100 (v90 set it to 85, batch M86: rows move)', () {
+  test('matcherVersion 101 (v90 set it to 85, batch M86: rows move)', () {
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
@@ -139,7 +141,8 @@ void main() {
     // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-    expect(matcherVersion, 100);
+    // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+    expect(matcherVersion, 101);
   });
 
   test('the energy def reads 208, then 958 (Specific Atwater), then 957 '

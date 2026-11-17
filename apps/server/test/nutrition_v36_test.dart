@@ -39,7 +39,10 @@ void main() {
           final before = db.nutritionFor(r.id)!;
           expect((before.status, before.matchedCount), ('complete', 13));
           // RE-PIN (M86 batch, v90, 2346387 sour cream at its 958): was 464.8.
-          expect(before.caloriesPerServing, closeTo(464.1, 0.05));
+          // RE-PIN (M102 batch, v115): 462.45 (was 464.1) — line 6's
+          // unbleached flour on 789951, 248.06 g × (3.58 − 3.66) = −19.84
+          // kcal ÷ 12 servings.
+          expect(before.caloriesPerServing, closeTo(462.45, 0.05));
           final rows = db.ingredientMatchesFor(r.id);
           final row0 = rows.firstWhere((x) => x.position == 0);
           expect((row0.status, row0.fdcId), ('auto', 173430));
@@ -151,7 +154,10 @@ void main() {
           await d.editAndCompute(db, fixture, r);
           final before = db.nutritionFor(r.id)!;
           // RE-PIN (M86 batch, v90, 2346387 sour cream at its 958): was 464.8.
-          expect(before.caloriesPerServing, closeTo(464.1, 0.05));
+          // RE-PIN (M102 batch, v115): 462.45 (was 464.1) — line 6's
+          // unbleached flour on 789951, 248.06 g × (3.58 − 3.66) = −19.84
+          // kcal ÷ 12 servings.
+          expect(before.caloriesPerServing, closeTo(462.45, 0.05));
           final grams = d.rowOf(db, r, 0).grams!;
           v28.dropFood(path, 173430);
           final fault = v28.FoodFault(

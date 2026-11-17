@@ -249,7 +249,7 @@ void main() {
 
     for (final between in [true, false]) {
       test("O5: 0148's dredge flour confirmed (M52's C1d budget kept, "
-          '144.06 g — verify2 D1), then the dredge taken out of the steps ${between ? 'after' : 'with no'} '
+          '152.13 g — verify2 D1), then the dredge taken out of the steps ${between ? 'after' : 'with no'} '
           'compute between — the flour is weighed either way', () async {
         final (db, provider, r) = await computed(
           '0148-crispy-fried-chicken.yaml',
@@ -261,10 +261,13 @@ void main() {
         });
         // RE-PIN (M52 batch, v53 closer 2, verify2 D1): the confirm keeps
         // the engine's budget (was 0 g poured away).
+        // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951,
+        // carbohydrate 73.2 (was 789890, 77.3): the one C1d budget ÷ 73.2 % =
+        // 152.13 g (was 144.06).
         expect(shape(rowOf(db, r, i)), (
           'confirmed',
-          789890,
-          144.06,
+          789951,
+          152.13,
           GramSource.discarded.name,
           null,
         ));
@@ -347,7 +350,7 @@ void main() {
       "O8, a decided line that BECOMES held: 0148's flour picked (and, "
       'apart, confirmed) on the undredged recipe, then the dredge put '
       'back — the pick keeps the coating hold with no grams, the confirm '
-      "keeps the engine's C1d budget, 144.06 g, no hold (verify2 D1)",
+      "keeps the engine's C1d budget, 152.13 g, no hold (verify2 D1)",
       () async {
         final corpus = loadCorpusRecipe('0148-crispy-fried-chicken.yaml');
         final i = at(corpus, flour0148);
@@ -372,7 +375,8 @@ void main() {
           expect(
             (now.grams, now.hold),
             // RE-PIN (M52 batch, v53 closer 2, verify2 D1): was (0, null).
-            body.containsKey('fdc_id') ? (null, 'coating') : (144.06, null),
+            // RE-PIN (M102 batch, v115): ÷ 789951's 73.2 % (was 144.06).
+            body.containsKey('fdc_id') ? (null, 'coating') : (152.13, null),
             reason: '$body',
           );
         }

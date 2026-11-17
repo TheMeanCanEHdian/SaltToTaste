@@ -1031,14 +1031,17 @@ const List<_Row> _unmoved = [
     '0034-lighter-corn-chowder.yaml',
     null,
     6,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (lighter-corn-chowder|6,
+    // 789951 35.44 g, 126.86 kcal): was record 789890, description 'ed,
+    // bleached', kcal 129.70, confidence 0.950000.
     '¼ cup unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '35.44',
     'auto',
     null,
-    '129.70',
+    '126.86',
     '1/4 cup ≈ 59 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -1145,10 +1148,14 @@ const List<_Row> _unmoved = [
     '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
     null,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (skillet-chicken-and-rice-with-peas-and-scallions|2, 789951  g, 0.00
+    // kcal): was record 789890, description 'ed, bleached', confidence
+    // 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     null,
     'auto',
     'coating',
@@ -1441,14 +1448,17 @@ const List<_Row> _unmoved = [
     '0149-easier-fried-chicken.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (easier-fried-chicken|8,
+    // 789951 48.16 g, 172.41 kcal): was record 789890, description 'ed,
+    // bleached', grams 45.60, kcal 166.90, confidence 0.950000.
     '2 cups unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
-    '45.60',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
+    '48.16',
     'auto',
     null,
-    '166.90',
+    '172.41',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 3.18 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705980 recipe: 10 g breading per 125.77 g raw chicken breast; the dredge's excess not counted)",
   ),
   (
@@ -1599,14 +1609,18 @@ const List<_Row> _unmoved = [
     '0162-slow-roasted-turkey-with-gravy.yaml',
     null,
     13,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (slow-roasted-turkey-with-gravy|13, 789951 26.58 g, 95.15 kcal): was
+    // record 789890, description 'ed, bleached', kcal 97.27, confidence
+    // 0.950000.
     '3 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '26.58',
     'auto',
     null,
-    '97.27',
+    '95.15',
     '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -1758,14 +1772,17 @@ const List<_Row> _unmoved = [
     '0172-braised-turkey.yaml',
     null,
     15,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (braised-turkey|15,
+    // 789951 26.58 g, 95.15 kcal): was record 789890, description 'ed,
+    // bleached', kcal 97.27, confidence 0.950000.
     '3 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '26.58',
     'auto',
     null,
-    '97.27',
+    '95.15',
     '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -2187,14 +2204,17 @@ const List<_Row> _unmoved = [
     '0254-crunchy-oven-fried-fish.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|0, 174924 65.94 g, 175.40 kcal): was grams
+    // 65.12, kcal 173.22.
     '4 slices high-quality white sandwich bread, torn into quarters',
     174924,
     'Bread, white, commercially prepared (includes soft bread crumbs)',
     '0.914286',
-    '65.12',
+    '65.94',
     'auto',
     null,
-    '173.22',
+    '175.40',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge's excess not counted)",
   ),
   (
@@ -2258,14 +2278,18 @@ const List<_Row> _unmoved = [
     '0254-crunchy-oven-fried-fish.yaml',
     null,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|5, 789951 57.17 g, 204.67 kcal): was record
+    // 789890, description 'ed, bleached', grams 57.01, kcal 208.66, confidence
+    // 0.950000.
     '¼ cup plus 5 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
-    '57.01',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
+    '57.17',
     'auto',
     null,
-    '208.66',
+    '204.67',
     'discarded in cooking — only "plus 5 tablespoons unbleached all-purpose flour" and the coat on the food counted · approximation (coat: 7.41 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706243 recipe: 15 g breading per 81 g raw cod; the dredge\'s excess not counted)',
   ),
   (
@@ -2403,14 +2427,17 @@ const List<_Row> _unmoved = [
     '0255-fish-and-chips.yaml',
     null,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|2,
+    // 789951 100.36 g, 359.29 kcal): was record 789890, description 'ed,
+    // bleached', grams 96.56, kcal 353.41, confidence 0.950000.
     '1½ cups unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
-    '96.56',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
+    '100.36',
     'auto',
     null,
-    '353.41',
+    '359.29',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 31.45 g, 119.82 kcal (the v84 replay's row).
@@ -2419,14 +2446,16 @@ const List<_Row> _unmoved = [
     '0255-fish-and-chips.yaml',
     null,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|3,
+    // 169698 26.76 g, 101.96 kcal): was grams 25.75, kcal 98.11.
     '½ cup cornstarch',
     169698,
     'Cornstarch',
     '1.000000',
-    '25.75',
+    '26.76',
     'auto',
     null,
-    '98.11',
+    '101.96',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 0.44 g, 1.40 kcal (the v84 replay's row).
@@ -2435,14 +2464,16 @@ const List<_Row> _unmoved = [
     '0255-fish-and-chips.yaml',
     null,
     4,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|4,
+    // 170932 0.42 g, 1.34 kcal): was grams 0.41, kcal 1.30.
     '½ teaspoon cayenne pepper',
     170932,
     'Spices, pepper, red or cayenne',
     '1.000000',
-    '0.41',
+    '0.42',
     'auto',
     null,
-    '1.30',
+    '1.34',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 0.57 g, 1.61 kcal (the v84 replay's row).
@@ -2451,14 +2482,16 @@ const List<_Row> _unmoved = [
     '0255-fish-and-chips.yaml',
     null,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|5,
+    // 171329 0.55 g, 1.55 kcal): was grams 0.53, kcal 1.49.
     '½ teaspoon paprika',
     171329,
     'Spices, paprika',
     '0.900000',
-    '0.53',
+    '0.55',
     'auto',
     null,
-    '1.49',
+    '1.55',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2495,14 +2528,16 @@ const List<_Row> _unmoved = [
     '0255-fish-and-chips.yaml',
     null,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|8,
+    // 172804 2.14 g, 1.09 kcal): was grams 2.06, kcal 1.05.
     '1 teaspoon baking powder',
     172804,
     'Leavening agents, baking powder, double-acting, straight phosphate',
     '0.850000',
-    '2.06',
+    '2.14',
     'auto',
     null,
-    '1.05',
+    '1.09',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -2526,14 +2561,16 @@ const List<_Row> _unmoved = [
     '0255-fish-and-chips.yaml',
     null,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|10,
+    // 2710616 160.58 g, 69.05 kcal): was grams 154.50, kcal 66.44.
     '1½ cups (12 ounces) cold beer',
     2710616,
     'Beer',
     '0.565000',
-    '154.50',
+    '160.58',
     'auto',
     null,
-    '66.44',
+    '69.05',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
   (
@@ -3234,14 +3271,17 @@ const List<_Row> _unmoved = [
     '0304-chicken-fried-steaks.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-fried-steaks|0,
+    // 789951 102.13 g, 365.63 kcal): was record 789890, description 'ed,
+    // bleached', grams 96.71, kcal 353.96, confidence 0.950000.
     '3 cups unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
-    '96.71',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
+    '102.13',
     'auto',
     null,
-    '353.96',
+    '365.63',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 8.79 g carbohydrate per 100 g of the raw beef — USDA FNDDS 2705842 recipe: 20 g breading per 90.99 g raw beef steak; the dredge's excess not counted)",
   ),
   (
@@ -3410,14 +3450,17 @@ const List<_Row> _unmoved = [
     '0304-chicken-fried-steaks.yaml',
     null,
     12,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (chicken-fried-steaks|12, 789951 26.58 g, 95.15 kcal): was record 789890,
+    // description 'ed, bleached', kcal 97.27, confidence 0.950000.
     '3 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '26.58',
     'auto',
     null,
-    '97.27',
+    '95.15',
     '3 tablespoon ≈ 44 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -4454,14 +4497,17 @@ const List<_Row> _unmoved = [
     '0457-beef-burgundy.yaml',
     null,
     13,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (beef-burgundy|13,
+    // 789951 47.25 g, 169.15 kcal): was record 789890, description 'ed,
+    // bleached', kcal 172.93, confidence 0.950000.
     '⅓ cup unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '47.25',
     'auto',
     null,
-    '172.93',
+    '169.15',
     '1/3 cup ≈ 79 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -6874,6 +6920,8 @@ const List<_Row> _unmoved = [
     '0987-pumpkin-pie.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (pumpkin-pie|0,  301.90
+    // g, 1529.90 kcal): was kcal 1544.07, basis 1,544.
     '1 recipe Basic Single-Crust Pie Dough (this page), fitted into a 9-inch pie plate and chilled',
     null,
     '',
@@ -6881,8 +6929,8 @@ const List<_Row> _unmoved = [
     '301.90',
     'auto',
     null,
-    '1544.07',
-    'from the recipe Basic Single-Crust Pie Dough: 302 g, 1,544 kcal',
+    '1529.90',
+    'from the recipe Basic Single-Crust Pie Dough: 302 g, 1,530 kcal',
   ),
   (
     '0987-pumpkin-pie.yaml',
@@ -8492,7 +8540,9 @@ void main() {
           '0162-slow-roasted-turkey-with-gravy.yaml',
           null,
           'complete',
-          '564.49',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+          // v115 replay): was 564.49.
+          '564.28',
         ), // 608.72 → 586.18
         // RE-PIN (M82 batch, v84): was 578.50 (the replay 578.50 → 579.95).
         // RE-PIN (M83 batch, v85): was 579.95 — B5: the porcini |11 strained
@@ -8505,7 +8555,9 @@ void main() {
           '0172-braised-turkey.yaml',
           null,
           'complete',
-          '529.28',
+          // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+          // v115 replay): was 529.28.
+          '529.06',
         ), // 601.81 → 578.50
         (
           '0235-maple-glazed-pork-tenderloin.yaml',

@@ -5,7 +5,7 @@
       "raw": "1¼ cups (6¼ ounces) unbleached all-purpose flour, plus extra for the work surface",
       "item": "unbleached all-purpose flour",
       "line_amount": "1 1/4 cup",
-      "kcal_per_100g": 366.0,
+      "kcal_per_100g": 358.0,
       "portions": [],
       "others": 0,
       "others_lines": 0,
@@ -13,10 +13,10 @@
       "candidates_name_ingredient": true,
       "candidates_cached_at": "<timestamp>",
       "match": {
-        "fdc_id": 789890,
-        "description": "Flour, wheat, all-purpose, enriched, bleached",
+        "fdc_id": 789951,
+        "description": "Flour, wheat, all-purpose, enriched, unbleached",
         "data_type": "Foundation",
-        "confidence": 0.95,
+        "confidence": 0.9833333333333333,
         "grams": 177.184375,
         "gram_source": "weight",
         "gram_basis": "from 6 1/4 ounce",
@@ -30,52 +30,52 @@
       },
       "candidates": [
         {
-          "fdc_id": 789890,
-          "description": "Flour, wheat, all-purpose, enriched, bleached",
-          "data_type": "Foundation",
-          "confidence": 0.95
-        },
-        {
           "fdc_id": 789951,
           "description": "Flour, wheat, all-purpose, enriched, unbleached",
           "data_type": "Foundation",
-          "confidence": 0.95
+          "confidence": 0.9833333333333333
         },
         {
           "fdc_id": 790018,
           "description": "Flour, wheat, all-purpose, unenriched, unbleached",
           "data_type": "Foundation",
-          "confidence": 0.95
-        },
-        {
-          "fdc_id": 169761,
-          "description": "Wheat flour, white, all-purpose, unenriched",
-          "data_type": "SR Legacy",
-          "confidence": 0.87
-        },
-        {
-          "fdc_id": 168894,
-          "description": "Wheat flour, white, all-purpose, enriched, bleached",
-          "data_type": "SR Legacy",
-          "confidence": 0.8557142857142858
+          "confidence": 0.9833333333333333
         },
         {
           "fdc_id": 168936,
           "description": "Wheat flour, white, all-purpose, enriched, unbleached",
           "data_type": "SR Legacy",
-          "confidence": 0.8557142857142858
+          "confidence": 0.8842857142857143
+        },
+        {
+          "fdc_id": 789890,
+          "description": "Flour, wheat, all-purpose, enriched, bleached",
+          "data_type": "Foundation",
+          "confidence": 0.6875
+        },
+        {
+          "fdc_id": 169761,
+          "description": "Wheat flour, white, all-purpose, unenriched",
+          "data_type": "SR Legacy",
+          "confidence": 0.6075
+        },
+        {
+          "fdc_id": 168894,
+          "description": "Wheat flour, white, all-purpose, enriched, bleached",
+          "data_type": "SR Legacy",
+          "confidence": 0.5932142857142858
         },
         {
           "fdc_id": 169754,
           "description": "Wheat flour, white, all-purpose, enriched, calcium-fortified",
           "data_type": "SR Legacy",
-          "confidence": 0.8450000000000001
+          "confidence": 0.5825
         },
         {
           "fdc_id": 168895,
           "description": "Wheat flour, white, all-purpose, self-rising, enriched",
           "data_type": "SR Legacy",
-          "confidence": 0.8450000000000001
+          "confidence": 0.5825
         }
       ]
     },

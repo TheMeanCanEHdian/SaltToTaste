@@ -563,12 +563,15 @@ void main() {
       final at = nutritionLines(r).indexWhere((l) => l.raw == flour);
       // RE-PIN (M52 batch, v53): the engine's row counts the C1d coat
       // budget, unheld (144.06 g, `discarded`); the pick derives the hold.
+      // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951,
+      // carbohydrate 73.2 (was 789890, 77.3): the one C1d budget ÷ 73.2 % =
+      // 152.13 g (was 144.06).
       expect(
         (
           db.ingredientMatchesFor(r.id)[at].hold,
           db.ingredientMatchesFor(r.id)[at].grams?.toStringAsFixed(2),
         ),
-        (null, '144.06'),
+        (null, '152.13'),
       );
       await applyMatchOverride(db, provider, r, at, {
         'raw': flour,

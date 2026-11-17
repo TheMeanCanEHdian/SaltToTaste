@@ -432,11 +432,13 @@ const List<_Row> _coats = [
     '0122-chicken-kiev.yaml',
     null,
     11,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-kiev|11, 789951
+    // 41.25 g, 147.68 kcal): was record 789890, grams 39.06, kcal 142.96.
     '1 cup unbleached all-purpose flour',
-    789890,
+    789951,
     'discarded',
-    '39.06',
-    '142.96',
+    '41.25',
+    '147.68',
     null,
   ),
   (
@@ -455,11 +457,14 @@ const List<_Row> _coats = [
     '0114-breaded-chicken-cutlets.yaml',
     null,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (breaded-chicken-cutlets|3, 789951 26.19 g, 93.76 kcal): was record
+    // 789890, grams 25.43, kcal 93.07.
     '¾ cup unbleached all-purpose flour',
-    789890,
+    789951,
     'discarded',
-    '25.43',
-    '93.07',
+    '26.19',
+    '93.76',
     null,
   ),
   // v82: 40.36 g, 147.72 kcal (discarded)
@@ -525,7 +530,7 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 100 (v84 set it to 79, batch M82: rows move)', () {
+  test('matcherVersion 101 (v84 set it to 79, batch M82: rows move)', () {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
@@ -547,7 +552,8 @@ void main() {
     // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-    expect(matcherVersion, 100);
+    // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+    expect(matcherVersion, 101);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {
@@ -759,8 +765,11 @@ void main() {
           'C5a',
           '0770-blueberry-boy-bait.yaml',
           0,
+          // RE-PIN (M102 batch, v115): the v115 replay's row
+          // (blueberry-boy-bait|0, 789951 286.45 g, 1,025.48 kcal): was
+          // record 789890 (1,048.40 kcal).
           '2 cups (10 ounces) plus 1 teaspoon unbleached all-purpose flour',
-          789890,
+          789951,
           '286.45',
           'from 10 ounce + 1 teaspoon unbleached all-purpose flour',
         ),

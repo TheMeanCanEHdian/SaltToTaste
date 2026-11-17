@@ -2620,10 +2620,15 @@ _whole = [
   // before and after the ethanol moves alike: was 4938.05, 4607.48.
   (
     '0005-best-beef-stew.yaml',
-    4934.18,
-    4603.61,
-    193.33,
-    390.14,
+    // RE-PIN (M102 batch, v115): its |7 flour names `unbleached` — 789951
+    // (358 kcal, was 789890's 366): the energy before and after the ethanol
+    // moves alike, after = this compute: was 4934.18, 4603.61.
+    4931.34,
+    4600.77,
+    // RE-PIN (M102 batch, v115): its flour's carbohydrate and protein on
+    // 789951 (73.2 / 13.1 per 100 g, was 77.3 / 10.9): was 193.33, 390.14.
+    191.87,
+    390.92,
     [(8, 2710688, 468.44, 5)],
   ),
   // P10 restated: 180 + the skimmed liquid reduced 18 = 198 min → 5 %
@@ -2633,8 +2638,11 @@ _whole = [
   // after the ethanol moves alike, after = this compute: was 3671.56, 3142.31.
   (
     '0426-beef-braised-in-barolo.yaml',
-    3668.99,
-    3139.74,
+    // RE-PIN (M102 batch, v115): its |8 unbleached flour on 789951 —
+    // the energy before and after the ethanol moves alike: was
+    // 3668.99, 3139.74.
+    3668.28,
+    3139.04,
     0,
     0,
     [(10, 2710688, 750.00, 5)],
@@ -2650,10 +2658,14 @@ _whole = [
   // after = this compute: was 1547.18, 1537.03.
   (
     '0013-ultimate-cream-of-tomato-soup.yaml',
-    1481.78,
-    1471.63,
-    133.12,
-    30.60,
+    // RE-PIN (M102 batch, v115): its |6 unbleached flour on 789951 —
+    // the energy before and after the ethanol moves alike, carbohydrate
+    // and protein by its 73.2 / 13.1 per 100 g (was 77.3 / 10.9): was
+    // 1481.78, 1471.63, 133.12, 30.60.
+    1480.36,
+    1470.21,
+    132.40,
+    30.99,
     [(9, 2710699, 29.28, 85)],
   ),
   // P1: brought to a simmer, ladled → boil-off 85 %
@@ -2709,11 +2721,16 @@ _whole = [
   // moves alike (+634.27), after = this compute: was 3404.70, 3398.45.
   (
     '0255-fish-and-chips.yaml',
-    4038.97,
-    4032.72,
+    // RE-PIN (M102 batch, v115): its |2 flour names `unbleached` — 789951's
+    // carbohydrate re-solves the batter's one f: every part rises (+12.47
+    // kcal gross), the beer |10 154.50 → 160.58 g (the v115 replay's row), so
+    // the ethanol removed rises 26.96 × 6.08 / 100 × 15 % = 0.25: was
+    // 4038.97, 4032.72, 154.50.
+    4051.44,
+    4044.95,
     0,
     0,
-    [(10, 2710616, 154.50, 85)],
+    [(10, 2710616, 160.58, 85)],
   ),
   // P21: |6 the batter's crepes (sub-minute → 5002), |8 3 T flamed + 1 T
   // into the hot sauce (75/85 by volume = 77.5), |12 the liqueur (85)
@@ -2721,10 +2738,14 @@ _whole = [
   // before and after alike (was 3095.29, 3049.95, 312.00, 57.24).
   (
     '0960-crepes-suzette.yaml',
-    3093.37,
-    3048.03,
-    311.51,
-    57.24,
+    // RE-PIN (M102 batch, v115): its |2 unbleached flour on 789951 —
+    // the energy before and after the ethanol moves alike, carbohydrate
+    // and protein by its 73.2 / 13.1 per 100 g (was 77.3 / 10.9): was
+    // 3093.37, 3048.03, 311.51, 57.24.
+    3076.36,
+    3031.02,
+    302.79,
+    61.92,
     [
       (6, 2710699, 28.00, 85),
       (8, 2710699, 56.00, 77.5),

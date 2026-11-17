@@ -27994,5 +27994,34 @@
     "description": "1 chip"
    }
   ]
+ },
+ "789951": {
+  "fdc_id": 789951,
+  "description": "Flour, wheat, all-purpose, enriched, unbleached",
+  "data_type": "Foundation",
+  "nutrients": {
+   "208": 358.0,
+   "203": 13.1,
+   "204": 1.48,
+   "205": 73.2,
+   "301": 21.0,
+   "303": 5.41,
+   "304": 33.3,
+   "305": 115.0,
+   "306": 135.0,
+   "307": 4.0,
+   "404": 1.05,
+   "405": 0.467,
+   "406": 7.07,
+   "415": 0.079
+  },
+  "portions": [
+   {
+    "gram_weight": 30.0,
+    "amount": 1.0,
+    "unit": "racc",
+    "description": null
+   }
+  ]
  }
 }

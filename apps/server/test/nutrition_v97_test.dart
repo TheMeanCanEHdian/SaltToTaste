@@ -221,7 +221,10 @@ const _totals = [
   // replay 355.98 → 522.08 (+166.10); fixtures 356.05 → 522.15 (+166.10).
   (_easier, 'complete', '522.15'),
   // replay 856.27 → 1,017.71 (+161.44); fixtures 856.44 → 1,017.88 (+161.44).
-  (_fishChips, 'complete', '1017.88'),
+  // RE-PIN (M102 batch, v115): the batter's unbleached flour on 789951 —
+  // the coat re-solves (the v115 replay 1,017.71 → 1,020.77, +3.06): was
+  // 1017.88.
+  (_fishChips, 'complete', '1020.94'),
   // replay 382.59 → 548.68 (+166.09); fixtures 382.72 → 548.82 (+166.10).
   (_steakFries, 'complete', '548.82'),
   // replay 1,079.57 → 1,245.66 (+166.09); fixtures 1,079.70 → 1,245.80
@@ -274,7 +277,7 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    "matcherVersion 100 (v97 set it to 92, batch M95: the fries' uptake)",
+    "matcherVersion 101 (v97 set it to 92, batch M95: the fries' uptake)",
     () {
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
       // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
@@ -284,7 +287,8 @@ void main() {
       // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
       // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
       // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-      expect(matcherVersion, 100);
+      // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+      expect(matcherVersion, 101);
     },
   );
 

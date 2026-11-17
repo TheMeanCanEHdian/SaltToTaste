@@ -134,15 +134,21 @@ final _reach = [
 /// standing offset v61 / v68 / v78 already pin (332.99 / 357.13 / 417.18 at
 /// v94 against the replay's 333.21 / 357.45 / 417.49), untouched by M93: the
 /// per-serving moves equal the replay's to the cent of rounding.
+// RE-PIN (M102 batch, v115): each recipe's unbleached flour on 789951 —
+// the dredge's grams up by 77.3 / 73.2 (the v115 replay's per-serving moves:
+// saltimbocca 447.24 → 448.00, francese 386.97 → 387.56, meunière 287.54 →
+// 288.30, parmesan-crusted 353.50 → 354.03; the fixtures move alike): was
+// 446.92, 1787.69, 1121.6; 386.66, 1546.63, 1527.7; 287.54, 1150.15, 758.2;
+// 353.29, 1413.14, 658.7.
 const _totals = [
   // replay 417.49 → 447.24 (+29.75); fixtures 417.18 → 446.92 (+29.74).
-  (_saltimbocca, '446.92', '1787.69', '1121.6'),
+  (_saltimbocca, '447.69', '1790.76', '1123.0'),
   // replay 357.45 → 386.97 (+29.52); fixtures 357.13 → 386.66 (+29.53).
-  (_francese, '386.66', '1546.63', '1527.7'),
+  (_francese, '387.25', '1548.99', '1529.2'),
   // replay 258.01 → 287.54 (+29.53); fixtures equal the replay.
-  (_meuniere, '287.54', '1150.15', '758.2'),
+  (_meuniere, '288.30', '1153.22', '759.7'),
   // replay 333.21 → 353.50 (+20.29); fixtures 332.99 → 353.29 (+20.30).
-  (_parmesan, '353.29', '1413.14', '658.7'),
+  (_parmesan, '353.81', '1415.25', '659.6'),
 ];
 
 /// Rows the share does not reach (file, position, raw, grams, source) — the
@@ -193,7 +199,7 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    'matcherVersion 100 (v95 set it to 90, batch M93: six rows, four totals)',
+    'matcherVersion 101 (v95 set it to 90, batch M93: six rows, four totals)',
     () {
       // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
       // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
@@ -205,7 +211,8 @@ void main() {
       // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
       // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
       // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-      expect(matcherVersion, 100);
+      // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+      expect(matcherVersion, 101);
     },
   );
 

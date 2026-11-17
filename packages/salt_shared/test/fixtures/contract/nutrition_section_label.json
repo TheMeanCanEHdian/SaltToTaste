@@ -2,13 +2,13 @@
   "status": "complete",
   "serving_basis": 1,
   "basis_kind": "per_batch",
-  "calories_per_serving": 1544.07,
+  "calories_per_serving": 1529.9,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 1544.07,
+      "amount": 1529.9,
       "unit": "kcal",
-      "dv_percent": 77.2
+      "dv_percent": 76.5
     },
     "fat": {
       "label": "Total Fat",
@@ -45,15 +45,15 @@
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 1178.32,
+      "amount": 1181.86,
       "unit": "mg",
-      "dv_percent": 51.2
+      "dv_percent": 51.4
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 149.36,
+      "amount": 142.09,
       "unit": "g",
-      "dv_percent": 54.3
+      "dv_percent": 51.7
     },
     "fiber": {
       "label": "Dietary Fiber",
@@ -68,9 +68,9 @@
     },
     "protein": {
       "label": "Protein",
-      "amount": 19.92,
+      "amount": 23.81,
       "unit": "g",
-      "dv_percent": 39.8
+      "dv_percent": 47.6
     },
     "vitamin_d": {
       "label": "Vitamin D",
@@ -80,19 +80,19 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 51.91,
+      "amount": 55.45,
       "unit": "mg",
-      "dv_percent": 4.0
+      "dv_percent": 4.3
     },
     "iron": {
       "label": "Iron",
-      "amount": 10.01,
+      "amount": 9.64,
       "unit": "mg",
-      "dv_percent": 55.6
+      "dv_percent": 53.6
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 258.48,
+      "amount": 256.7,
       "unit": "mg",
       "dv_percent": 5.5
     },
@@ -122,27 +122,27 @@
     },
     "thiamin_b1": {
       "label": "Thiamin (B1)",
-      "amount": 1.67,
+      "amount": 1.87,
       "unit": "mg",
-      "dv_percent": 139.6
+      "dv_percent": 156.0
     },
     "riboflavin_b2": {
       "label": "Riboflavin (B2)",
-      "amount": 0.81,
+      "amount": 0.85,
       "unit": "mg",
-      "dv_percent": 62.2
+      "dv_percent": 65.5
     },
     "niacin_b3": {
       "label": "Niacin (B3)",
-      "amount": 11.97,
+      "amount": 12.56,
       "unit": "mg",
-      "dv_percent": 74.8
+      "dv_percent": 78.5
     },
     "vitamin_b6": {
       "label": "Vitamin B6",
-      "amount": 0.12,
+      "amount": 0.14,
       "unit": "mg",
-      "dv_percent": 7.0
+      "dv_percent": 8.4
     },
     "folate_equivalent": {
       "label": "Folate (DFE)",
@@ -163,15 +163,15 @@
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 48.79,
+      "amount": 60.49,
       "unit": "mg",
-      "dv_percent": 11.6
+      "dv_percent": 14.4
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 208.38,
+      "amount": 220.78,
       "unit": "mg",
-      "dv_percent": 16.7
+      "dv_percent": 17.7
     }
   },
   "total_grams": 301.9,

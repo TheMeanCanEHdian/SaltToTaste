@@ -1039,14 +1039,17 @@ const List<_Row> _unmoved = [
     '0962-peach-crisp.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (peach-crisp|0, 789951
+    // 53.16 g, 190.30 kcal): was record 789890, description 'ed, bleached',
+    // kcal 194.55, confidence 0.950000.
     '6 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '53.16',
     'auto',
     null,
-    '194.55',
+    '190.30',
     '6 tablespoon ≈ 89 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -1708,14 +1711,17 @@ const List<_Row> _unmoved = [
     '0875-summer-peach-cake.yaml',
     null,
     4,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (summer-peach-cake|4,
+    // 789951 141.75 g, 507.46 kcal): was record 789890, description 'ed,
+    // bleached', kcal 518.80, confidence 0.950000.
     '1 cup (5 ounces) unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '141.75',
     'auto',
     null,
-    '518.80',
+    '507.46',
     'from 5 ounce',
   ),
   (
@@ -2037,14 +2043,17 @@ const List<_Row> _unmoved = [
     '0998-free-form-summer-fruit-tart.yaml',
     null,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (free-form-summer-fruit-tart|0, 789951 212.62 g, 761.18 kcal): was record
+    // 789890, description 'ed, bleached', kcal 778.19, confidence 0.950000.
     '1½ cups (7½ ounces) unbleached all-purpose flour, plus extra for the work surface',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '212.62',
     'auto',
     null,
-    '778.19',
+    '761.18',
     'from 7 1/2 ounce',
   ),
   (
@@ -3858,14 +3867,17 @@ const List<_Row> _unmoved = [
     '0223-onion-braised-beef-brisket.yaml',
     null,
     9,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (onion-braised-beef-brisket|9, 789951 17.72 g, 63.43 kcal): was record
+    // 789890, description 'ed, bleached', kcal 64.85, confidence 0.950000.
     '2 tablespoons unbleached all-purpose flour',
-    789890,
-    'Flour, wheat, all-purpose, enriched, bleached',
-    '0.950000',
+    789951,
+    'Flour, wheat, all-purpose, enriched, unbleached',
+    '0.983333',
     '17.72',
     'auto',
     null,
-    '64.85',
+    '63.43',
     '2 tablespoon ≈ 30 mL · approximate (ATK: 1 cup all-purpose flour = 5 ounces)',
   ),
   (
@@ -6451,15 +6463,23 @@ const List<_Totals> _totals = [
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2346395 nuts): was 641.96.
-    '627.79',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 627.79.
+    '626.72',
     // RE-PIN (M86 batch, v90, 958: 2346395 nuts): was 2567.85.
-    '2511.15',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 2511.15.
+    '2506.90',
     '144.7907',
     '43.2788',
     '61.1988',
     '28.1095',
-    '27.3001',
-    '741.2300',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 27.3001.
+    '28.4695',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 741.2300.
+    '742.2932',
     '152.4408',
   ),
   // v71: 584.35 /serving, batch 4674.79, fat 215.2484
@@ -6550,14 +6570,22 @@ const List<_Totals> _totals = [
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2346387 sour cream): was 403.97, 3231.77.
-    '403.71',
-    '3229.66',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+    // replay): was 403.71.
+    '402.29',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 3229.66.
+    '3218.32',
     '119.0901',
     '66.8619',
     '32.5967',
     '5.6454',
-    '43.7283',
-    '2690.9876',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 43.7283.
+    '46.8467',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 2690.9876.
+    '2693.8225',
     '685.1349',
   ),
   (
@@ -6583,15 +6611,23 @@ const List<_Totals> _totals = [
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was 385.80.
-    '384.26',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 384.26.
+    '381.43',
     // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was 2314.78.
-    '2305.57',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 2305.57.
+    '2288.56',
     '120.0221',
     '71.5961',
     '33.2250',
     '4.2683',
-    '29.5052',
-    '1244.7521',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 29.5052.
+    '34.1829',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 1244.7521.
+    '1249.0045',
     '304.8816',
   ),
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 608.38 /serving, batch
@@ -6832,15 +6868,23 @@ const List<_Totals> _totals = [
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 589.45.
-    '589.02',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+    // replay): was 589.02.
+    '588.78',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 3536.68.
-    '3534.12',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 3534.12.
+    '3532.70',
     '126.1858',
     '47.7967',
     '53.6581',
     '6.9644',
-    '430.8269',
-    '1723.2694',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 430.8269.
+    '431.2167',
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 1723.2694.
+    '1723.6237',
     '1367.5799',
   ),
   // v71: 836.27 /serving, batch 5017.64, fat 360.7148

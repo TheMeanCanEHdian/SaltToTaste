@@ -151,7 +151,11 @@ const _totals = [
   // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 at the print
   // (the replay 590.30 → 589.45): was 590.30, 3541.81.
   // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 589.45, 3536.68.
-  (_onion, 'complete', '589.02', '3534.12'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 589.02.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 3534.12.
+  (_onion, 'complete', '588.78', '3532.70'),
   // RE-PIN (M82 batch, v84): was 794.35, 4766.11 (the replay 794.35 → 797.57).
   // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 797.57, 4785.41.
   (_pomegranate, 'complete', '797.14', '4782.85'),
@@ -381,7 +385,9 @@ void main() {
       // RE-PIN (M90 batch, v89, brown sugar): its brown sugar |4 13.75 →
       // 12.40 g (the v89 replay's row): was 4326.79.
       // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 4321.67.
-      expect(gross(_onion).toStringAsFixed(2), '4319.10');
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+      // test's compute): was 4319.10.
+      expect(gross(_onion).toStringAsFixed(2), '4317.69');
       final corned = row(_corned) * (1 - braisedKept[173128]!['energy']!);
       expect(corned.toStringAsFixed(2), '1940.46');
       expect(

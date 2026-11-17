@@ -1227,7 +1227,10 @@ void statuses() {
     () async {
       for (final (file, position, perServing) in [
         ('0937-chilled-lemon-souffle.yaml', 4, 395.35),
-        ('0994-lemon-tart.yaml', 2, 471.42),
+        // RE-PIN (M102 batch, v115): 469.65 (was 471.42) — its crust's
+        // routed Classic Tart Dough moves with the dough's unbleached flour
+        // (1,868.96 → 1,854.79 kcal, −14.17 ÷ 8 servings = −1.77).
+        ('0994-lemon-tart.yaml', 2, 469.65),
         ('0878-coconut-layer-cake.yaml', 2, 796.69),
       ]) {
         final (db, _) = a.pathDb();

@@ -190,8 +190,10 @@ const _negatives = [
   (
     '0407-eggplant-parmesan.yaml',
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|3,
+    // 170848 14.32 g, 56.13 kcal): was grams 14.03.
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    '14.03',
+    '14.32',
     'discarded',
   ),
   (
@@ -261,20 +263,28 @@ const _totals = [
   // Parmesan on 170848).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 326.61.
   // RE-PIN (M93 batch, v95): was 332.99 (the replay 333.21 → 353.50).
-  (_parmesan, 'complete', '353.29'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 353.29.
+  (_parmesan, 'complete', '353.81'),
   // 438.34 → 346.62.
   // RE-PIN (M82 batch, v84, C5a): its 1 tablespoon flour |2 at 5 oz a cup,
   // 7.54 → 8.86 g (the replay 346.62 → 347.83): was 346.57.
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 347.78.
   // RE-PIN (M93 batch, v95): was 357.13 (the replay 357.45 → 386.97).
-  (_francese, 'complete', '386.66'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 386.66.
+  (_francese, 'complete', '387.25'),
   // 511.56 → 407.88.
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 407.82.
   // RE-PIN (M93 batch, v95): was 417.18 (the replay 417.49 → 447.24).
-  (_saltimbocca, 'complete', '446.92'),
+  // RE-PIN (M102 batch, v115): its |1 unbleached flour on 789951 (this
+  // test's compute): was 446.92.
+  (_saltimbocca, 'complete', '447.69'),
   // 349.73 → 258.01.
   // RE-PIN (M93 batch, v95): was 258.01 (the replay 258.01 → 287.54).
-  (_meuniere, 'complete', '287.54'),
+  // RE-PIN (M102 batch, v115): its |0 unbleached flour on 789951 (the v115
+  // replay 287.54 → 288.30): was 287.54.
+  (_meuniere, 'complete', '288.30'),
 ];
 
 /// The corpus recipes whose steps put a fat line in a pan-fat window
@@ -678,8 +688,12 @@ void main() {
         '`discarded`, the pan basis; the per serving unmoved', () async {
       for (final (file, position, grams, basis, perServing) in [
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken breast): was 407.82.
-        (_saltimbocca, 5, '23.14', _pan('chicken breast'), '446.92'),
-        (_meuniere, 4, '12.87', _pan('flatfish', butter: true), '287.54'),
+        // RE-PIN (M102 batch, v115): its |1 unbleached flour on 789951: was
+        // 446.92.
+        (_saltimbocca, 5, '23.14', _pan('chicken breast'), '447.69'),
+        // RE-PIN (M102 batch, v115): its |0 unbleached flour on 789951: was
+        // 287.54.
+        (_meuniere, 4, '12.87', _pan('flatfish', butter: true), '288.30'),
       ]) {
         final recipe = await variant(loadCorpusRecipe(file), 'confirm');
         final line = nutritionLines(recipe)[position];

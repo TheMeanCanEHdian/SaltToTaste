@@ -95,10 +95,13 @@ final _reach = [
   (
     _rings,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (oven-fried-onion-rings|0, 789951 70.87 g, 253.71 kcal): was record
+    // 789890, kcal 259.38.
     '½ cup unbleached all-purpose flour',
-    789890,
+    789951,
     '70.87',
-    '259.38',
+    '253.71',
     'discarded in cooking — only the part the recipe keeps and the coat on the food counted · $_ringFlag',
   ),
   // held `coating`, no grams, 0 kcal (|1–|7).
@@ -179,12 +182,15 @@ final _reach = [
   (
     _lighter,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (lighter-chicken-parmesan|3, 789951 30.93 g, 110.73 kcal): was record
+    // 789890, grams 29.29, kcal 107.20.
     '½ cup unbleached all-purpose flour',
-    789890,
+    789951,
     // RE-PIN (M88 batch, v88): was 45.83 g, 167.74 kcal — the dredge's own
     // share f_d (the v88 replay's row).
-    '29.29',
-    '107.20',
+    '30.93',
+    '110.73',
     _crumb(),
   ),
   // 23.79 g, 13.08 kcal.
@@ -207,12 +213,14 @@ final _reach = [
   (
     _kiev,
     11,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-kiev|11, 789951
+    // 41.25 g, 147.68 kcal): was record 789890, grams 39.06, kcal 142.96.
     '1 cup unbleached all-purpose flour',
-    789890,
+    789951,
     // RE-PIN (M88 batch, v88): was 73.34 g, 268.42 kcal — f_d (the v88
     // replay's row).
-    '39.06',
-    '142.96',
+    '41.25',
+    '147.68',
     _crumb(),
   ),
   // 30.67 g, 45.39 kcal.
@@ -232,12 +240,15 @@ final _reach = [
   (
     _stuffed,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (stuffed-chicken-cutlets-with-ham-and-cheddar|10, 789951 30.25 g, 108.30
+    // kcal): was record 789890, grams 28.64, kcal 104.82.
     '¾ cup unbleached all-purpose flour',
-    789890,
+    789951,
     // RE-PIN (M88 batch, v88): was 46.76 g, 171.14 kcal — f_d (the v88
     // replay's row).
-    '28.64',
-    '104.82',
+    '30.25',
+    '108.30',
     _crumb(),
   ),
   // 23.26 g, 34.42 kcal.
@@ -286,12 +297,15 @@ final _reach = [
   (
     _nut,
     9,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (nut-crusted-chicken-breasts-with-lemon-and-thyme|9, 789951 38.50 g,
+    // 137.83 kcal): was record 789890, grams 36.45, kcal 133.41.
     '1 cup unbleached all-purpose flour',
-    789890,
+    789951,
     // RE-PIN (M88 batch, v88): was 74.54 g, 272.82 kcal — f_d (the v88
     // replay's row).
-    '36.45',
-    '133.41',
+    '38.50',
+    '137.83',
     _crumb(nut: true),
   ),
   // 27.60 g, 40.85 kcal.
@@ -321,8 +335,10 @@ const _negatives = [
   (
     '0407-eggplant-parmesan.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|2,
+    // 174924 91.62 g, 243.71 kcal): was grams 89.79.
     '8 slices high-quality white sandwich bread, torn into quarters',
-    '89.79',
+    '91.62',
     'discarded',
     null,
   ),
@@ -332,8 +348,10 @@ const _negatives = [
   (
     '0407-eggplant-parmesan.yaml',
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|3,
+    // 170848 14.32 g, 56.13 kcal): was grams 14.03.
     '2 ounces Parmesan cheese, grated (about 1 cup)',
-    '14.03',
+    '14.32',
     'discarded',
     null,
   ),
@@ -435,8 +453,10 @@ const _negatives = [
   (
     '0149-easier-fried-chicken.yaml',
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (easier-fried-chicken|8,
+    // 789951 48.16 g, 172.41 kcal): was grams 45.60.
     '2 cups unbleached all-purpose flour',
-    '45.60',
+    '48.16',
     'discarded',
     null,
   ),
@@ -452,8 +472,10 @@ const _negatives = [
   (
     '0418-chicken-piccata.yaml',
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-piccata|3,
+    // 789951 29.56 g, 105.82 kcal): was grams 27.99.
     '½ cup unbleached all-purpose flour',
-    '27.99',
+    '29.56',
     'discarded',
     null,
   ),
@@ -468,32 +490,42 @@ const _negatives = [
   (
     '0419-parmesan-crusted-chicken-cutlets.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (parmesan-crusted-chicken-cutlets|2, 789951 18.47 g, 66.12 kcal): was
+    // grams 17.49.
     '5 tablespoons unbleached all-purpose flour',
-    '17.49',
+    '18.47',
     'discarded',
     null,
   ),
   (
     '0420-chicken-francese.yaml',
     9,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-francese|9,
+    // 789951 27.09 g, 96.98 kcal): was grams 25.66.
     '1 cup unbleached all-purpose flour',
-    '25.66',
+    '27.09',
     'discarded',
     null,
   ),
   (
     '0421-chicken-saltimbocca.yaml',
     1,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-saltimbocca|1,
+    // 789951 27.09 g, 96.98 kcal): was grams 25.66.
     '½ cup unbleached all-purpose flour',
-    '25.66',
+    '27.09',
     'discarded',
     null,
   ),
   (
     '0466-fish-meuniere-with-browned-butter-and-lemon.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (fish-meuniere-with-browned-butter-and-lemon|0, 789951 27.09 g, 96.98
+    // kcal): was grams 25.66.
     '½ cup unbleached all-purpose flour',
-    '25.66',
+    '27.09',
     'discarded',
     null,
   ),
@@ -502,8 +534,11 @@ const _negatives = [
   (
     '0206-crunchy-baked-pork-chops.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-baked-pork-chops|2, 174924 82.35 g, 219.05 kcal): was grams
+    // 81.33.
     '4 slices high-quality white sandwich bread, torn into 1-inch pieces',
-    '81.33',
+    '82.35',
     'discarded',
     null,
   ),
@@ -511,8 +546,11 @@ const _negatives = [
   (
     '0254-crunchy-oven-fried-fish.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (crunchy-oven-fried-fish|0, 174924 65.94 g, 175.40 kcal): was grams
+    // 65.12.
     '4 slices high-quality white sandwich bread, torn into quarters',
-    '65.12',
+    '65.94',
     'discarded',
     null,
   ),
@@ -545,8 +583,10 @@ const _negatives = [
   (
     '0114-breaded-chicken-cutlets.yaml',
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (breaded-chicken-cutlets|2, 174924 33.52 g, 89.16 kcal): was grams 32.54.
     '3 slices high-quality white sandwich bread, torn into quarters',
-    '32.54',
+    '33.52',
     'discarded',
     null,
   ),
@@ -571,8 +611,11 @@ const _negatives = [
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (pork-schnitzel-breaded-pork-cutlets|0, 174924 37.57 g, 99.94 kcal): was
+    // grams 36.69.
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
-    '36.69',
+    '37.57',
     'discarded',
     null,
   ),
@@ -603,7 +646,9 @@ const _totals = [
   // 217.50 → 532.09 (partial 2/10 → complete).
   // RE-PIN (M82 batch, v84, C5a): the flour |0 at 5 oz a cup, 60.33 → 70.87
   // g (the replay 532.09 → 541.73): was 532.09.
-  (_rings, 'complete', '541.73'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 541.73.
+  (_rings, 'complete', '540.32'),
   // 235.26 → 298.97 (the fresh compute's 298.93: its search-hit energies
   // differ from the library's in other rows, the rows above are equal).
   // RE-PIN (M82 batch, v84): was 298.93 (the replay 298.97 → 297.64).
@@ -612,22 +657,30 @@ const _totals = [
   // RE-PIN (M88 batch, v88): was 298.40 (the replay 298.43 → 288.50: the
   // dredge split).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 288.46.
-  (_lighter, 'complete', '294.42'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 294.42.
+  (_lighter, 'complete', '295.00'),
   // 540.19 → 667.12.
   // RE-PIN (M82 batch, v84): was 667.05 (the replay 667.12 → 668.42).
   // RE-PIN (M88 batch, v88): was 668.35 (the replay 668.42 → 672.70).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 672.63.
-  (_kiev, 'complete', '685.38'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 685.38.
+  (_kiev, 'complete', '686.56'),
   // 544.51 → 638.71.
   // RE-PIN (M82 batch, v84): was 638.65 (the replay 638.71 → 639.11).
   // RE-PIN (M88 batch, v88): was 639.06 (the replay 639.11 → 641.38).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 641.32.
-  (_stuffed, 'complete', '650.68'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 650.68.
+  (_stuffed, 'complete', '651.55'),
   // 385.84 → 575.56.
   // RE-PIN (M82 batch, v84): was 575.50 (the replay 575.56 → 566.38).
   // RE-PIN (M88 batch, v88): was 566.32 (the replay 566.38 → 516.05).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 515.98.
-  (_nut, 'complete', '527.89'),
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 527.89.
+  (_nut, 'complete', '529.00'),
 ];
 
 /// STATED synthesized (M80-1): 0315 whose S3 FRIES the rings — its "Bake,

@@ -352,10 +352,13 @@ void main() {
       // RE-PIN (M52 batch, v53): the engine's own row counts the C1d coat
       // budget, unheld (144.06 g, `discarded`); a person's write on it
       // derives the line's medium hold as before (RULE A).
+      // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951,
+      // carbohydrate 73.2 (was 789890, 77.3): the one C1d budget ÷ 73.2 % =
+      // 152.13 g (was 144.06).
       final engine = db.ingredientMatchesFor(r.id)[8];
       expect(
         (engine.hold, engine.gramSource, engine.grams?.toStringAsFixed(2)),
-        (null, 'discarded', '144.06'),
+        (null, 'discarded', '152.13'),
       );
       return (db, provider, r);
     }
@@ -447,7 +450,7 @@ void main() {
     }, skip: skipIfNoCorpus);
 
     test('a confirmed row whose amount is edited (4 → 5 cups, synthesized) '
-        "keeps the engine's coat budget (144.06 g — M52's C1d budget is the "
+        "keeps the engine's coat budget (152.13 g — M52's C1d budget is the "
         "coated chicken's, not the flour's; verify2 D1), its hold resolved "
         '(the compute site, derivedFor; RULE A, v25)', () async {
       final (db, provider, r) = await computed();
@@ -485,9 +488,10 @@ void main() {
       // RE-PIN (M52 batch, v53 closer 2, verify2 D1): a confirm is the
       // engine's current weight — the C1d budget, 1266.89 × 8.79 / 100 ÷
       // 77.3 % = 144.06 g whatever the flour's amount (was 0 g poured away).
+      // RE-PIN (M102 batch, v115): ÷ 789951's 73.2 % = 152.13 g (was 144.06).
       expect(
         (row.status, row.grams, row.gramSource, row.hold),
-        ('confirmed', 144.06, 'discarded', null),
+        ('confirmed', 152.13, 'discarded', null),
       );
     }, skip: skipIfNoCorpus);
   });

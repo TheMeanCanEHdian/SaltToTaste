@@ -59,11 +59,14 @@ const List<_Row> _reach = [
   (
     _tempura,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|2,
+    // 789951 107.04 g, 383.20 kcal): was record 789890, grams 102.73, kcal
+    // 375.99, confidence 0.950000.
     '1½ cups (7½ ounces) unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '102.73',
-    '375.99',
+    789951,
+    '0.983333',
+    '107.04',
+    '383.20',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -72,11 +75,13 @@ const List<_Row> _reach = [
   (
     _tempura,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|3,
+    // 169698 28.54 g, 108.74 kcal): was grams 27.39, kcal 104.36.
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '27.39',
-    '104.36',
+    '28.54',
+    '108.74',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -85,11 +90,13 @@ const List<_Row> _reach = [
   (
     _tempura,
     4,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|4,
+    // 2710704 112.76 g, 260.48 kcal): was grams 108.23, kcal 250.01.
     '1 cup vodka',
     2710704,
     '0.990000',
-    '108.23',
-    '250.01',
+    '112.76',
+    '260.48',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -98,11 +105,13 @@ const List<_Row> _reach = [
   (
     _tempura,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|5,
+    // 748967 25.17 g, 37.25 kcal): was grams 24.16, kcal 35.76.
     '1 large egg',
     748967,
     '0.920000',
-    '24.16',
-    '35.76',
+    '25.17',
+    '37.25',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -111,10 +120,12 @@ const List<_Row> _reach = [
   (
     _tempura,
     6,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (shrimp-tempura|6,
+    // 2710539 119.10 g, 0.00 kcal): was grams 114.31.
     '1 cup seltzer water',
     2710539,
     '0.923333',
-    '114.31',
+    '119.10',
     '0.00',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw shrimp — USDA FNDDS 2706364 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw shrimp, matched by its carbohydrate; the batter's excess not counted)",
@@ -207,11 +218,14 @@ const List<_Row> _reach = [
   (
     _fishChips,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|2,
+    // 789951 100.36 g, 359.29 kcal): was record 789890, grams 96.56, kcal
+    // 353.41, confidence 0.950000.
     '1½ cups unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '96.56',
-    '353.41',
+    789951,
+    '0.983333',
+    '100.36',
+    '359.29',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -221,11 +235,13 @@ const List<_Row> _reach = [
   (
     _fishChips,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|3,
+    // 169698 26.76 g, 101.96 kcal): was grams 25.75, kcal 98.11.
     '½ cup cornstarch',
     169698,
     '1.000000',
-    '25.75',
-    '98.11',
+    '26.76',
+    '101.96',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -235,11 +251,13 @@ const List<_Row> _reach = [
   (
     _fishChips,
     4,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|4,
+    // 170932 0.42 g, 1.34 kcal): was grams 0.41, kcal 1.30.
     '½ teaspoon cayenne pepper',
     170932,
     '1.000000',
-    '0.41',
-    '1.30',
+    '0.42',
+    '1.34',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -249,11 +267,13 @@ const List<_Row> _reach = [
   (
     _fishChips,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|5,
+    // 171329 0.55 g, 1.55 kcal): was grams 0.53, kcal 1.49.
     '½ teaspoon paprika',
     171329,
     '0.900000',
-    '0.53',
-    '1.49',
+    '0.55',
+    '1.55',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -263,11 +283,13 @@ const List<_Row> _reach = [
   (
     _fishChips,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|8,
+    // 172804 2.14 g, 1.09 kcal): was grams 2.06, kcal 1.05.
     '1 teaspoon baking powder',
     172804,
     '0.850000',
-    '2.06',
-    '1.05',
+    '2.14',
+    '1.09',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -277,11 +299,13 @@ const List<_Row> _reach = [
   (
     _fishChips,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (fish-and-chips|10,
+    // 2710616 160.58 g, 69.05 kcal): was grams 154.50, kcal 66.44.
     '1½ cups (12 ounces) cold beer',
     2710616,
     '0.565000',
-    '154.50',
-    '66.44',
+    '160.58',
+    '69.05',
     // RE-PIN (M66 batch, v65, Q1 b): the C5 basis names the breading's carbohydrate it is matched by.
     "discarded in cooking — only the coat on the food counted · approximation (coat: 15.38 g carbohydrate per 100 g of the raw cod — USDA FNDDS 2706244 recipe: 25 g breading (USDA 99995000, 40.1 % carbohydrate) per 65 g raw cod, matched by its carbohydrate; the batter's excess not counted)",
   ),
@@ -295,11 +319,14 @@ const List<_Row> _standIns = [
   (
     '0148-crispy-fried-chicken.yaml',
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (crispy-fried-chicken|8,
+    // 789951 152.13 g, 544.63 kcal): was record 789890, grams 144.06, kcal
+    // 527.26, confidence 0.950000.
     '4 cups (20 ounces) unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '144.06',
-    '527.26',
+    789951,
+    '0.983333',
+    '152.13',
+    '544.63',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 8.79 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705842 recipe: 20 g breading per 90.99 g raw beef steak (no record for chicken; read as Beef, steak, country fried); the dredge's excess not counted)",
   ),
   // v56: the same grams; the flag moved
@@ -318,11 +345,14 @@ const List<_Row> _standIns = [
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (pork-schnitzel-breaded-pork-cutlets|0, 174924 37.57 g, 99.94 kcal): was
+    // grams 36.69, kcal 97.60.
     '7 slices high-quality white sandwich bread, crusts removed, cut into ¾-inch cubes (about 4 cups)',
     174924,
     '0.914286',
-    '36.69',
-    '97.60',
+    '37.57',
+    '99.94',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // v56: the same grams; the flag moved
@@ -330,11 +360,14 @@ const List<_Row> _standIns = [
   (
     '0233-pork-schnitzel-breaded-pork-cutlets.yaml',
     1,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (pork-schnitzel-breaded-pork-cutlets|1, 789951 19.02 g, 68.09 kcal): was
+    // record 789890, grams 18.57, kcal 67.97, confidence 0.950000.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '18.57',
-    '67.97',
+    789951,
+    '0.983333',
+    '19.02',
+    '68.09',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw pork — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for pork; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
   // v56: the same grams; the flag moved
@@ -342,11 +375,14 @@ const List<_Row> _standIns = [
   (
     '0288-maryland-crab-cakes.yaml',
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (maryland-crab-cakes|8,
+    // 789951 35.44 g, 126.88 kcal): was record 789890, grams 33.62, kcal
+    // 123.05, confidence 0.950000.
     '¼ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '33.62',
-    '123.05',
+    789951,
+    '0.983333',
+    '35.44',
+    '126.88',
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
 ];
@@ -627,12 +663,15 @@ void main() {
         // RE-PIN (M90 batch, v89, cornstarch): the batter starch at 4 oz a cup
         // re-solves the coats f (the v89 replay rows): was 99.71, 105.05; 93.89,
         // 46.41, 41.53.
-        expect(g(_tempura, 2), '102.73');
-        expect(g(_tempura, 4), '108.23');
+        // RE-PIN (M102 batch, v115): the tempura's unbleached flour on
+        // 789951 (carbohydrate 73.2) re-solves the coat's f (the v115 replay's
+        // rows): was 102.73, 108.23; 96.56.
+        expect(g(_tempura, 2), '107.04');
+        expect(g(_tempura, 4), '112.76');
         // RE-PIN (M82 batch, v84, C5a): the batter flours at 5 oz a cup
         // re-solve the coats' f (the v84 replay's rows): was 89.12, 49.79,
         // 40.36.
-        expect(g(_fishChips, 2), '96.56');
+        expect(g(_fishChips, 2), '100.36');
         expect(g(_sandwiches, 7), '43.57');
         expect(g(_wings, 8), '42.32');
         expect(
@@ -724,7 +763,9 @@ void main() {
 
       // RE-PIN (M90 batch, v89, cornstarch): the coats re-solve (the replay
       // rows): was 280.02; 513.09, 1028.15.
-      expect(of(_tempura), ('partial', '281.09')); // v56 381.94
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+      // v115 replay): was 281.09.
+      expect(of(_tempura), ('partial', '283.84')); // v56 381.94
       // RE-PIN (M82 batch, v84, C5a): the coats' flour re-solves (the
       // replay's 512.96 → 513.09, 1,028.23 → 1,028.15): was 512.96, 1028.23.
       // RE-PIN (M86 batch, v90, 958: 2727568 chicken): was 512.69.
@@ -757,7 +798,7 @@ void main() {
     });
 
     test("a person's CONFIRM of a batter line keeps the budget's grams the "
-        'GET showed (verify2 D1, as for a coat): tempura|2 102.73, the '
+        'GET showed (verify2 D1, as for a coat): tempura|2 107.04, the '
         'totals unmoved', () async {
       final tempura = recipes[_tempura]!;
       final line = nutritionLines(tempura)[2];
@@ -771,7 +812,9 @@ void main() {
       expect(
         (row.status, row.grams!.toStringAsFixed(2), row.gramSource),
         // RE-PIN (M90 batch, v89, cornstarch): was 99.71.
-        ('confirmed', '102.73', 'discarded'),
+        // RE-PIN (M102 batch, v115): 789951's carbohydrate (the v115 replay's
+        // row): was 102.73.
+        ('confirmed', '107.04', 'discarded'),
       );
       expect(basisOf(_tempura, 2), basis);
       final shown = [
@@ -786,7 +829,8 @@ void main() {
             ),
       ];
       // RE-PIN (M90 batch, v89, cornstarch): was 99.71.
-      expect(shown, [('102.73', basis)]);
+      // RE-PIN (M102 batch, v115): was 102.73.
+      expect(shown, [('107.04', basis)]);
       final after = db.nutritionFor(tempura.id)!;
       expect(
         (after.status, after.caloriesPerServing!.toStringAsFixed(2)),

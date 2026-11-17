@@ -950,7 +950,11 @@ void critics() {
     // 382.09; 3056.69, 382.09; 3519.96, 440.0; 3649.32, 456.17.
     // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
     // 382.01.
-    expect(sheet['kcal_per_serving'], 381.81);
+    // RE-PIN (M102 batch, v115): each dough's unbleached flour on 789951 (the
+    // replay 3,054.47 → 3,026.12, 3,518.69 → 3,490.34, 3,648.05 → 3,619.70;
+    // ÷ the pie's 8 servings): was 381.81; 3054.47, 381.81; 3518.69,
+    // 439.84; 3648.05, 456.01.
+    expect(sheet['kcal_per_serving'], 378.27);
     expect(
       [
         for (final c
@@ -960,9 +964,9 @@ void critics() {
       [
         // RE-PIN (M86 batch, v90, 958: 2346387 sour cream): was 3056.05,
         // 382.01.
-        ('note_named', 'All-Butter Double-Crust Pie Dough', 3054.47, 381.81),
-        ('note_named', 'Basic Double-Crust Pie Dough', 3518.69, 439.84),
-        ('note_named', 'Foolproof Double-Crust Pie Dough', 3648.05, 456.01),
+        ('note_named', 'All-Butter Double-Crust Pie Dough', 3026.12, 378.27),
+        ('note_named', 'Basic Double-Crust Pie Dough', 3490.34, 436.29),
+        ('note_named', 'Foolproof Double-Crust Pie Dough', 3619.7, 452.46),
       ],
     );
     final source = stored(db, blueberry);
@@ -1993,7 +1997,13 @@ void readers() {
         // 19.33, 41.14.
         // RE-PIN (M85 batch, v87): the Parmesan part on SR 170848 — the three
         // parts re-solve (the v87 replay's rows): was 88.21, 13.78, 34.46.
-        ['89.79', '14.03', '35.07', '84.39'],
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 89.79.
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 14.03.
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 35.07.
+        ['91.62', '14.32', '35.79', '84.39'],
       );
     },
   );

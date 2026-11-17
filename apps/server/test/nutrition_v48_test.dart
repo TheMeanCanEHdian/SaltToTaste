@@ -326,7 +326,9 @@ void main() {
           '0383-crisp-thin-crust-pizza.yaml',
           0,
           '1¾–2 cups (8¾ to 10 ounces) unbleached all-purpose flour, plus extra for the work surface',
-          789890,
+          // RE-PIN (M102 batch, v115): the line names `unbleached` — 789951
+          // (was 789890); grams and basis unchanged.
+          789951,
           '265.78',
           'from the printed weight (8¾–10 oz, the midpoint)',
         ),

@@ -204,13 +204,16 @@ const List<_Row> _rows = [
   (
     _lighter,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (lighter-chicken-parmesan|3, 789951 30.93 g, 110.73 kcal): was record
+    // 789890, grams 29.29, kcal 107.20.
     '½ cup unbleached all-purpose flour',
-    789890,
+    789951,
     'discarded',
     // RE-PIN (M88 batch, v88): was 45.83 g, 167.74 kcal — the dredge's own
     // share f_d (the v88 replay's row).
-    '29.29',
-    '107.20',
+    '30.93',
+    '110.73',
     _crumbCoat,
   ),
   // eggplant (v86): |2 88.21 g 234.64, |3 13.78 g 58.01 on 325036, |5 34.46 g
@@ -218,31 +221,38 @@ const List<_Row> _rows = [
   (
     _eggplant,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|2,
+    // 174924 91.62 g, 243.71 kcal): was grams 89.79, kcal 238.84.
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
     'discarded',
-    '89.79',
-    '238.84',
+    '91.62',
+    '243.71',
     _batterCoat,
   ),
   (
     _eggplant,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|3,
+    // 170848 14.32 g, 56.13 kcal): was grams 14.03, kcal 55.00.
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     170848,
     'discarded',
-    '14.03',
-    '55.00',
+    '14.32',
+    '56.13',
     _batterCoat,
   ),
   (
     _eggplant,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|5,
+    // 789951 35.79 g, 128.13 kcal): was record 789890, grams 35.07, kcal
+    // 128.36.
     '1 cup unbleached all-purpose flour',
-    789890,
+    789951,
     'discarded',
-    '35.07',
-    '128.36',
+    '35.79',
+    '128.13',
     _batterCoat,
   ),
   (
@@ -280,9 +290,17 @@ const Map<String, (String, String, String)> _totals = {
   // RE-PIN (M88 batch, v88): was 298.40 / 1,785.10 (replay 298.43) — the
   // dredge split (the v88 replay 288.50).
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 288.46.
-  _lighter: ('complete', '294.42', '1768.80'), // replay 288.50; v86 297.64
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 294.42.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 1768.80.
+  _lighter: ('complete', '295.00', '1770.50'), // replay 288.50; v86 297.64
   // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 451.60.
-  _eggplant: ('partial', '446.01', '2767.50'), // replay 451.58; v86 452.38
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 446.01.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 2767.50.
+  _eggplant: ('partial', '446.97', '2770.30'), // replay 451.58; v86 452.38
 };
 
 /// The recorded cached answers (FixtureProvider) every Parmesan, Asiago and
@@ -291,7 +309,7 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 100 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 101 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
@@ -310,7 +328,8 @@ void main() {
     // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-    expect(matcherVersion, 100);
+    // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+    expect(matcherVersion, 101);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "

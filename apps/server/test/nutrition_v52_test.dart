@@ -350,7 +350,11 @@ void main() {
       // row): was '30.16' (f = 1, the whole ¼ cup at 0.51).
       expect(
         (rowAt(_crab, 8).hold, rowAt(_crab, 8).grams?.toStringAsFixed(2)),
-        (null, '33.62'),
+        // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951's
+        // carbohydrate 73.2 (was 789890's 77.3) lifts f 0.949 × 77.3 / 73.2
+        // past 1: the whole ¼ cup at 5 oz a cup, 35.44 g (the v115 replay's
+        // row): was '33.62'.
+        (null, '35.44'),
       );
       // RE-PIN (M63 batch, v62, Q11): |9 at the crab cake's own read oil,
       // FNDDS 2706549's 7.69 % (was 30.30 on the breast's 6.68 % stand-in).
@@ -540,7 +544,9 @@ void main() {
           // RE-PIN (M90 batch, v89, sugar): the replay 302.10 → 301.90 g,
           // 435.07 → 434.57: was 302.1, 435.07.
           301.9,
-          434.57,
+          // RE-PIN (M102 batch, v115): the dough's unbleached flour on 789951
+          // (the replay 434.57 → 432.80): was 434.57.
+          432.8,
           14,
         ),
       ]) {
@@ -567,7 +573,9 @@ void main() {
         batchTotalsOf(db.nutritionFor(stored(_dough).id)!)['energy'],
         // RE-PIN (M90 batch, v89, sugar): the host's sugar at the print (the replay
         // 3,519.96 → 3,518.69): was 3519.96.
-        closeTo(3518.69, 0.005),
+        // RE-PIN (M102 batch, v115): the host's unbleached flour on 789951
+        // (the replay 3,518.69 → 3,490.34): was 3518.69.
+        closeTo(3490.34, 0.005),
       );
       expect(proseSectionsReadBy(stored(_lemon), ResolverMemo(db)), [
         keyOf(_dough, 'Single-Crust Pie Dough for Custard Pies'),

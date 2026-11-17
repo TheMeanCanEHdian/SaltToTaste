@@ -9,6 +9,9 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// search query so "unbleached all-purpose flour" still hits "Flour, wheat,
 /// all-purpose". Deliberately small: over-stripping hurts more than it
 /// helps ("unsalted", "brown", "dark" are identity and stay).
+/// (Changed 2026-11-17, matcher v115: `unbleached` is still dropped from the
+/// query and the key, but a line naming it ranks the unbleached record —
+/// [namesUnbleached], a ranking token only.)
 const Set<String> _stopWords = {
   'fresh',
   'freshly',
@@ -168,7 +171,9 @@ const Map<String, String> _synonyms = {
 /// leg record in `ah102Records`.
 /// v100: matcher v114 (batch M101) — egg parts, each on its own record (the
 /// whole egg, the yolk, the white), every pair of two different parts.
-const int matcherVersion = 100;
+/// v101: matcher v115 (batch M102) — a line naming `unbleached` ranks the
+/// unbleached flour record ([namesUnbleached]).
+const int matcherVersion = 101;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -2717,6 +2722,15 @@ bool namesCannedLegume(String raw, String normalizedItem) =>
         .any((item) => _legumes.contains(headNounOf(item))) &&
     RegExp(r'\b(cans?|canned|jars?|jarred)\b').hasMatch(raw.toLowerCase());
 
+/// Whether [raw] names the whole word `unbleached`: the unbleached record's
+/// word ([rankCandidates]), ranked but never searched — the word stays a
+/// [_stopWords] member, so key, query, cache and density are untouched.
+/// v115 (M102, prep52 P4): 172 lines' "unbleached all-purpose flour" tied
+/// Foundation 789890 "…, enriched, bleached" with 789951 "…, enriched,
+/// unbleached" and FDC's order picked the bleached record.
+bool namesUnbleached(String raw) =>
+    RegExp(r'\bunbleached\b').hasMatch(raw.toLowerCase());
+
 /// Whether a bone-in bird cut is skin-on though the line does
 /// not say so — how it is sold unless skinned. "1 (6- to 7-pound) whole
 /// bone-in turkey breast" read FDC's class word 'whole' in "Turkey, whole,
@@ -3614,6 +3628,7 @@ List<RankedCandidate> rankCandidates(
   bool canned = false,
   bool skinOn = false,
   bool skinless = false,
+  bool unbleached = false,
   bool dropConnectors = connectorTokensDropped,
 }) {
   Set<String> tokensOf(String text) => dropConnectors
@@ -3626,6 +3641,8 @@ List<RankedCandidate> rankCandidates(
     ...tokensOf(query),
     if (canned) 'canned',
     if (skinOn) 'skin',
+    // v115 (M102): [namesUnbleached], ranked the same way.
+    if (unbleached) 'unbleached',
   };
   final cooked = allTokens.any(_cookingWords.contains);
   if (allTokens.isEmpty || candidates.isEmpty) {

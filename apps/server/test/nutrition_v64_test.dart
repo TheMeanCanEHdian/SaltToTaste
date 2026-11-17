@@ -1031,7 +1031,9 @@ void main() {
       // absolute figures can differ by the energies the fixtures' search
       // hits round, as M63's note says).
       // RE-PIN (M90 batch, v89): the replay 297.32 → 296.37: was 297.32.
-      expect(of(_cobbler), ('complete', '296.37')); // partial 250.28 → 297.32
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+      // v115 replay): was 296.37.
+      expect(of(_cobbler), ('complete', '294.48')); // partial 250.28 → 297.32
       // RE-PIN (M72 batch, v72, R-Y): 283.63 (was 290.37) — its 1½ pounds
       // of sprouts trimmed at AH-102 item 423's 90 % (replay 290.36 →
       // 283.61).

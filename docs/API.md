@@ -5356,6 +5356,350 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v115 (batch M102, prep52 P4 — "unbleached all-purpose flour" on
+the unbleached record; matcherVersion 100 → 101. The spec
+.claude/diag/2026-11-16/prep52/design_v2.md "P4 — unbleached all-purpose
+flour", the rulings in the M102 brief. 172 corpus lines name "unbleached
+all-purpose flour"; `unbleached` is a `_stopWords` member, so their item and
+key are `all-purpose flour`, their ranking words carry no variety, and on
+the recorded 'all-purpose flour' answer Foundation 789890 "Flour, wheat,
+all-purpose, enriched, bleached" (366 kcal per 100 g, carbohydrate 77.3)
+and 789951 "…, enriched, unbleached" (358, carbohydrate 73.2; its detail
+cached since live step L55) tied at 0.950000 and FDC's order picked the
+bleached record. Replayed on SNAPSHOT 33, both orders byte-identical, calls
+0. No migration. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **The flag** (matcher.dart `namesUnbleached(raw)`: the WHOLE word
+  `unbleached` on the lower-cased raw line, `RegExp(r'\bunbleached\b')`),
+  passed to `rankCandidates` as its new `unbleached:` parameter, which adds
+  the ranking token `unbleached` to `allTokens` (`grep -c "if (unbleached)
+  'unbleached'" matcher.dart` → 1) — the `namesCannedLegume` /
+  `impliesSkinOn` precedent: ranked, never searched. The word STAYS a stop
+  word: key, search query, cache and density are untouched; the rows are
+  unflagged (it is the line's own food). On the recorded answer (pinned):
+  with the token 789951 0.983333, 790018 "…, unenriched, unbleached"
+  0.983333 (second by FDC's order), SR 168936 0.884286, 789890 0.687500;
+  without it 789890 and 789951 tie at 0.950000 as before.
+- **The three call sites** (engine.dart; `grep -c 'unbleached:
+  namesUnbleached(' engine.dart` → 3, `grep -c 'canned: namesCannedLegume('
+  engine.dart` → 3, each in the same call, after `skinless:` — the v115 GREP
+  pin): (1) the compute (`matchAndCompute`'s ranking of the line's cached or
+  fetched answer) — every stored row; (2) `_rankedCached` (the
+  carried-decision and lean-only reads, `_carriedIdOf` /
+  `_leanOnlyBoughtOf`) and (3) `candidatesForLine` (the matches GET's
+  candidates, cache only) — MEASURED: the replay after site 1 alone and
+  after all three is cmp-identical (every TSV and the buckets): a flour row
+  takes none of the moves site 2 feeds, and the GET's list is no stored
+  row. Sites 2 and 3 are pinned by a direct call on the recorded answer
+  (`rankedCachedForTest`, a `@visibleForTesting` wrapper of
+  `_rankedCached`; `candidatesForLine(cacheOnly: true)`).
+- **The record-keyed readers (R3)** — `grep -rn "789890\|789951"
+  apps/server/lib` → 7 hits, every one a comment or a source string: the
+  FNDDS recipes' own flour input (2710050's batter, 2706442's dredge, Veal
+  Marsala's read — USDA's recipe composition, fixed figures, not a matched
+  row), the C5a density's comment (now noting 789951's same lone 30 g racc),
+  `namesUnbleached`'s doc. No table keys on either id (`volumeSiblings`,
+  `nutrientSiblings`, `approximationRecords`, `trimStandInFlagOf`,
+  `ah102Records`: none). The density key is the ITEM ('all-purpose flour',
+  ATK's 5 oz a cup) and 789951 publishes the same lone 30 g racc, so a
+  density row keeps its grams. The one reader a CORPUS row naming the word
+  reaches is the M52
+  coat plan (`_m52Plan`), which reads the flour row's RECORD carbohydrate
+  (`nutrientsPer100g['205']`): f = min(1, B / Σ dredge × carbohydrate)
+  over the coat's parts. A SECOND reader of a counted row's record
+  carbohydrate — the fried cauliflower's batter scale (`rowCho`; `grep -c
+  'rowCho' engine.dart` → 3: the absorbed oil is scaled by min(1, C / K), C
+  the batter rows' carbohydrate, v57 / v82) — reaches NO corpus row naming
+  the word (the owner gate's scan of the replay: one stored row carries
+  that basis, buffalo-cauliflower-bites|4 "scaled to the recipe's batter
+  (109.56 g of 229.20 g carbohydrate)", byte-identical). Its shipped test
+  computes a SYNTHESIZED variant (the tempura's batter beside a cauliflower
+  line, nutrition_v58_test.dart) and moves by a RE-PIN: C 216.59 → 207.87 g
+  (its 212.62 g of flour at 73.2 %), the oil 234.60 → 229.37 g. Two more
+  reads of a row's record carbohydrate were checked and reach no corpus row
+  naming the word: `_m52Plan`'s own subtraction of the counted dredge-head
+  rows from the budget (`budget -= r.grams! * …['205']`, under shape C5
+  alone — a battered fish or shrimp: the two C5 coats among the 21 rows,
+  fish-and-chips|2 and shrimp-tempura|2, hold no other row on a flour
+  record, so nothing is subtracted; a coat of any other shape never
+  subtracts a counted flour row — chicken-fried-steaks' counted |12, 26.58 g
+  by density, moves its energy alone, 97.27 → 95.15, beside the coat |0 at
+  102.13 g × 0.732 = 74.759 against B's 74.758) and `_partialKept`'s
+  `cooked` arm (the potato's; no flour row). This census is of the corpus rows — the replay
+  moves 203 rows, each derived — not of every shape a test can synthesize.
+- **The rows** (the replay on snapshot 33 against the v114 set; 203 rows
+  differ, every one listed and derived by hand in the batch's fix report):
+  ALL 172 lines naming `unbleached` land 789951 at 0.983333 (was 789890 at
+  0.950000), unflagged; 166 carry grams, −2,003.50 kcal: 95 weight rows
+  (2 in sections) −1,939.63 and 50 density rows (3 in sections) −132.27 —
+  grams unchanged, each × 358 / 366 (quick-cheese-bread|1 "3 cups (15
+  ounces)" 425.24 g, 1,556.39 → 1,522.37; daube-provencal|10 "⅓ cup" 47.25 g,
+  172.93 → 169.15; classic-roast-turkey's Giblet Pan Gravy |8 "¼ cup"
+  35.44 g, 129.70 → 126.86); 21 coat / dip / discard rows +68.40 — the same
+  budget B over carbohydrate 73.2 (was 77.3): where the flour is the coat's
+  only carbohydrate part its grams rise ×77.3 / 73.2 = 1.0560
+  (chicken-fried-steaks|0 B = 8.79 × 850.485 / 100 = 74.758 g, 96.71 →
+  102.13 g, 353.96 → 365.63 kcal — the plan rounds its grams to the cent
+  before the energy; crispy-fried-chicken|8 144.06 → 152.13 g, 527.26 →
+  544.63), shared with crumbs or a starch less (shrimp-tempura|2 102.73 →
+  107.04, fish-and-chips|2 96.56 → 100.36, crunchy-baked-pork-chops|10
+  69.04 → 69.24), and a coat whose f reaches 1 counts the whole line
+  (oven-fried-onion-rings|0 70.87 g, f = 1 before and after;
+  maryland-crab-cakes|8 33.62 → 35.44 g: its ¼ cup's carbohydrate, 35.44 ×
+  0.732 = 25.94 g, now falls UNDER B's 25.99, so the budget no longer binds
+  — the v84 retitled test's "binds" re-pinned as stated); 5 rows "Unbleached
+  all-purpose flour, for the work surface" (0.00 g `unmeasured`) and one
+  held row with no grams (skillet-chicken-and-rice-with-peas-and-scallions|2)
+  move their record only.
+- **The dependents (31 rows, each through a documented mechanism)**: 15 coat
+  CO-PARTS +38.77 kcal — the M52 plan's one f re-solves on the flour's
+  carbohydrate, so the bread, cornstarch, egg, beer, vodka, seltzer, spice
+  and baking-powder parts of the same coats rise with it (fish-and-chips|10
+  beer 154.50 → 160.58 g; eggplant-parmesan|2 bread 89.79 → 91.62 g); 16
+  ROUTED rows (`gram_source` `recipe`, v44 sections-as-children) carry their
+  child's new total: the All-Butter Double-Crust Pie Dough 3,054.47 →
+  3,026.12 (4 pies), Basic Single-Crust 1,544.07 → 1,529.90 (4), Classic
+  Tart Dough 1,868.96 → 1,854.79 (3), Giblet Pan Gravy 1,168.15 → 1,165.31
+  (2), Golden Cornbread 2,454.01 → 2,437.00, Turkey Gravy 379.04 → 376.20,
+  Sauce Base for Steak Diane 559.36 → 558.42 — SEVEN children: two recipes
+  (the All-Butter Double-Crust and Classic Tart doughs) and five sections.
+  Five sections' totals move
+  (those five children). Notes, calls (0 bytes) and the buckets are
+  byte-identical to v114; no status moves; no person row.
+- **The recipes**: 166 recipes' per-serving figures move, 148 down and 18 up,
+  none by more than 5 % — the largest falls ciabatta 800.00 → 782.99
+  (−2.13 %), rosemary-focaccia 1,023.95 → 1,006.94, pizza-bianca 364.71 →
+  359.04; the rises are the coats (shrimp-tempura 281.09 → 283.84,
+  crispy-fried-chicken 832.44 → 836.78, chicken-fried-steaks 479.29 →
+  480.88, fish-and-chips 1,017.71 → 1,020.77). The design's model (−1,944.56
+  on the v111 rows, 21 up) did not carry the coats' co-parts or the routed
+  parents: the replay is the authority.
+- **The label's other lines (stated; measured in the owner gate on
+  snapshot 33's cache)**: the two records hold the SAME 14 mapped numbers,
+  so no label line appears or disappears; per 100 g the move is energy 366
+  → 358, carbohydrate 77.3 → 73.2, protein 10.9 → 13.1, fat 1.48 both,
+  sodium 2 → 4 mg, calcium 19 → 21 mg, iron 5.62 → 5.41 mg, potassium 136 →
+  135 mg, magnesium 26.7 → 33.3 mg, phosphorus 108 → 115 mg, thiamin 0.939 →
+  1.05 mg, riboflavin 0.443 → 0.467 mg, niacin 6.74 → 7.07 mg, vitamin B6
+  0.066 → 0.079 mg (quick-cheese-bread|1's 425.24 g: protein 46.35 → 55.71
+  g, carbohydrate 328.71 → 311.28 g). Neither record publishes fiber,
+  sugars, saturated fat or cholesterol — the label-panel gap
+  (docs/IMPLEMENTATION.md, 2026-11-17), not this batch's.
+- **The coat budget on a lower-carbohydrate record (RULED in the owner
+  gate under the standing matcher authorization: ACCEPTED as the M52 plan's
+  ruled form)**: B is grams of CARBOHYDRATE (FNDDS's breading on the raw
+  food), so the same budget on 789951's 73.2 % counts 5.6 % more flour than
+  on 789890's 77.3 % — the +68.40 kcal of the 21 coat rows and the +38.77
+  of their 15 co-parts; the largest recipe move is shrimp-tempura, +0.98 %
+  a serving. Where FNDDS's own recipe names a flour input it is the
+  bleached record — the parmigiana dredge 2706442 (four of the 21 rows) and
+  the eggplant batter 2710050 (one), the R3 hits; the other 16 rows read a
+  generic "N g breading" with no wheat-flour input to be true to. A
+  mass-true plan (a wheat flour's share divided by the input's 77.3) is not
+  built — backlog, with the fried cauliflower's batter scale, which reads
+  the same figure the other way: less carbohydrate, less oil.
+- **Other flours, other foods (stated; pinned on the recorded answers)**:
+  the token is the QUERY's, whatever the food. No corpus ingredient line
+  names `unbleached` beside another food (the corpus grep: every one of the 180
+  lines is "unbleached all-purpose flour"; "unbleached cake flour" occurs in
+  prose notes only), so no stored row shows it; on the recorded answers a
+  line naming the word would move bread flour from SR 168913 "Wheat flours,
+  bread, unenriched" (0.900000) to Foundation 790146 "Flour, bread, white,
+  enriched, unbleached" (0.940000), and would leave cake flour on 169723
+  with less confidence (0.850000 → 0.533333, still above the 0.5 gate — its
+  answer holds no unbleached record, so the token matches nothing). WHAT
+  THE FLAG IS, on every recorded answer: it ranks an answer exactly as the
+  query NAMING the word would — the whole ranking, on all 1,105 recorded
+  answers but one (pinned; 'half-and-half' apart, pinned as it is: 167814
+  0.070000 by the flag, 2705594 0.465000 by the query). So an answer
+  holding no unbleached record is docked, flour or not — the owner gate's
+  probe over the recorded answers: 1,102 hold none, 10 of them rank
+  nothing; of the other 1,092 the top's confidence falls on 1,070 (on 250
+  from at or above the 0.5 gate to under it), stays on 22, and 23 change
+  their top record (10 of them from at or above the gate). Pinned among
+  them: whole-wheat flour 790085 1.000000 → 0.757500, granulated sugar
+  746784 1.000000 → 0.733333, panko bread crumbs 174928 0.563333 → 0.455000
+  (under the gate), frozen phyllo 172791 0.475000 → 0.366667 (under it
+  already). A line naming the word beside such a food would rank lower on
+  1,070 of those answers (no higher on the 22) — on 250 of them under the
+  gate, so it would be asked of a person; no corpus line is one. The
+  reader is not scoped to a food class
+  (`namesCannedLegume` is, by its head noun): the brief's ruling, kept.
+- **The class (R4, each measured on the replay against v114_rows.tsv)**:
+  every row naming `unbleached` lands 789951 (172 of 172); BYTE-IDENTICAL
+  (the whole TSV line): the 149 other rows of the key (148 unnamed and 0107
+  |4 "preferably bleached"), the 99 rows of every other key naming flour
+  (bread, cake, whole-wheat, rice … — the 4 King Arthur all-purpose rows
+  and 0886 |3 bleached cake flour among them, each its own key, on 789890)
+  and so every row left on 789890 (154 = 149 + 4 + 1; corrected in the
+  owner gate: the batch's list counted the last five twice). STAYS (stated,
+  the brief's "NOT in
+  this batch"): the unnamed lines on bleached 789890, King Arthur on
+  789890, bleached cake flour on the AP record.
+- **THE SHARED DECISION KEY (R6) — a finding, told to the owner, not
+  designed around.** An unbleached and an unnamed line keep ONE key,
+  `all-purpose flour`, and now land two records; a food decided on either
+  is the key's decision (`putDecision`), `applyDecisionToOthers` reaches a
+  sibling on ANOTHER food at any score, and the next compute carries the
+  key's decision to every line of the key. MEASURED on each tree's own
+  replayed snapshot-33 database (the same PUTs, cache only, calls 0): on the
+  base a Confirm + apply_to_all on either variety reached 0 lines (both on
+  789890), a pick of 789890 likewise, a pick of 789951 reached all 318 (−3,847.32
+  kcal on the key's rows); on v115 a Confirm + apply_to_all on an unbleached
+  row (0787 |1) re-points the 148 unnamed rows to 789951 (−1,843.81), on an
+  unnamed row (0028 |0) the 171 unbleached rows with a record back to
+  789890 (+2,003.51 — v115 undone for them); a pick of 789890 on either
+  does the latter, of 789951 the former (the same end state as the base's
+  pick). And with NO apply_to_all: a Confirm on 0028 |0 records 789890 as
+  the key's decision and the next compute of 0787 carries it to its
+  unbleached |1 (1,522.37 → 1,556.39 kcal) — on the base the same Confirm
+  moved nothing. The matches GET's `others` / `others_lines` (what an apply
+  would reach) follow the same reach. Pinned on 0787 |1 and 0028 |0 in
+  nutrition_v115_test.dart (one per direction, the carried Confirm; each
+  target row's grams and energy pinned: 0787 |1 425.24 g, 1,556.39 kcal;
+  0028 |0 141.75 g, 507.46).
+  **RULED BY THE OWNER, 2026-11-17 (asked as one question, with these
+  figures): "Same kind only"** — a decision on a line naming `unbleached` is
+  to reach the lines naming it, a decision on a plain line the plain lines.
+  Not taken: one shared decision (the table as it works in this tree) and
+  dropping the split. The batch that separates the key by kind follows
+  BEFORE the chain's single deploy, with a measurement of the 15 other keys
+  whose unheld food rows land more than one record on the v114 rows (99
+  rows; `whole chicken` the largest, 21 + 5); until it ships, the reach
+  above is what this tree does, and the three shared-key pins move by a
+  RE-PIN then.
+- **Person paths**: all three call sites are on one (site 1 the compute
+  every PUT settles with; site 2 `_rankedCached`, read by `_carriedIdOf`
+  and `_leanOnlyBoughtOf`; site 3 `candidatesForLine`, the matches GET).
+  GATE-P sw5–sw13 on each tree's OWN replayed snapshot-33 database (12
+  shards, NoNet, calls 0), base 196a95f vs v115: sw5 32,395, sw6 38,280,
+  sw7 1,905, sw8 58,125, sw8r 5,358, sw9 176 — 0 divergent, 0 refused, line
+  sets identical; sw10 158 bare and typed, 0 divergent both (its lines
+  differ by the 13 moved-flour recipes' per-serving kcal alone); sw11
+  40,186, 200 divergent (all calls-only) and 12,880 refused both, the DIV
+  lines identical; sw13 294, 0 divergent both (its row lines differ only in
+  moved-flour hosts). sw12 base 131 combos / 54 divergent, v115 133 / 56:
+  the key `all-purpose flour` now holds two foods (789951 and 789890), so
+  sw12 runs two representatives (0005 |7 on 789951, 0006 |7 on 789890), each
+  × own / other — two combos more; the two extra divergent rows are the SAME
+  two line-held flour rows the base reaches (0799 sourdough-starter |1,
+  0077 skillet-chicken-and-rice |2, both `decided-or-gated`, moved by the
+  next compute), now reached once per representative — R6's shared key, no
+  new class.
+- **Pins** (nutrition_v115_test.dart; corpus-backed groups skip on CI): the
+  reader on real lines (the capitalised work-surface line, the bleached,
+  King Arthur, cake and bread lines) and three STATED synthesized ones (no
+  corpus line spells them: "un-bleached", "unbleachedflour",
+  "ununbleached"); the ranking on the recorded answer, and on the bread,
+  cake and whole-wheat flour, granulated sugar, panko and frozen phyllo
+  answers, and the flag against the query naming the word on every recorded
+  answer (the owner gate's pins, "Other flours, other foods" above); the GREP
+  pin; sites 2
+  and 3 by direct call; the reader's INPUT — the raw line, not the item — at
+  all three sites on one STATED synthesized line, "1 cup (5 ounces)
+  all-purpose flour, preferably unbleached" (0028 |0's real line with 0107
+  |4's comma tail; on all 180 corpus lines naming the word, 172 with a row,
+  the YAML item keeps it — measured): its item is `all-purpose flour`, and it lands 789951 at site 1 (141.75 g weight, 507.46 kcal) and
+  first at sites 2 and 3; one weight, one density, two coat rows, the 0 g
+  capitalised row and one section row with EVERY stored column (record,
+  description, status, hold, gram source, the stored confidence, grams,
+  energy) and the basis; the negatives (unnamed 0028 |0, bleached 0107 |4,
+  bread flour 0382 |0); a person's Confirm, typed grams, skip and back, a
+  pick of 789951 and of 789890 on a weight, a density and a coat row through
+  the real PUT — stored == `recomputeTotals` == a full compute, the GET's
+  grams and hold == stored, the GET's basis pinned (a pick on the coat row
+  keeps its derived `coating` hold with no grams, either record — the ruled
+  pick site); R6 above. 58 shipped server test files re-pinned as equalities with
+  RE-PIN comments (the moved rows, their recipes and sections, matcherVersion
+  101, four staleness-hash literals measured with the bump alone), the
+  fixtures gain 789951's detail verbatim from snapshot 33 (the sweep audit's
+  compared 558 → 559, differ 426), and the ten shared contract goldens
+  holding a flour row are regenerated; the app pins reading them move by
+  RE-PIN (contract_golden_parse, nutrition_composite, nutrition_sections:
+  All-Butter Double-Crust Pie Dough 3,054.47 → 3,026.12 kcal, 381.81 →
+  378.27 a serving — its 354.37 g of flour × 0.08 = −28.35 — Blueberry
+  Pie's label 562.97 → 559.43, the other doughs 3,518.69 → 3,490.34 and
+  3,648.05 → 3,619.70, Basic Single-Crust Pie Dough 1,544.07 → 1,529.90,
+  193.01 → 191.24 — its 177.18 g × 0.08 = −14.17).
+- **Mutants** (each on a snapshot copy, restored by copy + cmp + md5 from a
+  trap; all killed by a VALUE pin in nutrition_v115_test.dart): the flag
+  dropped at each call site separately (site 1 by the moved rows, sites 2
+  and 3 by their direct calls — and the GREP pin), the reader as a
+  substring `contains('bleached')` (the bleached negative), the token added
+  unconditionally (the unnamed negative), `un-?bleached` (hyphen), the
+  reader without lower-casing (the capitalised 0 g row), the word spelled
+  `Unbleached`, the token spelled `bleached`, `contains('unbleached')` and
+  each word boundary dropped (the synthesized reader pins), and the reader
+  fed the ITEM (`eaten.item ?? ""` / `line.item ?? ""`) at each site
+  separately (the synthesized "…, preferably unbleached" line). STATED: the
+  hyphen, substring and boundary mutants match exactly the same 172 corpus
+  lines as the shipped reader (measured on v114_rows.tsv) — the replay under
+  `contains('unbleached')` is cmp-identical to v115's — so only the
+  synthesized pins tell them apart.
+- **Cost**: no new reader or memo; `namesUnbleached` runs once per
+  `rankCandidates` call beside `namesCannedLegume` (linear in the line).
+  The RULE C cost suites (nutrition_v26_cost and the v81 / v82 cost groups)
+  pass with their exact counts unchanged; the 400-line set-out shape's
+  grams re-pin by a cent (35.61 → 35.62, 53.33 → 53.34), its counts equal.
+- **Deploy**: matcherVersion 101 stales every recipe; a zero-request sweep
+  recomputes them (789951's detail is cached since L55 and is on the live
+  seeding list). No migration.
+- **The owner gate** (2026-11-17; archive
+  `.claude/diag/2026-11-16/prep52/m102/owner/`): the replay re-run —
+  byte-identical to verifier round 2's set (rows, recs, sections, calls,
+  notes, buckets), calls 0. Every one of the 203 differing rows classified
+  and derived again by an independent script (`hand.py`): the 172 named
+  rows — 95 weight, 50 density, 21 coat (20 with grams moved, one at f = 1),
+  5 unmeasured, 1 held with no grams — 15 co-parts and 16 routed rows, none
+  unexplained; −2,203.79 kcal over the rows TSV (the named rows' −2,003.50,
+  the co-parts' +38.77, and the routed rows' −239.06, which restate their
+  children). Each coat's carbohydrate, summed over its moved rows, is equal
+  before and after to 0.006 g, but for the two coats that KEEP a share of
+  the flour line (crunchy-baked-pork-chops|10 "¼ cup plus 6 tablespoons":
+  −2.180 g, the 4.1 points on its 6 tablespoons kept — 53.16 g × 0.041 =
+  2.18; crunchy-oven-fried-fish|5 "¼ cup plus 5 tablespoons": −1.815 g, on
+  44.30 g) and the crab cakes' unbound budget; each
+  routed row equals its child's flour rows' sum (the cornbread's −22.68 ×
+  1,145.93 / 1,527.90 = −17.01). The RE-PINS checked against the replay's
+  own changes (`repin_delta.py`): of the 700 numeric literals the re-pinned
+  tests changed on paired code lines, 209 are the record id, the confidence
+  or the version, 424 change by an amount the replay shows on a row or a
+  recipe, 16 are whole-number displays within 1 of one, and 51 were read
+  one by one (coat and batter figures of tests that compute on the fixtures
+  or on a synthesized variant). SIX OWN MUTANTS, each one site moved to its
+  nearest neighbour: the reader's trailing boundary as a space, the reader
+  reading only before the first parenthesis, `rankCandidates`' default
+  flipped, the reader narrowed to the corpus's phrase "unbleached
+  all-purpose" — each KILLED by a value; the word taken out of the stop
+  words — killed by an ERROR, not a value (the query becomes an unrecorded
+  search: a different design, not a narrowed slot); the token only on a
+  query naming all-purpose flour — SURVIVED the whole file: pinned on the
+  bread and cake flour answers ("Other flours, other foods"), re-run and
+  killed (790146 0.940000 expected, 168913 0.900000 read). The hand-edit
+  verifier's own neighbour of that pin — the token only on a query naming
+  FLOUR — survived it in turn (hand-edit round 1): pinned on the granulated
+  sugar answer, with the whole-wheat flour and panko figures. Round 2's
+  neighbour — the token only on an answer whose top stands at or above the
+  0.5 gate — survived that too: pinned on frozen phyllo (172791 0.366667
+  expected, 0.475000 read) and, for every conditional token that changes a
+  recorded answer's ranking, by the flag against the query naming the word
+  on every recorded answer; four rule mutants re-run (the three above and
+  the token only on an answer holding an unbleached record), each killed by
+  a value in both tests. STATED LIMIT of that property (hand-edit round 3:
+  the verifiers' two survivors, each equivalent on the 1,105 answers): a
+  condition true of every recorded answer (the top not a Branded record —
+  none is) passes it, and so does a second spelling on answers that hold no
+  unbleached record (an unmatched token docks the same, whatever it
+  spells). No lib file was hand-edited.
+  Suites at the gated tree (run whole after hand-edit round 2's closes;
+  after round 3's, which change a comment alone in the code, the
+  docs-reading files and nutrition_v115_test.dart re-run): server +3,490 ~4
+  (the base's +3,476 ~4 plus the 14 tests of nutrition_v115_test.dart),
+  salt_shared +265, app +674;
+  analyzers clean; `dart format` changes none of the 65 changed or new Dart
+  files; the 59 changed or new server test files and the 3 app ones load
+  without the corpus.
+
 **Matcher v114 (batch M101, prep52 P3 — egg parts, each on its own record;
 matcherVersion 99 → 100. The spec .claude/diag/2026-11-16/prep52/design_v2.md
 "P3 — egg parts", the rulings in the M101 brief: the OWNER ruled 2026-11-16
@@ -12001,7 +12345,9 @@ standing authorization:
   `_densities` 'all-purpose flour' / 'flour' 5 × 28.3495 / 236.588 =
   0.5991 (199 of 203 prints: 5 oz a cup) and 'whole-wheat flour' 0.6590
   (5½ oz), each `recordFirst` in `_approximateDensities` (the Z5 form;
-  789890 / 790085 publish only a 30 g racc), flagged "ATK: 1 cup
+  789890 / 790085 publish only a 30 g racc) (Changed 2026-11-17, matcher
+  v115: a line naming `unbleached` lands 789951, which publishes the same
+  lone 30 g racc and weighs the same), flagged "ATK: 1 cup
   all-purpose flour = 5 ounces" / "… whole-wheat flour = 5½ ounces". 103
   density and coat rows +1,622.09 (wicked-good-boston-cream-pie|4 "¼ cup
   all-purpose flour" 30.16 → 35.44 g; the exact quotient, 0.599132 — 0.5991

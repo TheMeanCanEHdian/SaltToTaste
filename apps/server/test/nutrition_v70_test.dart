@@ -510,7 +510,7 @@ void readers() {
   });
 
   test('verify1 D5: a fillet printed "1 ½ inch thick" is no thin piece — the '
-      'dredge stays held; the real "⅜ inch thick" reads thin, C4 25.66 g '
+      'dredge stays held; the real "⅜ inch thick" reads thin, C4 27.09 g '
       '(STATED: 0466 re-printed)', () async {
     final db = _db();
     final fdc = _fdc();
@@ -523,7 +523,9 @@ void readers() {
     final real = await _compute(db, fdc, sole);
     expect(
       (_g2(_row(db, real.id, 0).grams!), _row(db, real.id, 0).gramSource),
-      ('25.66', 'discarded'),
+      // RE-PIN (M102 batch, v115): the sole's unbleached flour on 789951
+      // (the v115 replay's row): was '25.66'.
+      ('27.09', 'discarded'),
     );
     final thick = await _compute(
       db,
@@ -754,7 +756,9 @@ void writes() {
     final flour = _row(db, r.id, 3);
     expect(
       (_g2(flour.grams!), flour.gramSource, flour.hold),
-      ('27.99', 'discarded', null),
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+      // v115 replay): was 27.99.
+      ('29.56', 'discarded', null),
     );
     await applyMatchOverride(db, fdc, r, 1, {
       'raw': nutritionLines(r)[1].raw,

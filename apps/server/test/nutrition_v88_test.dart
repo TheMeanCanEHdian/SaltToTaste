@@ -77,10 +77,12 @@ final _reach = [
   (
     _kiev,
     11,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-kiev|11, 789951
+    // 41.25 g, 147.68 kcal): was record 789890, grams 39.06, kcal 142.96.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '39.06',
-    '142.96',
+    789951,
+    '41.25',
+    '147.68',
     _crumb(),
   ),
   // Pin (6). v87 93.87 g, 249.69. f_c below 1: 147.47 × 0.4942 / 0.7198 =
@@ -132,10 +134,13 @@ final _reach = [
   (
     _lighter,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (lighter-chicken-parmesan|3, 789951 30.93 g, 110.73 kcal): was record
+    // 789890, grams 29.29, kcal 107.20.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '29.29',
-    '107.20',
+    789951,
+    '30.93',
+    '110.73',
     _crumb(),
   ),
   (_lighter, 6, '3 large egg whites', 747997, '90.69', '49.88', _dip()),
@@ -143,10 +148,13 @@ final _reach = [
   (
     _stuffed,
     10,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (stuffed-chicken-cutlets-with-ham-and-cheddar|10, 789951 30.25 g, 108.30
+    // kcal): was record 789890, grams 28.64, kcal 104.82.
     '¾ cup unbleached all-purpose flour',
-    789890,
-    '28.64',
-    '104.82',
+    789951,
+    '30.25',
+    '108.30',
     _crumb(),
   ),
   (_stuffed, 11, '2 large eggs', 748967, '88.67', '131.23', _dip()),
@@ -187,10 +195,13 @@ final _reach = [
   (
     _nut,
     9,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (nut-crusted-chicken-breasts-with-lemon-and-thyme|9, 789951 38.50 g,
+    // 137.83 kcal): was record 789890, grams 36.45, kcal 133.41.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '36.45',
-    '133.41',
+    789951,
+    '38.50',
+    '137.83',
     _crumb(nut: true),
   ),
   (_nut, 10, '3 large eggs', 748967, '105.19', '155.68', _dip()),
@@ -216,46 +227,59 @@ const _negatives = [
   (
     _breaded,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (breaded-chicken-cutlets|2, 174924 33.52 g, 89.16 kcal): was grams 32.54,
+    // kcal 86.56.
     '3 slices high-quality white sandwich bread, torn into quarters',
     174924,
-    '32.54',
-    '86.56',
+    '33.52',
+    '89.16',
     'coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975',
   ),
   (
     _breaded,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (breaded-chicken-cutlets|3, 789951 26.19 g, 93.76 kcal): was record
+    // 789890, grams 25.43, kcal 93.07.
     '¾ cup unbleached all-purpose flour',
-    789890,
-    '25.43',
-    '93.07',
+    789951,
+    '26.19',
+    '93.76',
     'coat: 5.73 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705975',
   ),
   (
     _eggplant,
     2,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|2,
+    // 174924 91.62 g, 243.71 kcal): was grams 89.79, kcal 238.84.
     '8 slices high-quality white sandwich bread, torn into quarters',
     174924,
-    '89.79',
-    '238.84',
+    '91.62',
+    '243.71',
     'coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050',
   ),
   (
     _eggplant,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|3,
+    // 170848 14.32 g, 56.13 kcal): was grams 14.03, kcal 55.00.
     '2 ounces Parmesan cheese, grated (about 1 cup)',
     170848,
-    '14.03',
-    '55.00',
+    '14.32',
+    '56.13',
     'coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050',
   ),
   (
     _eggplant,
     5,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (eggplant-parmesan|5,
+    // 789951 35.79 g, 128.13 kcal): was record 789890, grams 35.07, kcal
+    // 128.36.
     '1 cup unbleached all-purpose flour',
-    789890,
-    '35.07',
-    '128.36',
+    789951,
+    '35.79',
+    '128.13',
     'coat: 7.93 g carbohydrate per 100 g of the raw eggplant — USDA FNDDS 2710050',
   ),
   (
@@ -279,28 +303,37 @@ const _negatives = [
   (
     _easier,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (easier-fried-chicken|8,
+    // 789951 48.16 g, 172.41 kcal): was record 789890, grams 45.60, kcal
+    // 166.90.
     '2 cups unbleached all-purpose flour',
-    789890,
-    '45.60',
-    '166.90',
+    789951,
+    '48.16',
+    '172.41',
     'coat: 3.18 g carbohydrate per 100 g of the raw chicken — USDA FNDDS 2705980',
   ),
   (
     _piccata,
     3,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (chicken-piccata|3,
+    // 789951 29.56 g, 105.82 kcal): was record 789890, grams 27.99, kcal
+    // 102.44.
     '½ cup unbleached all-purpose flour',
-    789890,
-    '27.99',
-    '102.44',
+    789951,
+    '29.56',
+    '105.82',
     'coat: 3.18 g carbohydrate per 100 g of the raw chicken breast — USDA FNDDS 2705980',
   ),
   (
     _rings,
     0,
+    // RE-PIN (M102 batch, v115): the v115 replay's row
+    // (oven-fried-onion-rings|0, 789951 70.87 g, 253.71 kcal): was record
+    // 789890, kcal 259.38.
     '½ cup unbleached all-purpose flour',
-    789890,
+    789951,
     '70.87',
-    '259.38',
+    '253.71',
     'coat: 50.53 g carbohydrate per 100 g of the raw onions — USDA FNDDS 2710042',
   ),
 ];
@@ -311,17 +344,33 @@ const _negatives = [
 /// v88 replay's per serving in the comment, then v87's replay.
 const Map<String, (String, String, String)> _totals = {
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 672.63.
-  _kiev: ('complete', '685.38', '1331.00'), // replay 672.70; v87 668.42
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 685.38.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 1331.00.
+  _kiev: ('complete', '686.56', '1333.20'), // replay 672.70; v87 668.42
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was 288.46.
-  _lighter: ('complete', '294.42', '1768.80'), // replay 288.50; v87 298.43
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 294.42.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 1768.80.
+  _lighter: ('complete', '295.00', '1770.50'), // replay 288.50; v87 298.43
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 641.32.
-  _stuffed: ('complete', '650.68', '1274.70'), // replay 641.38; v87 639.11
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 650.68.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 1274.70.
+  _stuffed: ('complete', '651.55', '1276.30'), // replay 641.38; v87 639.11
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken): was 515.98.
-  _nut: ('complete', '527.89', '1129.30'), // replay 516.05; v87 566.38
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this test's
+  // compute): was 527.89.
+  // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
+  // replay): was 1129.30.
+  _nut: ('complete', '529.00', '1131.40'), // replay 516.05; v87 566.38
 };
 
 void main() {
-  test('matcherVersion 100 (v88 set it to 83, batch M88: rows move)', () {
+  test('matcherVersion 101 (v88 set it to 83, batch M88: rows move)', () {
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
@@ -339,7 +388,8 @@ void main() {
     // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-    expect(matcherVersion, 100);
+    // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+    expect(matcherVersion, 101);
   });
 
   test("pin (7) — the figures: FNDDS 2706442's two inputs by sequenceNumber "
@@ -627,7 +677,9 @@ void main() {
         ),
         ('59.15', '59.15', 'discarded'),
       );
-      expect(_row(db, nut.id, 9).grams?.toStringAsFixed(2), '36.45');
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+      // v115 replay): was 36.45.
+      expect(_row(db, nut.id, 9).grams?.toStringAsFixed(2), '38.50');
       expect(
         gramBasisFor(db, nutritionLines(nut)[5], panko, recipe: nut),
         _crumb(),
@@ -640,9 +692,13 @@ void main() {
     // the flour line's carbohydrate, 141.7475 g × 77.3 % = 109.57 g, i.e.
     // a typed chicken above 3,086.50 g. Uncapped (f_d without min(1, …), the
     // crumbs' f_c still capped) kiev|11 reads 183.70 g, more than its line.
+    // (Changed 2026-11-17, matcher v115: the line names `unbleached` — on
+    // 789951's 73.2 % the line holds 103.76 g carbohydrate, the cap meets it
+    // above 2,922.79 g of chicken, and uncapped the flour would read
+    // 142.00 ÷ 0.732 = 193.99 g; the 4,000 g below still caps.)
     test("f_d's min(1, …) cap: typed grams on kiev|10's chicken (a person's "
-        '4,000 g, past the 3,086.50 g where 3.55 × raw ÷ 100 meets the '
-        "flour line's 109.57 g carbohydrate) leave kiev|11 its whole "
+        '4,000 g, past the 2,922.79 g where 3.55 × raw ÷ 100 meets the '
+        "flour line's 103.76 g carbohydrate) leave kiev|11 its whole "
         '141.75 g line, f_d = 1 — uncapped it would count more flour than '
         'the line holds', () async {
       final db = freshDb();
@@ -669,7 +725,9 @@ void main() {
           whole?.toStringAsFixed(2),
           flour.gramSource,
         ),
-        (789890, '141.75', '141.75', 'discarded'),
+        // RE-PIN (M102 batch, v115): the line names `unbleached` — 789951
+        // (was 789890); f_d = 1 still, the whole line.
+        (789951, '141.75', '141.75', 'discarded'),
       );
     });
 
@@ -685,7 +743,9 @@ void main() {
       final flour = _row(db, kiev.id, 11);
       expect(
         (flour.grams?.toStringAsFixed(2), flour.gramSource),
-        ('34.99', 'discarded'),
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+        // test's compute): was 34.99.
+        ('36.95', 'discarded'),
       );
       expect(
         gramBasisFor(db, nutritionLines(kiev)[11], flour, recipe: kiev),

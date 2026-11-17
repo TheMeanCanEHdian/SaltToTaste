@@ -15387,6 +15387,7 @@ Future<NutritionProviderException?> _computePass(
               canned: namesCannedLegume(eaten.raw, normalized),
               skinOn: impliesSkinOn(eaten.raw, normalized),
               skinless: removesSkin(eaten.raw),
+              unbleached: namesUnbleached(eaten.raw),
             ),
           ),
         ),
@@ -17238,8 +17239,17 @@ List<RankedCandidate> _rankedCached(SaltDatabase db, IngredientLine line) {
     canned: namesCannedLegume(line.raw, normalized),
     skinOn: impliesSkinOn(line.raw, normalized),
     skinless: removesSkin(line.raw),
+    unbleached: namesUnbleached(line.raw),
   );
 }
+
+/// [_rankedCached] for the tests (v115, M102: its `unbleached` flag reaches
+/// no stored row — a flour line takes none of the moves it feeds).
+@visibleForTesting
+List<RankedCandidate> rankedCachedForTest(
+  SaltDatabase db,
+  IngredientLine line,
+) => _rankedCached(db, line);
 
 /// [ranked] with [moved] first, carrying the top's confidence (R2, R3).
 List<RankedCandidate> _movedFirst(
@@ -18639,6 +18649,7 @@ Future<List<RankedCandidate>> candidatesForLine(
           canned: namesCannedLegume(line.raw, normalized),
           skinOn: impliesSkinOn(line.raw, normalized),
           skinless: removesSkin(line.raw),
+          unbleached: namesUnbleached(line.raw),
         ),
       ),
     ),

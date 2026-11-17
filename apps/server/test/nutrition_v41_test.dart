@@ -634,11 +634,17 @@ void main() {
         // 1135.14, 273.62; 220.6, 1135.14, 450.14; 220.6, 1135.14, 598.27.
         // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream, 2346411
         // blueberries, 1750342 Granny Smith): was 3056.05, 571.43.
-        (_blueberry, 0, _allButter, 642.7, 3054.47, 562.97, 'complete'),
+        // RE-PIN (M102 batch, v115): the dough's unbleached flour on 789951
+        // (the replay 3,054.47 → 3,026.12; the pie 562.96 → 559.41): was
+        // 3054.47, 562.97 (this fixture compute: 562.97 → 559.43).
+        (_blueberry, 0, _allButter, 642.7, 3026.12, 559.43, 'complete'),
         // v43 (Y8): its two apple lines × 0.78 (AH-102 item 17).
         // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
         // 3056.05, 596.97.
-        (_deepDish, 0, _allButter, 642.7, 3054.47, 596.77, 'complete'),
+        // RE-PIN (M102 batch, v115): the dough's unbleached flour on 789951
+        // (the replay 3,054.47 → 3,026.12; 596.77 → 593.23): was 3054.47,
+        // 596.77.
+        (_deepDish, 0, _allButter, 642.7, 3026.12, 593.23, 'complete'),
         // RE-PIN (M86 batch, v90, 958: 2346410 raspberries, 2346411
         // blueberries): was 272.10.
         (_summerBerry, 7, _graham, 220.1, 1133.23, 267.71, 'complete'),
@@ -667,12 +673,18 @@ void main() {
         // whole eggs", held `second_food`, counts its parts on their own
         // records, 545.46 kcal (the v114 replay 403.24 partial → 471.42
         // complete): was 403.24, 'partial'.
-        (_lemonTart, 0, _tartDough, 401.8, 1868.96, 471.42, 'complete'),
+        // RE-PIN (M102 batch, v115): the dough's unbleached flour on 789951
+        // (the replay 1,868.96 → 1,854.79; 471.42 → 469.65): was 1868.96,
+        // 471.42.
+        (_lemonTart, 0, _tartDough, 401.8, 1854.79, 469.65, 'complete'),
         // RE-PIN (M90 batch, v89, cornstarch): its pastry cream's cornstarch
         // |4 at the print (the replay 559.80 → 558.51): was 559.79.
         // RE-PIN (M86 batch, v90, 958: the dough's 2346386 heavy cream, the
         // fruit's 2710831 / 2346410 / 2346411): was 1870.07, 558.51.
-        (_fruitTart, 7, _tartDough, 401.8, 1868.96, 553.89, 'complete'),
+        // RE-PIN (M102 batch, v115): the dough's unbleached flour on 789951
+        // (the replay 1,868.96 → 1,854.79; 553.90 → 552.12): was 1868.96,
+        // 553.89.
+        (_fruitTart, 7, _tartDough, 401.8, 1854.79, 552.12, 'complete'),
       ]) {
         final parent = r(file);
         final row = rowAt(parent, position);
@@ -704,7 +716,9 @@ void main() {
         // RE-PIN (M90 batch, v89, sugar): was 3,057 kcal.
         // RE-PIN (M86 batch, v90, 958: the dough's 2346387 sour cream): was
         // 3,056 kcal.
-        'from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,054 kcal',
+        // RE-PIN (M102 batch, v115): the dough's unbleached flour on 789951
+        // (the replay 3,054.47 → 3,026.12 kcal): was 3,054 kcal.
+        'from the recipe All-Butter Double-Crust Pie Dough: 643 g, 3,026 kcal',
       );
       expect(
         compositeFlagOf(db, stored(blueberry), line, row, ResolverMemo(db)),
@@ -1190,7 +1204,9 @@ void main() {
       expect(picked.grams, closeTo(label(basic).totalGrams!, 1e-9));
       // RE-PIN (M90 batch, v89, sugar): Basic Double-Crust's sugar at the
       // print (the replay 3,519.96 → 3,518.69): was 3519.96.
-      expect(childKcal(picked), closeTo(3518.69, 0.05));
+      // RE-PIN (M102 batch, v115): Basic Double-Crust's unbleached flour on
+      // 789951 (the replay 3,518.69 → 3,490.34): was 3518.69.
+      expect(childKcal(picked), closeTo(3490.34, 0.05));
       expect(label(deepDish).status, 'complete');
       expect(fresh(deepDish), isTrue);
       parity();

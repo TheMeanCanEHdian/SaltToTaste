@@ -463,8 +463,11 @@ void main() {
       expect(
         find.text(
           // RE-PIN (M90 batch, v89, sugar): was 1,545 kcal.
+          // RE-PIN (M102 batch, v115: the section's 177.18 g of unbleached
+          // flour on 789951, −14.17): was 1,544 kcal · +193 (the golden's
+          // 1529.9 / 191.24).
           'amount: from the recipe Basic Single-Crust Pie Dough: 302 g, '
-          '1,544 kcal · +193 kcal per serving',
+          '1,530 kcal · +191 kcal per serving',
         ),
         findsOneWidget,
       );

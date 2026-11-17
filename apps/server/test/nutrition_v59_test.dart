@@ -679,7 +679,9 @@ void main() {
         // RE-PIN (M82 batch, v84): was 586.18 (the replay 586.18 → 587.62).
         // RE-PIN (M100 batch, v113, W6): was 587.62 — |7 on the leg record
         // 171493 (the replay 587.62 → 564.49).
-        (_slowRoasted, '564.49'), // v58 583.42
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 564.49.
+        (_slowRoasted, '564.28'), // v58 583.42
         // RE-PIN (M71 batch, v71, R-E5): 578.50 (was 601.81) — the same
         // strain: onions, celery, carrots, garlic, bay, parsley (−233.14 /
         // 10; the porcini |11 stays, its head 'mushroom' never named).
@@ -690,7 +692,9 @@ void main() {
         // pairs, deducted (the replay 575.75 → 536.07).
         // RE-PIN (M100 batch, v113, W6): was 536.07 — |3 on the leg record
         // 171493, no longer deducted (the replay 536.07 → 529.28).
-        (_braised, '529.28'), // v58 576.52
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 529.28.
+        (_braised, '529.06'), // v58 576.52
         (_grillroasted, '482.28'), // v58 440.12
         // RE-PIN (M82 batch, v84): was 566.13 (the replay 566.13 → 568.27).
         // RE-PIN (M92 batch, v94): was 568.27 — Q8 (b″): |12's legs deducted, |16's served
@@ -701,7 +705,9 @@ void main() {
         // RE-PIN (M82 batch, v84): was 618.09 (the replay 618.09 → 621.31).
         // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery): was
         // 621.31.
-        (_enCocotte, '620.88'), // v58 572.42
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 620.88.
+        (_enCocotte, '620.40'), // v58 572.42
         // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 700.52.
         // RE-PIN (M82 batch, v84): was 703.29 (the replay 703.29 → 702.44).
         (_porchetta, '702.44'), // v58 647.82

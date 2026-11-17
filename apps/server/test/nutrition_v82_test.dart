@@ -585,7 +585,11 @@ void plans() {
     // flour |12 (C5a, 22.62 → 26.58 g) — the replay's rows: was 3206.9.
     // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
     // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
-    expect(await steaksWith((t) => t), ('850.485', '2872.1'));
+    // RE-PIN (M102 batch, v115): its two unbleached flours on 789951 — the
+    // coat |0 96.71 → 102.13 g (353.96 → 365.63 kcal) and the gravy's |12
+    // 26.58 g × (3.58 − 3.66) (−2.13): +9.54 (the v115 replay's rows): was
+    // 2872.1.
+    expect(await steaksWith((t) => t), ('850.485', '2881.6'));
   });
 
   test("F4 (the fleet's, STATED): one more dip sentence appended to S2 — "
@@ -602,7 +606,8 @@ void plans() {
       // 3206.9.
       // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
       // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
-      ('850.485', '2872.1'),
+      // RE-PIN (M102 batch, v115): as F4's baseline — was 2872.1.
+      ('850.485', '2881.6'),
     );
   });
 
@@ -620,7 +625,8 @@ void plans() {
       // 3206.9.
       // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
       // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
-      ('850.485', '2872.1'),
+      // RE-PIN (M102 batch, v115): as F4's baseline — was 2872.1.
+      ('850.485', '2881.6'),
     );
   });
 
@@ -641,7 +647,8 @@ void plans() {
       // 3206.9.
       // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
       // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
-      ('850.485', '2872.1'),
+      // RE-PIN (M102 batch, v115): as F4's baseline — was 2872.1.
+      ('850.485', '2881.6'),
     );
   });
 
@@ -659,7 +666,8 @@ void plans() {
       // 3206.9.
       // RE-PIN (M100 batch, v113, W9a): |7 on raw top round 2646173 (its
       // cached hit's 146 kcal here; was the cooked 2705826, 187): was 3220.7.
-      ('850.485', '2872.1'),
+      // RE-PIN (M102 batch, v115): as F4's baseline — was 2872.1.
+      ('850.485', '2881.6'),
     );
   });
 
@@ -713,7 +721,10 @@ void plans() {
       // was 3632.89.
       // RE-PIN (M95 batch, v97): the chips' uptake at FNDDS 2709458's 12.51 %
       // (the oil |1 + 71.75 g on the fixtures' 172336, 884 kcal): was 3637.05.
-      ('96.56', '4271.32'),
+      // RE-PIN (M102 batch, v115): the batter's flour names `unbleached` —
+      // 789951's carbohydrate re-solves the coat (|2 100.36 g, the v115
+      // replay's row; this test's compute): was 96.56, 4271.32.
+      ('100.36', '4283.55'),
     );
   });
 
@@ -771,8 +782,11 @@ void plans() {
       ],
       // RE-PIN (M82 batch, v84, C5a): the flour |2's share — was 89.12.
       // RE-PIN (M90 batch, v89, cornstarch): the coat re-solves — was 93.89.
+      // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951, the
+      // coat re-solved on its carbohydrate (|2 100.36 g, the v115 replay's
+      // row): was 789890, 96.56.
       [
-        'confirmed|789890|96.56|discarded|null',
+        'confirmed|789951|100.36|discarded|null',
         'overridden|169717|28.35|density|null',
         'confirmed|748967|100.00|discarded|null',
       ],
@@ -791,7 +805,9 @@ void plans() {
     // was 3551.03.
     // RE-PIN (M95 batch, v97): the chips' uptake at FNDDS 2709458's 12.51 %
     // (+634.27): was 3555.19.
-    expect(kcal, '4189.46');
+    // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+    // test's compute): was 4189.46.
+    expect(kcal, '4201.68');
   });
 }
 
@@ -907,7 +923,9 @@ void persons() {
     // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
     // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
     // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 2709.63.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2676.06');
+    // RE-PIN (M102 batch, v115): its |5 unbleached flour on 789951 — the
+    // coat's parts re-solve (this test's compute): was 2676.06.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2681.84');
     await _put(db, fdc, r.id, 0, {'confirmed': true});
     expect(
       _sig(_row(db, r.id, 0)),
@@ -918,7 +936,9 @@ void persons() {
     // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
     // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
     // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 2709.63.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2676.06');
+    // RE-PIN (M102 batch, v115): its |5 unbleached flour on 789951 — the
+    // coat's parts re-solve (this test's compute): was 2676.06.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2681.84');
     await _settled(db, fdc, r.id);
     // The gate in `derivedFor`: the confirmed eggplant derives with no plan
     // of its own — the GET plans once (routed to the plan: twice).
@@ -935,7 +955,9 @@ void persons() {
     // RE-PIN (M85 batch, v87): the Parmesan lines on SR 170848, the coat
     // parts re-solved (the replay's 452.38 → 451.58 a serving): was 2714.43.
     // RE-PIN (M86 batch, v90, 958: 2685577 eggplant): was 2709.63.
-    expect(_energy(db, r.id).toStringAsFixed(2), '2676.06');
+    // RE-PIN (M102 batch, v115): its |5 unbleached flour on 789951 — the
+    // coat's parts re-solve (this test's compute): was 2676.06.
+    expect(_energy(db, r.id).toStringAsFixed(2), '2681.84');
     await _settled(db, fdc, r.id);
   });
 
@@ -999,7 +1021,9 @@ void persons() {
       ],
       [
         'auto|2685577|907.18|weight|null',
-        'auto|789890|null|null|coating',
+        // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951
+        // (was 789890).
+        'auto|789951|null|null|coating',
         'auto|790646|null|null|coating',
         'auto|171329|null|null|coating',
       ],
@@ -1022,7 +1046,9 @@ void persons() {
       [2, 4],
       1,
       [
-        '2 confirmed|789890|212.62|weight|null',
+        // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951
+        // (was 789890; grams unchanged).
+        '2 confirmed|789951|212.62|weight|null',
         '4 confirmed|2710704|224.00|portion|null',
       ],
     ),
@@ -1049,7 +1075,9 @@ void persons() {
       [3, 4],
       0,
       [
-        '3 confirmed|789890|0.00|discarded|null',
+        // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951
+        // (was 789890).
+        '3 confirmed|789951|0.00|discarded|null',
         '4 confirmed|748967|0.00|discarded|null',
       ],
     ),
@@ -1057,7 +1085,9 @@ void persons() {
       '0255-fish-and-chips.yaml',
       [2],
       9,
-      ['2 confirmed|789890|0.00|discarded|null'],
+      // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951
+      // (was 789890).
+      ['2 confirmed|789951|0.00|discarded|null'],
     ),
     (
       '0315-oven-fried-onion-rings.yaml',
@@ -1065,7 +1095,9 @@ void persons() {
       8,
       // RE-PIN (M82 batch, v84, C5a): the eaten ¼ cup at 5 oz a cup — was
       // 30.16.
-      ['0 confirmed|789890|35.44|discarded|null'],
+      // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951
+      // (was 789890; grams unchanged).
+      ['0 confirmed|789951|35.44|discarded|null'],
     ),
   ]) {
     test('F7: $file — $confirmed confirmed, then the food |$food skipped '
@@ -1293,7 +1325,9 @@ void persons() {
       // (crunchy-oven-fried-fish|0 65.12 g, |5 57.01 g at the replay): was
       // 1382.5822.
       // RE-PIN (M86 batch, v90, 958: 2684444 cod): was 1408.3556.
-      '1433.8701',
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+      // test's compute): was 1433.8701.
+      '1432.0633',
     ),
     (
       '0149-easier-fried-chicken.yaml',
@@ -1307,7 +1341,9 @@ void persons() {
         '6 confirmed|170932|0.45|portion|null',
         '9 confirmed|172804|9.07|density|null',
       ],
-      '2721.7335',
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+      // test's compute): was 2721.7335.
+      '2727.2503',
     ),
   ]) {
     test(
@@ -1409,14 +1445,14 @@ void persons() {
   );
 
   test("F11 (folded into F7; the fleet's, STATED edit): "
-      "crispy-fried-chicken's flour |8 confirmed (144.06 g), then its "
+      "crispy-fried-chicken's flour |8 confirmed (152.13 g), then its "
       'chicken line edited '
       '"4 pounds" → "10 pounds" and not yet computed — the GET reads the '
       'flour as stored (base: 0.00 g "poured away after your confirm"), a '
       'Confirm PUT in the window stores it and holds no dip (base: 0.00 g, '
       'the egg and buttermilk held `coating`, 3,329.77 → 2,723.81 kcal), a '
       'recompute writes nothing; the next compute equals a fresh compute of '
-      'the edited recipe (360.15 g)', () async {
+      'the edited recipe (380.33 g)', () async {
     final db = _db();
     final fdc = _fdc();
     final r = await _compute(
@@ -1425,7 +1461,9 @@ void persons() {
       loadCorpusRecipe('0148-crispy-fried-chicken.yaml'),
     );
     await _put(db, fdc, r.id, 8, {'confirmed': true});
-    expect(_sig(_row(db, r.id, 8)), 'confirmed|789890|144.06|discarded|null');
+    // RE-PIN (M102 batch, v115): the flour names `unbleached` — 789951, the
+    // one C1d budget ÷ 73.2 % = 152.13 g (was 789890, 144.06).
+    expect(_sig(_row(db, r.id, 8)), 'confirmed|789951|152.13|discarded|null');
     Future<String> got() async {
       final body = await matchesBody(
         db,
@@ -1436,7 +1474,8 @@ void persons() {
       return '${(m['grams'] as num).toStringAsFixed(2)} ${m['hold_note']}';
     }
 
-    expect(await got(), '144.06 eaten part counted after your confirm');
+    // RE-PIN (M102 batch, v115): was 144.06.
+    expect(await got(), '152.13 eaten part counted after your confirm');
     final chicken = nutritionLines(r)[6];
     final raw = chicken.raw.replaceFirst('4 pounds', '10 pounds');
     expect(raw, isNot(chicken.raw));
@@ -1452,7 +1491,8 @@ void persons() {
     );
     db.upsertRecipe(edited, sourceSlug: _source, contentHash: 'edited');
     final window = _state(db, r.id);
-    expect(await got(), '144.06 eaten part counted after your confirm');
+    // RE-PIN (M102 batch, v115): was 144.06.
+    expect(await got(), '152.13 eaten part counted after your confirm');
     await _put(db, fdc, r.id, 8, {'confirmed': true});
     expect(_state(db, r.id), window, reason: 'a Confirm in the window');
     recomputeTotals(db, nutritionRecipeOf(db, r.id)!.recipe);
@@ -1461,7 +1501,9 @@ void persons() {
       await matchAndCompute(db, fdc, nutritionRecipeOf(db, r.id)!.recipe),
       isNull,
     );
-    expect(_row(db, r.id, 8).grams?.toStringAsFixed(2), '360.15');
+    // RE-PIN (M102 batch, v115): 360.15 × 77.3 / 73.2 (789951's
+    // carbohydrate) = 380.33: was '360.15'.
+    expect(_row(db, r.id, 8).grams?.toStringAsFixed(2), '380.33');
     // A fresh compute of the edited recipe, the flour confirmed the same.
     final fresh = _db();
     final again = await _compute(
@@ -1524,7 +1566,7 @@ void persons() {
       'written "4 pounds bone-in pork chops, trimmed" (another item key) and '
       "not yet computed — the stale chicken row is no longer the line's "
       'ingredient: the GET reads the flour poured away (0.00 g; the key '
-      'equality dropped: 144.06 g, eaten part counted)', () async {
+      'equality dropped: 152.13 g, eaten part counted)', () async {
     final db = _db();
     final fdc = _fdc();
     final r = await _compute(

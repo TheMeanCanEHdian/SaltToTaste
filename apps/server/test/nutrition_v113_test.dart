@@ -339,9 +339,12 @@ const _unmoved = [
     _steaks,
     0,
     '3 cups unbleached all-purpose flour',
-    789890,
-    '96.71',
-    '353.96',
+    // RE-PIN (M102 batch, v115): the line names `unbleached` — 789951
+    // (358 kcal, carbohydrate 73.2), the coat's grams 96.71 × 77.3 / 73.2
+    // = 102.13, × 3.58 = 365.63 (was 789890, 96.71 g, 353.96).
+    789951,
+    '102.13',
+    '365.63',
   ),
   (_steaks, 8, '4–5 cups peanut oil', 2710187, '84.11', '756.99'),
   // W6: the thighs and the boneless thigh keep their records.
@@ -669,9 +672,10 @@ void statuses() {
 /// and the keys no corpus line prints pinned EQUAL to a sibling whose
 /// landing a corpus row pins.
 void keys() {
-  test('matcherVersion 100 (v113 set it, batch M100: 21 rows move)', () {
+  test('matcherVersion 101 (v113 set it, batch M100: 21 rows move)', () {
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-    expect(matcherVersion, 100);
+    // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+    expect(matcherVersion, 101);
   });
 
   test('every new key is a rank-as item; the unprinted numbers read their '

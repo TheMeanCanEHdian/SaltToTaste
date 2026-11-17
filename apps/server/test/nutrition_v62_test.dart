@@ -220,11 +220,14 @@ const List<_Row> _kept = [
   (
     _maryland,
     8,
+    // RE-PIN (M102 batch, v115): the v115 replay's row (maryland-crab-cakes|8,
+    // 789951 35.44 g, 126.88 kcal): was record 789890, grams 33.62, kcal
+    // 123.05, confidence 0.950000.
     '¼ cup unbleached all-purpose flour',
-    789890,
-    '0.950000',
-    '33.62',
-    '123.05',
+    789951,
+    '0.983333',
+    '35.44',
+    '126.88',
     null,
     "discarded in cooking — only the coat on the food counted · approximation (coat: 5.73 g carbohydrate per 100 g of the raw crab — USDA FNDDS 2705975 recipe: 15 g breading per 104.76 g raw chicken breast (no record for crab; read as Chicken breast, fried, coated, prepared skinless, coating eaten, from raw); the dredge's excess not counted)",
   ),
@@ -734,7 +737,9 @@ void main() {
       // Partial on its unmatched Old Bay, as at v61.
       // RE-PIN (M82 batch, v84): was 334.26 (the replay 334.26 → 337.42).
       // RE-PIN (M86 batch, v90, 958: 2684446 crustaceans): was 337.43.
-      expect(of(_maryland), ('partial', '343.10')); // 323.96; 323.95 → 334.26
+      // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+      // test's compute): was 343.10.
+      expect(of(_maryland), ('partial', '344.06')); // 323.96; 323.95 → 334.26
       // The three sirloin recipes move nothing but a basis.
       expect(of(_fennel).$1, 'complete');
     });

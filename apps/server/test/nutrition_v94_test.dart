@@ -163,7 +163,7 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    "matcherVersion 100 (v94 set it to 89, batch M92: three recipes' totals move)",
+    "matcherVersion 101 (v94 set it to 89, batch M92: three recipes' totals move)",
     () {
       // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
       // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
@@ -176,7 +176,8 @@ void main() {
       // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
       // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
       // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
-      expect(matcherVersion, 100);
+      // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
+      expect(matcherVersion, 101);
     },
   );
 
@@ -463,7 +464,11 @@ void main() {
         // rows' −163.40 / −270.69 deductions are gone; the rows fall −231.33 /
         // −383.24 (was 536.07 / 5360.70 / 260.03 / 92.23 and 553.24 /
         // 9958.24 / 526.32 / 189.69).
-        (_braised, '529.28', '5292.76', '246.22', '87.47'),
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
+        // v115 replay): was 529.28.
+        // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
+        // test's compute): was 5292.76.
+        (_braised, '529.06', '5290.64', '246.22', '87.47'),
         (_crowd, '546.98', '9845.70', '503.45', '181.80'),
         (_confit, '481.09', '2886.52', '116.58', '35.99'),
       ]) {

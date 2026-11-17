@@ -625,8 +625,11 @@ void main() {
             switch ((family, loud)) {
               // RE-PIN (M82 batch, v84, C5a): the flour at 5 oz a cup — was
               // 30.34 and 45.42 (the counts unchanged).
-              ('memo:setsOut', false) => {('discarded', null, '35.61')},
-              ('memo:setsOut', true) => {('discarded', null, '53.33')},
+              // RE-PIN (M102 batch, v115): the flour line names `unbleached`
+              // — 789951's carbohydrate re-solves the 400 lines' one f: was
+              // 35.61 and 53.33 (the counts unchanged).
+              ('memo:setsOut', false) => {('discarded', null, '35.62')},
+              ('memo:setsOut', true) => {('discarded', null, '53.34')},
               (_, false) => {('density', null, '88.72')},
               // RE-PIN (M88 batch, v88): the crumb coat reads FNDDS 2706442
               // — the panko shares the crumbs' own budget by its dry mass,
@@ -1961,7 +1964,10 @@ void eggDips() {
             'flag-dips' => {(100.0, null)},
             // RE-PIN (M82 batch, v84, C5a): the batter's flour at 5 oz a cup
             // re-solves each dip — was 7.91 (the counts unchanged).
-            'w-batter' => {(7.7, null)},
+            // RE-PIN (M102 batch, v115): the batter's unbleached flour on
+            // 789951 (carbohydrate 73.2) re-solves it — was 7.7 (the counts
+            // unchanged).
+            'w-batter' => {(7.77, null)},
             // RE-PIN (v82, review Run 067/068 F4): a dip sentence is no
             // mixing sentence ("dip in the egg mixture" — "mixture" read as
             // a mix before): the 398 identical egg lines take A13's nth
@@ -2030,7 +2036,8 @@ void eggDips() {
             },
             'flag-dips' => {('confirmed', 100.0, null)},
             // RE-PIN (M82 batch, v84, C5a): as above — was 7.91.
-            'w-batter' => {('confirmed', 7.7, null)},
+            // RE-PIN (M102 batch, v115): as above — was 7.7.
+            'w-batter' => {('confirmed', 7.77, null)},
             // The picked half counted whole. RE-PIN (v82, F4): the auto half
             // — the odd lines, whose A13 mention is the dip sentence, no
             // longer the dip's — counted whole too (was E-w's 0.21 g on its
