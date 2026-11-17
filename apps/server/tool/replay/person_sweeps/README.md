@@ -151,3 +151,24 @@ divergent, 14,070 refused both; sw12 129, 52 both; every line set identical base
 divergent (all K `peel-counted,peel-not-reopened`: the unheld NULL-grams row, calls 0), tip 0 (K: held
 `food_unavailable` on the row's OWN record, held_on null, calls 3 = control 0 + one per compute; the arrival reads
 stale; one compute heals the stored pair — 68.92 / 86.00 / 63.69 / 22.15 / 129.84 g); every other sw13 line identical.
+
+v114 (batch M101, 2026-11-17; docs/API.md "Matcher v114"): sw9's settle is a FIXPOINT. It read the Rule B1 keys ONCE
+from the snapshot's stored rows, which misses a key whose rows gain parts only on the swept tree (v114's egg pairs:
+snapshot 33 stores v111's rows, no egg row with parts) — the sweep's own key list, read on the settled DB, then reached
+35 never-settled recipes, stale before any PUT: tip 175 combos, 45 divergent, every one on an egg key. The settle now
+computes, re-reads the keys and repeats until a compute adds none. GATE-P base 2318767 (a worktree) vs the tip, the
+tip's sweep scripts on both, 12 shards, fresh snapshot-33 copies (the replay base since v112; its stored rows are
+v111's, so sw10 shows moroccan-chicken|8, a row v112 moved, divergent on BOTH sides), calls 0 — sw9 the owner gate's
+run of the committed script, the others the batch's fixer's and verifier's (each its own run, the same figures): sw5
+31,757 / sw6 37,444 / sw7 1,875 / sw8 56,943 / sw8r 5,358 combos, 0 divergent 0 refused both, line sets identical; sw9
+base 130 (settled 128 recipes of 8 keys) / tip 176 (163 of 11 — egg plus white, egg plus yolk, egg yolk plus white
+added: the 46 egg rows), 0 divergent 0 refused both, second pass moved 0, the base's 130 lines all in the tip's set;
+sw10 156 (bare and typed), 1 divergent both, sw10.tsv differing only at beef-wellington|0's per-serving (961.40 →
+965.35, its |17 egg line); sw11 39,816, 200 divergent, 12,772 refused both, identical; sw12 131, 54 both, identical;
+sw13 base 200 / tip 210 (+ the decided multi-part hold on 5 egg pair rows × 2 parts), 0 divergent both. THE SAME LIMIT
+IN EVERY SETTLE (stated; sw9's fixpoint only finds a key through a recipe an earlier key holds, and sw13's plans are read
+on a DB whose unsettled recipes still store the snapshot's rows — 5 of the 46 egg rows): the form that spans is to hand a
+sweep the tree's OWN replayed database (gate.sh's rp_main.db, copied with sqlite3 `.backup`) as its snapshot, every
+stored row then that tree's own. The owner gate's runs so: sw9 the same 176 / 130 line sets as on the snapshot; sw13 tip
+294 combos (apply 130, hold 134 = the 67 two-part rows × 2 parts, all 46 egg rows; the six pair arms 5 each) / base 202
+(hold 42), 0 divergent 0 refused 0 errors both, settled 139 / 98 recipes, second pass moved 0, calls 0.

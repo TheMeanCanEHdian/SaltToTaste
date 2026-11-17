@@ -5655,7 +5655,9 @@ void main() {
         // The fresh compute (the replay: 512.98, 1,047.88 — search-hit
         // energies in other rows).
         // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was '512.99'.
-        ('0859-marbled-blueberry-bundt-cake.yaml', '511.45'),
+        // RE-PIN (M101 batch, v114): the egg line's yolk on its own record
+        // (the v114 replay 511.45 → 514.09): was '511.45'.
+        ('0859-marbled-blueberry-bundt-cake.yaml', '514.09'),
         // RE-PIN (M72 batch, v72, R-Y): 567.20 each (was 584.35) — the
         // peaches peeled at AH-102 item 1654's 76 %.
         // RE-PIN (M90 batch, v89): the replay 567.20 → 566.38: was 567.20.
@@ -6098,7 +6100,9 @@ void main() {
           '0859-marbled-blueberry-bundt-cake.yaml',
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2346411 blueberries): was '512.99'.
-          '511.45',
+          // RE-PIN (M101 batch, v114): the egg line's yolk on its own record
+          // (the v114 replay 511.45 → 514.09): was '511.45'.
+          '514.09',
         ), // replay partial 503.23 → complete 512.98
         (
           '0944-raspberry-sorbet.yaml',

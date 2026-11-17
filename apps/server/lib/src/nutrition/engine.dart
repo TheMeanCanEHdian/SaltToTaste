@@ -12761,11 +12761,12 @@ Future<IngredientMatchRow> withParts(
     final juice = second.grams(detail);
     // The first record not cached (never after the caller's own fetch of
     // the row's food): held.
+    // v114 (M101): each part under its rule's role ([SecondFoodRule.roles]).
     return zest == null || juice == null
         ? bacon.copyWith(hold: 'second_food')
         : split(
-            (rule.fdcId, zest.grams, 'zest'),
-            (second.fdcId, juice.grams, 'juice'),
+            (rule.fdcId, zest.grams, rule.roles.$1),
+            (second.fdcId, juice.grams, rule.roles.$2),
           );
   }
   final liquid = cannedBeanLiquids[bacon.fdcId];
@@ -12799,8 +12800,14 @@ bool _splits(IngredientMatchRow row) =>
 /// citrus peel: only a row on a peel record reads the rule — its regexes
 /// run per row), else null — the rule [withParts] splits by and fetches the
 /// second record of, and [_heldOnOf] names (v108 V3, v109 W8).
+/// v114 (M101): the first records of every two-part rule — the peels and
+/// the egg parts ([_eggRecords]) — on a line naming "plus" (a native find
+/// first, any case as the rule's own pattern: a plain "3 large eggs" row
+/// runs no regex).
 SecondFoodRule? _pairOf(Recipe recipe, IngredientLine line, int fdcId) {
-  if (!_citrus.values.any((c) => c.peel.fdcId == fdcId)) {
+  if (!line.raw.toLowerCase().contains('plus') ||
+      !(_citrus.values.any((c) => c.peel.fdcId == fdcId) ||
+          _eggRecords.containsValue(fdcId))) {
     return null;
   }
   final rule = secondFoodRuleOf(line, recipe: recipe);
@@ -12869,6 +12876,15 @@ const bool citrusJuiceRuleOn = true;
 /// parts' own records in energy, but no line counted at the first part's
 /// grams. Lines led by a part ("5 large egg whites plus 1 large egg") stay
 /// held: the whole-egg record misstates them most. False holds them all.
+/// (Changed 2026-11-17, matcher v114: the owner's answer of 2026-11-16,
+/// "Split, with new label", reverses this one — a yolk is 334 kcal per
+/// 100 g on its Foundation record 748236 and a white 55 on 747997 against
+/// the whole egg's 148, so the sum sat up to 39 % under on yolk-heavy lines
+/// (fresh pasta's 298.96 kcal for 488.68) and over on white-heavy ones.
+/// True now counts EACH part on its own record at the piece weight, every
+/// pair of two different parts in either order — a led-by-a-part line too
+/// ([secondFoodRuleOf], two parts stored by [withParts]); the name is kept.
+/// False still holds them all.)
 const bool eggPartsMassSumOn = true;
 
 /// Each citrus fruit's records: the `juice` [citrusJuiceRuleOn] counts on;
@@ -12971,8 +12987,17 @@ final RegExp _strainsZest = RegExp(
 );
 
 /// The whole-egg record [eggPartsMassSumOn] counts on: "Eggs, Grade A,
-/// Large, egg whole" (Foundation).
+/// Large, egg whole" (Foundation) — v114: an egg pair's `egg` part.
 const int _wholeEgg = 748967;
+
+/// v114 (M101): each egg part's own record — the whole egg [_wholeEgg], the
+/// yolk "Eggs, Grade A, Large, egg yolk" and the white "…, egg white"
+/// (Foundation; 148 / 334 / 55 kcal per 100 g, nutrient 208).
+const Map<String, int> _eggRecords = {
+  'egg': _wholeEgg,
+  'yolk': 748236,
+  'white': 747997,
+};
 
 /// A tablespoon: the most zest [citrusJuiceRuleOn] drops.
 const double _tablespoonMl = 14.7868;
@@ -12980,7 +13005,14 @@ const double _tablespoonMl = 14.7868;
 /// A second-food line the engine counts on one record by rule: the record,
 /// the words its score is ranked under, and the grams on it.
 class SecondFoodRule {
-  const SecondFoodRule._(this.fdcId, this.query, this._grams, [this.second]);
+  const SecondFoodRule._(
+    this.fdcId,
+    this.query,
+    this._grams, [
+    this.second,
+    this.roles = ('zest', 'juice'),
+    this.joinBasis = _zestJuiceBasis,
+  ]);
 
   /// The record the line counts on.
   final int fdcId;
@@ -12995,10 +13027,23 @@ class SecondFoodRule {
   /// ([withParts]); null for a one-record rule.
   final ({int fdcId, GramResolution? Function(FdcFood? food) grams})? second;
 
-  /// The line's grams on [food] (the record [fdcId]; the egg sum needs
+  /// v114 (M101): the two parts' stored `role`s ([withParts]) — a citrus
+  /// pair's `zest` / `juice`, an egg pair's part words (`egg`, `yolk`,
+  /// `white`, the line's order).
+  final (String, String) roles;
+
+  /// v114 (M101): the stored basis of a two-part row from its parts' own
+  /// ([_gramBasis]): "zest … + juice …"; an egg pair's "2 × 50 g egg + 2 ×
+  /// 17 g yolk, each on its own record".
+  final String Function(String first, String second) joinBasis;
+
+  /// The line's grams on [food] (the record [fdcId]; an egg part needs
   /// none) — its first part's alone when the rule has a [second].
   GramResolution? gramsOn(FdcFood? food) => _grams(food);
 }
+
+String _zestJuiceBasis(String zest, String juice) =>
+    'zest $zest + juice $juice';
 
 /// The [SecondFoodRule] of [line], or null: a zest-plus-juice line under
 /// [citrus], an eggs-plus-parts line under [eggs].
@@ -13118,32 +13163,39 @@ SecondFoodRule? secondFoodRuleOf(
   final second = part(plus.text.toLowerCase());
   final firstCount = countOf(line.amounts);
   final secondCount = countOf([plus.amount]);
+  // v114 (M101, the owner's answer 2026-11-16 "Split, with new label"):
+  // every pair of two DIFFERENT parts, either order — each part on its own
+  // record at the piece table's weight ([_eggRecords]).
   if (!eggs ||
       first == null ||
       second == null ||
+      first == second ||
       firstCount == null ||
-      secondCount == null ||
-      !const {'egg yolk', 'egg white', 'yolk white'}.contains(
-        '$first $second',
-      )) {
+      secondCount == null) {
     return null;
   }
   String label(double count) => count == count.roundToDouble()
       ? count.toInt().toString()
       : count.toString();
-  final firstGrams = pieceWeightOf(first == 'egg' ? 'egg' : 'egg $first')!;
-  final secondGrams = pieceWeightOf('egg $second')!;
-  return SecondFoodRule._(
-    _wholeEgg,
-    'egg',
-    (_) => GramResolution(
-      grams: firstCount * firstGrams + secondCount * secondGrams,
+  String keyOf(String part) => part == 'egg' ? 'egg' : 'egg $part';
+  GramResolution partOn(String part, double count) {
+    final grams = pieceWeightOf(keyOf(part))!;
+    return GramResolution(
+      grams: count * grams,
       source: GramSource.piece,
-      basis:
-          '${label(firstCount)} × ${firstGrams.round()} g $first + '
-          '${label(secondCount)} × ${secondGrams.round()} g $second, '
-          'summed on the whole egg',
-    ),
+      basis: '${label(count)} × ${grams.round()} g $part',
+    );
+  }
+
+  final a = partOn(first, firstCount);
+  final b = partOn(second, secondCount);
+  return SecondFoodRule._(
+    _eggRecords[first]!,
+    keyOf(first),
+    (_) => a,
+    (fdcId: _eggRecords[second]!, grams: (_) => b),
+    (first, second),
+    (x, y) => '$x + $y, each on its own record',
   );
 }
 
@@ -19139,10 +19191,21 @@ String? _gramBasis(
         : GramResolution(
             grams: byRule!.grams + other.grams,
             source: byRule.source,
-            basis: 'zest ${byRule.basis} + juice ${other.basis}',
+            basis: rule.joinBasis('${byRule.basis}', '${other.basis}'),
           );
     if (both != null && (both.grams - row.grams!).abs() <= 0.05) {
       return both.basis;
+    }
+    // v114 (the owner gate, hand-edit round 2): a row storing a two-part
+    // rule's FIRST part alone — a person's pick of the rule's first record
+    // (it undoes the rule), or the pair held on its second part — reads
+    // that part's own basis. The generic weigh below read a yolk-led
+    // yolks-plus-whites line at the white's piece weight: "6 × 33 g each"
+    // beside the stored 102 g (0885 line 9).
+    if (second != null &&
+        byRule != null &&
+        (byRule.grams - row.grams!).abs() <= 0.05) {
+      return byRule.basis;
     }
   }
   GramResolution? on(FdcFood? food) {

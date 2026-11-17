@@ -917,7 +917,14 @@ void main() {
       ),
       findsNWidgets(2),
     );
-    expect(find.text('Change'), findsNWidgets(2));
+    // RE-PIN (M101 batch, v114): the golden's egg pair (Duchess Potato
+    // Casserole's line, a two-part row since v114) carries a Change too —
+    // was findsNWidgets(2).
+    expect(
+      find.text('matched to two records, the whole eggs and the yolks:'),
+      findsOneWidget,
+    );
+    expect(find.text('Change'), findsNWidgets(3));
   });
 
   testWidgets('the queue: the Choose recipe chip and its slim row', (t) async {

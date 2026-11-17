@@ -669,8 +669,9 @@ void statuses() {
 /// and the keys no corpus line prints pinned EQUAL to a sibling whose
 /// landing a corpus row pins.
 void keys() {
-  test('matcherVersion 99 (v113 set it, batch M100: 21 rows move)', () {
-    expect(matcherVersion, 99);
+  test('matcherVersion 100 (v113 set it, batch M100: 21 rows move)', () {
+    // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
+    expect(matcherVersion, 100);
   });
 
   test('every new key is a rank-as item; the unprinted numbers read their '

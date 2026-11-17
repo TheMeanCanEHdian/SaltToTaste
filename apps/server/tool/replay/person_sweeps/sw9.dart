@@ -97,12 +97,29 @@ Future<void> main(List<String> a) async {
     File(a[1]).copySync(a[2]);
     final db = SaltDatabase.open(a[2]);
     final all = bulkScopeIds(db, BulkScope.all);
-    final keys = b1Keys(db, all);
-    final held = {for (final k in keys) ...holding(db, all, k)};
-    final ids = [
-      for (final id in all)
-        if (held.contains(id)) id,
-    ];
+    // v114 (M101): settle to a FIXPOINT. A snapshot stores an older matcher's
+    // rows, so a key whose rows gain parts only on this tree (v114's egg
+    // pairs: no stored row of snapshot 33 carries their parts) shows after a
+    // compute — the key set grows until a compute adds none. (Read once, the
+    // 35 never-settled recipes of the three egg keys read stale before any
+    // PUT: 45 false divergences.)
+    var keys = b1Keys(db, all);
+    var ids = <String>[];
+    while (true) {
+      final held = {for (final k in keys) ...holding(db, all, k)};
+      ids = [
+        for (final id in all)
+          if (held.contains(id)) id,
+      ];
+      for (final id in ids) {
+        await matchAndCompute(db, NoNet(), nutritionRecipeOf(db, id)!.recipe);
+      }
+      final grown = b1Keys(db, all);
+      if (keys.containsAll(grown)) {
+        break;
+      }
+      keys = {...keys, ...grown};
+    }
     for (var pass = 0; pass < 2; pass++) {
       final before = {for (final id in ids) id: state(db, id)};
       for (final id in ids) {

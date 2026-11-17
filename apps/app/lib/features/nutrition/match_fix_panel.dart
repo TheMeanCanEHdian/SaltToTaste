@@ -818,6 +818,20 @@ const Map<String, (String, Map<String, String>)> _twoPartCopy = {
     'matched to two records, drained and with its liquid:',
     {'drained': '· drained', 'undrained': '· with its liquid'},
   ),
+  // v114 (M101, the owner's answer 2026-11-16): an egg pair, each part on
+  // its own record.
+  'egg·yolk': (
+    'matched to two records, the whole eggs and the yolks:',
+    {'egg': '· the whole eggs', 'yolk': '· the yolks'},
+  ),
+  'egg·white': (
+    'matched to two records, the whole eggs and the whites:',
+    {'egg': '· the whole eggs', 'white': '· the whites'},
+  ),
+  'white·yolk': (
+    'matched to two records, the yolks and the whites:',
+    {'yolk': '· the yolks', 'white': '· the whites'},
+  ),
 };
 
 /// A rendered row (v41, R2): one line, two records — each with its grams
@@ -825,8 +839,9 @@ const Map<String, (String, Map<String, String>)> _twoPartCopy = {
 /// part's suffix read the parts' `role` from the wire, never their
 /// position (the approved docs/mockups/v49-two-part-rows-copy.html §3):
 /// the bacon's cooked · kept_fat (a missing role reads as the bacon's, as
-/// the server defaults it), a v49 zest · juice row and a half-drained
-/// can's drained · undrained; any other pair the plain header, no suffix.
+/// the server defaults it), a v49 zest · juice row, a half-drained can's
+/// drained · undrained and a v114 egg pair's egg · yolk, egg · white or
+/// white · yolk; any other pair the plain header, no suffix.
 Widget _twoParts(IngredientMatch match) {
   final parts = match.parts;
   String roleOf(int at) => parts[at].role ?? (at == 0 ? 'cooked' : 'kept_fat');

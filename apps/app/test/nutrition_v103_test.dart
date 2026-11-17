@@ -271,7 +271,15 @@ void main() {
         section: 'Triple Chocolate Chunk Pecan Pie',
       );
       expect(find.text("Open the recipe's matches"), findsOneWidget);
-      expect(find.text('Change'), findsNothing);
+      // RE-PIN (M101 batch, v114): the golden's egg line ("3 large whole
+      // eggs plus 2 large egg yolks") is a two-part row now, and a two-part
+      // row carries its own Change — the routed line still offers none
+      // (was findsNothing).
+      expect(
+        find.text('matched to two records, the whole eggs and the yolks:'),
+        findsOneWidget,
+      );
+      expect(find.text('Change'), findsOneWidget);
     });
 
     testWidgets('the review sheet on the host cubit: the routed line offers '
@@ -282,7 +290,13 @@ void main() {
         slug: 'pumpkin-pie',
       );
       expect(find.text("Open the recipe's matches"), findsOneWidget);
-      expect(find.text('Change'), findsOneWidget);
+      // RE-PIN (M101 batch, v114): the routed line's Change and the egg
+      // pair's (a two-part row) — was findsOneWidget.
+      expect(
+        find.text('matched to two records, the whole eggs and the yolks:'),
+        findsOneWidget,
+      );
+      expect(find.text('Change'), findsNWidgets(2));
     });
 
     testWidgets('the host cubit: the share field and a pickable result', (

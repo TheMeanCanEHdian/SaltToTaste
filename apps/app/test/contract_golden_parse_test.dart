@@ -488,7 +488,8 @@ void main() {
         [for (final line in parsed) line.gramBasis],
         containsAll(<Matcher>[
           contains('juice only (the zest is dropped)'),
-          contains('summed on the whole egg'),
+          // RE-PIN (M101 batch, v114): was 'summed on the whole egg'.
+          contains('each on its own record'),
           contains('1/16 tsp (USDA tsp portion)'),
           contains('approximate (gross weight, no USDA refuse portion)'),
           contains('× 0.61 edible (USDA ready-to-cook yield)'),

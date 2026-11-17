@@ -663,7 +663,11 @@ void main() {
         // 547.59, partial).
         // RE-PIN (M86 batch, v90, 958: the dough's and the tart's 2346386 heavy
         // cream): was 1870.07, 403.79.
-        (_lemonTart, 0, _tartDough, 401.8, 1868.96, 403.24, 'partial'),
+        // RE-PIN (M101 batch, v114): its |2 "7 large egg yolks plus 2 large
+        // whole eggs", held `second_food`, counts its parts on their own
+        // records, 545.46 kcal (the v114 replay 403.24 partial → 471.42
+        // complete): was 403.24, 'partial'.
+        (_lemonTart, 0, _tartDough, 401.8, 1868.96, 471.42, 'complete'),
         // RE-PIN (M90 batch, v89, cornstarch): its pastry cream's cornstarch
         // |4 at the print (the replay 559.80 → 558.51): was 559.79.
         // RE-PIN (M86 batch, v90, 958: the dough's 2346386 heavy cream, the
@@ -894,7 +898,13 @@ void main() {
       ];
       // RE-PIN (M47 batch, v49 Q6): a zest-plus-juice row carries its two
       // parts too ([withParts]); only the bacon row is rendered.
-      expect(withParts, ['${r(_wilted).id}|5', '${r(_keyLime).id}|1']);
+      // RE-PIN (M101 batch, v114): an egg-parts row carries its two parts
+      // (the lemon tart's |2: 748236 119 g yolk + 748967 100 g egg).
+      expect(withParts, [
+        '${r(_wilted).id}|5',
+        '${r(_keyLime).id}|1',
+        '${r(_lemonTart).id}|2',
+      ]);
     });
 
     test('every computed recipe is fresh; the buckets agree [§3, parity]', () {

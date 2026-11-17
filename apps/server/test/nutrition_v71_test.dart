@@ -6836,8 +6836,10 @@ const List<_Row> _unmoved = [
     '218.00',
     'auto',
     null,
-    '322.64',
-    '3 × 50 g egg + 4 × 17 g yolk, summed on the whole egg',
+    // RE-PIN (M101 batch, v114): each part on its own record — was
+    // '322.64' and "3 × 50 g egg + 4 × 17 g yolk, summed on the whole egg" (the v114 replay's row).
+    '449.12',
+    '3 × 50 g egg + 4 × 17 g yolk, each on its own record',
   ),
   (
     '0905-chocolate-volcano-cakes-with-espresso-ice-cream.yaml',
@@ -6922,8 +6924,10 @@ const List<_Row> _unmoved = [
     '184.00',
     'auto',
     null,
-    '272.32',
-    '3 × 50 g egg + 2 × 17 g yolk, summed on the whole egg',
+    // RE-PIN (M101 batch, v114): each part on its own record — was
+    // '272.32' and "3 × 50 g egg + 2 × 17 g yolk, summed on the whole egg" (the v114 replay's row).
+    '335.56',
+    '3 × 50 g egg + 2 × 17 g yolk, each on its own record',
   ),
   (
     '0987-pumpkin-pie.yaml',

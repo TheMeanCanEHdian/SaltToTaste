@@ -166,7 +166,9 @@ const Map<String, String> _synonyms = {
 /// v99: matcher v113 (batch M100) — record choice: rank-as and approximation
 /// entries, the 'flavored' dock, the curry-leaf zero flavouring, the turkey
 /// leg record in `ah102Records`.
-const int matcherVersion = 99;
+/// v100: matcher v114 (batch M101) — egg parts, each on its own record (the
+/// whole egg, the yolk, the white), every pair of two different parts.
+const int matcherVersion = 100;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

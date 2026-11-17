@@ -529,17 +529,21 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 }
 
 void main() {
-  test('matcherVersion 99 (v96 set it to 91, batch M94: the browning fat)', () {
-    // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
-    // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
-    // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
-    // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
-    // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
-    // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
-    // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
-    // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
-    expect(matcherVersion, 99);
-  });
+  test(
+    'matcherVersion 100 (v96 set it to 91, batch M94: the browning fat)',
+    () {
+      // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
+      // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
+      // RE-PIN (M97 batch, v100): matcherVersion 94 (was 93).
+      // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
+      // RE-PIN (fix103 batch, v103): matcherVersion 96 (was 95).
+      // RE-PIN (fix104 batch, v104): matcherVersion 97 (was 96).
+      // RE-PIN (M99 batch, v112): matcherVersion 98 (was 97).
+      // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
+      // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
+      expect(matcherVersion, 100);
+    },
+  );
 
   test("the share from the figures the flag prints (2705972's inputFoods: "
       'o 2 g oil per 98 g baked-from-raw breast; r = 98 × 30.22 / 22.5 = '

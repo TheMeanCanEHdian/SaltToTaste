@@ -674,8 +674,13 @@ void main() {
       for (final item in golden('nutrition_matches_rules')['items']! as List)
         item as Map<String, dynamic>,
     ];
+    // RE-PIN (M101 batch, v114): the golden's first two-part row is now the
+    // egg pair (position 0, Duchess Potato Casserole's line) — the bacon is
+    // the pancetta row by its raw (was the first row with parts).
     final bacon = items.firstWhere(
-      (i) => ((i['match'] as Map?)?['parts'] as List?)?.isNotEmpty ?? false,
+      (i) =>
+          (((i['match'] as Map?)?['parts'] as List?)?.isNotEmpty ?? false) &&
+          i['raw'] == '2 ounces pancetta, cut into ½-inch pieces',
     );
     // Each suffix sits beside ITS OWN record — keyed on the part's role,
     // never its position (verifier round 1, D2): the Wrap that renders a
@@ -896,6 +901,132 @@ void main() {
       '· kept in the pan',
     ]) {
       expect(find.text(suffix), findsNothing, reason: suffix);
+    }
+  });
+
+  // v114 (M101, the owner's answer 2026-11-16 "Split, with new label";
+  // OQ14's copy, docs/mockups/v49-two-part-rows-copy.html §3): an egg pair
+  // reads its own header and suffixes by its parts' sorted roles — the six
+  // orders of the v114 replay's rows (each part on its own record), each
+  // suffix beside its own record.
+  testWidgets('v114 egg pairs: egg·yolk, egg·white and white·yolk each read '
+      'their own header and suffixes, either order', (tester) async {
+    final items = [
+      for (final item in golden('nutrition_matches_rules')['items']! as List)
+        item as Map<String, dynamic>,
+    ];
+    final bacon = items.firstWhere(
+      (i) => i['raw'] == '2 ounces pancetta, cut into ½-inch pieces',
+    );
+    const egg = 'Eggs, Grade A, Large, egg whole';
+    const yolk = 'Eggs, Grade A, Large, egg yolk';
+    const white = 'Eggs, Grade A, Large, egg white';
+    const ids = {egg: 748967, yolk: 748236, white: 747997};
+    const roles = {egg: 'egg', yolk: 'yolk', white: 'white'};
+    const suffixOf = {
+      'egg': '· the whole eggs',
+      'yolk': '· the yolks',
+      'white': '· the whites',
+    };
+    const all = ['· the whole eggs', '· the yolks', '· the whites'];
+    for (final (raw, first, a, second, b, header) in [
+      // 0324 |1, 0994 |2, 0746 |4, 0878 |2, 0885 |9, 0937 |4.
+      (
+        '2 large eggs plus 6 large yolks',
+        egg,
+        100.0,
+        yolk,
+        102.0,
+        'matched to two records, the whole eggs and the yolks:',
+      ),
+      (
+        '7 large egg yolks plus 2 large whole eggs',
+        yolk,
+        119.0,
+        egg,
+        100.0,
+        'matched to two records, the whole eggs and the yolks:',
+      ),
+      (
+        '2 large eggs, separated, plus 2 large whites',
+        egg,
+        100.0,
+        white,
+        66.0,
+        'matched to two records, the whole eggs and the whites:',
+      ),
+      (
+        '5 large egg whites plus 1 large egg, at room temperature',
+        white,
+        165.0,
+        egg,
+        50.0,
+        'matched to two records, the whole eggs and the whites:',
+      ),
+      (
+        '6 large egg yolks plus 3 large egg whites, at room temperature',
+        yolk,
+        102.0,
+        white,
+        99.0,
+        'matched to two records, the yolks and the whites:',
+      ),
+      (
+        '5 large egg whites plus 2 large egg yolks, at room temperature',
+        white,
+        165.0,
+        yolk,
+        34.0,
+        'matched to two records, the yolks and the whites:',
+      ),
+    ]) {
+      Map<String, dynamic> part(String d, double grams) => {
+        'fdc_id': ids[d],
+        'description': d,
+        'data_type': 'Foundation',
+        'grams': grams,
+        'role': roles[d],
+      };
+      await pump(
+        tester,
+        IngredientMatch.fromJson({
+          ...bacon,
+          'raw': raw,
+          'match': {
+            ...bacon['match']! as Map<String, dynamic>,
+            'fdc_id': ids[first],
+            'description': first,
+            'data_type': 'Foundation',
+            'grams': a + b,
+            'gram_source': 'piece',
+            'flag': null,
+            'parts': [part(first, a), part(second, b)],
+          },
+        }),
+      );
+      expect(find.text(header), findsOneWidget, reason: raw);
+      expect(find.text('matched to two records:'), findsNothing, reason: raw);
+      final wraps = [
+        for (final (label, d) in [
+          ('${a.round()} g · $first', first),
+          ('+ ${b.round()} g · $second', second),
+        ])
+          (
+            find
+                .ancestor(of: find.text(label), matching: find.byType(Wrap))
+                .first,
+            suffixOf[roles[d]]!,
+          ),
+      ];
+      for (final (wrap, suffix) in wraps) {
+        for (final other in all) {
+          expect(
+            find.descendant(of: wrap, matching: find.text(other)),
+            other == suffix ? findsOneWidget : findsNothing,
+            reason: '$raw — $other',
+          );
+        }
+      }
     }
   });
 }

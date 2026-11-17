@@ -285,13 +285,28 @@
         "confidence": 0.92,
         "grams": 184.0,
         "gram_source": "piece",
-        "gram_basis": "3 × 50 g egg + 2 × 17 g yolk, summed on the whole egg",
+        "gram_basis": "3 × 50 g egg + 2 × 17 g yolk, each on its own record",
         "status": "auto",
         "hold": null,
         "hold_note": null,
         "carried_from": null,
         "child": null,
-        "parts": [],
+        "parts": [
+          {
+            "fdc_id": 748967,
+            "description": "Eggs, Grade A, Large, egg whole",
+            "data_type": "Foundation",
+            "grams": 150.0,
+            "role": "egg"
+          },
+          {
+            "fdc_id": 748236,
+            "description": "Eggs, Grade A, Large, egg yolk",
+            "data_type": "Foundation",
+            "grams": 34.0,
+            "role": "yolk"
+          }
+        ],
         "flag": null
       },
       "candidates": []

@@ -300,7 +300,13 @@ void main() {
     );
     // The 12 food lines' bars carry a Skip each; the routed line's is the
     // 13th (base: 12 — the routed line's bar held only its sheet link).
-    expect(find.text('Change'), findsNothing);
+    // RE-PIN (M101 batch, v114): the one Change is the egg pair's (a
+    // two-part row since v114), never the routed line's — was findsNothing.
+    expect(
+      find.text('matched to two records, the whole eggs and the yolks:'),
+      findsOneWidget,
+    );
+    expect(find.text('Change'), findsOneWidget);
     expect(find.text('Confirm'), findsOneWidget);
     expect(find.text('Skip'), findsNWidgets(13));
     await _sheet(
@@ -308,7 +314,9 @@ void main() {
       body: _copy('nutrition_matches_section_other'),
       slug: 'pumpkin-pie',
     );
-    expect(find.text('Change'), findsOneWidget);
+    // RE-PIN (M101 batch, v114): the routed line's Change and the egg
+    // pair's — was findsOneWidget.
+    expect(find.text('Change'), findsNWidgets(2));
     expect(find.text('Confirm'), findsNothing);
     expect(find.text('Skip'), findsNWidgets(12));
   });

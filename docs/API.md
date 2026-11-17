@@ -2164,8 +2164,11 @@ teaspoon portion reads its tablespoon's, `"dash ≈ 1/16 tsp (USDA tbsp
 portion)"` — "Dash of hot sauce" is 0.33 g — and "1 small pinch saffron"
 is one pinch, 0.04 g), `"2 tablespoon ≈ 30 mL · juice only (the
 zest is dropped)"` for a zest-plus-juice line counted on the fruit's juice
-record, `"2 × 50 g egg + 2 × 17 g yolk, summed on the whole egg"` for an
-eggs-plus-parts line counted on the whole-egg record,
+record, `"2 × 50 g egg + 2 × 17 g yolk, each on its own record"` for an
+eggs-plus-parts line counted as two parts (Changed 2026-11-17, matcher v114:
+was `"2 × 50 g egg + 2 × 17 g yolk, summed on the whole egg"` for the line
+counted on the whole-egg record — each part now sits on its own record,
+the "Matcher v114" block),
 `"… · drained (USDA can portion)"` for a drained can or jar (its printed
 weight × the drained share of the record's own can portion), `"discarded in
 cooking — counted as 0 g"`, `"poured away — counted as 0 g"` (a person's
@@ -2563,8 +2566,10 @@ is RULE A's (above: a confirm counts the eaten part or pours the line
 away, a pick on a divided line counts its eaten part, any other keeps the
 hold with no grams — at the PUT, every compute and every GET),
 `second_food` (the line names a second ingredient —
-"egg whites plus 1 large egg", "chipotle chile in adobo sauce plus 2
-teaspoons adobo sauce" — that the match does not cover; a counted fruit cut
+"chipotle chile in adobo sauce plus 2 teaspoons adobo sauce" — that the
+match does not cover (Changed 2026-11-17, matcher v114: the example "egg
+whites plus 1 large egg" is gone — a line led by an egg part now counts,
+below); a counted fruit cut
 into wedges, "plus 1 lemon, cut into wedges", is for serving and holds
 nothing; such a line is also keyed apart from the first food's lines, e.g.
 `egg plus white` for "5 large egg whites plus 1 large egg", so a decision on
@@ -2576,7 +2581,14 @@ either part first ("1 teaspoon grated lemon zest plus 2 tablespoons juice",
 fruit's juice record (lemon 167747, lime 168156, orange 169098) with the
 zest dropped, and eggs plus yolks or whites, or yolks plus whites ("1 large
 egg, separated, plus 2 large yolks"), count the parts' summed piece weights
-(egg 50 g, yolk 17 g, white 33 g) on the whole-egg record 748967. Since
+(egg 50 g, yolk 17 g, white 33 g) on the whole-egg record 748967 (Changed
+2026-11-17, matcher v114, the owner's answer of 2026-11-16 "Split, with new
+label", reversing checkpoint 5's: every pair of two DIFFERENT egg parts, in
+either order — "5 large egg whites plus 2 large egg yolks" too, held
+before — counts each part on its OWN record at the same piece weights, the
+whole egg 748967, the yolk 748236, the white 747997, as two parts; the sum
+on the whole egg sat up to 39 % under on yolk-heavy lines — the "Matcher
+v114" block). Since
 matcher v49 (M47 Q6) a zest over a tablespoon plus juice counts too, as two
 parts (or the juice alone when a step strains or discards the zest; with
 no recipe to read, held as before) — the v49 paragraph below. Their keys
@@ -5343,6 +5355,431 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v114 (batch M101, prep52 P3 — egg parts, each on its own record;
+matcherVersion 99 → 100. The spec .claude/diag/2026-11-16/prep52/design_v2.md
+"P3 — egg parts", the rulings in the M101 brief: the OWNER ruled 2026-11-16
+(asked in chat, the recommended option) "Split, with new label", which
+REVERSES the owner's checkpoint-5 answer (the egg sum); OQ10's basis text,
+OQ14's app copy. Blind accuracy audit 7: an egg line naming parts summed the
+parts' piece weights on the WHOLE egg 748967 (148 kcal per 100 g), but a
+yolk is 334 on Foundation 748236 and a white 55 on 747997 — yolk-heavy lines
+sat up to 39 % under (fresh-pasta|1 298.96 for 488.68), white-heavy ones
+over (lemon-ricotta-pancakes|4 245.68 for 184.30) — and a line LED by a part
+("5 large egg whites plus 2 large egg yolks") was held, uncounted. Replayed
+on SNAPSHOT 33, both orders byte-identical, calls 0. No migration. This
+section cites symbols, grep commands and hit counts — never a line
+number.)**
+- **The rule** (engine.dart `secondFoodRuleOf`, its egg arm): every pair of
+  two DIFFERENT parts (`egg`, `yolk`, `white`, the part words the arm already
+  read) with both counts present, in either order, is a two-part rule — the
+  first part on its own record, the second part on its own (`_eggRecords`:
+  egg 748967, yolk 748236, white 747997; `grep -c _eggRecords engine.dart` →
+  6), each at the piece table's weight (`pieceWeightOf`, unchanged: 50 /
+  17 / 33 g). The old accepted set {'egg yolk', 'egg white', 'yolk white'}
+  is gone; a same-part pair (another bird's eggs: "2 large eggs plus 2
+  quail eggs", synthesized) returns null and stays held `second_food`. The
+  row's confidence is ranked under the FIRST part's piece-table key (`egg`,
+  `egg yolk`, `egg white`) on that part's record. `SecondFoodRule` gains
+  the rule's two role names (`roles`; citrus `zest` / `juice` by default,
+  an egg pair the line's part words in its order) and its basis join
+  (`joinBasis`; citrus `_zestJuiceBasis` "zest A + juice B", byte for byte as
+  before; an egg pair "A + B, each on its own record") — the v49 two-part
+  shape widened for the class, no egg-only branch. The switch
+  `eggPartsMassSumOn` is kept, its name too (`grep -c eggPartsMassSumOn
+  engine.dart` → 4, as before): its false arm is live through the `eggs:`
+  parameter (nutrition_v8 "P1: both switches" and the v114 rule negatives
+  pin it), so no arm is dead; its "USER QUESTION SWITCH (egg parts,
+  checkpoint 5)" text is corrected in place with the dated note. RULE (f):
+  the old sentences — engine.dart "Lines led by a part ("5 large egg whites
+  plus 1 large egg") stay held: the whole-egg record misstates them most";
+  this file's "count the parts' summed piece weights (egg 50 g, yolk 17 g,
+  white 33 g) on the whole-egg record 748967", the basis example "2 × 50 g
+  egg + 2 × 17 g yolk, summed on the whole egg" and the `second_food`
+  example "egg whites plus 1 large egg" — are each corrected IN PLACE with
+  a dated note (`grep -c 'Changed 2026-11-1[7]' docs/API.md` → 3: the
+  basis and `second_food` notes and the owner gate's, on the re-pick
+  sentence — the rule sentence's note wraps its date across two lines;
+  `grep -c 'Changed 2026-11-1[7], matcher v114' engine.dart` → 1, the
+  switch's). The
+  KEY example `egg plus white` stays true (the decision keys are unchanged,
+  `egg yolk plus white` one key for either order; pinned).
+- **The five pair-row sites**, each built for the class (a rule with a
+  `second`): (1) `_pairOf`'s gate admits the first records of every
+  two-part rule — the three peels and `_eggRecords` — behind a native find
+  of "plus" in any case (`grep -c -F "toLowerCase().contains('plus')"
+  engine.dart` → 1; the rule's own pattern is case-insensitive, so a
+  case-sensitive find would leave a "PLUS" line whole at its first part's
+  grams — the synthesized "2 large eggs PLUS 6 large yolks" pin; a find
+  narrowed to the space-bounded word would leave ",plus" and a no-break
+  space after the word the same way — the owner gate's two synthesized
+  pins, below); (2)
+  `withParts` writes the rule's roles (`grep -c "rule.roles" engine.dart` →
+  2); (3) `_heldOnOf` names the pair's second record through `_pairOf`
+  (unchanged code); (4) nutrition_handlers.dart `_heldOnOther`: the part
+  stored under `held_on` has a two-part rule's SECOND role — `{'juice',
+  'egg', 'yolk', 'white'}` (`grep -c -F "const {'juice', 'egg', 'yolk',
+  'white'}" nutrition_handlers.dart` → 1; a rule's first part is the row's
+  own `fdc_id`, false before the loop; a bacon row held on one of its own
+  parts stays "this food" — its stored parts carry no role, v111 Y2's pin;
+  a half-drained can row held on its liquid twin, a part stored under role
+  `undrained`, reads "this food" too — the half rule is no two-part RULE;
+  the owner gate's pin, below), and the SHIPPED v110
+  X3 wording "this line's second food" applies as written; (5) `_gramBasis`
+  joins a two-part row's basis with the rule's `joinBasis` (`grep -c
+  joinBasis engine.dart` → 3), and a row storing the rule's FIRST part
+  alone — a pick of the rule's first record, or the pair held on its gone
+  second part — reads that part's own basis (the owner gate's one lib
+  edit, below). MEASURED: the rule alone (sites 1, 2, 5 as
+  base) is NOT a no-op — the 46 rows stored their FIRST part's grams only
+  (−1,902.44 kcal on the replay, three held rows counted partially), since
+  `engineOutcome` returns the rule's first-part grams and only `withParts`
+  adds the second; the rule and the sites ship together.
+- **The app** (apps/app/lib/features/nutrition/match_fix_panel.dart
+  `_twoPartCopy`, keyed on the parts' SORTED roles joined by `·`; `grep -c
+  -E "'(egg·yolk|egg·white|white·yolk)'" match_fix_panel.dart` → 3):
+  `egg·yolk` "matched to two records, the whole eggs and the yolks:" (`egg`
+  "· the whole eggs", `yolk` "· the yolks"); `egg·white` "matched to two
+  records, the whole eggs and the whites:" (`egg` "· the whole eggs",
+  `white` "· the whites"); `white·yolk` "matched to two records, the yolks
+  and the whites:" (`yolk` "· the yolks", `white` "· the whites") — OQ14's
+  copy word for word, added to docs/mockups/v49-two-part-rows-copy.html §3.
+  Pinned in apps/app/test/match_wording_test.dart on the six orders' rows,
+  each suffix beside its own record.
+- **The wire shape of an egg pair**: the row's top-level `fdc_id`,
+  `description` and `data_type` are the FIRST part's record (the part the
+  line prints first), `grams` the parts' sum (unchanged from the summed row
+  on every counted line: 50 / 17 / 33 g each way), `gram_source` `piece`,
+  `gram_basis` "2 × 50 g egg + 2 × 17 g yolk, each on its own record"; the
+  matches GET's `parts` carry the citrus pair's keys exactly (`fdc_id`,
+  `description`, `data_type`, `grams`, `role`) — only the role words differ.
+  The totals count each part on its own record. A pair whose SECOND part's
+  detail is gone (FDC "no such food") is held `food_gone` ON that part
+  (`held_on`, no parts; its stored grams the first part's, the citrus
+  pair's shape, never counted — the recipe reads `partial`), re-opened by
+  the part's arrival; an outage on it is held `food_unavailable` ON it
+  (parts kept, or none after an un-skip); the GET serves `held_on` and both
+  refusals read "this line's second food". The FIRST part's detail gone (a
+  search answer listing it) or both: held `food_gone` on the row's own
+  record, no `held_on`, "this food".
+- **THE ROWS** (the replay on snapshot 33 against the v113 set; each derived
+  by hand: count × the piece weight × the part record's kcal per 100 g,
+  nutrient 208 on all three — 748967 148, 748236 334, 747997 55): 46 rows in
+  46 recipes, +2,863.80 kcal (Σ|Δ| 3,650.58); 34 egg·yolk, 7 egg·white, 2
+  yolk·white, 1 each white·yolk, yolk·egg, white·egg. Every row's status
+  `auto`, unheld, gram source `piece`; grams unchanged on the 43 counted
+  rows; the stored confidence moves on the FOUR rows whose first part is a
+  yolk or a white on a record the row did not sit on before —
+  fluffy-yellow-layer-cake-with-milk-chocolate-frosting|9 and
+  make-ahead-chocolate-souffles|7 0.920000 → 0.950000 (748967 → 748236),
+  lemon-tart|2 0.653333 → 0.950000 (748967 → 748236),
+  chilled-lemon-souffle|4 0.633333 → 0.950000 (748236 → 747997);
+  coconut-layer-cake|2, the fifth part-led row, already sat on 747997 at
+  0.950000 and keeps it. The rows:
+  avgolemono-greek-chicken-and-rice-soup-with-egg-and-lemon|9 (egg·yolk) 134.00 g on 748967, 198.32 → 2×50×1.48 + 2×17×3.34 = 148.00 + 113.56 = 261.56 (748967 100.00 g + 748236 34.00 g);
+  fresh-pasta-without-a-machine|1 (egg·yolk) 202.00 g on 748967, 298.96 → 2×50×1.48 + 6×17×3.34 = 148.00 + 340.68 = 488.68 (748967 100.00 g + 748236 102.00 g);
+  foolproof-spaghetti-carbonara|4 (egg·yolk) 167.00 g on 748967, 247.16 → 3×50×1.48 + 1×17×3.34 = 222.00 + 56.78 = 278.78 (748967 150.00 g + 748236 17.00 g);
+  hand-rolled-meat-ravioli|1 (egg·yolk) 202.00 g on 748967, 298.96 → 2×50×1.48 + 6×17×3.34 = 148.00 + 340.68 = 488.68 (748967 100.00 g + 748236 102.00 g);
+  duchess-potato-casserole|2 (egg·yolk) 84.00 g on 748967, 124.32 → 1×50×1.48 + 2×17×3.34 = 74.00 + 113.56 = 187.56 (748967 50.00 g + 748236 34.00 g);
+  quiche-lorraine|2 (egg·yolk) 134.00 g on 748967, 198.32 → 2×50×1.48 + 2×17×3.34 = 148.00 + 113.56 = 261.56 (748967 100.00 g + 748236 34.00 g);
+  lemon-ricotta-pancakes|4 (egg·white) 166.00 g on 748967, 245.68 → 2×50×1.48 + 2×33×0.55 = 148.00 + 36.30 = 184.30 (748967 100.00 g + 747997 66.00 g);
+  bran-muffins|7 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  perfect-sticky-buns|3 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  new-yorkstyle-crumb-cake|11 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  coffee-cake-with-pecan-cinnamon-streusel|15 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  fresh-corn-cornbread|9 (egg·yolk) 117.00 g on 748967, 173.16 → 2×50×1.48 + 1×17×3.34 = 148.00 + 56.78 = 204.78 (748967 100.00 g + 748236 17.00 g);
+  classic-chewy-oatmeal-cookies|8 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  gingersnaps|12 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  almond-biscotti|4 (egg·white) 133.00 g on 748967, 196.84 → 2×50×1.48 + 1×33×0.55 = 148.00 + 18.15 = 166.15 (748967 100.00 g + 747997 33.00 g);
+  chewy-brownies|6 (egg·yolk) 134.00 g on 748967, 198.32 → 2×50×1.48 + 2×17×3.34 = 148.00 + 113.56 = 261.56 (748967 100.00 g + 748236 34.00 g);
+  best-lemon-bars|8 (egg·yolk) 201.00 g on 748967, 297.48 → 3×50×1.48 + 3×17×3.34 = 222.00 + 170.34 = 392.34 (748967 150.00 g + 748236 51.00 g);
+  holiday-eggnog|0 (egg·yolk) 334.00 g on 748967, 494.32 → 6×50×1.48 + 2×17×3.34 = 444.00 + 113.56 = 557.56 (748967 300.00 g + 748236 34.00 g);
+  marbled-blueberry-bundt-cake|8 (egg·yolk) 167.00 g on 748967, 247.16 → 3×50×1.48 + 1×17×3.34 = 222.00 + 56.78 = 278.78 (748967 150.00 g + 748236 17.00 g);
+  lemon-bundt-cake|8 (egg·yolk) 167.00 g on 748967, 247.16 → 3×50×1.48 + 1×17×3.34 = 222.00 + 56.78 = 278.78 (748967 150.00 g + 748236 17.00 g);
+  french-apple-cake|7 (egg·yolk) 84.00 g on 748967, 124.32 → 1×50×1.48 + 2×17×3.34 = 74.00 + 113.56 = 187.56 (748967 50.00 g + 748236 34.00 g);
+  spice-cake|10 (egg·yolk) 151.00 g on 748967, 223.48 → 2×50×1.48 + 3×17×3.34 = 148.00 + 170.34 = 318.34 (748967 100.00 g + 748236 51.00 g);
+  raspberry-charlotte|17 (egg·white) 149.00 g on 748967, 220.52 → 1×50×1.48 + 3×33×0.55 = 74.00 + 54.45 = 128.45 (748967 50.00 g + 747997 99.00 g);
+  coconut-layer-cake|2 (white·egg) held `second_food` on 747997 (0) → 5×33×0.55 + 1×50×1.48 = 90.75 + 74.00 = 164.75 (747997 165.00 g + 748967 50.00 g);
+  lemon-layer-cake-with-fluffy-white-icing|4 (egg·yolk) 302.00 g on 748967, 446.96 → 4×50×1.48 + 6×17×3.34 = 296.00 + 340.68 = 636.68 (748967 200.00 g + 748236 102.00 g);
+  fluffy-yellow-layer-cake-with-milk-chocolate-frosting|9 (yolk·white) 201.00 g on 748967, 297.48 → 6×17×3.34 + 3×33×0.55 = 340.68 + 54.45 = 395.13 (748236 102.00 g + 747997 99.00 g; confidence 0.920000 → 0.950000);
+  yellow-sheet-cake-with-chocolate-frosting|0 (egg·yolk) 234.00 g on 748967, 346.32 → 4×50×1.48 + 2×17×3.34 = 296.00 + 113.56 = 409.56 (748967 200.00 g + 748236 34.00 g);
+  old-fashioned-chocolate-layer-cake-with-chocolate-frosting|9 (egg·yolk) 234.00 g on 748967, 346.32 → 4×50×1.48 + 2×17×3.34 = 296.00 + 113.56 = 409.56 (748967 200.00 g + 748236 34.00 g);
+  chocolate-volcano-cakes-with-espresso-ice-cream|7 (egg·yolk) 218.00 g on 748967, 322.64 → 3×50×1.48 + 4×17×3.34 = 222.00 + 227.12 = 449.12 (748967 150.00 g + 748236 68.00 g);
+  new-york-cheesecake|9 (egg·yolk) 334.00 g on 748967, 494.32 → 6×50×1.48 + 2×17×3.34 = 444.00 + 113.56 = 557.56 (748967 300.00 g + 748236 34.00 g);
+  foolproof-new-york-cheesecake|11 (egg·yolk) 334.00 g on 748967, 494.32 → 6×50×1.48 + 2×17×3.34 = 444.00 + 113.56 = 557.56 (748967 300.00 g + 748236 34.00 g);
+  lemon-cheesecake|14 (egg·yolk) 117.00 g on 748967, 173.16 → 2×50×1.48 + 1×17×3.34 = 148.00 + 56.78 = 204.78 (748967 100.00 g + 748236 17.00 g);
+  lemon-pudding-cakes|7 (egg·white) 166.00 g on 748967, 245.68 → 2×50×1.48 + 2×33×0.55 = 148.00 + 36.30 = 184.30 (748967 100.00 g + 747997 66.00 g);
+  classic-creme-caramel|6 (egg·yolk) 184.00 g on 748967, 272.32 → 3×50×1.48 + 2×17×3.34 = 222.00 + 113.56 = 335.56 (748967 150.00 g + 748236 34.00 g);
+  chilled-lemon-souffle|4 (white·yolk) held `second_food` on 748236 (0) → 5×33×0.55 + 2×17×3.34 = 90.75 + 113.56 = 204.31 (747997 165.00 g + 748236 34.00 g; confidence 0.633333 → 0.950000);
+  make-ahead-chocolate-souffles|7 (yolk·white) 366.00 g on 748967, 541.68 → 6×17×3.34 + 8×33×0.55 = 340.68 + 145.20 = 485.88 (748236 102.00 g + 747997 264.00 g; confidence 0.920000 → 0.950000);
+  pumpkin-pie|3 (egg·yolk) 184.00 g on 748967, 272.32 → 3×50×1.48 + 2×17×3.34 = 222.00 + 113.56 = 335.56 (748967 150.00 g + 748236 34.00 g);
+  lemon-tart|2 (yolk·egg) held `second_food` on 748967 (0) → 7×17×3.34 + 2×50×1.48 = 397.46 + 148.00 = 545.46 (748236 119.00 g + 748967 100.00 g; confidence 0.653333 → 0.950000);
+  lemonolive-oil-tart|8 (egg·yolk) 201.00 g on 748967, 297.48 → 3×50×1.48 + 3×17×3.34 = 222.00 + 170.34 = 392.34 (748967 150.00 g + 748236 51.00 g);
+  challah|2 (egg·yolk) 84.00 g on 748967, 124.32 → 1×50×1.48 + 2×17×3.34 = 74.00 + 113.56 = 187.56 (748967 50.00 g + 748236 34.00 g);
+  beef-wellington|17 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  madeleines|2 (egg·yolk) 117.00 g on 748967, 173.16 → 2×50×1.48 + 1×17×3.34 = 148.00 + 56.78 = 204.78 (748967 100.00 g + 748236 17.00 g);
+  pistachio-spice-biscotti|9 (egg·white) 133.00 g on 748967, 196.84 → 2×50×1.48 + 1×33×0.55 = 148.00 + 18.15 = 166.15 (748967 100.00 g + 747997 33.00 g);
+  choux-au-craquelin|11 (egg·white) 133.00 g on 748967, 196.84 → 2×50×1.48 + 1×33×0.55 = 148.00 + 18.15 = 166.15 (748967 100.00 g + 747997 33.00 g);
+  profiteroles|0 (egg·white) 133.00 g on 748967, 196.84 → 2×50×1.48 + 1×33×0.55 = 148.00 + 18.15 = 166.15 (748967 100.00 g + 747997 33.00 g);
+  new-york-cheesecakes|9 (egg·yolk) 67.00 g on 748967, 99.16 → 1×50×1.48 + 1×17×3.34 = 74.00 + 56.78 = 130.78 (748967 50.00 g + 748236 17.00 g);
+  The three held rows count, and each was its recipe's only held row:
+  chilled-lemon-souffle `partial` 344.28 → `complete` 395.35 a serving,
+  lemon-tart `partial` 403.24 → `complete` 471.42, coconut-layer-cake
+  `partial` 780.22 → `complete` 796.69. Per serving over 5 %: lemon-tart
+  +16.9 %, chilled-lemon-souffle +14.8 %, fresh-pasta-without-a-machine
+  397.14 → 444.57 (+11.9 %), hand-rolled-meat-ravioli 769.34 → 816.77
+  (+6.2 %); the largest fall lemon-ricotta-pancakes 487.77 → 467.31
+  (−4.2 %). Sections and notes byte-identical to v113, calls 0, 0 person
+  rows; the buckets move only as these rows explain (counted +3,
+  `second_food` −3, `check` −3, complete +3 / partial −3, `two_part|piece`
+  6 → 52).
+- **The class is closed** (R7; on the replay, the whole TSV line): every
+  plain "N large eggs" row (224), every "separated" line with no plus (16),
+  every yolk-only (52) and white-only (38) line, every other row on the
+  three egg records (325), the five citrus two-part rows (0536|3, 0142|8,
+  0860|2, 0861|5, 0989|1: roles, basis and parts byte-identical) and the 16
+  bacon / can two-part rows — byte-identical. "1 large egg, separated, plus
+  2 large yolks" counts the separated egg whole on 748967 plus the yolks on
+  748236; raspberry-charlotte|17 "1 large egg plus 3 large egg whites
+  (reserved from filling)" is 50 g on 748967 + 99 g on 747997, exactly
+  right (its |2 yolks counted on 748236 alone).
+- **Record-keyed readers** (R6, the M100 lesson): `grep -n
+  "748967\|748236\|747997\|_wholeEgg" apps/server/lib -r` → grams.dart
+  `volumeSiblings` `748967: 171287` (a VOLUME amount's cup portion — a
+  pair's grams come from the piece table, never resolveGrams on the food,
+  so no pair row reads it) and engine.dart `_wholeEgg` / `_eggRecords`; no
+  `approximationRecords`, `nutrientSiblings`, `trimStandInFlagOf`, AH-102,
+  braised / dry-heat or yield-table entry keys on an egg record, and no
+  `description.startsWith('Egg')`. The egg-HEAD text readers (`_leftInBowl`
+  / `_dipsOf`) never size a pair row: `engineOutcome` returns the rule's
+  grams before any medium or plan (base and tip alike). No dependent row
+  moved.
+- **STATED, measured** (not built): the yolk and white Foundation records
+  publish energy, protein, fat, carbohydrate and riboflavin — the yolk
+  vitamin E too — and nothing else of the panel (748236: 203, 204,
+  205, 208, 323, 405; 747997: 203, 204, 205, 208, 405) — no saturated fat,
+  cholesterol, sodium, mono / poly fat. The 2,137.00 g the 43 counted rows
+  moved off 748967 carried, on the whole egg, 68.38 g saturated fat,
+  8,783.07 mg cholesterol and 2,756.73 mg sodium the parts' records do not
+  publish — those nutrients FALL on these rows (pumpkin-pie's per-serving
+  saturated fat 13.19 → 13.05 g in the contract golden while its fat rises
+  26.49 → 27.29 g); the yolk-only and white-only rows have read those records
+  so since before v114. SR 172184 "Egg, yolk, raw, fresh" (322 kcal; 9.551 g
+  saturated, 1,085 mg cholesterol) and 172183 "Egg, white, raw, fresh" are
+  cached (the L55 details), each with the whole panel — not this batch.
+  The owner gate's scan of the cache found the gap a CLASS: of the 666
+  records the replay's unheld rows and parts with grams sit on (0 g among
+  them), 204 hold a cached detail
+  lacking at least one of eight panel numbers (saturated fat, cholesterol,
+  sodium, fiber, sugars, calcium, iron, potassium) — the sugars number on
+  188 of them (Foundation 746784 "Sugars, granulated", 525 rows, holds
+  none) — and 42 more have no cached detail. The provider keeps only the
+  numbers nutrients.dart maps; whether FDC publishes the rest under other
+  numbers is NOT yet measured (a live look-up of the raw details). A
+  design pass on the label's panel follows (told to the owner). Also
+  stated: a three-part line (synthesized "2 large eggs plus 2 large yolks
+  plus 1 large white"; no corpus line) reads its first two parts and drops
+  the third, as base did (the design's "returns null as today" was not so);
+  a non-count part ("1 cup egg whites plus …") is not this arm; the
+  separated egg stays whole; S3b (the french omelets' reserved whites) is not
+  built.
+- **Person paths** (nutrition_v114_test.dart "a person decision on an egg
+  pair"): on one row of each of the six orders, confirm (parts kept,
+  `confirmed`), typed 77 g (`overridden`, no parts, the first record),
+  skip and back (the pair again), a pick of the row's own record and its
+  apply_to_all (`overridden`, the first part's grams on its record — the
+  v108 V3 citrus pick's shape: a pick never reads the second food), a pick
+  of the second part's record — each
+  stored == `recomputeTotals` == a full compute, the GET's grams and hold ==
+  stored, nothing refused. A CHANGE FROM BASE, RULED KEPT in the owner gate
+  (the orchestrator's, under the owner's standing authorization 2026-10-07;
+  told to the owner): this file's sentence on a re-pick of the rule's own
+  record ("keeps the rule's grams — … the parts' summed weights") described
+  the ONE-record egg rule and is corrected in place with a dated note; a
+  pick on a two-part row is how a person UNDOES the rule (v108 V3; the
+  app's "Change" on a two-part row, review_sheet.dart "Change undoes the
+  rule"), and a pick on a "plus" line counts the line's
+  FIRST count alone on the picked record, the part after "plus" dropped —
+  at base too, on the part-led rows it held (lemon-tart|2 below: the seven
+  yolks' 119.00 g on the picked whole egg, its two eggs dropped). (The
+  count is weighed at the first part's piece weight on five of the six
+  orders' pick-other rows; fluffy-yellow-layer-cake|9, yolks then whites
+  picked onto the white, at the white's — 198.00 g = 6 × 33 g:
+  `_personStates`.) A person keeps the pair by Confirm (the parts
+  kept) and counts one total on one record by typing the grams. On
+  the 43 rows counted at base, a pick of the row's own record (and its
+  apply_to_all across the key) stored the WHOLE sum on 748967 at base and
+  stores the first part's grams alone at v114, the second part dropped —
+  measured on a base worktree with the same PUT (the line alone, the
+  fixtures): fresh-pasta-without-a-machine|1 202.00 g, 298.96 kcal →
+  100.00 g, 148.00 (the six yolks, 340.68, gone);
+  lemon-ricotta-pancakes|4 166.00 g, 245.68 → 100.00 g, 148.00. The three
+  rows held at base (part-led) took the pick on 748967 at base
+  (lemon-tart|2 119.00 g, 176.12); at v114 their own record is the first
+  part's (lemon-tart|2 119.00 g on 748236, 397.46). Pinned as the tip's
+  states (`_personStates`, the base figures in its comment). GATE-P on
+  snapshot 33, base 2318767 (a worktree)
+  vs the tip, the tip's sweep scripts on both, 12 shards, calls 0: sw5
+  31,757, sw6 37,444, sw7 1,875, sw8 56,943, sw8r 5,358 combos, 0 divergent
+  0 refused both, every line identical; sw10 156, 1 divergent both
+  (moroccan-chicken|8, the v112 row snapshot 33 stores as v111's), its lines
+  identical but beef-wellington|0's per-serving 961.40 → 965.35 (its |17
+  egg line); sw11 39,816, 200 divergent, 12,772 refused both, identical;
+  sw12 131, 54 both, identical; sw13 base 200 / tip 210 (+ the decided
+  multi-part hold on 5 egg pair rows × 2 parts), 0 divergent both, its
+  other lines differing only by the moved egg rows. sw9 as it stood at
+  2318767: base 130 / 0, tip 175 with 45 divergent — every one on an egg
+  key, a HARNESS limit: its settle read the keys once from the snapshot's
+  stored rows (v111's: no egg row has parts), so 35 of the 46 egg rows were
+  never settled and read stale before any PUT. sw9.dart now settles to a
+  FIXPOINT (the key set grown until a compute adds none; committed with
+  this batch, the owner gate's run): tip 176 combos (130 + the 46 egg rows;
+  settled 163 recipes of 11 keys, second pass moved 0, calls 0), base 130
+  (128 recipes of 8 keys), 0 divergent 0 refused both, the base's 130 lines
+  all in the tip's set. The same limit kept sw13's decided multi-part hold
+  to 5 of the 46 egg rows, so the owner ran sw9 and sw13 once more on each
+  tree's OWN replayed database (every stored row that tree's own): sw9 the
+  same 176 / 130 lines; sw13 tip 294 combos — 134 of them the hold arm, the
+  67 two-part rows × 2 parts, all 46 egg rows among them — base 202 (42),
+  0 divergent 0 refused 0 errors both.
+- **Pins** (apps/server/test/nutrition_v114_test.dart, 20 tests — the
+  batch's 16 and the owner gate's four; the corpus
+  group skips without SALT_CORPUS_DIR, the corpusless groups — the records'
+  energies, the rule on the six orders' real line texts, the keys, the
+  negatives, the wire shape, the fractional count, the first-part basis's
+  tolerance, the "PLUS" pre-check, the plain-egg read count — run on CI): every one of the 46 rows' stored record, status, hold,
+  `held_on`, gram source, confidence, grams, energy (and its hand
+  derivation), basis and both parts (record, grams, role); the three
+  statuses; the pair machinery per second record (yolk, egg, white): gone →
+  held ON it, the GET's `held_on`, the 422, the arrival; the outage with
+  parts kept; the un-skip outage (`_heldOnOf`); the first part gone and both
+  gone; a plain "3 large eggs" row (150 g, no parts) and a yolk-only row
+  (34 g on 748236, no parts); the citrus 0536|3 / 0142|8 parts and basis;
+  `namesSecondFood` reads across a plain egg row's compute and GET 3 / 1 on
+  base and tip. Re-pinned as equalities with RE-PIN comments: nutrition_v8
+  (the duchess basis and parts; the biscotti / fluffy rule unit pins),
+  nutrition_v71 (two basis texts and energies), nutrition_v69 (marbled
+  blueberry bundt cake 511.45 → 514.09, twice), nutrition_v41 (the lemon tart
+  partial 403.24 → complete 471.42; its |2 now carries parts), the app's
+  v49 pin (the golden's first two-part row is now the egg pair — the bacon
+  read by its raw), four hash literals (matcherVersion 100 alone, each
+  measured on base 2318767 with only the bump), and every matcherVersion pin.
+  The shared contract goldens nutrition_confirm_applied, nutrition_matches_rules,
+  nutrition_matches_section_other and nutrition_section_other regenerated
+  (UPDATE_CONTRACT_GOLDENS=1). Mutants: 48, each on a snapshot copy with a
+  trap restore, every one killed by a value pin (e1–e11, each accepted
+  order, each record id, each piece-weight key, each role word, the query,
+  the join text, the same-part gate — first SURVIVED, pinned by the quail /
+  duck lines —, the pre-check and its case, `withParts`' two roles,
+  `_heldOnOf`'s pair arm, `_heldOnOther`'s set and each of its three egg
+  words, and the twelve app strings and keys).
+- **The owner gate** (scratchpad m101/owner, archived with the batch). The
+  replay re-run by the owner on a fresh copy of snapshot 33: both orders
+  byte-identical, every TSV and the buckets cmp-identical to verifier
+  round 2's, exactly the 46 rows and the three statuses; each row derived
+  again by the owner's own script from the RAW line (the parts read off
+  the text; count × 50 / 17 / 33 g × 148 / 334 / 55): 46 of 46. A scan of
+  the replay for egg-part lines the rule does not reach: none joined by
+  "and" or a comma, no egg line left held `second_food`, 46 two-part rows
+  among the 371 on the three egg records. No FDC fixture changed
+  (apps/server/test/fixtures; the four contract goldens are the batch's
+  regenerated ones). 21 own
+  mutants, each ONE site moved to its NEAREST NEIGHBOUR rather than
+  dropped: `_pairOf`'s gate without the white as a first record, and
+  without the yolk; the same-part refusal narrowed to the whole egg; a
+  white weighed at the yolk's 17 g; the part basis's `×` written `x`; a
+  white second part on the yolk's record; the rank query written `egg egg`,
+  and the bare part word; the join's order; the gram source `portion`;
+  `_gramBasis`' two arguments swapped; the DEFAULT roles and the default
+  join (the citrus pair's) each swapped; three of the app's (egg·white's
+  suffixes swapped, egg·yolk's header reading the whites', the
+  `white·yolk` key unsorted) — these 16 killed by a value in the batch's
+  own two test files. `_heldOnOther` passing every role but `cooked` /
+  `kept_fat` survived the v114 file and dies on v111's Y2 pin (false
+  expected, true read: a stored bacon part carries no role). The pre-check
+  narrowed to the space-bounded word (`' plus '`) SURVIVED the whole file
+  with the replay byte-identical — no row of the replay prints "plus"
+  after a comma or before a no-break space (of its 583 occurrences two are
+  not space-bounded, each ending its line: "… grated lemon zest plus"):
+  pinned on two synthesized lines ("2 large eggs,plus 6 large yolks" and a
+  no-break space after the word), the mutant re-run and killed (202.0 g
+  expected, 100.0 read), its two one-sided neighbours (`'plus '`,
+  `' plus'`) killed by the same pins. The last, `_heldOnOther`'s set
+  widened by `undrained`, SURVIVED seven files (v114, v111, v110, v109,
+  v108, v107, v49: +89). The owner first read it as a state that does not
+  occur — with the twin 175206 ALONE dropped from both caches under a food
+  outage, the confirmed 1075|1 "2 (15-ounce) cans chickpeas (1 can drained,
+  1 can undrained)" re-derives UN-SPLIT (665.50 g on 2644288, no hold, no
+  parts, a confirm accepted): `withParts` splits a can only while a cache
+  holds the twin and never fetches it — and the hand-edit verifier REFUTED
+  that: with the row's OWN record 2644288 dropped too, three computes leave
+  it `confirmed`, held `food_unavailable`, `held_on` 175206, its parts kept
+  (the own fetch fails, the stored row stays, `_heldOnOf`'s parts loop
+  names the first part no cache holds). Pinned at that state (the GET
+  serves no `held_on` key, the refusal reads "USDA could not serve this
+  food — …"), the mutant re-run and killed (false expected, true read). The
+  verifier's own two survivors are pinned too, on the synthesized "½ large
+  egg plus 1 large yolk" (42.0 g; "0.5 × 50 g egg + 1 × 17 g yolk, each on
+  its own record"): the part basis's count always printed as an integer
+  (carried from base, where no pair printed a fraction either: "0 × 50 g
+  egg" read) and the pre-check requiring an ASCII digit before the word
+  (25.0 g read). Found in passing (backlog): a twin no cache holds leaves
+  the whole can line on the bought record with no hold (in the library
+  every twin is another row's food). ONE hand edit to lib code, found by
+  the second hand-edit round: on a pick of the row's own record
+  `_gramBasis` missed the pair's joined sum and fell through to the generic
+  weigh — "N × W g each" on five of the six orders, and on 0885|9 (yolks
+  then whites) "6 × 33 g each" beside the stored 102 g. A row storing the
+  rule's first part alone now reads that part's basis ("6 × 17 g yolk");
+  the citrus picks' bases are byte-identical before and after (five rows
+  measured), and the replay of the final tree is byte-identical. Pinned:
+  the GET's `gram_basis` after every verb on all six orders
+  (`_personBasis`, 36 values) and on the three held rows of the
+  gone-second-part test; three mutants of the new arm (never taken;
+  returning the second part's basis; matching on the pair's sum) each
+  killed by a value ("5 × 33 g white" expected). The third hand-edit round
+  found the CITRUS pair's basis in those two states now served by the same
+  arm with no test reading it (its mutant wording the citrus arm alone
+  passed the whole suite) and the arm's tolerance unpinned (widened to
+  60 g it passed too). Pinned: a pick of the peel and the pair held on its
+  gone juice on 0536|3, 0989|1 (its lime-on-lemon-peel approximation suffix
+  kept) and 0142|8; a synthesized row 0.04 g and 0.06 g off the first
+  part's grams. Both mutants, and the tolerance narrowed to 0.01, re-run
+  and killed by a value. The owner then STATED that the arm restricted to
+  egg pairs survives, the corpus citrus pairs' generic weigh reading the
+  same text; the fourth round showed that true of the corpus rows ALONE:
+  on the five corpus pairs the texts are the same (five pairs × six states
+  byte-identical with the arm, with it restricted and with it off), but
+  on a JUICE-FIRST pair — a zest over a tablespoon printed after the
+  juice; no corpus line: of its seven lines printing the juice before the
+  zest, the five joined by "plus" carry at most a tablespoon of zest, or
+  strips, and are juice-only, and two join by "and" or a comma, outside
+  the rule — the generic weigh read the
+  line's first amount, the juice's volume, beside the peel's stored grams
+  ("1/4 cup ≈ 59 mL" at 8.0 g), and the arm reads "4 teaspoon · USDA
+  portion". Pinned
+  on 0142's line 8 swapped for the synthesized "¼ cup lemon juice plus 4
+  teaspoons grated lemon zest" (the pick of the peel and the gone juice);
+  the egg-only mutant re-run and killed. The other hand edits: in
+  nutrition_v114_test.dart the owner gate's four new tests (the can's hold
+  wording, the fractional count, the citrus basis, the tolerance), the
+  pre-check test's two synthesized lines, the basis pins named above
+  (`_personBasis`, `_firstBasis` and their two expects) and the
+  `_personStates` comment (the ruling); sw9.dart's fixpoint settle (person
+  paths, above) with its README paragraph; the dated note on the PUT
+  section's re-pick sentence; this block's text.
+- **Suites** on the corpus: server +3,476 ~4 (the base's +3,456 ~4 plus the
+  20 tests of nutrition_v114_test.dart), salt_shared +265, app +674 (+1: the
+  egg-pair copy test; seven app pins in five files re-pinned — the
+  match_wording v49 selector, nutrition_v103 ×2, nutrition_v104 ×2,
+  nutrition_composite's Change count, contract_golden_parse's basis — as the
+  regenerated goldens' egg rows now render as two-part rows, each with its
+  own Change); the analyzers clean.
+- **Cost**: no new or memoised step reader; the widened gate runs the rule
+  only on a row on an egg record whose line names "plus" (the plain-egg read
+  count equal base and tip).
+- **Deploy**: matcherVersion 100 stales every recipe; a zero-request sweep
+  recomputes (the three egg details are cached). No migration.
 
 **Matcher v113 (batch M100, prep52 P2 — record choice; matcherVersion
 98 → 99. The spec .claude/diag/2026-11-16/prep52/design_v2.md "P2 — record
@@ -14474,7 +14911,15 @@ food is picked — `{grams}` is how a person counts it. A re-pick of the
 record the second-food rule counts a line on (the fruit's juice record for
 a zest-plus-juice line, the whole egg 748967 for eggs plus yolks or
 whites) keeps the rule's grams — the juice amount, or the parts' summed
-weights — and its `gram_basis`; a pick of any other record on such a line
+weights — and its `gram_basis`
+(Changed 2026-11-17, matcher v114: an egg line naming two parts is a
+TWO-PART rule now, each part on its own record, and a re-pick of a two-part
+rule's first record keeps THAT part's grams alone on it, under that part's
+own basis ("6 × 17 g yolk") — the citrus pair's shape since v108 V3 (a
+pick never reads the juice); the summed weights on 748967
+were the one-record egg rule's, which is gone. Confirm keeps the pair;
+typed grams count one total.); a pick of any other record
+on such a line
 gets grams from the line's own first amount (the zest's teaspoon, the
 whole eggs) like any pick. An engine pick below
 0.5 is stored without fetching FDC's food detail, so a volume or count line

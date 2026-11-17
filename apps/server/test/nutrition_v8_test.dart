@@ -459,24 +459,38 @@ void main() {
       );
     });
 
-    test('Duchess Potato Casserole (0447): the egg and its yolks sum on the '
-        'whole-egg record, 50 + 34 g', () async {
+    // RE-PIN (M101 batch, v114): each part on its own record (was "the egg
+    // and its yolks sum on the whole-egg record"; the basis read "1 × 50 g
+    // egg + 2 × 17 g yolk, summed on the whole egg"; the part-led line was
+    // held — rule null — and now counts, nutrition_v114_test.dart).
+    test('Duchess Potato Casserole (0447): the egg on the whole-egg record, '
+        'its yolks on the yolk record, 50 + 34 g', () async {
       final db = tempDb();
       final r = recipeOf(db, 'r1', [duchess]);
       await matchAndCompute(db, provider, r);
       final row = db.ingredientMatchesFor('r1').single;
       expect((row.fdcId, row.grams, row.hold), (748967, 84, null));
+      expect(
+        row.parts,
+        '[{"fdc_id":748967,"grams":50.0,"role":"egg"},'
+        '{"fdc_id":748236,"grams":34.0,"role":"yolk"}]',
+      );
       expect(bucketOf(row), MatchBucket.counted);
       expect(
         await basisOf(db, r, 0),
-        '1 × 50 g egg + 2 × 17 g yolk, summed on the whole egg',
+        '1 × 50 g egg + 2 × 17 g yolk, each on its own record',
       );
-      // Led by a part, the line stays held (Coconut Layer Cake, 0878).
+      // Led by a part, the line counts too (Coconut Layer Cake, 0878).
+      final led = secondFoodRuleOf(
+        lineOf('5 large egg whites plus 1 large egg, at room temperature'),
+      )!;
       expect(
-        secondFoodRuleOf(
-          lineOf('5 large egg whites plus 1 large egg, at room temperature'),
+        (led.fdcId, led.second!.fdcId, led.roles),
+        (
+          747997,
+          748967,
+          ('white', 'egg'),
         ),
-        isNull,
       );
     });
 
@@ -1166,24 +1180,34 @@ void main() {
       expect(rows[1].description, startsWith('Orange juice, raw'));
     });
 
-    test('eggs plus whites and yolks plus whites sum their parts too: Almond '
-        'Biscotti (0841), Fluffy Yellow Layer Cake (0885)', () {
-      for (final (raw, grams, basis) in [
+    // RE-PIN (M101 batch, v114): each part on its own record (was one
+    // record, 748967, at the summed grams 133 / 201 with the basis "…,
+    // summed on the whole egg"); `gramsOn` is now the FIRST part's alone.
+    test('eggs plus whites and yolks plus whites count their parts too: '
+        'Almond Biscotti (0841), Fluffy Yellow Layer Cake (0885)', () {
+      for (final (raw, first, second) in [
         (
           '2 large eggs, plus 1 large white beaten with pinch salt',
-          2 * 50 + 33,
-          '2 × 50 g egg + 1 × 33 g white, summed on the whole egg',
+          (748967, 2 * 50, '2 × 50 g egg'),
+          (747997, 33, '1 × 33 g white'),
         ),
         (
           '6 large egg yolks plus 3 large egg whites, at room temperature',
-          6 * 17 + 3 * 33,
-          '6 × 17 g yolk + 3 × 33 g white, summed on the whole egg',
+          (748236, 6 * 17, '6 × 17 g yolk'),
+          (747997, 3 * 33, '3 × 33 g white'),
         ),
       ]) {
         final rule = secondFoodRuleOf(lineOf(raw))!;
-        expect(rule.fdcId, 748967, reason: raw);
-        final resolved = rule.gramsOn(null)!;
-        expect((resolved.grams, resolved.basis), (grams, basis), reason: raw);
+        final a = rule.gramsOn(null)!;
+        final b = rule.second!.grams(null)!;
+        expect(
+          [
+            (rule.fdcId, a.grams, a.basis),
+            (rule.second!.fdcId, b.grams, b.basis),
+          ],
+          [first, second],
+          reason: raw,
+        );
       }
     });
 

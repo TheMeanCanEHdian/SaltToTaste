@@ -1301,6 +1301,9 @@ String _refusalOf(
 /// pair's parts-less rows), or the part stored under it is the `juice`; a
 /// rule B1 bacon row held on one of its own parts reads "this food" (v109).
 /// (`partsOf` carries no role: the role is read here.)
+/// v114 (M101): a two-part rule's SECOND role — the citrus `juice`, or an
+/// egg pair's part word (its first part is the row's own record, false
+/// above).
 bool _heldOnOther(IngredientMatchRow row) {
   final on = row.heldOn;
   if (on == null || on == row.fdcId) {
@@ -1311,7 +1314,7 @@ bool _heldOnOther(IngredientMatchRow row) {
           ? const <dynamic>[]
           : jsonDecode(row.parts!) as List<dynamic>) {
     if ((part as Map<String, dynamic>)['fdc_id'] == on) {
-      return part['role'] == 'juice';
+      return const {'juice', 'egg', 'yolk', 'white'}.contains(part['role']);
     }
   }
   return true;
