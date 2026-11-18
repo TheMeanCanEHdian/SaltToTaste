@@ -11,7 +11,9 @@ import 'package:salt_server/src/nutrition/provider.dart';
 /// helps ("unsalted", "brown", "dark" are identity and stay).
 /// (Changed 2026-11-17, matcher v115: `unbleached` is still dropped from the
 /// query and the key, but a line naming it ranks the unbleached record —
-/// [namesUnbleached], a ranking token only.)
+/// [namesUnbleached], a ranking token only.) (Changed 2026-11-17, matcher
+/// v116: the item key still drops it; the DECISION key, `decisionKeyFor`,
+/// carries it — "same kind only".)
 const Set<String> _stopWords = {
   'fresh',
   'freshly',
@@ -173,7 +175,11 @@ const Map<String, String> _synonyms = {
 /// whole egg, the yolk, the white), every pair of two different parts.
 /// v101: matcher v115 (batch M102) — a line naming `unbleached` ranks the
 /// unbleached flour record ([namesUnbleached]).
-const int matcherVersion = 101;
+/// v102: matcher v116 (batch M103) — the decision key of a line naming
+/// `unbleached` carries the word ('unbleached all-purpose flour'): a person's
+/// decision reaches the same kind only (`decisionKeyFor`); the boot re-key
+/// moves the 172 corpus rows' stored key.
+const int matcherVersion = 102;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -519,7 +525,9 @@ List<String> _fruitFromTail(List<String> words) {
 /// word singular, so "1 onion" and "2 onions" — 66 such pairs, 2,036 corpus
 /// lines — are one ingredient. Only the KEY: the FDC query keeps the line's
 /// own words, so nothing cached is invalidated and ranking is unchanged.
-/// Empty when nothing searchable remains.
+/// Empty when nothing searchable remains. (Changed 2026-11-17, matcher v116:
+/// the stored decision key is `decisionKeyFor`'s, which adds the kind word
+/// `unbleached` to this key; this function is unchanged.)
 String itemKeyFor(String item) => [
   for (final word in normalizeItem(item).split(' '))
     if (word.isNotEmpty) _keyWord(word),
@@ -2724,7 +2732,9 @@ bool namesCannedLegume(String raw, String normalizedItem) =>
 
 /// Whether [raw] names the whole word `unbleached`: the unbleached record's
 /// word ([rankCandidates]), ranked but never searched — the word stays a
-/// [_stopWords] member, so key, query, cache and density are untouched.
+/// [_stopWords] member, so the item key ([itemKeyFor]), query, cache and
+/// density are untouched; the DECISION key carries it (`decisionKeyFor`,
+/// changed 2026-11-17, matcher v116: "same kind only").
 /// v115 (M102, prep52 P4): 172 lines' "unbleached all-purpose flour" tied
 /// Foundation 789890 "…, enriched, bleached" with 789951 "…, enriched,
 /// unbleached" and FDC's order picked the bleached record.

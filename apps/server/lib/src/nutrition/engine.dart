@@ -14302,7 +14302,18 @@ final String _number = '[\\d$vulgarFractionChars][\\d$vulgarFractionChars/.]*';
 /// names a second food, under [secondFoodOwnKey] — that food's key after
 /// "plus" ('lemon zest plus juice'). One function for lines and stored
 /// decisions, so a re-key after a matcher change lands on the same key.
+/// v116 (M103, the owner's "same kind only"): an item naming the whole word
+/// `unbleached` ([namesUnbleached]) keys 'unbleached <key>', so a decision
+/// on one kind never reaches the other; [itemKeyFor] — the query, cache and
+/// density key — is unchanged.
 String decisionKeyFor(String itemText) {
+  final key = _decisionKeyOf(itemText);
+  // ponytail: one kind word, the shipped ranking flag; a key carrying every
+  // flag would split garlic / hazelnut (keysplit C §4a).
+  return key.isNotEmpty && namesUnbleached(itemText) ? 'unbleached $key' : key;
+}
+
+String _decisionKeyOf(String itemText) {
   final key = itemKeyFor(itemText);
   final plus = secondFoodOwnKey ? plusPartOf(itemText) : null;
   if (key.isEmpty || plus == null || plus.sameFood) {

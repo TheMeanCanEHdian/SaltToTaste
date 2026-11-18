@@ -609,9 +609,12 @@ void main() {
         '`coating` now', () async {
       final (db, a) = await stepless();
       db.upsertRecipe(a, sourceSlug: 'src', contentHash: 'ha');
+      // RE-PIN (M103 batch, v116): line 8 ("…unbleached all-purpose flour…")
+      // keys 'unbleached all-purpose flour' — its own key, so the reach
+      // still asks the question (was 'all-purpose flour').
       final reach = decisionReach(
         db,
-        'all-purpose flour',
+        'unbleached all-purpose flour',
         excluding: (recipeId: 'zz', position: 0),
         fdcId: 168913,
       );
@@ -625,14 +628,25 @@ void main() {
         'not written, counted moved (left for its compute)', () async {
       final (db, a) = await stepless();
       final provider = wp.Gated(FixtureProvider(pending: pendingSearches));
-      await matchAndCompute(db, provider, wp.saveLines(db, [tbsp], id: '0000'));
+      // RE-PIN (M103 batch, v116): the reached key is line 8's own,
+      // 'unbleached all-purpose flour' (was 'all-purpose flour'), and the
+      // earlier target is of that kind — STATED SYNTHESIZED: 0006's real
+      // "3 tablespoons all-purpose flour" with the word added, so that its
+      // portion fetch still opens the window before line 8.
+      await matchAndCompute(
+        db,
+        provider,
+        wp.saveLines(db, [
+          tbsp.replaceFirst('all-purpose', 'unbleached all-purpose'),
+        ], id: '0000'),
+      );
       provider.onCall = () async {
         db.upsertRecipe(a, sourceSlug: 'src', contentHash: 'ha');
       };
       final res = await applyDecisionToOthers(
         db,
         provider,
-        itemKey: 'all-purpose flour',
+        itemKey: 'unbleached all-purpose flour',
         decided: await breadFlour(),
         excluding: (recipeId: 'zz', position: 0),
       );

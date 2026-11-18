@@ -5356,12 +5356,388 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v116 (batch M103, prep52 — the key split: "same kind only" for
+the two all-purpose flour kinds; matcherVersion 101 → 102. The owner's
+ruling of 2026-11-17 on v115's shared decision key (R6 below): a decision
+on a line naming `unbleached` is to reach the lines naming it, a decision on
+a plain line the plain lines. The spec .claude/diag/2026-11-17/keysplit/
+final/design_v2.md §1–§9 (its Appendix A not built), the rulings in the
+M103 brief. Replayed on SNAPSHOT 33, both orders byte-identical, calls 0.
+No migration. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **The rule (for a person)**: a person's decision on an ingredient line —
+  a Confirm, a pick, an un-skip's derivation — is shared by the lines of the
+  SAME KIND only. One word makes a kind today: a line whose item names the
+  whole word `unbleached` ("unbleached all-purpose flour") is its own
+  ingredient, apart from the plain "all-purpose flour" lines. A decision on
+  one kind never touches a line of the other — not at once
+  (`apply_to_all`), not at the next compute (the carry) — the matches
+  sheet's "N other recipes" counts the same kind only, and the review queue
+  groups the kinds apart. Everything else keeps one key ("onion" /
+  "onions", every move key, the three spelling keys below).
+- **The one function** (engine.dart): `decisionKeyFor(itemText)` is its v115
+  body renamed `_decisionKeyOf` (unchanged; `grep -c "_decisionKeyOf("
+  engine.dart` → 2) plus one wrapper: `'unbleached ' + key` when the key is
+  non-empty and `namesUnbleached(itemText)` (v115's whole-word flag, here on
+  the ITEM text). At the function level, so the single-food and the
+  two-part returns both carry it ("1 cup unbleached all-purpose flour plus 2
+  tablespoons cornstarch" keys 'unbleached all-purpose flour plus
+  cornstarch'; no corpus line). Both `lineKeyOf` (a line's key) and
+  `rekeyDecisions` (a stored decision's re-key) read `decisionKeyFor`, so the
+  two cannot disagree. `itemKeyFor` — the search query, the cache key, the
+  density key and grams.dart's plus-part judgement — is unchanged
+  (`itemKeyFor('unbleached all-purpose flour')` is 'all-purpose flour'), as
+  are `normalizeItem`, `_stopWords`, `lineSearchFor`, `rankCandidates`,
+  every SQL text and the app's code. The empty-key guard keeps an item that
+  is the word alone at '' (`ingredient_decisions.item_key` is `CHECK
+  (item_key <> '')`).
+- **The rows** (the replay on snapshot 33 against the v115 set): ONE stored
+  column moves — `ingredient_matches.item_key` on exactly the 172 rows whose
+  raw line names `\bunbleached\b`, 'all-purpose flour' → 'unbleached
+  all-purpose flour' (5 of them section rows); every other column of those
+  rows (record, confidence, grams, gram source, status, hold, basis, kcal)
+  and every other row (14,395, the whole TSV line), recs, sections, notes,
+  calls (0 bytes) and the buckets are byte-identical to v115. No energy,
+  grams, record or status moves. The key 'all-purpose flour' keeps its 149
+  rows (148 unnamed and 0107 |4 "preferably bleached").
+- **matcherVersion 101 → 102 and the boot re-key**: a stored column moves,
+  and only a version change runs the boot's `rekeyAfterMatcherChange` →
+  `rekeyDecisions` then `backfillItemKeys` (each gated on its settings marker
+  equal to `matcherVersion`). Measured at library scale on a copy of the
+  v115 replayed database (markers 101) under the v116 code: a decision
+  stored under 'all-purpose flour' with the item "unbleached all-purpose
+  flour" ends under 'unbleached all-purpose flour' (its item text keys the
+  kind, and its example rows' new keys include it), one with the item
+  "all-purpose flour" stays; the rows end 149 / 172; both markers 102.
+  Rows a cross-kind `apply_to_all` wrote on v115 keep their record after the
+  re-key, under a key with no decision (no users; stated, not built).
+- **The reach (measured on the BUILT tree's own replayed snapshot-33
+  database, the real PUT under a provider that refuses every call, each
+  scenario on a fresh copy, calls 0)**:
+
+  | row [record] | its key | GET others / others_lines | Confirm + apply_to_all | Confirm, then compute every other key recipe | pick of the other record + apply_to_all |
+  |---|---|---|---|---|---|
+  | quick-cheese-bread\|1 [789951] | unbleached all-purpose flour | v115 135 / 148 → **0 / 0** | v115 148 plain rows → 789951 (−1,843.81) → **0 rows** | v115 149 → **0** | 170 lines / 159 recipes, the unbleached rows only → 789890 (+2,003.51 on the key's rows with the deciding row's +34.02); 0 plain |
+  | chicken-and-sausage-gumbo\|0 [789890] | all-purpose flour | v115 162 / 171 → **0 / 0** | v115 171 unbleached rows → 789890 (+2,003.51) → **0 rows** | v115 172 → **0** | 147 / 133, the plain rows only → 789951 (−1,843.81 with the deciding row's −11.34); 0 unbleached |
+
+  A pick's reach is the same at v115 and v116 (it never crossed a kind
+  whose rows already held the picked record). Both kinds decided are two
+  `ingredient_decisions` rows (`ON CONFLICT(item_key)` is per kind), so the
+  second no longer replaces the first. An un-skip derives from its own
+  kind's decision. A decided line retyped to the other kind ("3 cups (15
+  ounces) all-purpose flour" on 0787 |1) is no longer followed as the same
+  ingredient — it lands the engine's 789890 at 0.950000 (a one-way door on a
+  person decision; no users); an amount-only edit keeps the decision. The
+  same holds in the window between such a retype and the recipe's next
+  compute: the coat plan reads a row whose line was edited and not yet
+  computed only while it is still the same ingredient (`_m52Laid`: its
+  stored key the line's), so a COAT line retyped across kinds leaves its
+  coat without a budget until the compute — chicken-fried-steaks|0 retyped
+  "3 cups all-purpose flour" and saved reads 2,644.36 kcal under
+  `recomputeTotals` (the flour held `coating`, or 0.00 g if it had been
+  confirmed; the egg 50.00 g, the buttermilk 244.00 g) where v115 kept the
+  budget (2,881.59); the next compute writes 2,869.92 (789890, 96.71 g) —
+  on both trees for an undecided coat, at v116 for a confirmed one too
+  (v115 followed the confirmed row). An AMOUNT edit of the same line keeps
+  the budget as at v115 (2,881.59). Measured base against v116 by the
+  hand-edit verifier; pinned (G2). The
+  review queue groups by the stored key: on the replayed databases the
+  only change is the held `coating` row skillet-chicken-and-rice-with-peas-
+  and-scallions|2 moving from 'all-purpose flour' to 'unbleached all-purpose
+  flour' (the flour key's two line-held rows were two single-line groups at
+  v115 already; members, order and every other group identical).
+- **Stated limits** (each measured on this tree; none built):
+  - THE 12 MOVE KEYS (whole chicken, bone-in skin-on chicken thigh, bone-in
+    chicken thigh, boneless strip steak, chickpea, bone-in split chicken
+    breast, mussel, bone-in chicken piece, beef brisket, bone-in skin-on
+    chicken piece, pinto bean, chicken leg quarter) land two records through
+    a MOVE applied after ranking (skin, shell, can liquid, trim), which the
+    carry re-applies on a decided record the move tables list. A Confirm,
+    and a pick of the key's OTHER record, re-point no row's record or grams
+    on any of the 12. A pick of a THIRD record (one the move tables do not
+    list) re-points BOTH kinds' rows to it, the move dropped — with
+    `apply_to_all` at once, without it at each recipe's next compute —
+    measured on 7 of the 12 (keysplit/final/s4.dart, re-run on this tree's
+    replayed database: identical summary): both thigh keys (pick 172855),
+    boneless strip steak (168721: ultimate-charcoal-grilled-steaks|0 "…, fat
+    caps removed" 171751 → 168721), chickpea (2707417: chana-masala|11
+    "…, undrained" and pasta-e-ceci-pasta-with-chickpeas|10 175206 → 2707417), bone-in split
+    chicken breast (2705963), beef brisket (168657, the bought record a
+    Confirm already stores), pinto bean (174286); on the other 5 the chosen
+    third record needed an FDC request (the refusing provider asked 1–22
+    times; applied 0) — not measured. RULED by the orchestrator under the
+    standing matcher authorization, not asked: a pick of a third record
+    keeps its shipped reach — the owner's egg-pair ruling of 2026-11-17
+    ("Keep it as shipped": a pick is how a person undoes a rule) is the
+    precedent. The fix, if ever wanted, is in the move tables, not the key.
+  - THE THREE SPELLING KEYS (turnip, portobello mushroom cap, bone-in turkey
+    thigh; 8 rows of the v115 set — 4, 2 and 2): two spellings of one key
+    land two records through `_rankAs` entries that differ by spelling
+    (turnip and bone-in turkey thigh hold an entry for the singular alone,
+    portobello mushroom cap one for each spelling), and a Confirm on one
+    re-points the other — measured on this tree (keysplit/b/kprobe.dart, calls 0): turnip, a
+    Confirm on the weighed "1 pound turnips" (2747674) moves the count line
+    farmhouse-vegetable-and-barley-soup|16 "1 turnip" off 2709809 (−33.60
+    kcal), a Confirm on the count line moves the 3 weighed rows to 2709809
+    (−61.05); portobello mushroom cap −9.12 / +3.38; bone-in turkey thigh
+    −774.74 / +387.36. RULED by the orchestrator: NO spelling split (the
+    design's Appendix A is not built); the remedy is a later matcher batch
+    that lands both spellings on one food, before the chain's deploy.
+  - THE PREP-WORD SHAPE: "2 cups all-purpose flour, preferably unbleached"
+    ranks with the word (the raw line) and keys plain (the item drops the
+    prep word) — 0 corpus lines; pinned as today's value, the alarm for the
+    YAML rework (the fix then: carry the flag word into `decisionItemOf`'s
+    item text).
+  - THE KIND IS NOT SCOPED TO FLOUR, like the ranking token: "unbleached
+    bread flour", "unbleached cake flour", "unbleached cane sugar" key
+    'unbleached bread flour' / 'unbleached cake flour' / 'unbleached cane
+    sugar' (v115: without the word) — no corpus ingredient line names the
+    word beside another food; pinned as synthesized values. ONE reader
+    matches the key's TEXT rather than comparing or stamping it —
+    `secondFoodRuleOf`'s citrus pair pattern (`^(lemon|lime|orange)
+    (zest|peel) plus juice$` on `lineKeyOf`) — so a citrus pair naming the
+    word misses its rule: the synthesized "1 tablespoon grated unbleached
+    lemon zest plus 2 tablespoons juice" keys 'unbleached lemon zest plus
+    juice', reads no rule and is held `second_food` (167749 at 0.570000,
+    6.00 g stored, no energy) — at v115 it keyed 'lemon zest plus juice'
+    and read the citrus rule, as the same line without the word still does
+    (167747, 30.46 g, 6.70 kcal). No corpus line; pinned as today's value,
+    an alarm (G5), not a rule — found by the hand-edit verifier, round 1.
+    (`_rowKeysOf`, the layout's pairing, reads `headNounOf` of a stored
+    key: 'flour' for both kinds.)
+  - THE SEARCH SIBLING: `lineSearchFor` reads the KEY's cached answer only
+    as a sibling when the line's own query is uncached, and no cached query
+    names the word (0 `fdc_search_cache` rows of snapshot 33), so a line of
+    the unbleached kind has no sibling — as a two-part key has none
+    ('lemon zest plus juice' is no cached query either). Measured in the
+    owner gate on the replayed database (a synthesized line; no corpus line
+    takes the path — the 172 lines' own query 'all-purpose flour' is
+    cached): "2 cups unbleached all-purpose flours" reads the answer
+    "all-purpose flours", its own uncached words, which a compute then asks
+    FDC for; the same line without the word, and the same line under the
+    plain key, read the cached "all-purpose flour". `lineSearchFor` is
+    unchanged (the brief).
+- **Pins** (nutrition_v116_test.dart; the corpus-backed group skips on CI,
+  the file loads corpusless): P1 the stored key after a compute (0787 |1 the
+  kind key; 0028 |0, 0107 |4 "preferably bleached" plain; 0886 |3 "bleached
+  cake flour" its own key); P2 (synthesized: case, the two-part line — the
+  word in its first food and, an owner-gate pin, in its second: "1 cup
+  cornstarch plus 2 tablespoons unbleached all-purpose flour" keys
+  'unbleached cornstarch plus all-purpose flour', the rule being "the item
+  names the word", anywhere — the word alone → '', "unbleachedx"); P3 the
+  PROPERTY over every keyed corpus
+  line, host and titled-section lines — `namesUnbleached(weighedLine(…).raw)`
+  == the key carries the kind: 180 true (the 172 rowed lines and 8 in
+  titled sections the replay stores no row for), 16,329 false, 0
+  disagreeing — and its synthesized negative (the prep-word shape); P4
+  `matcherVersion` 102; P6 the real two-kind host
+  foolproof-double-crust-pie-dough|0 and its section "Foolproof
+  Single-Crust Pie Dough" |0 (a Confirm + apply on either leaves the other
+  kind; a pick + apply reaches its own kind elsewhere); P6b (an owner-gate
+  pin) the matches GET's `others` / `others_lines`: the unbleached 0787 |1
+  beside the plain 0028 |0 on another record reads 0 / 0, and 1 / 1 — its
+  own kind's daube-provencal|10 — once it is picked onto 789890; P7 both kinds
+  decided, each on the other kind's record (the unbleached kind on 789890,
+  the plain kind on 789951), then a recompute of each kind reads its own
+  (daube-provencal|10 789890, creole-style-shrimp-and-sausage-gumbo|4
+  789951); P8 the boot re-key 101 → 102; P9 (synthesized: one recipe
+  holding both kinds) the settle and the un-skip; P11 (synthesized) the
+  apply's write-time re-check across a kind edit; P12 an edit across kinds.
+  EIGHT MORE from the owner gate's hand-edit verifier rounds (below), at
+  `lineKeyOf` sites those rounds, or the closer between them, reached:
+  G1 the row a compute writes when FDC cannot be asked (`_computePass`'s
+  `engineUnavailable`: quick-cheese-bread|1 stored unmatched under the kind
+  key; the GET 0 / 0; a plain pick + apply_to_all applies 0 and leaves it);
+  G2 the coat plan between an edit and the next compute (`_m52Laid`: the
+  figures of "The reach" above, the coat auto and confirmed); G3 a decided
+  row a layout moves (`layoutMatchRows`: chicken-fried-steaks|12 picked or
+  confirmed, a line put first — row 13 keeps its status, record, 26.58 g
+  and the kind key after the layout alone, after the compute and after a
+  plain pick + apply_to_all, applied 0) and G3b (synthesized: the stored
+  key put back to v115's on that decided row, its line then amount-edited
+  and moved — a row the boot backfill leaves) the layout re-keys the moved
+  row to the kind (its text and its line both name the word), and G3c
+  the moved row takes its LINE's key, the authored item's, not the key of
+  its own text (hearty-beef-and-vegetable-stew|6 "1 tablespoon minced
+  fresh thyme or 1 teaspoon dried" keys 'thyme' after a line is put
+  first; its text alone parses to 'thyme or dried' — a corpus line, no
+  kind in it), and G3p the stamp as a PROPERTY over every corpus recipe's
+  own lines (one seeded row per line under a key no line has, a line put
+  first: each of the 13,615 moved rows holds `lineKeyOf` of the line it
+  now sits on; the titled sections' 2,895 lines are not looped); G4
+  (synthesized, as P11) the two
+  "gone" counts of `applyDecisionToOthers` — a target retyped within the
+  kind in the window is counted moved, (lines, moved, decided, gone)
+  (1, 1, 0, 0) at the turn and (0, 1, 0, 0) after the target's own awaits;
+  retyped across kinds, or its line replaced by another ingredient, gone,
+  (1, 0, 0, 1) and (0, 0, 0, 1); G5 (synthesized) the citrus pair pattern
+  on the key's text, the alarm stated above.
+  RE-PINNED (each with a RE-PIN comment): nutrition_v115_test.dart's three
+  R6 pins (now 0 cross-kind rows; plus the same kind still reaching);
+  nutrition_v23_writepath_test.dart's two flour-key reaches (line 8's own
+  key, the earlier target made the same kind); nutrition_review_groups_
+  test.dart's two `seed()` stamps (`lineKeyOf`) with `groupFor` and the key
+  order; nutrition_reuse_test.dart's two stored-key checks (`lineKeyOf`);
+  the 19 `expect(matcherVersion` pins and 17 titles; four hash literals that
+  carry the version (nutrition_v83, v101, seasoning_ci, v47_resolver: the
+  version alone — the hash reads no key; the tip with 101 put back gives
+  the old literals). No contract golden moved.
+- **Mutants** (each one site, run on a snapshot copy restored by a trap,
+  each killed by a value): the wrapper removed (P1, P2, P3, P6–P12 and the
+  three v115 re-pins); `contains('unbleached')` (P2 "unbleachedx");
+  `\bbleached\b` matched too (P1 0886 |3, P3); the kind at the single-food
+  return only (P2 two-part); the empty-key guard dropped (P2 → 'unbleached
+  '); the kind read off `line.raw` in `lineKeyOf` with `decisionKeyFor`
+  unchanged (P3's negative and P8); the kind in `itemKeyFor` instead (the
+  keys test, `itemKeyFor('unbleached bread flour')`); the word as a suffix
+  (P1, P2); `matcherVersion` left 101 (P4, P8, the hash pins); the compute
+  carry reading the plain kind's decision for an unbleached line (P7
+  daube-provencal|10: 789951 read, 789890 expected) and the unbleached
+  kind's for a plain line (P7 creole-style-shrimp-and-sausage-gumbo|4:
+  789890 read, 789951 expected; P12).
+- **The owner gate** (2026-11-17 and 18): the replay re-run — byte-identical to the
+  fixer's, the closer's and verifier round 2's; every row derived again by
+  an independent script (the expected v116 line BUILT from the v115 line
+  and the rule, compared byte for byte: 172 rows name the word, 172 move,
+  0 unexplained); the reach probe re-run on the owner's replayed database —
+  byte-identical to the fixer's output; the review queue and the boot
+  re-key re-run, the same figures (the re-key on a copy with the item key
+  and the two version markers put back to v115's; the hand-edit verifier
+  ran it on the base's own replayed database: the same six lines).
+  28 OWN MUTANTS, each one site moved to its nearest neighbour, run
+  against five test files (nutrition_v116, v115, v23_writepath,
+  review_groups, reuse). THIRTEEN KILLED by a value of the batch's pins —
+  the empty-key guard moved to the item text (P2: '' expected,
+  'unbleached ' read); a stored decision re-keyed without the kind and the
+  re-key's example rows keyed without it (`rekeyDecisions`: P8); the boot
+  backfill stamping the key without it (`backfillItemKeys`: P8 and
+  nutrition_reuse_test); and the key without the kind at ONE call site of
+  `lineKeyOf` — `_computePass`'s key, `pairRowsToLines`, `_keyOfRaw`,
+  `_decidedLineRow`, `decidedKeyRowFor`'s decision read,
+  `settleKeyInRecipe`, `derivedFor`, `applyDecisionToOthers`' per-target
+  re-check, `applyMatchOverride`. FIFTEEN SURVIVED those five files. Two
+  the owner pinned, each re-run and killed by a value: the kind read off a
+  two-part item's FIRST food alone (P2's second-food line: 'unbleached
+  cornstarch plus all-purpose flour' expected, 'cornstarch plus
+  all-purpose flour' read) and `matchesBody` counting its reach under the
+  key without the kind (P6b: 0 / 0 expected, 1 / 1 read). The other
+  thirteen are the key without the kind at one more call site each, which
+  the owner first stated as one class "no pin reaches". THE HAND-EDIT
+  VERIFIER, ROUND 1 measured each site on the real code (thirty scenarios
+  on corpus recipes, the base ec9d489 against v116, and a print at every
+  site whenever a line names the word): no wrong row and no decision of
+  one kind reaching the other at any site — and the class as stated was
+  wrong. FIVE of the thirteen sites are reached with a line naming the
+  word and their mutants move a stored key, a total or a count, or — at
+  the `engineUnavailable` row — write a plain pick onto an unbleached
+  line: `_computePass`'s `engineUnavailable` row, `_m52Laid`,
+  `layoutMatchRows`' moves and the two "gone" counts of
+  `applyDecisionToOthers` (the second reached by the closer). Each is
+  pinned (G1–G4) and its mutant re-run and killed by a value. THREE are
+  reached and their mutants change nothing on any measured input:
+  `_computePass`'s re-laid decided row (two scenarios reach it),
+  `_unplannedOf`'s carried-decision read (reached by nutrition_v82_test's
+  coat pins: the verifier read the outcome's decided and picked arms as
+  agreeing on a flour coat, and did not refute it) and
+  `decidedKeyRowFor`'s `_lineRuleRow` argument (no rule row is written
+  for a flour line). FOUR no corpus line naming the word reaches — the
+  row stamps of `subRecipeRowFor`, `referenceRowFor` (two sites) and
+  `_ruleRowFor`: none of the 172 rows is a reference or a rule row. ONE
+  is `matchesBody`'s search sibling, the limit above; the four other
+  reads of that sibling (`_computePass`, `_rankedCached`,
+  `candidatesForLine`, `knownFood`) were not mutated — the same limit.
+  Those EIGHT (three, four and one), swapped TOGETHER in one mutant,
+  passed the whole server suite as it stood after the closer's pins
+  (+3,509 ~4), and the test file as it stood at the gate's end (21
+  tests) passed under the same mutant: no pin is built for them. The same round found the one reader of the key's text
+  (the citrus pattern: stated above, pinned G5 — its neighbour, the
+  pattern made to accept the word, dies on G5) and the retype window of
+  the coat plan (stated in "The reach", pinned G2). What reads the real
+  code on the corpus's 172 rows through a person's verbs is GATE-P below
+  (sw5–sw13, base against v116: identical but for the flour key's
+  cross-kind rows) — it does not edit a recipe's lines; the verifier's
+  scenarios and G2, G3 do. ROUND 2 (the delta: the closer's pins, the
+  rewritten text, the commit message): every close holds and each of the
+  closer's six mutants dies on its own pin; of the code verifier's six
+  narrowed neighbours five die and ONE SURVIVED — `layoutMatchRows`' moved
+  row KEEPING its stored key (G3's stored key is already the line's) —
+  not equivalent on a stale v115 key: pinned G3b, the neighbour re-run and
+  killed by a value ('… unbleached all-purpose flour' expected, '…
+  all-purpose flour' read); and four LOW in comments and text, corrected.
+  ROUND 3 (the delta of those closes): one MED and four LOW. The MED: a
+  neighbour of G3b — the moved row taking the key of its OWN stored text
+  (`_keyOfRaw(row.raw)`) in place of its line's — passes all 19 tests (in
+  G3b the row's text and its line both name the word). The orchestrator
+  ruled it STATED, not pinned, on two grounds: that it differs only on a
+  row left off its line's text before the upgrade, of which the library
+  holds none (0 of the 14,567 stored rows, no decision stored: snapshot 33
+  and the v116 replayed database), and that a pin of the input that
+  showed it would assert a behaviour as intended (below). ROUND 4 (text
+  only) REFUTED THE FIRST GROUND: the two keys differ wherever a line's
+  authored item keys apart from the parse of its raw text — 51 of the
+  13,615 lines of the corpus's recipes outside their titled sections (59
+  of 16,510 with them), none of them across kinds — so
+  the neighbour moves the key of a row that sits ON its line's text at an
+  ordinary move, and it passed the whole server suite. PINNED on a corpus
+  line (G3c), the neighbour re-run and killed by a value ('… 2.40 thyme'
+  expected, '… 2.40 thyme or dried' read); the owner's own neighbour, the
+  key of the line at the row's OLD position, dies on G3, G3b and G3c. What
+  stays STATED and not pinned is round 3's synthesized input alone: a
+  decided row whose stored text is of the OTHER kind from its line, laid
+  out as one ingredient before v116 (the two texts shared a key then),
+  then moved — the tree stamps the line's key and the decision stays with
+  its line across kinds, where v116 does not follow an edit made under it
+  (P12). No stored row sits off its line's text (the measurement above),
+  and a pin would assert that behaviour as intended. The four LOW of round
+  3 and the one of round 4: wording, corrected. ROUND 5 (the delta of
+  those closes): one MED and four distinct LOW. The MED: a FIFTH
+  neighbour of the same stamp — the key without its second food
+  (`decisionKeyFor(lineItemOf(…))`: 'egg' for 'egg plus yolk') — passed
+  the whole server suite; it differs on 24 of those 13,615 lines (30 of
+  the 16,510), every one a two-part line, none across kinds. A pin per
+  neighbour does not end the neighbours of "the line's key", so the stamp
+  is pinned as a PROPERTY (G3p, in the Pins above); all five neighbours
+  die on it, the fifth on it alone ('lemon zest != lemon zest plus juice'
+  among the rows it reports). The LOW: wording, corrected. ROUND 6 (the
+  delta of those closes): no finding in the code or the pins — the
+  property fails under a layout that does nothing, that drops the rows or
+  that moves them without re-keying; a stamp that keeps the stored key
+  for a row moved UP, or for a titled section's rows, differs on no
+  ordinary edit of a corpus recipe (it needs a stale key), and
+  `layoutMatchRows` has no section branch: the 2,895 lines are a limit of
+  the loop, not of the code — and one LOW in the entry's text, corrected.
+  ROUND 7 (text only, the delta of that close): nothing wrong in these
+  docs; one LOW in the commit message alone — the titled sections' 2,895
+  lines named before the message had introduced them — corrected, and
+  that correction checked by an eighth, text-only round.
+- **GATE-P** on each tree's own replayed database (12 shards, NoNet, calls
+  0), base ec9d489 vs v116: sw5 32,395, sw6 38,280, sw7 1,905, sw8 58,125,
+  sw8r 5,358, sw9 176, sw13 294 — 0 divergent, 0 refused both, line sets
+  identical; sw10 158 bare and typed, 0 divergent both, sw10.tsv identical;
+  sw11 40,186, 200 divergent and 12,880 refused both, identical; sw12 133
+  combos both, divergent 56 → 54: the flour key's two representatives now
+  sit under the two kind keys (one each), and the two line-held flour rows
+  each reached ACROSS kinds at v115 (sourdough-starter|1 from the unbleached
+  representative, skillet-chicken-and-rice|2 from the plain one) are no
+  longer reached; every v116 sw12 block, its tag renamed, is a v115 block.
+- **Cost**: no new step reader; `decisionKeyFor` adds one whole-word regex
+  test per key derivation, which `lineKeyOf` memoises by (raw, item); the
+  cost families (test/support/cost_bounds.dart) unchanged and green.
+- **Deploy**: matcherVersion 102 stales every computed recipe (the staleness
+  hash carries the version) and the boot runs the re-key (decisions first,
+  then `backfillItemKeys` re-keys the 172 rows); the sweep after it is a
+  zero-request sweep (every answer cached; no record moves). No migration:
+  `item_key` is free TEXT. NOT deployed — the prep52 chain ships with one
+  deploy at its end.
+
 **Matcher v115 (batch M102, prep52 P4 — "unbleached all-purpose flour" on
 the unbleached record; matcherVersion 100 → 101. The spec
 .claude/diag/2026-11-16/prep52/design_v2.md "P4 — unbleached all-purpose
 flour", the rulings in the M102 brief. 172 corpus lines name "unbleached
 all-purpose flour"; `unbleached` is a `_stopWords` member, so their item and
-key are `all-purpose flour`, their ranking words carry no variety, and on
+key are `all-purpose flour` (changed 2026-11-17, matcher v116: the DECISION
+key carries the word, 'unbleached all-purpose flour'; the item key —
+query, cache and density — is unchanged), their ranking words carry no variety, and on
 the recorded 'all-purpose flour' answer Foundation 789890 "Flour, wheat,
 all-purpose, enriched, bleached" (366 kcal per 100 g, carbohydrate 77.3)
 and 789951 "…, enriched, unbleached" (358, carbohydrate 73.2; its detail
@@ -5375,7 +5751,9 @@ never a line number.)**
   the ranking token `unbleached` to `allTokens` (`grep -c "if (unbleached)
   'unbleached'" matcher.dart` → 1) — the `namesCannedLegume` /
   `impliesSkinOn` precedent: ranked, never searched. The word STAYS a stop
-  word: key, search query, cache and density are untouched; the rows are
+  word: key, search query, cache and density are untouched (changed
+  2026-11-17, matcher v116: the DECISION key carries it; the item key,
+  query, cache and density stay untouched); the rows are
   unflagged (it is the line's own food). On the recorded answer (pinned):
   with the token 789951 0.983333, 790018 "…, unenriched, unbleached"
   0.983333 (second by FDC's order), SR 168936 0.884286, 789890 0.687500;
@@ -5537,7 +5915,10 @@ never a line number.)**
   this batch"): the unnamed lines on bleached 789890, King Arthur on
   789890, bleached cake flour on the AP record.
 - **THE SHARED DECISION KEY (R6) — a finding, told to the owner, not
-  designed around.** An unbleached and an unnamed line keep ONE key,
+  designed around.** (Resolved 2026-11-17, matcher v116: the decision key
+  carries the word — 'unbleached all-purpose flour' — so a decision reaches
+  its own kind only; the R6 pins are re-pinned to 0 cross-kind rows — the
+  "Matcher v116" block above.) An unbleached and an unnamed line keep ONE key,
   `all-purpose flour`, and now land two records; a food decided on either
   is the key's decision (`putDecision`), `applyDecisionToOthers` reaches a
   sibling on ANOTHER food at any score, and the next compute carries the
@@ -14752,8 +15133,9 @@ endpoint's `fresh=true` replaces it), `item` (the parsed ingredient item VERBATI
 the line's parenthetical, e.g. `(1 1/2 sticks) unsalted butter`; a client
 wanting a bare name strips parentheticals, as the app does; null when the
 line has none), `others`: how many recipes hold an undecided line
-with the same ingredient (keys are singular and accent-folded, so "onion"
-and "onions" are one; the same recipe's other lines count until a decision
+with the same ingredient of the same kind (keys are singular and
+accent-folded, so "onion" and "onions" are one; a line naming `unbleached`
+is its own kind — changed 2026-11-17, matcher v116; the same recipe's other lines count until a decision
 on the key lands in this recipe — v102 (M98): a decision PUT settles them,
 so after it they count only where the decision could not settle them, a
 FOOD failure or a decision unusable on that line; a line the
@@ -14971,7 +15353,9 @@ writes it, before the totals), and it survives this recipe being edited or
 deleted. A grams-only edit decides the amount, not the food, and records no
 ingredient decision; neither does `skipped`. The newest decision wins.
 Ingredient keys are singular ("onion" and "onions" are one ingredient) and
-accent-folded. A decided line also follows its text: an ingredient inserted,
+accent-folded — and a line naming the whole word `unbleached` keys
+'unbleached <ingredient>' (Changed 2026-11-17, matcher v116, the owner's
+"same kind only"): a decision on one kind never reaches the other. A decided line also follows its text: an ingredient inserted,
 deleted or reordered above it moves the line, and its decision moves with it;
 an amount edit on a decided line keeps the food and the status (a skip stays
 a skip) and re-derives the grams as a compute weighs the new line — the
@@ -15327,7 +15711,9 @@ holds) — pinned hold by hold against the table
 
 Add `apply_to_all: true` — together with `fdc_id` or `confirmed: true`,
 the decision being broadcast — to land the same food on every other
-undecided (`auto` / `unmatched`) line with the same ingredient item (other
+undecided (`auto` / `unmatched`) line with the same ingredient item of the
+same kind (changed 2026-11-17, matcher v116: a line naming `unbleached` is
+its own kind) (other
 recipes, and this recipe's other lines), each with grams from its own amounts
 — weighed and gated as a compute writes it: a sub-recipe's eaten "plus"
 part, and a marked count the food gives no grams lands as the 0 g

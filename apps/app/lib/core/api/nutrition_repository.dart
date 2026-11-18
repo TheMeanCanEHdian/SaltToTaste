@@ -328,7 +328,8 @@ class IngredientMatch {
   final String? item;
 
   /// Other recipes holding an undecided line with this same ingredient item
-  /// — what an apply-to-all from this line would reach.
+  /// — the same kind of it ("unbleached" flour apart from plain, server
+  /// matcher v116) — what an apply-to-all from this line would reach.
   final int others;
 
   /// The same undecided lines counted as LINES — two lines of one ingredient

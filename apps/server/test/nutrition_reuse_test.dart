@@ -185,7 +185,9 @@ void main() {
         final lines = nutritionLines(recipe);
         for (final row in db.ingredientMatchesFor(recipe.id)) {
           final line = lines[row.position];
-          expect(row.itemKey, itemKeyFor(line.item ?? line.raw));
+          // RE-PIN (M103 batch, v116): the stored key is [lineKeyOf]'s (was
+          // itemKeyFor): bundt's and caramel's flour lines name `unbleached`.
+          expect(row.itemKey, lineKeyOf(line));
         }
       }
     });
@@ -817,7 +819,9 @@ void main() {
       expect(db.getSetting(itemKeyBackfillSetting), '$matcherVersion');
       for (final row in db.ingredientMatchesFor(bundt.id)) {
         final line = nutritionLines(bundt)[row.position];
-        final expected = itemKeyFor(line.item ?? line.raw);
+        // RE-PIN (M103 batch, v116): [lineKeyOf], as the backfill stamps it
+        // (was itemKeyFor; bundt's flour line names `unbleached`).
+        final expected = lineKeyOf(line);
         expect(row.itemKey, expected.isEmpty ? isNull : expected);
       }
       expect(backfillItemKeys(db), 0, reason: 'guarded by the marker');

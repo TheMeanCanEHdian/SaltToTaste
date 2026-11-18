@@ -125,7 +125,7 @@ const Map<String, (String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 101 (v90 set it to 85, batch M86: rows move)', () {
+  test('matcherVersion 102 (v90 set it to 85, batch M86: rows move)', () {
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
@@ -142,7 +142,8 @@ void main() {
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
-    expect(matcherVersion, 101);
+    // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
+    expect(matcherVersion, 102);
   });
 
   test('the energy def reads 208, then 958 (Specific Atwater), then 957 '

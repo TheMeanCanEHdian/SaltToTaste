@@ -85,7 +85,9 @@ void main() {
           recipeId: recipe.id,
           position: position,
           raw: line.raw,
-          itemKey: unkeyed ? unkeyedAs : itemKeyFor(line.item ?? line.raw),
+          // RE-PIN (M103 batch, v116): the production stamp, [lineKeyOf]
+          // (was itemKeyFor; equal on every line this group seeds).
+          itemKey: unkeyed ? unkeyedAs : lineKeyOf(line),
           fdcId: food?.id,
           description: food?.desc,
           dataType: food?.type,
@@ -507,7 +509,9 @@ void main() {
           recipeId: recipe.id,
           position: position,
           raw: raw ?? line.raw,
-          itemKey: itemKeyFor(line.item ?? line.raw),
+          // RE-PIN (M103 batch, v116): the production stamp, [lineKeyOf] (was
+          // itemKeyFor): 0857 |6 and 0879 |3 name `unbleached`.
+          itemKey: lineKeyOf(line),
           fdcId: food.id,
           description: food.desc,
           dataType: food.type,
@@ -671,7 +675,10 @@ void main() {
 
     test('the example is the LOWEST-confidence member even when a higher one '
         'has grams and it has none', () {
-      final group = groupFor('all-purpose flour');
+      // RE-PIN (M103 batch, v116): bundt's and caramel's flour lines name
+      // `unbleached`, so their group is 'unbleached all-purpose flour' (was
+      // 'all-purpose flour').
+      final group = groupFor('unbleached all-purpose flour');
       expect(
         group['recipe'],
         containsPair('slug', caramel.slug),
@@ -724,7 +731,9 @@ void main() {
         [
           'chicken broth',
           'powdered sugar',
-          'all-purpose flour',
+          // RE-PIN (M103 batch, v116): the same group, its key the kind's
+          // (was 'all-purpose flour'); the order is unchanged.
+          'unbleached all-purpose flour',
           'without salt butter',
           'table salt', // the two undecided lines
           'table salt', // the decided line, its own group

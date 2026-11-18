@@ -681,8 +681,10 @@ class _QueueRow extends StatelessWidget {
   }
 }
 
-/// A group row's meta slot: the ingredient, how far it reaches, and whether
-/// it has already been decided (so the same ingredient is not decided twice).
+/// A group row's meta slot: the ingredient (the same kind of it — server
+/// matcher v116 groups "unbleached" flour apart from plain), how far it
+/// reaches, and whether it has already been decided (so the same ingredient
+/// is not decided twice).
 class _GroupMeta extends StatelessWidget {
   const _GroupMeta({required this.line});
 

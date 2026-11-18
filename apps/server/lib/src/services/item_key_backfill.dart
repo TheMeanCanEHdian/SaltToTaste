@@ -15,7 +15,10 @@ const String itemKeyBackfillSetting = 'backfill.item_key';
 /// Keys every match row with the matcher's decision key ([itemKeyFor]) —
 /// first for rows written before migration 009, and again whenever
 /// [matcherVersion] changes what the key is (a singular form, a folded
-/// accent), so cross-recipe reuse keeps finding decisions.
+/// accent), so cross-recipe reuse keeps finding decisions. (Changed
+/// 2026-11-17, matcher v116: the key stamped is the line's decision key,
+/// `lineKeyOf` — `decisionKeyFor`, not [itemKeyFor]; the two differ on a
+/// line naming a second food after "plus" or the kind word `unbleached`.)
 ///
 /// The key comes from the recipe's PARSED line (`item`, falling back to the
 /// raw text), so it is derived here rather than in SQL. A row whose position

@@ -601,63 +601,88 @@ void person() {
 /// both sat on 789890 — and a carried confirm moved none. On v115 each
 /// re-points the OTHER variety (the replay-wide figures in docs/API.md
 /// "Matcher v115", R6). Pinned here on 0787 |1 and 0028 |0 alone.
+/// (Resolved 2026-11-17, matcher v116, the owner's "same kind only": the
+/// decision key carries `unbleached`; the pins below are RE-PINNED to 0
+/// cross-kind rows, and the same kind still reaches.)
 void sharedKey() {
-  // The target row's grams are the weight print's either way, its energy at
-  // the new record's kcal: 0787 |1 15 oz = 425.24 g × 3.66 = 1,556.39; 0028
-  // |0 5 oz = 141.75 g × 3.58 = 507.46 (was × 3.66 = 518.80).
-  for (final (name, from, to, other, before, after, grams, kcal) in [
+  // RE-PIN (M103 batch, v116, the owner's "same kind only"): the decision
+  // key carries the kind — 0787 |1 keys 'unbleached all-purpose flour',
+  // 0028 |0 'all-purpose flour' — so each cross-kind Confirm below reaches
+  // 0 rows and the target keeps its own record (v115: re-pointed). 0787 |1
+  // 425.24 g × 3.58 = 1,522.37; 0028 |0 141.75 g × 3.66 = 518.80.
+  for (final (name, from, to, other, record, grams, kcal) in [
     (
-      'a Confirm + apply_to_all on the unnamed 0028 |0 moves the unbleached '
-          '0787 |1 to 789890 (base: reached 0)',
+      'a Confirm + apply_to_all on the unnamed 0028 |0 leaves the unbleached '
+          '0787 |1 on 789951 (v115: moved it to 789890)',
       (_gumbo, 0),
       (_quickBread, 1),
       _quickBread,
       _unbleached,
-      _bleached,
       '425.24',
-      '1556.39',
+      '1522.37',
     ),
     (
-      'a Confirm + apply_to_all on the unbleached 0787 |1 moves the unnamed '
-          '0028 |0 to 789951 (base: reached 0)',
+      'a Confirm + apply_to_all on the unbleached 0787 |1 leaves the unnamed '
+          '0028 |0 on 789890 (v115: moved it to 789951)',
       (_quickBread, 1),
       (_gumbo, 0),
       _gumbo,
       _bleached,
-      _unbleached,
       '141.75',
-      '507.46',
+      '518.80',
     ),
   ]) {
     test(name, () async {
       final (db, _) = a.pathDb();
       final decided = await _compute(db, _only(from.$1, from.$2));
       final target = await _compute(db, _only(to.$1, to.$2));
-      expect(d.rowOf(db, target, 0).fdcId, before, reason: other);
+      expect(d.rowOf(db, target, 0).fdcId, record, reason: other);
       final reach = decisionReach(
         db,
-        'all-purpose flour',
+        lineKeyOf(nutritionLines(decided).single),
         excluding: (recipeId: decided.id, position: 0),
         fdcId: d.rowOf(db, decided, 0).fdcId,
       );
-      expect([for (final r in reach) r.recipeId], [target.id]);
+      expect([for (final r in reach) r.recipeId], isEmpty);
       final applied = await applyMatchOverride(db, _fx, decided, 0, {
         'raw': nutritionLines(decided).single.raw,
         'confirmed': true,
         'apply_to_all': true,
       });
-      expect(applied?.lines, 1);
+      expect(applied?.lines, 0);
       final row = d.rowOf(db, target, 0);
       expect(
         (row.fdcId, row.status, _g(row.grams), _kcal(db, row)),
-        (after, 'auto', grams, kcal),
+        (record, 'auto', grams, kcal),
       );
     });
   }
 
-  test("a Confirm WITHOUT apply_to_all on the unnamed 0028 |0 is the key's "
-      'decision: the next compute of 0787 carries 789890 to its unbleached '
-      '|1 (base: 789890 before and after)', () async {
+  test('the same kind still reaches: a pick of 789890 + apply_to_all on the '
+      'unbleached 0787 |1 moves the unbleached daube |10 to it, never the '
+      'unnamed 0028 |0', () async {
+    final (db, _) = a.pathDb();
+    final bread = await _compute(db, _only(_quickBread, 1));
+    final daube = await _compute(db, _only(_daube, 10));
+    final gumbo = await _compute(db, _only(_gumbo, 0));
+    final applied = await applyMatchOverride(db, _fx, bread, 0, {
+      'raw': nutritionLines(bread).single.raw,
+      'fdc_id': _bleached,
+      'apply_to_all': true,
+    });
+    expect(applied?.lines, 1);
+    final row = d.rowOf(db, daube, 0);
+    // 47.25 g × 3.66 = 172.93.
+    expect(
+      (row.fdcId, row.status, _g(row.grams), _kcal(db, row)),
+      (_bleached, 'auto', '47.25', '172.93'),
+    );
+    expect(d.rowOf(db, gumbo, 0).confidence, 0.95);
+  });
+
+  test('a Confirm WITHOUT apply_to_all on the unnamed 0028 |0 is the plain '
+      "kind's decision only: the next compute of 0787 keeps its unbleached "
+      '|1 on 789951 (v115: carried 789890 to it)', () async {
     final (db, _) = a.pathDb();
     final gumbo = await _compute(db, _only(_gumbo, 0));
     final bread = await _compute(db, _only(_quickBread, 1));
@@ -666,13 +691,15 @@ void sharedKey() {
       'raw': nutritionLines(gumbo).single.raw,
       'confirmed': true,
     });
+    // RE-PIN (M103 batch, v116): two keys; the unbleached one undecided.
     expect(db.decisionFor('all-purpose flour')?.fdcId, _bleached);
+    expect(db.decisionFor('unbleached all-purpose flour'), isNull);
     expect(d.rowOf(db, bread, 0).fdcId, _unbleached, reason: 'the PUT alone');
     await matchAndCompute(db, _fx, bread);
     final row = d.rowOf(db, bread, 0);
     expect(
       (row.fdcId, row.status, _g(row.grams), _kcal(db, row)),
-      (_bleached, 'auto', '425.24', '1556.39'),
+      (_unbleached, 'auto', '425.24', '1522.37'),
     );
   });
 }

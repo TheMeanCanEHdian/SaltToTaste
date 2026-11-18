@@ -8,8 +8,10 @@ import 'package:salt_app/core/api/recipe_repository.dart'
 import 'package:salt_shared/salt_shared.dart' show ApiErrorCodes, holdActionsOf;
 
 /// An offer to push a decision just made on one line out to every other
-/// undecided line of the same ingredient item: what to resend (the pick, or
-/// the confirm), and how many recipes and lines it would change.
+/// undecided line of the same ingredient item (the same kind of it — server
+/// matcher v116 keys "unbleached" flour apart from plain): what to resend
+/// (the pick, or the confirm), and how many recipes and lines it would
+/// change.
 ///
 /// The reach is food-agnostic: the others are the undecided lines of this
 /// ingredient, whatever food they happen to sit on — so the strip tells one

@@ -536,7 +536,7 @@ Recipe _without(Recipe corpus, String sentence, String tag) {
 
 void main() {
   test(
-    'matcherVersion 101 (v96 set it to 91, batch M94: the browning fat)',
+    'matcherVersion 102 (v96 set it to 91, batch M94: the browning fat)',
     () {
       // RE-PIN (M95 batch, v97): matcherVersion 92 (was 91).
       // RE-PIN (M96 batch, v99): matcherVersion 93 (was 92).
@@ -548,7 +548,8 @@ void main() {
       // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
       // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
       // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
-      expect(matcherVersion, 101);
+      // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
+      expect(matcherVersion, 102);
     },
   );
 

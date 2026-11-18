@@ -3525,7 +3525,10 @@ class IngredientDecisionRow {
   /// `pickedMoveSource`).
   final bool asPicked;
 
-  /// The decision key (`itemKeyFor` of [item]).
+  /// The decision key (`itemKeyFor` of [item]). (Changed 2026-11-17, matcher
+  /// v116: the key is `decisionKeyFor` of [item] — `itemKeyFor`'s, plus a
+  /// second food's after "plus" and the kind word `unbleached` — so the two
+  /// differ on an item naming that word.)
   final String itemKey;
 
   /// The parsed ingredient text the key was derived from.

@@ -319,7 +319,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 101 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 102 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -341,7 +341,8 @@ void main() {
     // RE-PIN (M100 batch, v113): matcherVersion 99 (was 98).
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
-    expect(matcherVersion, 101);
+    // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
+    expect(matcherVersion, 102);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {

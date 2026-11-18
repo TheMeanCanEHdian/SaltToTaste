@@ -172,3 +172,13 @@ sweep the tree's OWN replayed database (gate.sh's rp_main.db, copied with sqlite
 stored row then that tree's own. The owner gate's runs so: sw9 the same 176 / 130 line sets as on the snapshot; sw13 tip
 294 combos (apply 130, hold 134 = the 67 two-part rows × 2 parts, all 46 egg rows; the six pair arms 5 each) / base 202
 (hold 42), 0 divergent 0 refused 0 errors both, settled 139 / 98 recipes, second pass moved 0, calls 0.
+
+v116 (batch M103, 2026-11-17; docs/API.md "Matcher v116"): the decision key of a line naming `unbleached` carries the
+word, so sw12's flour key no longer has a second representative: the two flour representatives v115 added (0005
+best-beef-stew|7 on 789951, 0006 hearty-beef-and-vegetable-stew|7 on 789890) sit under 'unbleached all-purpose flour'
+and 'all-purpose flour', one each. GATE-P on each tree's own replayed snapshot-33 database (12 shards, NoNet, calls 0),
+base ec9d489 vs v116: sw5 32,395 / sw6 38,280 / sw7 1,905 / sw8 58,125 / sw8r 5,358 / sw9 176 / sw13 294, 0 divergent
+0 refused both, line sets identical; sw10 158 bare and typed, 0 divergent both, sw10.tsv identical; sw11 40,186, 200
+divergent, 12,880 refused both, identical; sw12 133 combos both, 56 → 54 divergent — the two line-held flour rows
+(0799 sourdough-starter|1, 0077 skillet-chicken-and-rice|2) are no longer reached ACROSS kinds (0077|2 is still reached
+by its own kind's representative); every v116 sw12 block, its tag renamed, is a v115 block.
