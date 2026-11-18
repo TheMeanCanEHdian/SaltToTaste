@@ -199,7 +199,8 @@ const List<_Row> _b5 = [
 /// frying medium (prep50's negative). B5: guay-tiew|2's own word "green"
 /// ("scallions" → "green onions") is first named after the strain, so the
 /// fallback reaches it and refuses; caldo-de-siete-mares|0's anchos (head
-/// `pepper`) are no strained class.
+/// `pepper`) are no strained class — since v117 (M104 S1a) they are: their
+/// strain head is 'chile' (`_strainHeadOf`), strained out, 0 g (re-pinned).
 const List<_Row> _negatives = [
   (
     '0027-mulligatawny-soup.yaml',
@@ -274,15 +275,19 @@ const List<_Row> _negatives = [
     '19.20',
     '4 × 15 g each',
   ),
+  // RE-PIN (M104 batch, v117): the anchos' strain head is 'chile'
+  // (`_strainHeadOf`), their own word "ancho" names S1.0's toast and S2.1's
+  // "Add ancho mixture", both before S2.4's strain: strained out, 0 g (was
+  // 'piece', 51.00 g, 143.31 kcal, '3 · USDA per-item weight').
   (
     '1207-caldo-de-siete-mares.yaml',
     0,
     '3 dried ancho chiles, stemmed, seeded, and torn into ½-inch pieces (¾ cup)',
     169396,
-    'piece',
-    '51.00',
-    '143.31',
-    '3 · USDA per-item weight',
+    'discarded',
+    '0.00',
+    '0.00',
+    'discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted)',
   ),
 ];
 
@@ -319,7 +324,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 102 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 103 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -342,7 +347,8 @@ void main() {
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
-    expect(matcherVersion, 102);
+    // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
+    expect(matcherVersion, 103);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {

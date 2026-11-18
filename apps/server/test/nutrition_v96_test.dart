@@ -108,15 +108,19 @@ String _browning(String food, {bool butter = false, bool evoo = false}) =>
 /// heaviest counted meat row) — kept = 0.015195 × that ÷ the line's fat.
 final _the15 = [
   // 14.00 → 6.89 g, 126.00 → 62.01 kcal; ground chicken 453.59 g; T S3 skim.
+  // RE-PIN (M104 batch, v117): the ground chicken |1 is strained out (0 g),
+  // so the heaviest counted meat row is the breasts |9, 442.25 g: 0.015195
+  // × 442.25 = 6.72 g, 60.48 kcal, the basis naming the breast (was 6.89,
+  // 62.01, 'chicken').
   (
     _hearty,
     0,
     '1 tablespoon vegetable oil',
     2710180,
     '14.00',
-    '6.89',
-    '62.01',
-    _browning('chicken'),
+    '6.72',
+    '60.48',
+    _browning('chicken breast'),
   ),
   // 14.00 → 6.10, 126.00 → 54.90; thighs 401.43 g; T S4.3 skim (S2.0's
   // "Pour off all but 1 tablespoon fat" is a printed kept part: no trigger).
@@ -421,7 +425,9 @@ const _unmoved = [
 /// replay's to the cent of rounding.
 const _totals = [
   // replay 517.28 → 501.29 (-15.99).
-  (_hearty, 'complete', '501.29'),
+  // RE-PIN (M104 batch, v117): replay 501.29 → 338.75 (the ground chicken
+  // strained out, −648.64, and the oil −1.53: −650.17 ÷ 4).
+  (_hearty, 'complete', '338.75'),
   // replay 276.45 → 264.60 (-11.85).
   (_slowSoup, 'complete', '264.60'),
   // replay 211.12 → 208.83 (-2.29).
@@ -549,7 +555,8 @@ void main() {
       // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
       // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
       // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
-      expect(matcherVersion, 102);
+      // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
+      expect(matcherVersion, 103);
     },
   );
 

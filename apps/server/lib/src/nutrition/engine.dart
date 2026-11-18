@@ -212,13 +212,15 @@ enum DiscardedMedium {
   /// name ("Remove and discard the bay leaves"; a celery bundle, onion
   /// halves, a garlic head, lemons from a cavity), only the discarded
   /// pieces of a count line ([_discardedShareOf], F12), and cured pork so
-  /// discarded from a skimmed pot (Q17) — [_discardedByName]. Follows the
-  /// policy: 0 g, "removed and discarded (step N)".
+  /// discarded from a skimmed pot (Q17) — since v117 (M104 W1-D) a bone-in
+  /// wing too — [_discardedByName]. Follows the policy: 0 g, "removed and
+  /// discarded (step N)".
   removedAromatic,
 
   /// v50 (Q17; critic F4): cured pork or ground stock meat a step strains
-  /// out or discards while no sentence skims, separates or pours off the
-  /// pot's fat — its rendered fat stays in the dish, in a share no source
+  /// out or discards — since v117 (M104 W1-D) a bone-in wing a step
+  /// discards by name too — while no sentence skims, separates or pours off
+  /// the pot's fat — its rendered fat stays in the dish, in a share no source
   /// gives ("discard salt pork, leaving fat in pot"). Held
   /// (`discarded_medium`), as the 2026-10-01 rulings hold an unwritten
   /// eaten part.
@@ -4470,6 +4472,19 @@ const Set<String> _strainedHeads = {
   'allspice', 'juniper', 'cardamom', 'kombu', 'bonito', 'pi',
 };
 
+/// v117 (M104 S1a): the head a strain reader tests against [_strainedHeads]
+/// — [headNounOf] maps 'chile' / 'chili' to 'pepper', so a chile line's
+/// head is never [_vegetableHeads]' 'chile' (caldo de siete mares' "3 dried
+/// ancho chiles" pulsed coarse in the mix the broth strains): 'chile' for a
+/// 'pepper' head whose item names the chile word, else [head]. Read at the
+/// three `_strainedHeads.contains` sites ([_strainedOut], also for its
+/// mentions; [_discardedByName]; [_keptSolidsOf]).
+String? _strainHeadOf(String? head, IngredientLine line) =>
+    head == 'pepper' && _chileWord.hasMatch(normalizeItem(lineItemOf(line)))
+    ? 'chile'
+    : head;
+final RegExp _chileWord = RegExp(r'\bchil(?:e|i)s?\b');
+
 /// The aromatic vegetables a strain zeroes ([_strainedHeads]).
 const Set<String> _vegetableHeads = {
   'onion',
@@ -4497,6 +4512,13 @@ const Set<String> _zestHeads = {'lemon', 'lime', 'orange'};
 /// skims, separates or pours it off ([_fatSkimmed]).
 final RegExp _curedPork = RegExp(
   r'\b(?:salt pork|bacon|pancetta|prosciutto|ham hock|chorizo)\b',
+);
+
+/// v117 (M104 W1-E): a bone-in poultry word — a sentence naming one after
+/// the strain names that part's line, not the ground stock meat
+/// ([_strainedOut]'s `returned`).
+final RegExp _boneInWord = RegExp(
+  r'\b(?:skin|bones?|shred\w*|breasts?|thighs?|legs?|drumsticks?|wings?)\b',
 );
 
 /// Ground meat simmered in a stock (F4): the stock-meat class.
@@ -4532,8 +4554,14 @@ final RegExp _liftsVegetables = RegExp(
 final RegExp _vegetablesWord = RegExp(r'\bvegetables\b');
 
 /// "Add the vegetable mixture": a later sentence that carries a processor's
-/// lines into the pot (the Sauce Base).
-final RegExp _addsMixture = RegExp(r'\badd (?:the )?(?:\w+ )?mixture\b');
+/// lines into the pot (the Sauce Base). v117 (M104 S1b): "Transfer the
+/// <x-y> mixture to" a pot carries them too — chinese-style barbecued
+/// spareribs' "Transfer ginger-garlic mixture to dutch oven." (a hyphenated
+/// mixture word; the carrying condition, no other vessel or a pot word, is
+/// unchanged).
+final RegExp _addsMixture = RegExp(
+  r'\b(?:add|transfer)\w* (?:the )?(?:[\w-]+ )?mixture\b',
+);
 
 /// A sentence that blends a food smooth or into a paste (F3's line
 /// history: cochinita pibil's garlic, spices and onion).
@@ -4584,6 +4612,29 @@ bool _skimsFatIn(String s) {
 /// skim word outside [spans] with a fat past it outside them ([_freeActIn]).
 bool _skimsTheFat(String s, List<Match> spans) =>
     _freeActIn(s, _skimWord, _fatAlone, spans);
+
+/// v117 (M104): the strain head ([_strainHeadOf]) of [line] (its
+/// [_headsOf] head) — for the corpus property pins.
+@visibleForTesting
+String? strainHeadOfForTest(IngredientLine line) => _strainHeadOf(
+  headNounOf(normalizeItem(lineItemOf(line))),
+  line,
+);
+
+/// v117 (M104): whether the carry pattern ([_addsMixture]) matches [s].
+@visibleForTesting
+bool addsMixtureForTest(String s) => _addsMixture.hasMatch(s);
+
+/// v117 (M104): each step's sentences, as the strain readers read them.
+@visibleForTesting
+List<List<String>> stepSentencesForTest(Recipe recipe) =>
+    _stepIndexOf(recipe).sentences;
+
+/// v117 closer 1 (verify1 D1): the lines [_keptSolidsOf] shares the kept
+/// part among, null when no such strain — for the corpus property pin.
+@visibleForTesting
+List<int>? keptSolidsLinesForTest(Recipe recipe) =>
+    _keptSolidsOf(recipe)?.lines;
 
 /// [_skimsTheFat] (nothing forbidden) for the tests' fuzz and cap pins.
 @visibleForTesting
@@ -4703,7 +4754,8 @@ List<(int, int)> _ownMentions(
 }
 
 /// Q16 (D1) and Q17: what [recipe]'s strain ([_strainAt]) does to [line]
-/// (head [head]) — null when the line is not in the strained liquid or not
+/// (head [pepperHead], read through [_strainHeadOf] since v117) — null when
+/// the line is not in the strained liquid or not
 /// a solid it keeps: [DiscardedMedium.strainedSolid] (0 g, the policy) for
 /// an aromatic, herb, whole spice or zest strip ([_strainedHeads]), and for
 /// cured pork or ground stock meat whose fat a sentence skims, separates or
@@ -4713,14 +4765,18 @@ List<(int, int)> _ownMentions(
 /// meat). The line is in the liquid when its nth mention (A13,
 /// [_ownMentions]) stands before the strain and no sentence after it names
 /// its head again (a discard aside): a food named after the strain goes back
-/// into the dish (the Calvados chops' apples). Kept: a ground spice, powder
+/// into the dish (the Calvados chops' apples) — since v117 (M104 W1-E) for
+/// ground stock meat never in a sentence naming a bone-in part
+/// ([_boneInWord]: that part's line). Kept: a ground spice, powder
 /// or paste ([_passesStrainer], F3); a line a sentence of its own history
 /// blends smooth or into a paste ([_blendsSmooth], F3: cochinita pibil); a
 /// mention in a bowl, mixer, processor or blender with no pot word, unless
 /// a later "add the … mixture" in the pot carries it there (the Sauce
-/// Base); a mention in the step of a strain opening "meanwhile" (a second
-/// pot: the butternut risotto's onions); a mention on a baking sheet when
-/// the strain's step strains another pot (best roast chicken's carrots);
+/// Base; since v117, M104 S1b, "transfer the <x-y> mixture to" a pot too:
+/// [_addsMixture]); a mention in the step of a strain opening
+/// "meanwhile" (a second pot: the butternut risotto's onions); a mention
+/// on a baking sheet when the strain's step strains another pot (best
+/// roast chicken's carrots);
 /// an amount-less line.
 /// v85 (batch M83 B5; prep51 design_v2 §2, planner pB, decided under the
 /// 2026-10-07 standing authorization): a line no step names by its head is
@@ -4732,12 +4788,14 @@ List<(int, int)> _ownMentions(
 DiscardedMedium? _strainedOut(
   Recipe recipe,
   IngredientLine line,
-  String head,
+  String pepperHead,
 ) {
   final at = _strainAt(recipe);
   if (at == null || line.amounts.isEmpty) {
     return null;
   }
+  // v117 (M104 S1a): a chile's class test AND its mentions read 'chile'.
+  final head = _strainHeadOf(pepperHead, line)!;
   final raw = line.raw.toLowerCase();
   final cured = _curedPork.hasMatch(raw);
   final meat =
@@ -4783,7 +4841,11 @@ DiscardedMedium? _strainedOut(
   // re-added after the stock's strain left the stock's onion counted). The
   // line's own nth mention stands before the strain (above), so this is
   // [mine] read once per head.
-  final returned = index.memo(('namedAfterStrain', name), () {
+  // v117 (M104 W1-E; key: meat too): for ground stock meat, a later mention
+  // whose sentence names a bone-in part ([_boneInWord]) is that part's line,
+  // never the ground meat back (hearty chicken noodle soup's "Add the
+  // shredded chicken", the breasts' line).
+  final returned = index.memo(('namedAfterStrain', name, meat), () {
     final lines = _headsOf(recipe).where((h) => h == name).length;
     return _foodNaming(recipe, name)
         .skip(lines)
@@ -4791,6 +4853,7 @@ DiscardedMedium? _strainedOut(
           (m) =>
               _before(at, m) &&
               !index.sentence(m).trimLeft().startsWith('discard') &&
+              !(meat && _boneInWord.hasMatch(index.sentence(m))) &&
               _names(
                 strained.fold(
                   index.sentence(m),
@@ -5002,6 +5065,11 @@ const Set<String> _wholePieceHeads = {
   'orange',
 };
 
+/// v117 (M104 W1-D): the bone-in poultry parts [_discardedByName] reads as
+/// it reads cured pork — the wing, the one such part a corpus step discards
+/// by name.
+const Set<String> _discardedPartHeads = {'wing'};
+
 /// A line partly or wholly cut fine: its cut part is eaten ("2 medium
 /// onions, 1 quartered and 1 chopped fine"), so a discard never zeroes it.
 final RegExp _cutFine = RegExp(
@@ -5025,7 +5093,9 @@ final RegExp _wholePart = RegExp(
 /// removes or discards (the farmhouse soup's "remove herb bundle"), and
 /// for cured pork whose pot's fat a sentence takes off ([_fatSkimmed]);
 /// [DiscardedMedium.fatKept] (held) for cured pork whose fat stays
-/// (milk-braised pork loin: "discard salt pork, leaving fat in pot"). The
+/// (milk-braised pork loin: "discard salt pork, leaving fat in pot") —
+/// since v117 (M104 W1-D) a bone-in wing ([_discardedPartHeads]) both ways
+/// (best chicken stew's "Discard wings": held). The
 /// clause names the head and stands at or after the line's nth mention
 /// (A13). Null otherwise.
 ({DiscardedMedium medium, int step})? _discardedByName(
@@ -5037,7 +5107,11 @@ final RegExp _wholePart = RegExp(
     return null;
   }
   final raw = line.raw.toLowerCase();
-  final cured = _curedPork.hasMatch(raw);
+  // v117 (M104 W1-D): a bone-in poultry part discarded by name (best
+  // chicken stew's "1 pound chicken wings" … "Discard wings") reads as
+  // cured pork does (Q17): 0 g from a skimmed pot, else held — its
+  // rendered fat stays in the dish in a share no source gives.
+  final cured = _curedPork.hasMatch(raw) || _discardedPartHeads.contains(head);
   final cut = _cutFine.hasMatch(raw);
   final whole = !cut && !_passesStrainer.hasMatch(raw);
   // v81 (Run 065/066 F12): a line cut fine WHOLE — no whole part printed
@@ -5059,7 +5133,7 @@ final RegExp _wholePart = RegExp(
   if (!cured &&
       (!(whole || cutWhole) ||
           !(_wholePieceHeads.contains(head) ||
-              _strainedHeads.contains(head)))) {
+              _strainedHeads.contains(_strainHeadOf(head, line))))) {
     return null;
   }
   // closer 2 (verify2 D3): a line not whole (cut, strained or cured)
@@ -25122,8 +25196,15 @@ Map<int, _M52Row> _m52Plan(
       final heads = _headsOf(recipe);
       final lines = nutritionLines(recipe);
       final shared = <int>[];
-      for (final (k, head) in heads.indexed) {
+      for (final (k, h) in heads.indexed) {
         final raw = lines[k].raw.toLowerCase();
+        // v117 closer 1 (verify1 D1): the strain head serves the class
+        // test AND the mentions, as in [_strainedOut] — a chile's mentions
+        // are never another 'pepper' line's (black pepper's). [_headsOf]
+        // keeps 'pepper' for a chile line, so its mentions under 'chile'
+        // are none and this site reads no own word: a chile line never
+        // shares the kept part (the base's answer; STATED, reach 0).
+        final head = _strainHeadOf(h, lines[k]);
         if (head == null ||
             lines[k].amounts.isEmpty ||
             !(_strainedHeads.contains(head) ||

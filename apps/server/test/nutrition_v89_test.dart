@@ -638,7 +638,7 @@ const List<_Host> _hosts = [
 ];
 
 void main() {
-  test('matcherVersion 102 (v89 set it to 84, batch M90: rows move)', () {
+  test('matcherVersion 103 (v89 set it to 84, batch M90: rows move)', () {
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
@@ -657,7 +657,8 @@ void main() {
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
-    expect(matcherVersion, 102);
+    // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
+    expect(matcherVersion, 103);
   });
 
   test("the six keys' figures are the corpus's printed cups, oz × 28.3495 ÷ "

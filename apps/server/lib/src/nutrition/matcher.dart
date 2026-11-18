@@ -179,7 +179,11 @@ const Map<String, String> _synonyms = {
 /// `unbleached` carries the word ('unbleached all-purpose flour'): a person's
 /// decision reaches the same kind only (`decisionKeyFor`); the boot re-key
 /// moves the 172 corpus rows' stored key.
-const int matcherVersion = 102;
+/// v103: matcher v117 (batch M104) — the strain and discard step readers: a
+/// chile's strain head (`_strainHeadOf`), "transfer the … mixture" carries a
+/// processor's lines to the pot (`_addsMixture`), a bone-in wing discarded by
+/// name, and ground stock meat named again only in a bone-in part's sentence.
+const int matcherVersion = 103;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

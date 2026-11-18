@@ -940,7 +940,9 @@ void main() {
         // RE-PIN (M102 batch, v115): matcherVersion 101 alone (was 7da98ce5…).
         // RE-PIN (M103 batch, v116): matcherVersion 102 alone (was 62d7d607…;
         // the tip with 101 put back gives 62d7d607).
-        '73021997b1cb7d616f86af28f2f85e44cdf0006c85022584be0d39d439bfb624',
+        // RE-PIN (M104 batch, v117): matcherVersion 103 alone (was 73021997…;
+        // the tip with 102 put back gives 73021997).
+        '85b42d7be75cc947df83e504c83d6518b3609102c031c92ce8733f0bc90bec59',
       );
     });
   });

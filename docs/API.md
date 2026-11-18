@@ -3181,7 +3181,9 @@ cardamom" stays 3.03 g — they pass the strainer), never a line its own
 steps blend smooth or into a paste (cochinita pibil's garlic, spices and
 grilled onion), never one mixed in a bowl, mixer, processor or blender
 unless a later "add the … mixture" in the pot carries it there (the Sauce
-Base's processor vegetables are carried), never the second pot of a
+Base's processor vegetables are carried; Changed 2026-11-18, matcher v117:
+"transfer the … mixture to" a pot carries them too — the spareribs'
+"Transfer ginger-garlic mixture to dutch oven."), never the second pot of a
 "Meanwhile, strain …" step or a baking sheet beside a strained skillet;
 "beef broth" or "lemon juice" is no mention of the beef or the lemon, and
 the mixture the strain sentence itself strains ("Strain garlic-lemon
@@ -3199,7 +3201,11 @@ tablespoons shallot … in a medium bowl", the poached salmon) is counted:
 approximate (strained out and discarded — what it gives the liquid is not
 counted)"`, 20 g of 40.
 (2) **Cured pork a step strains out or discards (Q17) and ground stock meat
-(critic F4):** 0 g when a sentence outside a parenthesis skims, separates
+(critic F4) — Changed 2026-11-18, matcher v117: and a bone-in chicken wing
+a step discards by name ("Discard wings", best chicken stew; the wing
+alone); a sentence after the strain naming a bone-in part (skin, bones,
+shredded, breast, thigh, leg, drumstick, wing) is that part's line, never
+the ground stock meat named back:** 0 g when a sentence outside a parenthesis skims, separates
 or pours off the pot's fat ("skim the fat off the surface", "into a fat
 separator") — stock meat also when blanched and drained (the pho's beef) —
 else **held** `discarded_medium` (new value `fatKept`: its rendered fat
@@ -5355,6 +5361,264 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v117 (batch M104, prep52 P5 — the strain and discard step
+readers; matcherVersion 102 → 103. The spec .claude/diag/2026-11-16/prep52/
+design_v2.md "P5 — strain and discard step readers" (S1a, S1b, W1-D, W1-E
+and the browning-fat dependent), the rulings in the M104 brief. Blind
+accuracy audit 7 found lines the steps strain out or discard still counted.
+Replayed on SNAPSHOT 33 against the v116 set, both orders byte-identical,
+calls 0. No migration. This section cites symbols, grep commands and hit
+counts — never a line number.)**
+- **S1a — a chile's strain head.** Today: `headNounOf` maps 'chile' /
+  'chili' to 'pepper' (`grep -c "'chile': 'pepper'" matcher.dart` → 2), so
+  `_vegetableHeads`' 'chile' was dead at all three `_strainedHeads.contains`
+  sites; caldo de siete mares' "3 dried ancho chiles" (pulsed in the
+  processor, carried by S2.1's "Add ancho mixture", strained at S2.4)
+  stayed counted while the same strain zeroed its onion, garlic, oregano
+  and bay. The change: `_strainHeadOf(head, line)` — 'chile' for a
+  'pepper' head whose normalized item names `_chileWord`
+  (`\bchil(?:e|i)s?\b`), else the head — at the three sites (`grep -c
+  "_strainHeadOf(" engine.dart` → 5: the definition, `_strainedOut`,
+  `_discardedByName`, `_keptSolidsOf`, the test hook); in `_strainedOut` it
+  is the head the whole reader reads (the class test, `_ownMentions`,
+  `_ownWordOf`, the lifts guard). caldo|0's own word "ancho" names S1.0
+  and S2.1, both before the strain, never smooth: `strainedSolid`. In
+  `_keptSolidsOf` (closer 1, verify1 D1) it is the head of the class test
+  AND of `_ownMentions`, so a chile's mentions are never another 'pepper'
+  line's (black pepper's): `_headsOf` keeps 'pepper' for a chile line and
+  this site reads no own word, so a chile line never shares the kept part
+  — the base's answer on every input (round 1 read the mentions under
+  'pepper', and a chile line took a "pepper" mention and shared).
+- **S1b — "transfer the … mixture to" a pot carries a processor's lines.**
+  Today: `_addsMixture` was `\badd (?:the )?(?:\w+ )?mixture\b`, so the
+  spareribs' S1.1 "Transfer ginger-garlic mixture to dutch oven." (a
+  hyphenated mixture word, and `transfer`) carried nothing and the
+  processor's ginger and garlic stayed counted under S2.2's strain. The
+  change: `\b(?:add|transfer)\w* (?:the )?(?:[\w-]+ )?mixture\b`, the
+  carrying condition (no other vessel, or a pot word) unchanged (`grep -c
+  _addsMixture engine.dart` → 5, matcher.dart → 1).
+- **W1-D — a bone-in wing discarded by name.** Today: `_discardedByName`
+  read only `_wholePieceHeads` and cured pork; best chicken stew's "1 pound
+  chicken wings" (S5 "Discard wings") counted 226.80 g. The change:
+  `_discardedPartHeads` = {'wing'} (`grep -c _discardedPartHeads
+  engine.dart` → 3) reads as cured pork does (Q17, RULE (f) above): 0 g
+  `removedAromatic` when `_fatSkimmed`, else HELD `discarded_medium`
+  (`fatKept`; its rendered fat stays in the dish in a share no source
+  gives). The stew skims nothing: held, no grams, the recipe `partial`.
+- **W1-E — ground stock meat named back only by its own sentence.** Today:
+  `_strainedOut`'s `returned` memo saw hearty chicken noodle soup's ground
+  chicken "named after the strain" in the breasts' sentences ("(The chicken
+  breasts can be stored …)", "remove the skin and bones …", "Add the
+  shredded chicken"). The change, the meat arm only: a later mention whose
+  sentence names `_boneInWord` (`\b(?:skin|bones?|shred\w*|breasts?|thighs?
+  |legs?|drumsticks?|wings?)\b`; `grep -c _boneInWord engine.dart` → 4) is
+  that part's line; the memo is keyed by the meat flag too (`grep -c
+  "'namedAfterStrain', name, meat" engine.dart` → 1). hearty|1 → 0 g
+  `strainedSolid` (S2 skims).
+- **The rows (the replay against the v116 set; exactly six, every other row,
+  sections, notes and calls byte-identical; 0 person, 0 section rows; one
+  status).** Each × the record's kcal per 100 g (208, else 958, else 957,
+  snapshot 33's details):
+  caldo-de-siete-mares|0 169396 51.00 g × 2.81 = 143.31 → 0.00 g
+  `discarded`, 0.00; chinese-style-barbecued-spareribs|0 169231 48.00 g ×
+  0.80 = 38.40 → 0 and |1 1104647 24.00 g × 1.43 = 34.32 → 0;
+  best-chicken-stew|3 2727568 226.80 g × 1.72792125 (958) = 391.89 → held
+  `discarded_medium`, no grams, no basis; hearty-chicken-noodle-soup|1
+  171116 453.59 g × 1.43 = 648.64 → 0; and the DEPENDENT
+  hearty-chicken-noodle-soup|0 (the ruled browning-fat plan,
+  `_browningFatPlan`: the heaviest counted meat row's STORED grams, now the
+  breasts |9 2646170 442.25 g): 2 / 131.62 × 442.25 = 6.72 g (was × 453.59
+  = 6.89), × 9.00 = 60.48 kcal (was 62.01), the basis naming "the raw
+  chicken breast". Batch −1,258.09 kcal. Recipes (recs): caldo 423.54 →
+  399.66 a serving, spareribs 832.71 → 820.59, best-chicken-stew 538.53 →
+  473.22 `complete` → `partial`, hearty 501.29 → 338.75. Buckets: check
+  113 → 114, counted 13,435 → 13,434, discarded_medium 64 → 65, complete
+  1,060 → 1,059, partial 138 → 139 — the held wing alone. The design's
+  model (on the v111 rows) is the same six rows and −1,258.09.
+- **The classes (R3; nutrition_v117_test "the strain head, the carry and
+  the three media on every corpus line and sentence", the corpus recipes'
+  own lines and steps).** 91 corpus lines read the chile strain head; of
+  them caldo|0 alone reaches a medium (`strainedSolid`). The widened
+  `_addsMixture` matches 171 sentences the old one does not (none it did
+  lose), 71 of them pass the carrying condition; the replay moves the
+  spareribs' rows alone. Every corpus line's `discardedMediumOf` answer
+  among strainedSolid / removedAromatic / fatKept (145 / 118 / 7) is pinned
+  as one list (a SHA-256 of the sorted list). The wing heads with a
+  medium: best-chicken-stew|3 `fatKept` and the stuffing's turkey wings
+  (0178|1, `partialUse`, as before); "Discard wingtips" (1125|0 907.18 g)
+  and the dumplings' wings (0095|9 226.80 g, no discard clause) stay
+  counted. The ground stock meat with a medium: hearty|1 and pho|0
+  `strainedSolid`, the wedding soup |4 |5 `fatKept` (as before); every
+  other ground stock-meat line (the turkey meatballs|8, the wedding soup |18
+  |20, kousa|1, albondigas en chipotle|16 among them) none. The guard that
+  keeps each of the other rows (closer 1, verify1 D3; measured with each
+  `return null` of `_strainedOut` tagged on the tip, the twelve chile rows
+  of the design's census `pC/census_chile.out` and the nine ground
+  stock-meat rows): the chile rows — guay-tiew-tom-yum-goong|4 and
+  tortilla-soup|10 no own mention before the strain (`mine.isEmpty ||
+  !_before(mine.first, at)`); red-snapper-ceviche|4 "chile paste" and
+  biang-biang|4 "ground fine" the class test (`_passesStrainer`);
+  guay-tiew|15 (head 'jam'), shrimp-cocktail|12 and barbecued-pulled-chicken
+  |15 ('powder'), tortilla-soup|11 ('adobo') and thai-style-chicken-soup|13
+  ('thai') the class test (a head not in `_strainedHeads`); tortilla-soup|17
+  amount-less (`line.amounts.isEmpty`); bulalo|14 "Chili oil" (head 'oil')
+  answered by an earlier reader of `discardedMediumOf`, `_strainedOut` not
+  reached; caldo|0 reached. (The design said "puréed after" for
+  tortilla-soup|10 and "garnish after" for thai-style-chicken-soup|13: not
+  the guards that answer.) The stock-meat rows — hearty|1 and pho|0
+  reached (`strainedSolid`), the wedding soup |4 |5 reached (`fatKept`);
+  the wedding soup |18 |20 a mention in a bowl or mixer with no carry to
+  the pot (`!carries.any(…)`); the turkey meatballs|8, kousa|1 and
+  albondigas en chipotle|16 no strain at all (`_strainAt` null). Kousa|1 is
+  NOT kept by the `returned` memo as the design's census said.
+- **The person paths (R4; nutrition_v117_test "a person decision on a
+  moved row", the real PUT, caldo|0, spareribs|0, best-chicken-stew|3,
+  hearty|1).** Stored == `recomputeTotals` == a full compute == the matches
+  GET (grams, hold) after each verb. A Confirm, a pick of the row's own
+  record or of another keeps the line's medium (0.00 g `discarded`, the
+  GET's shipped person basis "poured away — counted as 0 g"); typed grams
+  count (77 g, "entered by hand"); a skip and back restores the engine's
+  row (strained 0 g; the wing held again). The wing's hold is the SHIPPED
+  `discarded_medium`: packages/salt_shared's `holdActions` map gives it
+  `_pouredAway` (every verb finishes, offers and accepts it; decides
+  library-wide), and the app's `holdReason` reads "Looks like a cooking
+  medium the recipe discards (frying oil, a brine, a soak, cheese-making
+  milk, drained cooking water)" — the copy written for a poured-away
+  medium, as it already reads for the held cured pork and stock meat (no
+  hold note is written for `fatKept`). No app or shared code changed; a
+  wording for a discarded bone-in part is the orchestrator's (a mockup
+  first).
+- **Pins (apps/server/test/nutrition_v117_test.dart).** The six rows in their
+  real recipes on the fixtures: record, description, status, hold, gram
+  source, stored confidence, grams, energy, `gramBasisFor` AND the matches
+  GET's grams, hold and `gram_basis`; the four recipes' statuses (the
+  per-serving figures are the fixtures': caldo 399.93 and the stew 472.78,
+  the fixtures' copies of 2346401 / 2684445 / 2646171 / 2346402 carrying
+  other energies than snapshot 33's — measured row by row, no moved row
+  reads them); the design's negatives (caldo|7 2.30 and |4 4.24,
+  guay-tiew|4 4.00, tortilla-soup|10 7.00, red-snapper-ceviche|4 19.50,
+  biang-biang|4 7.50, shrimp-cocktail|12 2.71, thai-style-chicken-soup|13
+  30.00, chile-verde|4 648.00 and |7 14.00, spareribs|8 2.30,
+  cochinita pibil|0 75.00 and |3 8.72, roasted-and-glazed-chicken-wings|0
+  907.18, lighter-chicken-and-dumplings|9 226.80, kousa|1 226.80, the
+  wedding soup |18 |20 170.10 and |4 |5 held); the corpus properties above;
+  the person paths; synthesized negative paths (STATED, each naming its
+  corpus source): every spelling of the chile word ("chili" / "chilis"
+  read no own word: counted, a limit with reach 0), "Chilean", a bell
+  pepper; the carry with a vessel AND a pot word, "Transferring …", a
+  carry to a bowl; the wing from a skimmed pot (`removedAromatic`), a neck
+  and backs discarded by name (counted: the wing alone); each of the 15
+  words of `_boneInWord`, "chicken mixture", "chickenskin", "skinny"; the
+  memo's meat flag in both orders (a salt pork and a ground pork line of
+  one head); closer 1: a chile line beside the kept-solids strain (every
+  stored row of the recipe, the energy and the chile's basis); the owner
+  gate: what each reader READS — the chile word in the ITEM, not in a prep
+  word of the raw line (a bell pepper "cut into strips the size of a
+  chile" keeps its head), the bone-in word in the mention's own SENTENCE,
+  not its step, and the discarded part as the line's HEAD, not a word of
+  its raw text (0156|0's "6 turkey thighs, trimmed, or 9 wings, …" with a
+  discard of its thighs: counted). RULE C caps (corpusless, 400 lines ×
+  120 steps at the step cap): each reader's quiet and true path, memo counts pinned exactly
+  (`memo:strainAt` 1, `memo:addsMixture` 1, `memo:namedAfterStrain` 1 —
+  400 on the chile true path, one per own word, the v85 own-word path's
+  shipped shape — `memo:discards` 1); sentences and words visited equal
+  base and tip in every shape (e.g. the chile shapes 46,079 / 230,398);
+  the true paths read the later readers the base never reached (chile
+  true 135 → 192 ms, wing true 104 → 374 ms; every shape under the 10 s
+  backstop).
+- **Mutants (24, each one site, on a snapshot copy restored from a trap;
+  the diffs and logs kept):** killed by a value — K1 (the chile word
+  dropped), K2 (the helper returns the head), K4 (mentions read under
+  'pepper': no corpus line moves, the synthesized chile lines and the cap
+  shape kill it), K5 (`chili` dropped), the `s?` dropped, the regex
+  without `\b` (the "Chilean" pin), the helper unread in `_strainedOut`,
+  K6 (`transfer` dropped), K7 (`[\w-]+` → `\w+`), K8 (the pot-word clause
+  dropped: the vessel-and-pot pin), `\w*` dropped ("Transferring"), m9
+  (the wing read by substring: "wingtips"), m10 (the wing 0 g without the
+  skim test), the part set emptied, the part set widened to back / neck /
+  giblet / thigh / leg / drumstick (the neck and backs pins), the wing
+  unread as cured, m11a (the bone-in guard dropped), m11b ("mixture"
+  added), the guard on every arm (not the meat's alone), the memo key
+  without the meat flag, either `\b` of `_boneInWord` dropped. STATED:
+  K3a (the helper unread at `_discardedByName`) is equivalent on every
+  input — the strain head differs from the head only for a 'pepper' head,
+  and 'pepper' is in `_wholePieceHeads`, the other arm of the same `||`;
+  K3b (the class test of `_keptSolidsOf` reading the plain head) and the
+  helper unread there altogether are equivalent on every input since
+  closer 1: 'pepper' is in neither `_strainedHeads` nor `_zestHeads`, and
+  the mentions under 'chile' are none, so either way a chile line shares
+  nothing. Closer 1's mutant, the mentions read under the plain head (the
+  round-1 tree), is killed by a value on the property "the kept-solids
+  strain on every corpus recipe" (the corpus's one, grilled potatoes with
+  garlic and rosemary |1 |2; each of the 91 corpus chile lines put at its
+  |2 with step 1 naming a bare "pepper": [1, 3] expected, [1, 2, 3] read)
+  and on the synthesized pin of K3b's input (tortilla-soup|10's chile at
+  |2, step 1 naming "jalapeño pepper": garlic 8.19 g, the chile 7.00 g,
+  rosemary 0.21 g expected; the kept lines [1, 2, 3] read).
+- **The owner gate (2026-11-18).** The replay re-run: byte-identical to
+  the fixer's, closer 2's and verifier round 3's; the six rows derived
+  again from the raw lines and the records' energy, and each reading
+  checked against the recipe's own steps. Twelve own mutants, each diff
+  read before its result: nine killed by a value of the batch's pins (each
+  of the eight alternatives of `_boneInWord` dropped in turn; `transfer`
+  read only at a sentence's start); THREE SURVIVED — the chile word read
+  off the raw line, the bone-in word read in the mention's whole step, the
+  discarded part read off the raw text. Each differs on NO corpus line:
+  over the corpus's 16,510 lines, 0 of the 1,194 'pepper' lines name the
+  chile word in the raw line and not in the item, and 5 lines name wings
+  under another head, none of them with a medium; the media property (the
+  recipes' own 13,615 lines) holds under each mutant, and of the titled
+  sections' lines the hand-edit verifier read the two ground stock-meat
+  lines — neither has a bone-in word after a strain. Each is pinned on a
+  synthesized line and re-run, killed by a value ('pepper' expected,
+  'chile' read; null expected, `strainedSolid` read; null expected,
+  `fatKept` read). The hand-edit verifier's two further neighbours — the
+  chile word read off the authored item un-normalized, the wing read as a
+  word of the item rather than its head — differ on no corpus line
+  either: one more synthesized input each, both killed by a value.
+- **Stated limits ("Stays").** caldo|4 ground cumin 4.24 g and |7 pepper
+  2.30 g and the spareribs' ground pepper (F3, §5 S1e); a chile line whose
+  own word another line carries, or spelled "chili" (no form of 'chile'),
+  reads no mention and stays counted (reach 0); a chile line beside a
+  kept-solids strain shares none of the kept part and, when no mention
+  reaches it (tortilla-soup|10's "jalapeño" by its own word neither), is
+  counted whole — the base's answer (reach 0: the corpus's one such strain
+  holds no chile line); the widened carry reads no
+  destination: "transfer … mixture to a plate / dish / sheet" with no
+  other vessel passes the carrying condition (71 corpus sentences pass it;
+  it moves a row only where a processor mention precedes a strain — the
+  spareribs alone); "add\w*" also matches "additional … mixture" (no corpus
+  sentence moves); the wing alone of the bone-in parts (a discarded back
+  or neck stays counted; W1-F, §5); the shared `discarded_medium` copy
+  (above); the titled sections' lines and steps are not looped by the
+  properties (the replay's sections are byte-identical); the leftovers
+  S1c, S1e, S1g (design §5). Nothing of this batch reads a decision key
+  (A4: `git diff` of the lib files holds no `lineKeyOf`, `decisionKeyFor`,
+  `itemKeyFor` or `item_key` line).
+- **GATE-P (sw5–sw13; each tree's OWN replayed snapshot-33 database,
+  12 shards, NoNet, calls 0 at every settle; base e3fe99c a worktree, the
+  same sweep scripts):** sw5 32,395 → 32,659, sw6 38,280 → 38,588, sw7
+  1,905 → 1,920, sw8 58,125 → 58,596, sw8r 5,358 → 5,433 combos, 0
+  divergent 0 refused both; sw9 176 both, 0 divergent, line sets
+  identical; sw10 158 bare and typed, 0 divergent both, sw10.tsv differing
+  only at the per-serving figure of hearty|9 and caldo|15 (the moved
+  recipes); sw11 40,186 → 40,484, 200 divergent both, refused 12,880 →
+  12,918; sw12 133 → 135 combos, 54 divergent both, the defect lines
+  identical — the two new combos are the key 'dried ancho chile' (0008
+  our-favorite-chili|2, own and other), which caldo|0's 0 g `discarded` row
+  brings into sw12's census, neither divergent; sw13 294 both, 0 divergent,
+  line sets identical. Every other base-vs-tip line difference of sw5–sw11
+  lies in the four moved recipes (their new 0 g rows and the held wing
+  add combos).
+- **Suites at the gated tree:** server +3,590 ~4 (the base's +3,512 ~4
+  plus the 78 tests of nutrition_v117_test.dart, two of them closer 1's
+  and three the owner gate's), salt_shared +265, app +674; analyzers
+  clean; the 25 new or changed server test files load without the
+  corpus.
+- **Deploy note:** matcherVersion 103 stales every recipe; a zero-request
+  sweep recomputes (the replay's calls 0). No migration, no app change.
+  NOT deployed: the prep52 chain ships with one deploy at its very end.
 
 **Matcher v116 (batch M103, prep52 — the key split: "same kind only" for
 the two all-purpose flour kinds; matcherVersion 101 → 102. The owner's
@@ -11204,7 +11468,8 @@ recipe holds per gram of the raw browned food, capped at the line.
 - **Reach (fix96/c1 gate, the v95 rows; 0 person, section or status rows).**
   The 15 (v95 → v96 g; 2710180 / 2710186 at 900 kcal, 748608 at its sibling
   171413's 884): hearty-chicken-noodle-soup|0 14.00 → 6.89 (ground chicken
-  453.59 g), old-fashioned-slow-cooker-chicken-noodle-soup|2 14.00 → 6.10
+  453.59 g; Changed 2026-11-18, matcher v117: 6.72, from the breasts' 442.25
+  g once the ground chicken is strained out), old-fashioned-slow-cooker-chicken-noodle-soup|2 14.00 → 6.10
   (S2's "Pour off all but 1 tablespoon fat" no trigger; S4's skim),
   pressure-cooker-chicken-noodle-soup|0 14.00 → 11.97, simple-pot-roast|2
   28.00 → 24.12, braised-beef-short-ribs|2 28.00 → 24.12 (beside |0's M72
@@ -12603,7 +12868,8 @@ Step readers, decided under the 2026-10-07 standing authorization:
   Not reached: guay-tiew-tom-yum|2 (its own word "green" — "scallions"
   normalizes to "green onions" — is first named in step 3's "scallion
   greens", after the strain: 60.00 g), caldo-de-siete-mares|0 (head
-  `pepper`, no strained class).
+  `pepper`, no strained class — Changed 2026-11-18, matcher v117: its
+  strain head is 'chile', `_strainHeadOf`, and it is strained out, 0 g).
 Totals vs the v84 rows: 7 rows; row column +253.18, recipe energy +253.22
 (5 recipes); 0 status (col 9) / hold / fdc changes; gram sources
 unmeasured → portion (1) and weight → discarded (2); buckets, sections and

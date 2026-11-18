@@ -155,7 +155,10 @@ const List<_Row> _rows = [
 const Map<String, (String, String, String)> _totals = {
   // v85: 991.75 / 5950.51 — the row's 4,008.07 kcal × (1 − 0.761918) =
   // 954.25 less (the stored batch −954.26; per serving × 6, −954.24).
-  _chinese: ('complete', '832.71', '4996.25'),
+  // RE-PIN (M104 batch, v117): the ginger |0 and garlic |1 are carried by
+  // "Transfer ginger-garlic mixture to dutch oven." and strained out
+  // (38.40 + 34.32 = 72.72 kcal; per serving × 6): was 832.71, 4996.25.
+  _chinese: ('complete', '820.59', '4923.53'),
   // v85: 613.48 / 3680.89 — the row's 3,050.52 kcal × (1 − 0.924475) =
   // 230.39 less (per serving × 6, −230.40).
   // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
@@ -170,7 +173,7 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 102 (v86 set it to 81, batch M84: rows move)', () {
+  test('matcherVersion 103 (v86 set it to 81, batch M84: rows move)', () {
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
@@ -192,7 +195,8 @@ void main() {
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
-    expect(matcherVersion, 102);
+    // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
+    expect(matcherVersion, 103);
   });
 
   group('matcher v86 (batch M84) — whole recipes', skip: skipIfNoCorpus, () {

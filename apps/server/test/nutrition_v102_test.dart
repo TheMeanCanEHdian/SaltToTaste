@@ -240,7 +240,10 @@ void confirms() {
     // 2,373.60 → 378.92 kcal) and its browning oil follows (|0 126.00 → 43.56):
     // E −2,077.11 (was 3143.46).
     (_classic, 2, 7, '1066.35'),
-    (_hearty, 2, 12, '2005.15'),
+    // RE-PIN (M104 batch, v117): 0002 hearty's ground chicken |1 is strained
+    // out (648.64 → 0 kcal) and its browning oil |0 re-sizes from the
+    // breasts (62.01 → 60.48): E −650.17 (was 2005.15).
+    (_hearty, 2, 12, '1354.98'),
   ]) {
     test('P2: $file|$at Confirm → |$sib 790646 confidence .9367 → 1, E '
         '$energy (mutants m3, m4)', () async {
