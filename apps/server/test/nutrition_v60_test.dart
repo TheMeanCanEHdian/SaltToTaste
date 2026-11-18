@@ -89,8 +89,10 @@ const List<_Row> _reach = [
     '1½ quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '99.34',
-    '894.06',
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai|17 the M52 uptake on a mix 1.00 g lighter (|10 ginger 4.00 → 3.00 g) — was '99.34'.
+    '99.27',
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai|17 the M52 uptake (7.62 % of the raw lumpia) on a mix 1.00 g lighter (|10 ginger 4.00 → 3.00 g, 6 g an inch) — was '894.06'.
+    '893.43',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
   ),
@@ -835,7 +837,8 @@ void main() {
       // Lumpia: the LUMPIA group |6–|16 — never the DIPPING SAUCE |0–|5
       // before it (the mutant "every counted main row" reads 1,490.58).
       final lumpiaMix = sumOf(_lumpia, [for (var p = 6; p <= 16; p++) p]);
-      expect(g2(lumpiaMix), '1303.73');
+      // RE-PIN (M105 batch, v118): lumpiang-shanghai|10 ginger 4.00 → 3.00 g (6 g an inch) — was '1303.73'.
+      expect(g2(lumpiaMix), '1302.73');
       expect(g2(sumOf(_lumpia, [0, 1, 2, 3, 4, 5])), '186.85');
       expect(recipes[_lumpia]!.ingredients.first.items, hasLength(6));
       // Falafel: |0–|10 (the TAHINI SAUCE group follows the oil).
@@ -1026,7 +1029,8 @@ void main() {
       // kcal in a fresh compute against the replay's 1,035.43.
       // RE-PIN (M86 batch, v90, 958: 2514745 ground pork, 2258586 carrots,
       // 2346405 celery): was 655.51.
-      expect(of(_lumpia), ('complete', '658.97'));
+      // RE-PIN (M105 batch, v118): lumpiang-shanghai|10 ginger 4.00 → 3.00 g and |17's uptake 99.34 → 99.27 g — was '658.97'.
+      expect(of(_lumpia), ('complete', '658.73'));
       // RE-PIN (M82 batch, v84, C5a): the flour |9 and the oil's uptake |11
       // on the heavier mix: was 613.83.
       // RE-PIN (M86 batch, v90, 958: 2259794 yogurt): was 621.22.

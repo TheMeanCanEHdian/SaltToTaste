@@ -125,7 +125,8 @@ void main() {
       // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
       // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-      expect(matcherVersion, 103);
+      // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+      expect(matcherVersion, 104);
     },
   );
 
@@ -1199,14 +1200,17 @@ void main() {
       final row = _rowIn(db, recipe.id, 2);
       expect(
         db.nutritionFor(recipe.id)!.caloriesPerServing?.toStringAsFixed(2),
-        '648.25',
+        // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 gelatin at the corpus packet (0.7190 g/mL), 1.17 → 1.77 g — was '648.25'.
+        '648.59',
       );
       db.upsertIngredientMatch(row.copyWith(hold: 'partial_pour_away'));
       recomputeTotals(db, recipe);
       expect(_rowIn(db, recipe.id, 2).hold, 'partial_pour_away');
       expect(
         db.nutritionFor(recipe.id)!.caloriesPerServing?.toStringAsFixed(2),
-        '612.07',
+        // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 gelatin at the
+        // corpus packet, 1.17 → 1.77 g (+2.03 kcal ÷ 6): was '612.07'.
+        '612.41',
       );
     });
     test(
@@ -1249,7 +1253,8 @@ void main() {
         );
         expect(
           db.nutritionFor(recipe.id)!.caloriesPerServing?.toStringAsFixed(2),
-          '285.32',
+          // RE-PIN (M105 batch, v118): horseradish-crusted-beef-tenderloin|13 gelatin at the corpus packet (0.7190 g/mL), 1.17 → 1.77 g (+2.03 kcal ÷ 6) — was '285.32'.
+          '285.66',
         );
       },
     );

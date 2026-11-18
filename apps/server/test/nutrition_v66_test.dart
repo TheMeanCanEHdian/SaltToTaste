@@ -839,11 +839,12 @@ const List<_Row> _negatives = [
   (
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
     17,
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai-with-seasoned-vinegar|17 on 2710180 99.34 → 99.27 g (894.06 → 893.43 kcal), the replay's row — was '99.34'; '894.06'.
     '1½ quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '99.34',
-    '894.06',
+    '99.27',
+    '893.43',
     'auto',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
@@ -1029,7 +1030,8 @@ void main() {
           14,
           '40.72',
         ),
-        ('1194-lumpiang-shanghai-with-seasoned-vinegar.yaml', 17, '99.34'),
+        // RE-PIN (M105 batch, v118): lumpiang-shanghai|17 the M52 uptake on a mix 1.00 g lighter (|10 ginger 4.00 → 3.00 g) — was '99.34'.
+        ('1194-lumpiang-shanghai-with-seasoned-vinegar.yaml', 17, '99.27'),
         // RE-PIN (M82 batch, v84, C5a): the uptake on the mix's heavier
         // flour |9 (the v84 replay's row): was 85.55.
         ('0570-falafel.yaml', 11, '86.69'),

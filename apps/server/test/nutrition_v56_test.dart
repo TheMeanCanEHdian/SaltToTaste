@@ -595,12 +595,13 @@ const List<_Row> _sauceStrains = [
   (
     '0535-chinese-braised-beef.yaml',
     7,
+    // RE-PIN (M105 batch, v118): chinese-braised-beef|7 on 169231 16.00 → 12.00 g (12.80 → 9.60 kcal), the replay's row — was '16.00', '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'; '12.80'.
     '1 (2-inch) piece ginger, peeled, halved lengthwise, and crushed',
     169231,
     '0.886667',
-    '16.00',
-    '12.80',
-    '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '12.00',
+    '9.60',
+    '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0535-chinese-braised-beef.yaml',

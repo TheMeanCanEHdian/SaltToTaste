@@ -638,7 +638,7 @@ const List<_Host> _hosts = [
 ];
 
 void main() {
-  test('matcherVersion 103 (v89 set it to 84, batch M90: rows move)', () {
+  test('matcherVersion 104 (v89 set it to 84, batch M90: rows move)', () {
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
@@ -658,7 +658,8 @@ void main() {
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-    expect(matcherVersion, 103);
+    // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+    expect(matcherVersion, 104);
   });
 
   test("the six keys' figures are the corpus's printed cups, oz × 28.3495 ÷ "
@@ -1054,12 +1055,15 @@ IngredientMatchRow _row(SaltDatabase db, String id, int position) =>
 const Map<String, (String, String)> _totals = {
   // RE-PIN (M86 batch, v90, 958: 1750342 Granny Smith apples): was 444.30
   // (the v90 replay 444.30 → 437.12).
-  _chutney: ('complete', '437.12'), // replay 471.63 → 444.30
+  // RE-PIN (M105 batch, v118): cranberry-chutney|2 ginger on 169231's own tsp (2.0 g), 5.32 → 4.00 g (−1.06 kcal ÷ 3) — was '437.12'.
+  _chutney: ('complete', '436.77'), // replay 471.63 → 444.30
   // The fresh compute in its own database; the replay's 513.09 → 512.69
   // (other rows' search-hit energies recorded from earlier snapshots differ
   // from the library's; the coat rows |8 |9 are the replay's, above).
   // RE-PIN (M86 batch, v90, 958: 2727568 chicken): was 513.46.
-  _wings: ('complete', '521.96'),
+  // RE-PIN (M105 batch, v118): dakgangjeong|2 ginger on 169231's own tsp,
+  // 2.66 → 2.00 g (−0.53 kcal ÷ 4): was '521.96'.
+  _wings: ('complete', '521.83'),
 };
 
 /// Each cap shape's counts on the tree — equal to base d02f207's (fix89

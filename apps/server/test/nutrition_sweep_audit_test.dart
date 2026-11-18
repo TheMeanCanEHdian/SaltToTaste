@@ -1337,8 +1337,13 @@ void main() {
     // detail of 789951 (all-purpose flour, enriched, unbleached — a hit in
     // 'all-purpose flour'; the search was already in the fixtures):
     // compared 558 -> 559, differ 426 unchanged (measured).
-    expect(compared, 559);
-    expect(differ, 426);
+    // RE-PIN (M105 batch, v118): its pins recorded from snapshot 33 the
+    // detail of 173474 (Peppermint, fresh — a hit in 'herb'; cached by L55) and
+    // the search 'supermarket french or italian bread': compared 559 ->
+    // 560, differ 426 -> 427 (173474's detail differs from its 'herb'
+    // hit in some digit; measured).
+    expect(compared, 560);
+    expect(differ, 427);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

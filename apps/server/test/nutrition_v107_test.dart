@@ -146,12 +146,13 @@ void u2() {
       ('A9', one, '1 Sauce Base $written)'),
       ('WB', const <Amount>[], 'Sauce Base $written; recipe follows)'),
     ]) {
-      test('U2: "$edit" ($arm) reads 0.5 / 728.35 g / 212.83', () async {
+      test('U2: "$edit" ($arm) reads 0.5 / 731.40 g / 222.97', () async {
         final (row, child) = await run(edit, amounts);
         // Base: child_share 1.0, 1,456.7 g, 425.67 (the whole batch).
         expect(row.childShare, 0.5);
-        expect(row.grams, closeTo(728.35, 0.005));
-        expect(child['kcal'], 212.83);
+        // RE-PIN (M105 batch, v118): restaurant-style-herb-sauce-for-pan-seared-steaks's Sauce Base section |12 "5 teaspoons unflavored gelatin" on 169599 at the corpus packet (0.7190 g/mL), 11.67 → 17.72 g (39.08 → 59.36 kcal): the whole section 1,456.70 → 1,462.80 g — was 728.35 g / 212.83.
+        expect(row.grams, closeTo(731.40, 0.005));
+        expect(child['kcal'], 222.97);
       });
     }
   }
@@ -176,8 +177,9 @@ void u2() {
     // Base (v106): no_share — the token over-read as a written share; the
     // eb9614c reading (the amount over the yield) restored.
     expect(row.childShare, 2.0);
-    expect(row.grams, closeTo(2913.4, 0.005));
-    expect((child['state'], child['kcal']), ('routed', 851.33));
+    // RE-PIN (M105 batch, v118): restaurant-style-herb-sauce-for-pan-seared-steaks's Sauce Base section |12 "5 teaspoons unflavored gelatin" on 169599 at the corpus packet (0.7190 g/mL), 11.67 → 17.72 g (39.08 → 59.36 kcal): the whole section 1,456.70 → 1,462.80 g — was 2,913.4 g / 851.33.
+    expect(row.grams, closeTo(2925.6, 0.005));
+    expect((child['state'], child['kcal']), ('routed', 891.88));
   });
 }
 
@@ -567,7 +569,8 @@ void u4() {
         [for (final p in partsOf(confirmed.parts)) p.fdcId],
         [169103, juice],
       );
-      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.92, 0.005));
+      // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 603.92 → 603.13.
+      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.13, 0.005));
       v28.dropFood(path, juice);
       final fault = v28.FoodFault(_fx, {juice}, scope: FailureScope.food);
       for (var p = 1; p <= 3; p++) {
@@ -580,7 +583,8 @@ void u4() {
         ('confirmed', 'food_unavailable', juice, null),
       );
       // Held: out of the totals (base 24 g counted).
-      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(591.13, 0.005));
+      // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(590.33, 0.005));
       // The hold is the derived state (stamped, as the engine arm's and
       // v105 U1's): fresh, the row out of the totals until the part
       // arrives.
@@ -597,7 +601,8 @@ void u4() {
         (healed.status, healed.hold, healed.heldOn, healed.grams),
         ('confirmed', null, null, 86.0),
       );
-      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.92, 0.005));
+      // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 603.92 → 603.13.
+      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.13, 0.005));
     },
   );
 

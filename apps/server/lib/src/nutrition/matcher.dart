@@ -183,7 +183,12 @@ const Map<String, String> _synonyms = {
 /// chile's strain head (`_strainHeadOf`), "transfer the … mixture" carries a
 /// processor's lines to the pot (`_addsMixture`), a bone-in wing discarded by
 /// name, and ground stock meat named again only in a bone-in part's sentence.
-const int matcherVersion = 103;
+/// v104: matcher v118 (batch M105) — portion and density figures: a rustic
+/// slice on its record's own bare-noun slice (SR 174913 29 g), fresh ginger
+/// on its record's spoon (the 'ginger' density gone; 6 g an inch), gelatin
+/// by the spoon at the corpus print (0.7190 g/mL), instant espresso / coffee
+/// at the labels' 2.0 g a teaspoon, whole mint leaves on 173474's spoon.
+const int matcherVersion = 104;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1696,7 +1701,9 @@ const Map<String, (String, String)> _rankAs = {
   'anchovy paste': ('anchovy paste', 'fish anchovy'),
   // v31 (Q7 misc, ruled after every mapping was read, prep30/misc.md): the
   // planner's mappings; Cubanelle and the cornichon weigh their corpus
-  // figure (grams.dart), instant espresso its siblings' 0.43 g/mL.
+  // figure (grams.dart), instant espresso its siblings' figure (corrected
+  // 2026-11-18, matcher v118, M105 S8b: was 0.43 g/mL, unsourced; now the
+  // Branded labels' 2.0 g a teaspoon, 0.40578 g/mL).
   'anaheim chiles': ('cubanelle peppers', 'pepper banana'),
   'angel hair pasta': ('pasta dry enriched', 'pasta dry enriched'),
   'asian chili-garlic paste': (

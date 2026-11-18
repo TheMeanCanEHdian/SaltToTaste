@@ -204,19 +204,25 @@ const List<(String, double)> _densities = [
   ('corn syrup', 1.38),
   ('molasses', 1.41),
   ('cocoa', 0.52),
-  ('espresso powder', 0.43),
-  ('instant coffee', 0.43),
-  ('coffee powder', 0.43),
+  // v118 (batch M105 S8b, ruled under the standing matcher authorization;
+  // L55): the five instant espresso / coffee keys weigh the Branded labels'
+  // teaspoon — DeLallo 2059824 and Ferrara 2503093 each print 1 tsp = 2.0 g
+  // (the owner's standing rule: a label's grams for a printed volume), not
+  // SR 171893's regular instant 'tsp' 1.0 g (a coarser powder) — flagged
+  // ([_espressoLabel]). Was 0.43, unsourced (244743e).
+  ('espresso powder', _espressoDensity),
+  ('instant coffee', _espressoDensity),
+  ('coffee powder', _espressoDensity),
   // One path per record (Run 052 O8/S7): 'instant coffee' only modifies
   // "instant coffee powder"'s head, so the head-noun rule weighed that one
   // line by 171893's loose 'tsp' 1.0 g while its 14 instant-espresso
-  // siblings on the same record keep the table's fine-powder 0.43 (2.12
-  // g/tsp): the powder's own key keeps it on the table too.
-  ('instant coffee powder', 0.43),
+  // siblings on the same record keep the table's figure: the powder's own
+  // key keeps it on the table too.
+  ('instant coffee powder', _espressoDensity),
   // v31 (Q7 misc M2): "instant espresso" on the same record (171893) keeps
   // its 13 "instant espresso powder" siblings' figure, not the record's
   // loose 'tsp' 1.0 g.
-  ('instant espresso', 0.43),
+  ('instant espresso', _espressoDensity),
   ('brewed coffee', 1.0),
   ('coffee', 1.0),
   // v89 (M90, above): was 0.54 (SR 169698 'cup' 128 g) and 0.66 (SR
@@ -241,7 +247,6 @@ const List<(String, double)> _densities = [
   ('soy sauce', 1.16),
   ('fish sauce', 1.2),
   ('peanut butter', 1.09),
-  ('ginger', 0.54),
   ('tomato paste', 1.1),
   ('lemon juice', 1.03),
   ('lime juice', 1.03),
@@ -289,7 +294,9 @@ const List<(String, double)> _densities = [
   ('ground cloves', 0.43), // specific, so "garlic cloves" is untouched
   ('chili powder', 0.55),
   ('allspice', 0.39),
-  ('ground ginger', 0.37), // beats fresh 'ginger' (0.54) by length
+  // Fresh 'ginger' has no entry since v118 (M105 S8a: the unsourced 0.54
+  // went; SR 169231's own 'tsp' 2.0 g sizes the root).
+  ('ground ginger', 0.37),
   ('cardamom', 0.41),
   ('turmeric', 0.61),
   ('curry powder', 0.41),
@@ -384,9 +391,20 @@ const List<(String, double)> _densities = [
   // "Candied fruit" (no portion) at a Branded label's ¼ cup, 30 g — the
   // modal (and median) of the nine ¼-cup labels L50 #8 read (28, 28, 30 ×4,
   // 40, 40, 50 g). One figure per key ([_tableEntry]): the ⅓-cup label
-  // (41 g) sizes no line by its own volume. Longer than 'ginger' (the
-  // fresh root's kitchen 0.54), so it wins.
+  // (41 g) sizes no line by its own volume. (Corrected 2026-11-18, matcher
+  // v118, M105 S8a: this said "longer than 'ginger' (the fresh root's
+  // kitchen 0.54), so it wins" — the fresh root's entry is gone; the key
+  // wins over the fresh root's record portion.)
   ('crystallized ginger', 30 / (0.25 * 236.588)),
+  // v118 (batch M105 S8c; CP9 Q6, the corpus prints first): unflavored
+  // gelatin by the spoon at the cookbook's own packet — "2 teaspoons (about
+  // 1 packet) unflavored powdered gelatin" (Best Beef Stew) and "1
+  // (¼-ounce) package gelatin" (Chilled Lemon Soufflé): ¼ ounce in 2
+  // teaspoons, 0.7190 g/mL (3.54 g a teaspoon). SR 169599's only spoon is
+  // its "envelope (1 tbsp)" 7 g (2.33 g a teaspoon), which this key weighs
+  // ahead of ([_approximateDensities], recordFirst false). L55's Branded
+  // labels agree: Ahold 2298348 and Meijer 2633150, 1 packet = 7.0 g.
+  ('gelatin', 0.25 * 28.3495 / (2 * 4.92892)),
 ];
 
 /// The [_densities] keys that weigh on a stand-in's figure — flagged
@@ -437,6 +455,14 @@ const Map<String, (String? label, bool recordFirst)> _approximateDensities = {
   'sure-jell': (_sureJellLabel, false),
   // v76 (M79, Q9 (a)).
   'crystallized ginger': (_crystallizedGingerLabel, false),
+  // v118 (M105 S8b): the labels' teaspoon over 171893's 'tsp' 1.0 g.
+  'espresso powder': (_espressoLabel, false),
+  'instant coffee': (_espressoLabel, false),
+  'coffee powder': (_espressoLabel, false),
+  'instant coffee powder': (_espressoLabel, false),
+  'instant espresso': (_espressoLabel, false),
+  // v118 (M105 S8c): the corpus's packet over 169599's envelope.
+  'gelatin': ('ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce', false),
   // v84 (M82 C5a): the Z5 form.
   'all-purpose flour': ('ATK: 1 cup all-purpose flour = 5 ounces', true),
   'flour': ('ATK: 1 cup all-purpose flour = 5 ounces', true),
@@ -463,6 +489,15 @@ const String _sureJellLabel =
     'Sure-Jell label (Kraft Heinz, FDC Branded 2596757; the regular box — '
     'FDC holds no label of the low/no-sugar box the line names; the other '
     "makers' boxes read 3.2–4.0 g per teaspoon): ⅛ teaspoon = 0.5 g";
+
+/// The instant espresso labels' teaspoon (v118, M105 S8b; L55's Branded
+/// search 'instant espresso powder'): 2.0 g in a 4.92892 mL teaspoon.
+const double _espressoDensity = 2.0 / 4.92892;
+
+/// [_espressoDensity]'s source (v118, M105 S8b).
+const String _espressoLabel =
+    'instant espresso labels (FDC Branded 2059824 DeLallo, 2503093 '
+    'Ferrara): 1 teaspoon = 2.0 g';
 
 /// The crystallized-ginger labels its density reads (v76, M79 — Q9 (a);
 /// L50 #8, 25 Branded labels).
@@ -795,12 +830,13 @@ const Map<String, String> _approximatePieces = {
 /// units it is counted in, g per inch, the record it must be on, label).
 const Map<String, (Set<String>, double, String, String)> _perInch = {
   // "1 (1-inch) piece fresh ginger, grated (about 1 tablespoon)" (Roast
-  // Fresh Ham; Strawberries and Grapes agrees): the table's ginger 0.54
-  // g/mL × 1 tablespoon. Fresh root only: ground and crystallized ginger
-  // sit on other records.
+  // Fresh Ham; Strawberries and Grapes agrees): SR 169231's own 'tsp' 2.0
+  // g × 3 = 6 g (corrected 2026-11-18, matcher v118, M105 S8a: was 8 g, the
+  // unsourced table density 0.54 g/mL × 1 tablespoon). Fresh root only:
+  // ground and crystallized ginger sit on other records.
   'ginger': (
     {'', 'piece'},
-    8,
+    6,
     'ginger root',
     'ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon',
   ),
@@ -834,7 +870,7 @@ const Map<String, (Set<String>, double, String, String)> _perInch = {
   // Goong).
   'galangal': (
     {'', 'piece'},
-    8,
+    6, // v118 (M105 S8a): ginger's 6 g, was 8
     'ginger root',
     "ginger's figure (ATK's substitute for galangal)",
   ),
@@ -1091,9 +1127,72 @@ const Map<int, int> fineCutSiblings = {2709780: 172232};
   );
 }
 
+/// v118 (batch M105 S7a; the owner's ruling via the brief R3, L55): records
+/// whose only volume portion is a CHOPPED spoon → the same herb's record
+/// whose spoon weighs whole leaves. SR 173475 "Spearmint, fresh" prints '2
+/// tbsp' 11.4 g (91.2 g a cup, 3.8× basil's whole-leaf cup); SR 173474
+/// "Peppermint, fresh" prints '2 tbsp' 3.2 g (25.6 g a cup). A whole, torn
+/// or loose-leaf volume line ([leafWeighing]) weighs on the sibling's
+/// spoon, flagged approximate naming it; the food and its nutrients stay
+/// the line's; a cut line ([_cutLeaves]) keeps the record's own spoon.
+const Map<int, int> leafSiblings = {173475: 173474};
+
+/// The cut words that keep a [leafSiblings] line on its own record's spoon.
+final RegExp _cutLeaves = RegExp(
+  r'\b(chopped|minced|diced|grated|sliced|shredded)\b',
+);
+
+/// [food] carrying [sibling]'s volume portions — what a whole-leaf volume
+/// line ([raw], [amounts]: no [_cutLeaves] word) on a [leafSiblings]
+/// record weighs on — and the flag naming the sibling's portion; null for
+/// any other line, or a sibling with no volume portion.
+({FdcFood food, String note})? leafWeighing(
+  FdcFood food,
+  FdcFood sibling,
+  String raw,
+  List<Amount> amounts,
+) {
+  if (volumeMlOf(amounts) == null || _cutLeaves.hasMatch(raw.toLowerCase())) {
+    return null;
+  }
+  final volume = [
+    for (final portion in sibling.portions)
+      if (_foodGramsPerMl(
+            FdcFood(
+              fdcId: sibling.fdcId,
+              description: sibling.description,
+              dataType: sibling.dataType,
+              nutrientsPer100g: const {},
+              portions: [portion],
+            ),
+          ) !=
+          null)
+        portion,
+  ];
+  if (volume.isEmpty) {
+    return null;
+  }
+  final portion = volume.first;
+  return (
+    food: FdcFood(
+      fdcId: food.fdcId,
+      description: food.description,
+      dataType: food.dataType,
+      nutrientsPer100g: food.nutrientsPer100g,
+      portions: volume,
+    ),
+    note:
+        'approximate (USDA ${sibling.fdcId} ${sibling.description}: '
+        '${_figure(portion.amount ?? 1)} ${portion.description} = '
+        '${_figure(portion.gramWeight)} g)',
+  );
+}
+
 /// Descriptor words that mark a RUSTIC/artisan loaf — thick, dense, crusty —
 /// distinct from soft sandwich bread (the piece table's white loaves, else
 /// its record's own slice).
+/// (Corrected 2026-11-18, matcher v118, M105 W4: SR 174913 "Bread, Italian"
+/// prints a BARE 'slice' 29 g, read first since v118 — [_rusticBreadGrams].)
 /// FDC gives these breads no usable per-slice or per-loaf portion, and the flat
 /// [_pieceWeights] table can't serve them: a recipe counts them BOTH ways
 /// ("8 slices country bread", "1 loaf crusty bread"), which need different
@@ -1114,13 +1213,20 @@ const Set<String> _rusticBreadWords = {
 const Set<String> _sliceUnits = {'slice', 'slices'};
 const Set<String> _loafUnits = {'loaf', 'loaves'};
 
+/// The rustic loaf's 454 g source (v118, M105 W4; the design's OQ11).
+const String _loafLabel = 'ATK: a 1-pound loaf';
+
 /// Grams per counted unit for a rustic/artisan bread, by the unit the recipe
 /// used: a thick artisan SLICE ≈ 50 g (ATK's own "(9 ounces)" for 5 slices is
 /// ~51 g/slice), a whole LOAF ≈ 454 g (its standard "1 (1-pound) loaf"). Only
 /// for the crusty/rustic breads above; returns null for soft sandwich bread
-/// (the piece table's or its record's slice) and for any non-slice/loaf unit. An estimate,
-/// flagged as such — and only a FALLBACK: a real FDC slice/loaf portion is
-/// preferred (matched earlier in the count loop).
+/// (the piece table's or its record's slice) and for any non-slice/loaf unit.
+/// Only a FALLBACK: a real FDC slice/loaf portion is preferred — one with a
+/// leading number in step 3a, and (corrected 2026-11-18, matcher v118, M105
+/// W4: before, an SR BARE-noun portion was read only after this table, so
+/// the 50 g preempted SR 174913's 'slice' 29 g) the record's bare noun at
+/// step 3a.5 itself. The loaf's 454 g is flagged approximate ([_loafLabel],
+/// v118); the 50 g slice sizes no corpus row since v118 and is not flagged.
 double? _rusticBreadGrams(String normalizedItem, String unit) {
   final looksBread =
       normalizedItem.contains('bread') ||
@@ -1948,7 +2054,10 @@ double? _portionGramsPerUnit(FdcFood food, String unit, {bool bare = false}) {
 /// on table salt's portion. A portion that names its volume only in
 /// parentheses — 169599 gelatin's "envelope (1 tbsp)" = 7 g — is read when
 /// no portion leads with one: the count there is the whole portion's, so the
-/// structured amount is not applied (audit 3 refix: 30 gelatin lines).
+/// structured amount is not applied (audit 3 refix: 30 gelatin lines; since
+/// matcher v118, M105 S8c, the 'gelatin' key weighs ahead of it — the
+/// corpus packet, [_approximateDensities] — so it sizes no corpus gelatin
+/// line).
 ///
 /// Of several volume portions, one whose words the line shares wins ("cup
 /// spaghetti" for a spaghetti line, "cup, sliced" for sliced almonds, "tbsp,
@@ -4712,13 +4821,28 @@ GramResolution? _resolveGrams({
 
     // 3a.5 Rustic/artisan bread the flat piece table can't serve — its weight
     //      depends on the UNIT (thick slice vs whole loaf), not just the name.
-    //      After 3a so a real FDC slice/loaf portion still wins.
+    //      After 3a so a real FDC slice/loaf portion still wins — and
+    //      v118 (M105 W4): the record's own BARE-noun slice too (SR 174913
+    //      "Bread, Italian" 'slice' 29 g), which step 3b.5 reads only later.
     final breadGrams = _rusticBreadGrams(normalizedItem, amountUnit);
     if (breadGrams != null) {
+      final own = food == null
+          ? null
+          : _portionGramsPerUnit(food, amountUnit, bare: true);
+      if (own != null) {
+        return GramResolution(
+          grams: quantity * own,
+          source: GramSource.piece,
+          basis: '${_amountText(amount)} · USDA portion',
+        );
+      }
+      final loaf = _loafUnits.contains(amountUnit);
       return GramResolution(
         grams: quantity * breadGrams,
         source: GramSource.piece,
-        basis: '${_amountText(amount)} × ${breadGrams.round()} g each',
+        basis:
+            '${_amountText(amount)} × ${breadGrams.round()} g each'
+            '${loaf ? ' · approximate ($_loafLabel)' : ''}',
       );
     }
 

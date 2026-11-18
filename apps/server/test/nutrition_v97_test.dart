@@ -238,7 +238,8 @@ const _totals = [
   // (−33.57; 2709712's 11.14 %), the fixtures equal it.
   (_sweet, 'partial', '560.92'),
   // replay 491.27 → 690.62 (+199.35, 2 servings); fixtures 491.42 → 690.77.
-  (_eggplant, 'complete', '690.77'),
+  // RE-PIN (M105 batch, v118): crispy-thai-eggplant-salad|4 ginger 8.00 → 6.00 g and |12 whole mint leaves 45.60 → 12.80 g (the fixtures' compute fetches 173474) — was '690.77'.
+  (_eggplant, 'complete', '682.75'),
 ];
 
 /// [r] stored and computed (its section children first).
@@ -290,7 +291,8 @@ void main() {
       // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
       // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-      expect(matcherVersion, 103);
+      // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+      expect(matcherVersion, 104);
     },
   );
 

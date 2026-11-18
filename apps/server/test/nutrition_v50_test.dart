@@ -840,9 +840,12 @@ _rows = [
     12,
     '5 teaspoons unflavored gelatin',
     169599,
-    '11.67',
+    // RE-PIN (M105 batch, v118): the gelatin at the corpus packet (0.7190
+    // g/mL, `_approximateDensities` 'gelatin') — was '11.67', '5 teaspoon ·
+    // USDA portion' (169599's envelope (1 tbsp) 7 g).
+    '17.72',
     null,
-    '5 teaspoon · USDA portion',
+    '5 teaspoon ≈ 25 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0426-beef-braised-in-barolo.yaml',
@@ -1269,11 +1272,12 @@ _rows = [
     '0621-grilled-beef-satay.yaml',
     null,
     6,
+    // RE-PIN (M105 batch, v118): grilled-beef-satay|6 on 169231 15.97 → 12.00 g (12.78 → 9.60 kcal), the replay's row — was '15.97', '2 tablespoon ≈ 30 mL'.
     '2 tablespoons grated fresh ginger',
     169231,
-    '15.97',
+    '12.00',
     null,
-    '2 tablespoon ≈ 30 mL',
+    '2 tablespoon · USDA portion',
   ),
   // closer 1 (V1-D1): the carrots served; the celery bundle discarded; the
   // garlic sprinkled over the vegetables strained
@@ -1631,8 +1635,11 @@ void main() {
           .singleWhere((r) => r.position == 3);
       expect(parent.raw, '¼ cup Sauce Base (½ recipe; recipe follows)');
       expect(parent.childRecipeId, key);
-      expect(parent.grams?.toStringAsFixed(2), '728.35');
-      expect(db.nutritionFor(key)!.totalGrams?.toStringAsFixed(2), '1456.70');
+      // RE-PIN (M105 batch, v118): restaurant-style-herb-sauce-for-pan-seared-steaks's Sauce Base section |12 "5 teaspoons unflavored gelatin" on 169599 at the corpus packet (0.7190 g/mL), 11.67 → 17.72 g (39.08 → 59.36 kcal): the whole section 1,456.70 → 1,462.80 g — was '728.35'.
+      expect(parent.grams?.toStringAsFixed(2), '731.40');
+      // RE-PIN (M105 batch, v118): the section's |12 gelatin 11.67 → 17.72
+      // g — was '1456.70'.
+      expect(db.nutritionFor(key)!.totalGrams?.toStringAsFixed(2), '1462.80');
     });
 
     test('the reserved wings keep their own weighing: AH-102 item 2602 '

@@ -369,7 +369,8 @@ void u4() {
     // (the test's own run stores 464.1; was closeTo(464.1, 0.05)).
     // RE-PIN (M102 batch, v115): 462.45 (was 464.1) — line 6's unbleached
     // flour on 789951, 248.06 g × (3.58 − 3.66) = −19.84 kcal ÷ 12 servings.
-    expect(m.caloriesPerServing, closeTo(462.45, 0.01));
+    // RE-PIN (M105 batch, v118): rich-chocolate-bundt-cake|3 instant espresso at the labels' 2.0 g a teaspoon, 2.12 → 2.00 g (−0.42 kcal ÷ 12 servings) — was 462.45.
+    expect(m.caloriesPerServing, closeTo(462.41, 0.01));
     expect(d.rowOf(db, r, 0).grams, closeTo(170.166, 0.001));
   });
 }

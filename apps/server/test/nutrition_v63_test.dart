@@ -988,7 +988,8 @@ void main() {
           // RE-PIN (M95 batch, v97, 2709458's fries uptake on the eggplant
           // stand-in, |10 40.82 → 85.12 g): was '491.42' (the replay 491.27
           // → 690.62; the fixtures' standing +0.15).
-          ('complete', '690.77'), // 420.00; 419.95 → 503.95 (the yield)
+          // RE-PIN (M105 batch, v118): crispy-thai-eggplant-salad|4 ginger 8.00 → 6.00 g (6 g an inch) and |12 whole mint leaves on 173474's spoon 45.60 → 12.80 g (the fixtures' compute fetches 173474) — was '690.77'.
+          ('complete', '682.75'), // 420.00; 419.95 → 503.95 (the yield)
           // RE-PIN (M86 batch, v90, 958: 2727567 chicken thighs): was '670.38'.
           ('complete', '682.29'), // 671.01; 670.73 → 670.11 (bay)
           // RE-PIN (M70 batch, v69, pE Q6): 748.74 (was 748.47) — its

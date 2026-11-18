@@ -149,9 +149,10 @@ void main() {
           2709171,
         ),
         (
+          // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was 8 g per inch.
           '1 (2-inch) piece ginger, peeled, halved, and smashed',
           169231,
-          '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+          '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
           170926,
         ),
         (
@@ -448,13 +449,14 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
     '5 × 0.1 g each · approximate (reference figure: a whole allspice berry) · approximation (counted as Spices, allspice, ground)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '32.00' and 8 g per inch.
     '0010-vietnamese-beef-pho.yaml',
     4,
     '1 (4-inch) piece ginger, sliced into thin rounds',
     169231,
-    '32.00',
+    '24.00',
     'counted',
-    '1 piece × 4 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 4 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0010-vietnamese-beef-pho.yaml',
@@ -486,11 +488,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
   (
     '0053-crispy-thai-eggplant-salad.yaml',
     4,
+    // RE-PIN (M105 batch, v118): crispy-thai-eggplant-salad|4 on 169231 8.00 → 6.00 g (6.40 → 4.80 kcal), the replay's row — was '8.00', '1 × 1 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (1-inch piece) ginger, peeled and chopped coarse',
     169231,
-    '8.00',
+    '6.00',
     'counted',
-    '1 × 1 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 × 1 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0067-skillet-lasagna.yaml',
@@ -504,11 +507,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
   (
     '0129-mahogany-chicken-thighs.yaml',
     7,
+    // RE-PIN (M105 batch, v118): mahogany-chicken-thighs|7 on 169231 16.00 → 12.00 g (12.80 → 9.60 kcal), the replay's row — was '16.00', '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (2-inch) piece ginger, peeled, halved, and smashed',
     169231,
-    '16.00',
+    '12.00',
     'counted',
-    '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0141-pollo-en-mole-poblano-chicken-in-puebla-style-mole.yaml',
@@ -520,22 +524,24 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
     '1/2 × 4.6 g each · approximate (ATK: ½ dried chipotle chile ≈ a scant tablespoon)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '4.00' and 8 g per inch.
     '0209-red-winebraised-pork-chops.yaml',
     7,
     '1 (½-inch) piece ginger, peeled and crushed',
     169231,
-    '4.00',
+    '3.00',
     'counted',
-    '1 piece × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 0.5 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '8.00' and 8 g per inch.
     '0230-roast-butterflied-leg-of-lamb-with-coriander-cumin-and-mustard-seeds.yaml',
     5,
     '1 (1-inch) piece ginger, sliced into ½-inch-thick rounds and smashed',
     169231,
-    '8.00',
+    '6.00',
     'counted',
-    '1 piece × 1 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 1 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0230-roast-butterflied-leg-of-lamb-with-coriander-cumin-and-mustard-seeds.yaml',
@@ -549,11 +555,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
   (
     '0268-oven-steamed-fish-with-scallions-and-ginger.yaml',
     1,
+    // RE-PIN (M105 batch, v118): oven-steamed-fish-with-scallions-and-ginger|1 on 169231 24.00 → 18.00 g (19.20 → 14.40 kcal), the replay's row — was '24.00', '1 piece × 3 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (3-inch) piece ginger, peeled, divided',
     169231,
-    '24.00',
+    '18.00',
     'counted',
-    '1 piece × 3 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 3 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0285-shrimp-cocktail.yaml',
@@ -684,38 +691,42 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
   (
     '0526-san-bei-ji-three-cup-chicken.yaml',
     5,
+    // RE-PIN (M105 batch, v118): san-bei-ji-three-cup-chicken|5 on 169231 16.00 → 12.00 g (12.80 → 9.60 kcal), the replay's row — was '16.00', '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (2-inch) piece ginger, peeled, halved lengthwise, and sliced into thin half-rounds',
     169231,
-    '16.00',
+    '12.00',
     'counted',
-    '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0534-mapo-tofu-sichuan-braised-tofu-with-beef.yaml',
     5,
+    // RE-PIN (M105 batch, v118): mapo-tofu-sichuan-braised-tofu-with-beef|5 on 169231 24.00 → 18.00 g (19.20 → 14.40 kcal), the replay's row — was '24.00', '1 piece × 3 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (3-inch) piece ginger, peeled and cut into ¼-inch rounds',
     169231,
-    '24.00',
+    '18.00',
     'counted',
-    '1 piece × 3 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 3 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0535-chinese-braised-beef.yaml',
     7,
+    // RE-PIN (M105 batch, v118): chinese-braised-beef|7 on 169231 16.00 → 12.00 g (12.80 → 9.60 kcal), the replay's row — was '16.00', '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (2-inch) piece ginger, peeled, halved lengthwise, and crushed',
     169231,
-    '16.00',
+    '12.00',
     'counted',
-    '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '48.00' and 8 g per inch.
     '0538-chinese-style-barbecued-spareribs.yaml',
     0,
     '1 (6-inch) piece fresh ginger, peeled and sliced thin',
     169231,
-    '48.00',
+    '36.00',
     'counted',
-    '1 piece × 6 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 6 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0540-pork-lo-mein.yaml',
@@ -736,13 +747,14 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
     '10 × 0.2 g each · approximate (reference figure: a green cardamom pod)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '16.00' and 8 g per inch.
     '0566-chicken-biryani.yaml',
     7,
     '1 (2-inch) piece fresh ginger, peeled, cut into ½-inch-thick coins, and smashed',
     169231,
-    '16.00',
+    '12.00',
     'counted',
-    '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0567-indian-curry.yaml',
@@ -819,20 +831,22 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
   (
     '1095-goan-pork-vindaloo.yaml',
     2,
+    // RE-PIN (M105 batch, v118): goan-pork-vindaloo|2 on 169231 12.00 → 9.00 g (9.60 → 7.20 kcal), the replay's row — was '12.00', '1 piece × 1.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (1½-inch) piece ginger, peeled and sliced crosswise ⅛ inch thick',
     169231,
-    '12.00',
+    '9.00',
     'counted',
-    '1 piece × 1.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 1.5 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '1096-chana-masala.yaml',
     2,
+    // RE-PIN (M105 batch, v118): chana-masala|2 on 169231 12.00 → 9.00 g (9.60 → 7.20 kcal), the replay's row — was '12.00', '1 piece × 1.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (1½-inch) piece ginger, peeled and chopped coarse',
     169231,
-    '12.00',
+    '9.00',
     'counted',
-    '1 piece × 1.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 1.5 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '1172-multicooker-hawaiian-oxtail-soup.yaml',
@@ -846,11 +860,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsA = [
   (
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
     10,
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai-with-seasoned-vinegar|10 on 169231 4.00 → 3.00 g (3.20 → 2.40 kcal), the replay's row — was '4.00', '1 piece × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (½-inch) piece ginger, peeled',
     169231,
-    '4.00',
+    '3.00',
     'counted',
-    '1 piece × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 piece × 0.5 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0281-spanish-style-garlic-shrimp.yaml',
@@ -908,29 +923,32 @@ _storedRowsA = [
   (
     '0376-beijing-style-meat-sauce-and-noodles.yaml',
     8,
+    // RE-PIN (M105 batch, v118): beijing-style-meat-sauce-and-noodles|8 on 169231 4.00 → 3.00 g (3.20 → 2.40 kcal), the replay's row — was '4.00', '1 × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'.
     '1 (½-inch) piece ginger, peeled and sliced into ⅛-inch rounds',
     169231,
-    '4.00',
+    '3.00',
     'counted',
-    '1 × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 × 0.5 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '8.00' and 8 g per inch.
     '0376-biang-biang-mian-flat-hand-pulled-noodles-with-chili-oil-vinaigrette.yaml',
     7,
     '1 (1-inch) piece fresh ginger, peeled and sliced thin',
     169231,
-    '8.00',
+    '6.00',
     'counted',
-    '1 × 1 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 × 1 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '32.00' and 8 g per inch.
     '1171-bulalo-hearty-beef-shank-and-vegetable-soup.yaml',
     5,
     '1 (4-inch) piece ginger, sliced into thin rounds',
     169231,
-    '32.00',
+    '24.00',
     'counted',
-    '1 × 4 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '1 × 4 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '1184-monkfish-tagine.yaml',
@@ -1782,11 +1800,12 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
   (
     '0845-chewy-brownies.yaml',
     1,
+    // RE-PIN (M105 batch, v118): chewy-brownies|1 on 171893 3.18 → 3.00 g (11.22 → 10.59 kcal), the replay's row — was '3.18', '1 1/2 teaspoon ≈ 7 mL'.
     '1½ teaspoons instant espresso (optional)',
     171893,
-    '3.18',
+    '3.00',
     'counted',
-    '1 1/2 teaspoon ≈ 7 mL',
+    '1 1/2 teaspoon ≈ 7 mL · approximate (instant espresso labels (FDC Branded 2059824 DeLallo, 2503093 Ferrara): 1 teaspoon = 2.0 g)',
   ),
   (
     '0856-angel-food-cake.yaml',

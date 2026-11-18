@@ -1095,12 +1095,13 @@ void main() {
             '1189-bruschetta-with-artichoke-hearts-and-parmesan.yaml',
             0,
             0,
+            // RE-PIN (M105 batch, v118): bruschetta-with-artichoke-hearts-and-parmesan|0 on 174913 454.00 → 454.00 g (1175.86 → 1175.86 kcal), the replay's row — was '1 loaf × 454 g each'.
             '1 (10 by 5-inch) loaf country bread with thick crust, ends discarded, sliced crosswise into ¾-inch-thick pieces',
             174913,
             'Bread, Italian',
             '454.00',
             'auto',
-            '1 loaf × 454 g each',
+            '1 loaf × 454 g each · approximate (ATK: a 1-pound loaf)',
           ),
           (
             '0015-carrot-ginger-soup.yaml',
@@ -1205,12 +1206,13 @@ void main() {
             '0899-bittersweet-chocolate-roulade.yaml',
             0,
             1,
+            // RE-PIN (M105 batch, v118): bittersweet-chocolate-roulade|1 on 171893 4.24 → 4.00 g (14.96 → 14.12 kcal), the replay's row — was '4.24', '2 teaspoon ≈ 10 mL'.
             '2 teaspoons espresso powder or instant coffee',
             171893,
             'Beverages, coffee, instant, regular, powder',
-            '4.24',
+            '4.00',
             'auto',
-            '2 teaspoon ≈ 10 mL',
+            '2 teaspoon ≈ 10 mL · approximate (instant espresso labels (FDC Branded 2059824 DeLallo, 2503093 Ferrara): 1 teaspoon = 2.0 g)',
           ),
           (
             '0940-pavlova-with-fruit-and-whipped-cream.yaml',

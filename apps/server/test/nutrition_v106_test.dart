@@ -311,11 +311,13 @@ void u2() {
   const one = [Amount(measure: Measure.count, quantity: '1', primary: true)];
   for (final (arm, amounts) in const [('A9', one), ('WB', <Amount>[])]) {
     for (final (written, share, grams, kcal) in const [
-      ('(½ recipe', 0.5, 728.35, 212.83),
-      ('(1/2 recipe', 0.5, 728.35, 212.83),
-      ('(0.5 recipe', 0.5, 728.35, 212.83),
-      ('(1.5 recipes', 1.5, 2185.05, 638.5),
-      ('(0.00001 recipe', 0.00001, 0.014567, 0.0),
+      // RE-PIN (M105 batch, v118): restaurant-style-herb-sauce-for-pan-seared-steaks's Sauce Base section |12 "5 teaspoons unflavored gelatin" on 169599 at the corpus packet (0.7190 g/mL), 11.67 → 17.72 g (39.08 → 59.36 kcal): the whole section 1,456.70 → 1,462.80 g — was 728.35 / 212.83, 2,185.05 /
+      // 638.5 and 0.014567 g.
+      ('(½ recipe', 0.5, 731.40, 222.97),
+      ('(1/2 recipe', 0.5, 731.40, 222.97),
+      ('(0.5 recipe', 0.5, 731.40, 222.97),
+      ('(1.5 recipes', 1.5, 2194.20, 668.91),
+      ('(0.00001 recipe', 0.00001, 0.014628, 0.0),
     ]) {
       final raw = arm == 'WB'
           ? 'Sauce Base $written; recipe follows)'

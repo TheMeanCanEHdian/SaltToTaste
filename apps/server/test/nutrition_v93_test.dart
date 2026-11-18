@@ -58,7 +58,7 @@ const _lines = [
 ];
 
 void main() {
-  test('matcherVersion 103 (v93 set it to 88, batch M91: two rows move)', () {
+  test('matcherVersion 104 (v93 set it to 88, batch M91: two rows move)', () {
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
     // RE-PIN (M94 batch, v96): matcherVersion 91 (was 90).
@@ -74,7 +74,8 @@ void main() {
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-    expect(matcherVersion, 103);
+    // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+    expect(matcherVersion, 104);
   });
 
   group('the keys on the corpus lines (no compute)', skip: skipIfNoCorpus, () {
@@ -268,7 +269,10 @@ void main() {
         '528.74), sichuan 417.12 (v92 400.29; still partial — |10 baking '
         'soda has no grams)', () {
       for (final (file, status, perServing, grams) in const [
-        (_mapo, 'complete', '574.11', 1977.0),
+        // RE-PIN (M105 batch, v118): mapo-tofu|5 "1 (3-inch) piece ginger" at
+        // 6 g an inch, 24.00 → 18.00 g (−4.80 kcal ÷ 4) — was '574.11',
+        // 1977.0.
+        (_mapo, 'complete', '572.91', 1971.0),
         (_sichuan, 'partial', '417.12', 988.2),
       ]) {
         final n = db.nutritionFor(recipes[file]!.id)!;

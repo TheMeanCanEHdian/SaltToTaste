@@ -2623,12 +2623,16 @@ _whole = [
     // RE-PIN (M102 batch, v115): its |7 flour names `unbleached` — 789951
     // (358 kcal, was 789890's 366): the energy before and after the ethanol
     // moves alike, after = this compute: was 4934.18, 4603.61.
-    4931.34,
-    4600.77,
+    // RE-PIN (M105 batch, v118): best-beef-stew|15 gelatin at the corpus packet (0.7190 g/mL), 4.67 → 7.09 g (+8.11 kcal) — was 4931.34.
+    4939.45,
+    // RE-PIN (M105 batch, v118): best-beef-stew|15 gelatin at the corpus packet (0.7190 g/mL), 4.67 → 7.09 g (+8.11 kcal), before and after the ethanol alike — was 4600.77.
+    4608.88,
     // RE-PIN (M102 batch, v115): its flour's carbohydrate and protein on
     // 789951 (73.2 / 13.1 per 100 g, was 77.3 / 10.9): was 193.33, 390.14.
     191.87,
-    390.92,
+    // RE-PIN (M105 batch, v118): its |15 gelatin at the corpus packet, 4.67 →
+    // 7.09 g (+2.07 g protein): was 390.92.
+    392.99,
     [(8, 2710688, 468.44, 5)],
   ),
   // P10 restated: 180 + the skimmed liquid reduced 18 = 198 min → 5 %

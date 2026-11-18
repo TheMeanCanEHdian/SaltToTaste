@@ -3185,15 +3185,16 @@ const List<_Row> _unmoved = [
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
     null,
     15,
+    // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate-cumin-and-cilantro|15 on 169599 14.00 → 21.26 g (46.90 → 71.23 kcal), the replay's row — was '14.00', '2 tablespoon · USDA portion'; '46.90'.
     '2 tablespoons unflavored gelatin',
     169599,
     'Gelatins, dry powder, unsweetened',
     '1.000000',
-    '14.00',
+    '21.26',
     'auto',
     null,
-    '46.90',
-    '2 tablespoon · USDA portion',
+    '71.23',
+    '2 tablespoon ≈ 30 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
@@ -4095,15 +4096,16 @@ const List<_Row> _unmoved = [
     '0007-tuscan-style-beef-stew.yaml',
     null,
     11,
+    // RE-PIN (M105 batch, v118): tuscan-style-beef-stew|11 on 169599 7.00 → 10.63 g (23.45 → 35.61 kcal), the replay's row — was '7.00', '1 tablespoon · USDA portion'; '23.45'.
     '1 tablespoon unflavored gelatin',
     169599,
     'Gelatins, dry powder, unsweetened',
     '1.000000',
-    '7.00',
+    '10.63',
     'auto',
     null,
-    '23.45',
-    '1 tablespoon · USDA portion',
+    '35.61',
+    '1 tablespoon ≈ 15 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0007-tuscan-style-beef-stew.yaml',
@@ -4327,15 +4329,16 @@ const List<_Row> _unmoved = [
     '0087-braised-beef-short-ribs.yaml',
     null,
     12,
+    // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 on 169599 1.17 → 1.77 g (3.91 → 5.94 kcal), the replay's row — was '1.17', '1/2 teaspoon · USDA portion'; '3.91'.
     '½ teaspoon powdered gelatin',
     169599,
     'Gelatins, dry powder, unsweetened',
     '1.000000',
-    '1.17',
+    '1.77',
     'auto',
     null,
-    '3.91',
-    '1/2 teaspoon · USDA portion',
+    '5.94',
+    '1/2 teaspoon ≈ 2 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0088-slow-cooker-beer-braised-short-ribs.yaml',
@@ -5047,15 +5050,16 @@ const List<_Row> _unmoved = [
     '0535-chinese-braised-beef.yaml',
     null,
     0,
+    // RE-PIN (M105 batch, v118): chinese-braised-beef|0 on 169599 10.50 → 15.95 g (35.17 → 53.42 kcal), the replay's row — was '10.50', '1 1/2 tablespoon · USDA portion'; '35.17'.
     '1½ tablespoons unflavored gelatin',
     169599,
     'Gelatins, dry powder, unsweetened',
     '1.000000',
-    '10.50',
+    '15.95',
     'auto',
     null,
-    '35.17',
-    '1 1/2 tablespoon · USDA portion',
+    '53.42',
+    '1 1/2 tablespoon ≈ 22 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0535-chinese-braised-beef.yaml',
@@ -5145,15 +5149,16 @@ const List<_Row> _unmoved = [
     '0535-chinese-braised-beef.yaml',
     null,
     7,
+    // RE-PIN (M105 batch, v118): chinese-braised-beef|7 on 169231 16.00 → 12.00 g (12.80 → 9.60 kcal), the replay's row — was '16.00', '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'; '12.80'.
     '1 (2-inch) piece ginger, peeled, halved lengthwise, and crushed',
     169231,
     'Ginger root, raw',
     '0.886667',
-    '16.00',
+    '12.00',
     'auto',
     null,
-    '12.80',
-    '1 piece × 2 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '9.60',
+    '1 piece × 2 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '0535-chinese-braised-beef.yaml',
@@ -6791,15 +6796,19 @@ const List<_Totals> _totals = [
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
-    '797.14',
+    // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15 gelatin at the corpus packet (0.7190 g/mL), 14.00 → 21.26 g — was '797.14'.
+    '801.20',
     // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 4785.41.
-    '4782.85',
-    '287.1422',
-    '110.6942',
-    '121.9443',
-    '21.0922',
-    '398.1003',
-    '3563.3009',
+    // RE-PIN (M105 batch, v118): braised-brisket|15 gelatin 14.00 → 21.26 g
+    // (+24.33 kcal; its protein, sodium and fat) — was '4782.85', '287.1422',
+    // '110.6942', '121.9443', '21.0922', '398.1003', '3563.3009'.
+    '4807.18',
+    '287.1495',
+    '110.6992',
+    '121.9487',
+    '21.0929',
+    '404.3167',
+    '3577.5348',
     '1878.1569',
   ),
   // v71: 740.17 /serving, batch 13323.08, fat 881.7112
@@ -6896,16 +6905,20 @@ const List<_Totals> _totals = [
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was
     // 762.59.
-    '761.55',
+    '763.58',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2685580 tomato): was
     // 4575.56.
-    '4569.33',
-    '311.8976',
-    '133.1289',
-    '158.1784',
-    '18.0875',
-    '330.0988',
-    '1783.6274',
+    // RE-PIN (M105 batch, v118): tuscan-style-beef-stew|11 gelatin at the
+    // corpus packet, 7.00 → 10.63 g (+12.16 kcal; its protein, sodium and
+    // fat) — was '761.55', '4569.33', '311.8976', '133.1289', '158.1784',
+    // '18.0875', '330.0988', '1783.6274'.
+    '4581.49',
+    '311.9013',
+    '133.1315',
+    '158.1806',
+    '18.0879',
+    '333.2070',
+    '1790.7444',
     '1330.1836',
   ),
   // v71: 720.08 /serving, batch 4320.46, fat 330.9343
@@ -6921,14 +6934,18 @@ const List<_Totals> _totals = [
     // 144.8143, 21.5695 — |2's browning oil 28.00 → 24.12 g (its 3.88 g of
     // vegetable oil's fat and its three classes; the replay 654.07 →
     // 648.25).
-    '648.25',
-    '3889.49',
-    '284.3395',
-    '117.8568',
-    '143.1692',
+    // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 gelatin at the corpus packet (0.7190 g/mL), 1.17 → 1.77 g (+2.03 kcal ÷ 6) — was '648.25'.
+    '648.59',
+    // RE-PIN (M105 batch, v118): the same |12 gelatin (its protein, sodium and
+    // fat) — was '3889.49', '284.3395', '117.8568', '143.1692', '280.4856',
+    // '2003.5248'.
+    '3891.52',
+    '284.3401',
+    '117.8572',
+    '143.1696',
     '20.0796',
-    '280.4856',
-    '2003.5248',
+    '281.0036',
+    '2004.7109',
     '1158.9276',
   ),
   // v71: 1080.67 /serving, batch 4322.67, fat 313.7070
@@ -7001,14 +7018,18 @@ const List<_Totals> _totals = [
     '0535-chinese-braised-beef.yaml',
     null,
     'complete',
-    '557.78',
-    '3346.65',
-    '224.8281',
-    '98.7116',
-    '114.4442',
-    '10.2975',
-    '254.3319',
-    '6619.1792',
+    // RE-PIN (M105 batch, v118): its |0 gelatin at the corpus packet, 10.50 →
+    // 15.95 g (+18.26 kcal), and |7 ginger at 6 g an inch, 16.00 → 12.00 g
+    // (−3.20) — was '557.78', '3346.65', '224.8281', '98.7116', '114.4442',
+    // '10.2975', '254.3319', '6619.1792'.
+    '560.28',
+    '3361.70',
+    '224.8035',
+    '98.7073',
+    '114.4413',
+    '10.2918',
+    '258.9214',
+    '6629.3346',
     '994.3265',
   ),
   // RE-PIN (M82 batch, v84): was 958.77, 3835.10, 292.3790, 102.6473, 157.8699, 18.2445, 216.8326, 1025.1040 (the replay 958.80 → 951.33).
@@ -7963,7 +7984,8 @@ void main() {
           '202.12',
           '1838.33',
           // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
-          '797.14',
+          // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15 gelatin at the corpus packet (0.7190 g/mL), 14.00 → 21.26 g — was '797.14'.
+          '801.20',
           ['76.67', '85.50', '7.94'],
         ),
         // RE-PIN (M90 batch, v89, brown sugar + sugar): the deduction
@@ -8126,10 +8148,38 @@ void main() {
                     100;
               }(),
         ].fold<double>(0, (a, b) => a + b);
+        // RE-PIN (M105 batch, v118): a row S8a / S8c re-sized since v71 —
+        // the gelatin at the corpus packet over 169599's envelope (tuscan
+        // |11, the short ribs |12, chinese |0), the fresh ginger on 169231's
+        // own tsp over the table's 0.54 and at 6 g an inch over 8 (chinese
+        // |7): its v71 grams are its grams × the old figure ÷ the new, at its
+        // own energy (was `v71 + evoo - m90 + m86 - m94 - now - by`).
+        final m105 = [
+          for (final r in db.ingredientMatchesFor(recipes[file]!.id))
+            if ((r.grams ?? 0) > 0)
+              if (switch ((r.fdcId, r.gramSource)) {
+                    (169599, 'density') =>
+                      (7 / (3 * 4.92892)) / (0.25 * 28.3495 / (2 * 4.92892)),
+                    (169231, 'portion') => 0.54 / (2.0 / 4.92892),
+                    (169231, 'piece')
+                        when basisIn(
+                              file,
+                              r.position,
+                            )?.contains(' × 6 g per inch') ??
+                            false =>
+                      8 / 6,
+                    _ => null,
+                  }
+                  case final ratio?)
+                r.grams! *
+                    (ratio - 1) *
+                    kcalPer100g(knownFood(db, r.fdcId!)!) /
+                    100,
+        ].fold<double>(0, (a, b) => a + b);
         // The v71 batch is printed to 2 dp: the move equals the deduction
         // within its rounding.
         expect(
-          (v71 + evoo - m90 + m86 - m94 - now - by).abs(),
+          (v71 + evoo - m90 + m86 - m94 - m105 - now - by).abs(),
           lessThan(0.006),
           reason: file,
         );

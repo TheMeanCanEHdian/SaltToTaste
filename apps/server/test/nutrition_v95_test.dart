@@ -214,7 +214,8 @@ void main() {
       // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
       // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-      expect(matcherVersion, 103);
+      // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+      expect(matcherVersion, 104);
     },
   );
 

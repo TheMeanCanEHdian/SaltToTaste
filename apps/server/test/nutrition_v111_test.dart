@@ -165,7 +165,8 @@ void y1a() {
     );
     expect([for (final p in partsOf(row.parts)) p.fdcId], [_peel, _juice]);
     expect(nutritionIsFresh(db, r), isTrue);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.92, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 603.92 → 603.13.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.13, 0.005));
   }
 
   test('Y1 (a) FDC serving: ONE ask, the pair derived (86.0 g, two parts, '
@@ -231,7 +232,8 @@ void y1a() {
       ('auto', _peel, 'food_gone', null, null),
     );
     expect(held.parts, isNull);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(591.13, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(590.33, 0.005));
     for (var p = 2; p <= 3; p++) {
       await matchAndCompute(db, gone, r);
       expect(gone.asked, 1, reason: 'compute $p');
@@ -303,7 +305,8 @@ void y1a() {
       ('auto', 'food_unavailable', null, null),
     );
     expect(nutritionIsFresh(db, r), isTrue);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(591.13, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(590.33, 0.005));
     await cachedFood(db, _fx, _peel);
     await matchAndCompute(db, next, r);
     expect(next.asked, isEmpty);

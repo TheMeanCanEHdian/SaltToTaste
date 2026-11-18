@@ -705,7 +705,8 @@ void main() {
       // RE-PIN (M90 batch, v89, cornstarch): its cornstarch |8 at the print
       // (the replay 366.34 → 362.07): was 366.34.
       // RE-PIN (M86 batch, v90, 958: 2346388 lettuce): was 362.07.
-      expect(of(_saltPepper), ('complete', '361.36')); // v57 303.34
+      // RE-PIN (M105 batch, v118): crispy-salt-and-pepper-shrimp|11 ginger on 169231's own tsp (2.0 g), 7.98 → 6.00 g (−1.59 kcal ÷ 4) — was '361.36'.
+      expect(of(_saltPepper), ('complete', '360.96')); // v57 303.34
       // crispy-orange-beef (replay 599.09, v57 536.09): its beef |0 reads
       // its energy off another answer in a fresh compute (952.54 for the
       // replay's 953.52) — the status only.

@@ -158,7 +158,9 @@ const _totals = [
   (_onion, 'complete', '588.78', '3532.70'),
   // RE-PIN (M82 batch, v84): was 794.35, 4766.11 (the replay 794.35 → 797.57).
   // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 797.57, 4785.41.
-  (_pomegranate, 'complete', '797.14', '4782.85'),
+  // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15 gelatin at
+  // the corpus packet (0.7190 g/mL), 14.00 → 21.26 g (+24.33 kcal) — was '797.14', '4782.85'.
+  (_pomegranate, 'complete', '801.20', '4807.18'),
   // RE-PIN (M90 batch, v89, brown sugar + sugar): its rub's sugars at their
   // prints (the replay 697.49 → 696.88): was 697.49, 12554.79.
   (_barbecued, 'complete', '696.88', '12543.90'),

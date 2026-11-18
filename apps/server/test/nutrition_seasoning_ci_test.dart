@@ -105,7 +105,8 @@ void main() {
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-    expect(matcherVersion, 103); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+    expect(matcherVersion, 104); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -264,7 +265,9 @@ void main() {
       // the tip with 101 put back gives fa732279).
       // RE-PIN (M104 batch, v117): matcherVersion 103 alone (was 1e0bc69d…;
       // the tip with 102 put back gives 1e0bc69d).
-      '49397e58019892f4b6d2388af122d35e76d6d42f8172710d4d983a2fbf097e57',
+      // RE-PIN (M105 batch, v118): matcherVersion 104 alone (was 49397e58…;
+      // the tip with 103 put back gives 49397e58).
+      'e96ccbb567f05166790b93a9759fe9c0410d4ca9a4f5209ec0fa207e5573606f',
     );
   });
 

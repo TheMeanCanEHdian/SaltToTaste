@@ -435,7 +435,8 @@ const _totals = [
   // replay 565.56 → 559.74 (-5.82).
   (_simplePotRoast, 'complete', '559.74'),
   // replay 654.07 → 648.25 (-5.82).
-  (_shortRibs, 'complete', '648.25'),
+  // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 gelatin at the corpus packet (0.7190 g/mL), 1.17 → 1.77 g — was '648.25'.
+  (_shortRibs, 'complete', '648.59'),
   // replay 591.11 → 574.52 (-16.59); fixtures 591.12 → 574.53.
   (_oxtails, 'complete', '574.53'),
   // replay 444.28 → 430.70 (-13.58).
@@ -472,13 +473,15 @@ const _totals = [
   // replay 767.89 → 767.25 (-0.64); fixtures 767.91 → 767.27.
   // RE-PIN (M102 batch, v115): its |7 unbleached flour on 789951 (the
   // v115 replay 767.25 → 766.78): was 767.27.
-  (_bestStew, 'complete', '766.80'),
+  // RE-PIN (M105 batch, v118): best-beef-stew|15 gelatin at the corpus packet (0.7190 g/mL), 4.67 → 7.09 g (+8.11 kcal ÷ 6) — was '766.80'.
+  (_bestStew, 'complete', '768.15'),
   // replay 700.46 → 686.70 (-13.76).
   // RE-PIN (M97 batch, v100): |12 back to the engine's 28.36 g (the roux
   // guard) — replay 686.70 → 700.46 (+13.76).
   (_broiled, 'complete', '700.46'),
   // replay 331.38 → 329.97 (-1.41); fixtures 331.67 → 330.25.
-  (_teriyaki2, 'complete', '330.25'),
+  // RE-PIN (M105 batch, v118): chicken-teriyaki-2|5 ginger on 169231's own tsp (2.0 g), 15.97 → 12.00 g (−3.18 kcal ÷ 4) — was '330.25'.
+  (_teriyaki2, 'complete', '329.46'),
   // replay 653.74 → 647.92 (-5.82).
   (_hungarian, 'complete', '647.92'),
   // replay 989.04 → 988.27 (-0.77).
@@ -556,7 +559,8 @@ void main() {
       // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
       // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-      expect(matcherVersion, 103);
+      // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+      expect(matcherVersion, 104);
     },
   );
 
@@ -1035,7 +1039,8 @@ void main() {
                 '24.12',
                 'discarded',
                 _browning('beef'),
-                '648.25',
+                // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 gelatin at the corpus packet (0.7190 g/mL), 1.17 → 1.77 g — was '648.25'.
+                '648.59',
               ),
               (_bulalo, 0, '16.82', 'discarded', _browning('beef'), '373.83'),
               (_maple, 11, '18.95', 'discarded', _browning('pork'), '430.70'),
@@ -1162,7 +1167,8 @@ void main() {
         '`portion`, irish|1 20.39 → 42.00 g `portion`, no browning basis — '
         'and a full compute after the PUT writes nothing', () async {
       for (final (file, meat, fat, planned, whole, perServing) in [
-        (_shortRibs, 0, 2, '24.12', '28.00', '83.18'),
+        // RE-PIN (M105 batch, v118): braised-beef-short-ribs|12 gelatin at the corpus packet (0.7190 g/mL), 1.17 → 1.77 g — was '83.18'.
+        (_shortRibs, 0, 2, '24.12', '28.00', '83.51'),
         // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
         // test's compute): was 166.10.
         (_irish, 0, 1, '20.39', '42.00', '165.62'),

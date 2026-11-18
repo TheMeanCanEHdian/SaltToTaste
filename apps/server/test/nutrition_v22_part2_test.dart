@@ -174,8 +174,9 @@ void main() {
   }
 
   test('F8 (Run 052 O8/S7): one path per record — every instant coffee and '
-      "espresso wording on 171893 weighs by the table's 0.43 g/mL (2 "
-      "teaspoons: 4.24 g), never the record's loose tsp for one wording "
+      "espresso wording on 171893 weighs by the table's figure (v118: the "
+      "labels' 2.0 g a teaspoon; 2 teaspoons: 4.00 g), never the record's "
+      'loose tsp for one wording '
       '(0897 Hot Fudge Pudding Cake, 0821 Thick and Chewy Double-Chocolate '
       'Cookies, the 13 "instant espresso powder" lines at 2 tsp)', () async {
     final food = (await FixtureProvider().food(171893))!;
@@ -191,7 +192,10 @@ void main() {
         IngredientLine(raw: raw, item: parsed.item, amounts: parsed.amounts),
         food,
       );
-      expect(g?.grams, closeTo(4.24, 0.01), reason: raw);
+      // RE-PIN (M105 batch, v118): the five keys at the instant espresso
+      // labels' 2.0 g a teaspoon (S8b; DeLallo 2059824, Ferrara 2503093) —
+      // was 0.43 g/mL, 4.24 g.
+      expect(g?.grams, closeTo(4.00, 0.01), reason: raw);
       expect(g?.source, GramSource.density, reason: raw);
     }
   });

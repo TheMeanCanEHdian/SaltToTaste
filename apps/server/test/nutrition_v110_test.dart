@@ -202,7 +202,8 @@ void x2() {
     );
     expect([for (final p in partsOf(row.parts)) p.fdcId], [peel, juice]);
     expect(nutritionIsFresh(db, r), isTrue);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.92, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 603.92 → 603.13.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.13, 0.005));
   }
 
   /// 0536 computed, then the juice's detail dropped with an answer listing
@@ -261,7 +262,8 @@ void x2() {
       (held.status, held.hold, held.heldOn, held.grams),
       ('auto', 'food_unavailable', juice, null),
     );
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(591.13, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(590.33, 0.005));
     await matchAndCompute(db, fault, r);
     expect(fault.asked, foodUnavailableAfter);
     await cachedFood(db, _fx, juice);
@@ -359,7 +361,8 @@ void x2() {
       ('confirmed', peel, 'food_gone', juice, null),
     );
     expect(nutritionIsFresh(db, r), isTrue);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(591.13, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(590.33, 0.005));
     await matchAndCompute(db, gone, r);
     expect(gone.asked, 1);
     // Base: accepted.
@@ -404,7 +407,8 @@ void x2() {
       expect(nutritionIsFresh(db, r), confirm, reason: '$confirm');
       expect(
         db.nutritionFor(r.id)!.caloriesPerServing,
-        closeTo(591.13, 0.005),
+        // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+        closeTo(590.33, 0.005),
         reason: '$confirm',
       );
     }

@@ -798,13 +798,14 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsS = [
   ),
   // S4 galangal on ginger root, at ginger's per-inch figure.
   (
+    // RE-PIN (M105 batch, v118): the per-inch figure 8 → 6 g (S8a: SR 169231's own 'tsp' 2.0 g × 3, ATK's 1 inch ≈ 1 tablespoon) — was '16.00' and 8 g per inch.
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     5,
     '1 (2-inch) piece fresh galangal, peeled and sliced into ¼-inch-thick rounds',
     169231,
-    '16.00',
+    '12.00',
     'counted',
-    "1 piece × 2 inch × 8 g per inch · approximate (ginger's figure (ATK's substitute for galangal)) · approximation (counted as Ginger root, raw)",
+    "1 piece × 2 inch × 6 g per inch · approximate (ginger's figure (ATK's substitute for galangal)) · approximation (counted as Ginger root, raw)",
   ),
   // S5 culantro on cilantro; S6 alcaparrado on green olives.
   (

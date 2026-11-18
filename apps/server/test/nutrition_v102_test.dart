@@ -296,12 +296,15 @@ void knockOn() {
 /// ([engineOutcome] `decided`); the apply's reach skips it (m3, m7).
 void lineHeld() {
   for (final (file, at, sib, energy) in [
-    ('0510-goi-cuo-n-vietnamese-summer-rolls.yaml', 2, 10, '2639.47'),
+    // RE-PIN (M105 batch, v118): goi-cuon|12 "1 cup fresh mint leaves" on
+    // 173474's spoon, 91.20 → 25.60 g (−28.86 kcal): was '2639.47'.
+    ('0510-goi-cuo-n-vietnamese-summer-rolls.yaml', 2, 10, '2610.61'),
     (
       '0358-classic-spaghetti-and-meatballs-for-a-crowd.yaml',
       11,
       26,
-      '11248.44',
+      // RE-PIN (M105 batch, v118): classic-spaghetti-and-meatballs-for-a-crowd|2 gelatin on 169599 at the corpus packet (0.7190 g/mL), 3.50 → 5.32 g (+6.09 kcal) — was '11248.44'.
+      '11254.52',
     ),
   ]) {
     test('P4: $file|$at pick 746775 → |$sib 746775, `discarded_medium` '

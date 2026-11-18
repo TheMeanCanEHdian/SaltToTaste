@@ -2,13 +2,13 @@
   "status": "complete",
   "serving_basis": 8,
   "basis_kind": "per_serving",
-  "calories_per_serving": 438.44,
+  "calories_per_serving": 439.83,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 438.44,
+      "amount": 439.83,
       "unit": "kcal",
-      "dv_percent": 21.9
+      "dv_percent": 22.0
     },
     "fat": {
       "label": "Total Fat",
@@ -45,7 +45,7 @@
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 70.57,
+      "amount": 71.38,
       "unit": "mg",
       "dv_percent": 3.1
     },
@@ -68,9 +68,9 @@
     },
     "protein": {
       "label": "Protein",
-      "amount": 4.35,
+      "amount": 4.71,
       "unit": "g",
-      "dv_percent": 8.7
+      "dv_percent": 9.4
     },
     "vitamin_d": {
       "label": "Vitamin D",
@@ -80,19 +80,19 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 106.62,
+      "amount": 106.85,
       "unit": "mg",
       "dv_percent": 8.2
     },
     "iron": {
       "label": "Iron",
-      "amount": 0.4,
+      "amount": 0.41,
       "unit": "mg",
-      "dv_percent": 2.2
+      "dv_percent": 2.3
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 265.94,
+      "amount": 266.01,
       "unit": "mg",
       "dv_percent": 5.7
     },
@@ -146,13 +146,13 @@
     },
     "folate_equivalent": {
       "label": "Folate (DFE)",
-      "amount": 18.13,
+      "amount": 18.26,
       "unit": "µg",
-      "dv_percent": 4.5
+      "dv_percent": 4.6
     },
     "folate_food": {
       "label": "Folate (food)",
-      "amount": 18.13,
+      "amount": 18.26,
       "unit": "µg"
     },
     "vitamin_b12": {
@@ -163,18 +163,18 @@
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 25.41,
+      "amount": 25.5,
       "unit": "mg",
       "dv_percent": 6.1
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 105.2,
+      "amount": 105.36,
       "unit": "mg",
       "dv_percent": 8.4
     }
   },
-  "total_grams": 1790.3,
+  "total_grams": 1793.6,
   "matched_count": 7,
   "total_count": 7,
   "low_confidence": 0,

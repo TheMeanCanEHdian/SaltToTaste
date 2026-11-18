@@ -769,7 +769,8 @@ void main() {
       // RE-PIN (M82 batch, v84, C5a): the coats' flour re-solves (the
       // replay's 512.96 → 513.09, 1,028.23 → 1,028.15): was 512.96, 1028.23.
       // RE-PIN (M86 batch, v90, 958: 2727568 chicken): was 512.69.
-      expect(of(_wings), ('complete', '521.61')); // v56 601.62
+      // RE-PIN (M105 batch, v118): dakgangjeong|2 ginger on 169231's own tsp (2.0 g), 2.66 → 2.00 g (−0.53 kcal ÷ 4) — was '521.61'.
+      expect(of(_wings), ('complete', '521.48')); // v56 601.62
       expect(of(_sandwiches), ('complete', '1028.92')); // v56 1,057.75
       // fish-and-chips (replay 981.40, v56 1,003.49): its oil |1 reads
       // 172336 in a fresh compute, 2710187 in snapshot 23 (above) — the

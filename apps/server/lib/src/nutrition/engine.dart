@@ -17570,6 +17570,15 @@ Future<(FdcFood, GramResolution?)> gramsFor(
     await _cachedFood(db, provider, cut);
     return (detail, resolve(detail));
   }
+  // v118 (M105 S7a): a whole-leaf sibling's detail ([leafSiblings]),
+  // fetched the same way.
+  final leaf = leafSiblings[detail.fdcId];
+  if (leaf != null &&
+      _foodFromCache(db, leaf) == null &&
+      volumeMlOf(line.amounts) != null) {
+    await _cachedFood(db, provider, leaf);
+    return (detail, resolve(detail));
+  }
   return (detail, withDetail);
 }
 
@@ -17653,6 +17662,24 @@ GramResolution? lineGrams(
         grams: grams.grams,
         source: grams.source,
         basis: '${grams.basis} · ${fine.note}',
+      );
+    }
+  }
+  // v118 (M105 S7a): whole / torn / loose leaves by the volume on a
+  // [leafSiblings] record weigh on its cached sibling's spoon (fetched once
+  // by `gramsFor`, as a fine-cut sibling is) — the line's food stays.
+  final leafId = food == null ? null : leafSiblings[food.fdcId];
+  final leafSibling = leafId == null ? null : _foodFromCache(db, leafId);
+  final leaf = leafSibling == null
+      ? null
+      : leafWeighing(food!, leafSibling, line.raw, line.amounts);
+  if (leaf != null) {
+    if (on(leaf.food) case final grams?
+        when grams.source == GramSource.portion) {
+      return GramResolution(
+        grams: grams.grams,
+        source: grams.source,
+        basis: '${grams.basis} · ${leaf.note}',
       );
     }
   }

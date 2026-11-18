@@ -2,11 +2,11 @@
   "status": "complete",
   "serving_basis": 8,
   "basis_kind": "per_serving",
-  "calories_per_serving": 492.13,
+  "calories_per_serving": 491.99,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 492.13,
+      "amount": 491.99,
       "unit": "kcal",
       "dv_percent": 24.6
     },
@@ -45,13 +45,13 @@
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 486.86,
+      "amount": 486.84,
       "unit": "mg",
       "dv_percent": 21.2
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 55.48,
+      "amount": 55.45,
       "unit": "g",
       "dv_percent": 20.2
     },
@@ -59,7 +59,7 @@
       "label": "Dietary Fiber",
       "amount": 2.42,
       "unit": "g",
-      "dv_percent": 8.7
+      "dv_percent": 8.6
     },
     "sugars": {
       "label": "Total Sugars",
@@ -80,7 +80,7 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 100.99,
+      "amount": 100.96,
       "unit": "mg",
       "dv_percent": 7.8
     },
@@ -92,7 +92,7 @@
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 419.65,
+      "amount": 418.96,
       "unit": "mg",
       "dv_percent": 8.9
     },
@@ -104,7 +104,7 @@
     },
     "vitamin_c": {
       "label": "Vitamin C",
-      "amount": 5.48,
+      "amount": 5.47,
       "unit": "mg",
       "dv_percent": 6.1
     },
@@ -146,13 +146,13 @@
     },
     "folate_equivalent": {
       "label": "Folate (DFE)",
-      "amount": 11.09,
+      "amount": 11.07,
       "unit": "µg",
       "dv_percent": 2.8
     },
     "folate_food": {
       "label": "Folate (food)",
-      "amount": 11.09,
+      "amount": 11.07,
       "unit": "µg"
     },
     "vitamin_b12": {
@@ -163,18 +163,18 @@
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 33.99,
+      "amount": 33.92,
       "unit": "mg",
       "dv_percent": 8.1
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 139.56,
+      "amount": 139.5,
       "unit": "mg",
       "dv_percent": 11.2
     }
   },
-  "total_grams": 1788.4,
+  "total_grams": 1787.1,
   "matched_count": 13,
   "total_count": 13,
   "low_confidence": 0,

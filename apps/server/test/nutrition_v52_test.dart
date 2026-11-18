@@ -533,7 +533,10 @@ void main() {
           // (the replay 669.10 → 668.80 g, 586.77 → 585.33): was 669.1,
           // 586.77.
           668.8,
-          585.33,
+          // RE-PIN (M105 batch, v118): fresh-plum-ginger-pie|4 "1 teaspoon
+          // grated fresh ginger" on 169231's own tsp, 2.66 → 2.00 g (2.13 →
+          // 1.60 kcal) — was 585.33.
+          585.26,
           9,
         ),
         (
@@ -922,7 +925,10 @@ void main() {
         () => loadCorpusRecipe(_panna).id,
         true,
         // RE-PIN (M90 batch, v89, sugar): was 1043.1.
-        1042.1,
+        // RE-PIN (M105 batch, v118): panna-cotta|1 "2¾ teaspoons gelatin" on
+        // 169599 at the corpus packet (0.7190 g/mL), 6.42 → 9.75 g — was
+        // 1042.1.
+        1045.4,
       ),
     ]) {
       test(

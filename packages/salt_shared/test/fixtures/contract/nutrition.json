@@ -2,11 +2,11 @@
   "status": "partial",
   "serving_basis": 12,
   "basis_kind": "per_serving",
-  "calories_per_serving": 462.45,
+  "calories_per_serving": 462.41,
   "per_serving": {
     "energy": {
       "label": "Calories",
-      "amount": 462.45,
+      "amount": 462.41,
       "unit": "kcal",
       "dv_percent": 23.1
     },
@@ -45,13 +45,13 @@
     },
     "sodium": {
       "label": "Sodium",
-      "amount": 351.52,
+      "amount": 351.51,
       "unit": "mg",
       "dv_percent": 15.3
     },
     "carbs": {
       "label": "Total Carbohydrate",
-      "amount": 60.9,
+      "amount": 60.89,
       "unit": "g",
       "dv_percent": 22.1
     },
@@ -68,7 +68,7 @@
     },
     "protein": {
       "label": "Protein",
-      "amount": 7.81,
+      "amount": 7.8,
       "unit": "g",
       "dv_percent": 15.6
     },
@@ -80,7 +80,7 @@
     },
     "calcium": {
       "label": "Calcium",
-      "amount": 81.0,
+      "amount": 80.99,
       "unit": "mg",
       "dv_percent": 6.2
     },
@@ -92,7 +92,7 @@
     },
     "potassium": {
       "label": "Potassium",
-      "amount": 301.25,
+      "amount": 300.9,
       "unit": "mg",
       "dv_percent": 6.4
     },
@@ -134,7 +134,7 @@
     },
     "niacin_b3": {
       "label": "Niacin (B3)",
-      "amount": 1.8,
+      "amount": 1.79,
       "unit": "mg",
       "dv_percent": 11.2
     },
@@ -163,18 +163,18 @@
     },
     "magnesium": {
       "label": "Magnesium",
-      "amount": 62.68,
+      "amount": 62.65,
       "unit": "mg",
       "dv_percent": 14.9
     },
     "phosphorus": {
       "label": "Phosphorus",
-      "amount": 155.59,
+      "amount": 155.56,
       "unit": "mg",
       "dv_percent": 12.4
     }
   },
-  "total_grams": 1554.9,
+  "total_grams": 1554.8,
   "matched_count": 12,
   "total_count": 13,
   "low_confidence": 0,

@@ -324,7 +324,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 103 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 104 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -348,7 +348,8 @@ void main() {
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-    expect(matcherVersion, 103);
+    // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+    expect(matcherVersion, 104);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
@@ -1165,7 +1166,12 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:skinSentences': 1,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
     // skin sentences, once per index and item text: each of the shape's distinct line items (`skinScans`; uncounted before).
-    'skinScans': 399,
+    // RE-PIN (M105 batch, v118): 400 (was 399) — the shape's 'ginger' head
+    // (nutrition_v26_cost_test's `foods`) has no density since S8a deleted
+    // `_densities` ('ginger', 0.54): its step print weighed on no record
+    // (`lineGrams` food null) now has no grams, so `stepAmountGrams` returns
+    // null and the line reaches `skinDiscarded` like the other 399.
+    'skinScans': 400,
     'allSentences': 1,
   },
   'B1a-QUIET': {

@@ -1663,8 +1663,11 @@ Beef Burgundy, 2 × 2706232's 4 g fillet; "substitute 1½ teaspoons of
 anchovy paste for the fillets", Pan-Seared Thick-Cut Boneless Pork Chops,
 5.3 g a teaspoon), labelled `"1 teaspoon ≈ 5 mL · approximate (ATK: 2
 anchovy fillets ≈ 1 to 1½ teaspoons paste)"`, and "instant espresso"
-(171893) at its 13 "instant espresso powder" siblings' 0.43, never the
-record's loose `tsp` 1.0 g; since matcher v37 (the queue sweep, Z5/Z6/Z11/
+(171893) at its 13 "instant espresso powder" siblings' figure, never the
+record's loose `tsp` 1.0 g (corrected 2026-11-18, matcher v118, M105 S8b:
+the siblings' figure was an unsourced 0.43 g/mL; since v118 all five
+instant espresso / coffee keys weigh the Branded labels' 2.0 g a teaspoon,
+0.4058 g/mL, flagged — "Matcher v118" below); since matcher v37 (the queue sweep, Z5/Z6/Z11/
 Z15) eight figures for a record that publishes NO volume figure of its own
 (never over one: "¾ cup dried red lentils" keeps 174284's cup), each
 labelled with its source — ATK's printed pairs: frozen pearl onions 113.4
@@ -1737,22 +1740,24 @@ CP10 rulings, each flagged with its source in the basis): a dried
 chipotle 4.6 g (ATK's "½ dried chipotle chile … (scant tablespoon)" on
 168570's cup, Pollo en Mole); fresh ginger and citrus zest strips by the
 length the line prints — "(4-inch)", "(1½-inch piece)", "about 3 inches
-long" — at 8 g an inch of ginger root (ATK's "1 (1-inch) piece fresh
-ginger, grated (about 1 tablespoon)", Roast Fresh Ham, at the ginger
-density) and 0.8 g an inch of orange or lemon peel strip (ATK's "10
+long" — at 6 g an inch of ginger root (ATK's "1 (1-inch) piece fresh
+ginger, grated (about 1 tablespoon)", Roast Fresh Ham, at SR 169231's own
+`tsp` 2.0 g × 3 — corrected 2026-11-18, matcher v118, M105 S8a: was 8 g,
+the tablespoon at the unsourced table density 0.54, gone at v118) and 0.8
+g an inch of orange or lemon peel strip (ATK's "10
 (3-inch) strips orange peel … (¼ cup)", Crispy Orange Beef; lemon "the
 orange-peel strip figure, extended to lemon"), only on the ginger-root or
-peel record and only for a piece or strip count: `"1 piece × 4 inch × 8 g
+peel record and only for a piece or strip count: `"1 piece × 4 inch × 6 g
 per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1
-tablespoon)"`; since matcher v37 galangal by the same figure (since M71 the
+tablespoon)"` (v118; was × 8 g); since matcher v37 galangal by the same figure (since M71 the
 only galangal line, guay-tiew-tom-yum-goong|5, is a strained aromatic, 0 g
 "strained out and discarded" — the figure below reaches no corpus row; v103
 docs, Run 075 S14), ATK's own
 substitute ("If galangal is unavailable, substitute fresh ginger", Guay
 Tiew Tom Yum Goong), on the ginger-root record it ranks as (flagged
-below): `"1 piece × 2 inch × 8 g per inch · approximate (ginger's figure
+below): `"1 piece × 2 inch × 6 g per inch · approximate (ginger's figure
 (ATK's substitute for galangal)) · approximation (counted as Ginger root,
-raw)"`, 16 g; whole spices by a reference figure — a peppercorn 0.05 g,
+raw)"`, 12 g (v118; was 8 g an inch, 16 g); whole spices by a reference figure — a peppercorn 0.05 g,
 a whole clove 0.1, an allspice berry 0.1, a cardamom pod 0.2, a coriander
 seed 0.01, a star anise pod 0.5 (a flagged figure prints its decimals —
 a sub-gram one all of them, flagged or not since matcher v63 (the bay
@@ -5361,6 +5366,266 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v118 (batch M105, prep52 P6 — portion and density figures;
+matcherVersion 103 → 104. The spec .claude/diag/2026-11-16/prep52/
+design_v2.md "P6 — portion and density figures" (W4, S8a, S8c, S8b, S7a),
+the rulings in the M105 brief (R2: S8b at the Branded labels' teaspoon;
+R3: S7a on SR 173474's spoon; R4: S8c on the corpus's print; R5: W4 and
+the loaf's flag, the design's OQ11). Blind accuracy audit 7 found figures
+no source gives sizing lines. grams.dart's tables and count loop, one
+sibling map in the shipped `volumeSiblings` form; no new hold, no
+raw-line grammar, no app copy. Replayed on SNAPSHOT 33 against the v117
+set, both orders byte-identical, calls 0, a replay after each item. No
+migration. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **W4 — a rustic slice on its record's own slice.** Today: count-loop
+  step 3a.5 `_rusticBreadGrams` gave a rustic / crusty / French / Italian
+  bread 50 g a slice and 454 g a loaf AHEAD of the record's bare-noun
+  portion (step 3b.5, the one `bare: true` read before v118), though its
+  doc called it "only a FALLBACK": SR 174913 "Bread, Italian" prints
+  'slice' 29.0 g. The change: at 3a.5 the record's own bare-noun portion
+  of the line's unit is read first (`_portionGramsPerUnit(food,
+  amountUnit, bare: true)`; `grep -c -F "bare: true" grams.dart` → 2), its
+  basis "· USDA portion"; else the fallback, the loaf's 454 g flagged
+  "· approximate (ATK: a 1-pound loaf)" (`_loafLabel`; `grep -c _loafLabel
+  grams.dart` → 3); the 50 g slice sizes no corpus row since v118 and is
+  not flagged. Figure: SR 174913 'slice' 29.0 g (a ½-inch slice; the
+  corpus's ¾-inch rustic slice prints 51.0 g, its 1-inch country slice
+  56.7 g).
+- **S8a — fresh ginger on its record's spoon; 6 g an inch.** Today:
+  `_densities` ('ginger', 0.54), unsourced (244743e), weighed every fresh
+  ginger volume ahead of SR 169231's own 'tsp' 2.0 g (0.4058 g/mL), and the
+  ruled per-inch figure (v31 Q6: ATK's 1-inch piece ≈ 1 tablespoon) was
+  built from it, 8 g an inch; galangal reads ginger's figure. The change:
+  the entry deleted (`grep -c -F "('ginger', 0.54)" grams.dart` → 0; the
+  longer keys 'ground ginger' 0.37 and 'crystallized ginger' unchanged);
+  `_perInch` 'ginger' and 'galangal' 8 → 6 g (169231's 2.0 g × 3, ATK's
+  inch = 1 tablespoon). Orange / lemon peel strips keep 0.8 g an inch, the
+  baguette 14.73.
+- **S8c — gelatin by the spoon at the corpus's packet.** Today:
+  `_foodGramsPerMl(169599)` read its parenthesized "envelope (1 tbsp)" 7 g
+  (2.33 g a teaspoon). The change: `_densities` 'gelatin' = 0.25 ×
+  28.3495 / (2 × 4.92892) = 0.71902 g/mL (3.54 g a teaspoon), the corpus's
+  own two prints — "2 teaspoons (about 1 packet) unflavored powdered
+  gelatin" (Best Beef Stew) and "1 (¼-ounce) package gelatin" (Chilled
+  Lemon Soufflé) — `_approximateDensities` 'gelatin' recordFirst false,
+  flagged "approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼
+  ounce)" (`grep -c -F "'gelatin'" grams.dart` → 3). L55's Branded search
+  confirms the packet: Ahold 2298348 and Meijer 2633150 "1 packet" 7.0 g
+  (and five more "1 ENVELOPE" 7.0 g labels; Knox's "¼ envelope" 1.8 g).
+  The parenthesized-portion read stays; it sizes no corpus gelatin line.
+- **S8b — instant espresso / coffee at the labels' teaspoon.** Today: the
+  five keys 'espresso powder', 'instant coffee', 'coffee powder', 'instant
+  coffee powder', 'instant espresso' weighed an unsourced 0.43 g/mL (2.12 g
+  a teaspoon; v31 Q7 misc M2 above, corrected in place). RULED by the
+  orchestrator under the standing matcher authorization (the design's OQ3,
+  answered by L55): the Branded labels DeLallo 2059824 ("ESPRESSO INSTANT
+  POWDER", servingSize 2.0 g, household "1 tsp") and Ferrara 2503093
+  ("100% INSTANT ESPRESSO COFFEE", 2.0 GRM, "1 tsp") — the owner's standing
+  rule, a label's grams for a printed volume — not SR 171893's regular
+  instant 'tsp' 1.0 g (a coarser powder). The change: the five keys at
+  `_espressoDensity` = 2.0 / 4.92892 = 0.40578 g/mL, each flagged
+  "approximate (instant espresso labels (FDC Branded 2059824 DeLallo,
+  2503093 Ferrara): 1 teaspoon = 2.0 g)" (`grep -c _espressoDensity
+  grams.dart` → 7; `_espressoLabel` → 7).
+- **S7a — whole mint leaves on 173474's spoon.** Today: SR 173475
+  "Spearmint, fresh" prints one volume portion, '2 tbsp' 11.4 g (91.2 g a
+  cup, a chopped spoon), so "1½ cups fresh mint leaves, torn" weighed
+  136.80 g. RULED (R3): SR 173474 "Peppermint, fresh" — cached in snapshot
+  33 by L55 — prints '2 tbsp' 3.2 g (25.6 g a cup). The change:
+  `leafSiblings` {173475: 173474} (the `volumeSiblings` form; `grep -c
+  leafSiblings grams.dart` → 3, engine.dart → 4) read by `lineGrams`
+  through `leafWeighing` (grams.dart → 2, engine.dart → 1) only for a
+  VOLUME line naming no `_cutLeaves` word (chopped, minced, diced, grated,
+  sliced, shredded; `grep -c _cutLeaves grams.dart` → 4) and only where
+  the weighing is a `portion`: the line's food and nutrients stay
+  173475's, the grams 173474's spoon, flagged "approximate (USDA 173474
+  Peppermint, fresh: 2 tbsp = 3.2 g)"; `gramsFor` fetches the sibling's
+  detail once as it does a fine-cut sibling's (0 requests on snapshot 33).
+  Fine-cut lines keep 173475's own spoon. No corpus line prints a weight
+  for a volume of mint (`grep -rhoiE 'raw: .*\bmint\b.*' recipes | grep
+  -ciE 'ounce|grams|\bg\b|pound'` → 0).
+- **The rows (the replay against the v117 set: 157 rows in 139 recipes —
+  125 recipes' recs move, 14 move titled-section rows alone — 0 status
+  changes; 22 sections lines differ, each holding a moved row: 18 titled
+  glaze, marinade, paste, relish or sauce sections with their own ginger
+  row and the 4 sections a routed row restates; notes and calls byte-identical,
+  the buckets equal).** Each derived by hand
+  (grams = the line's volume or count × the new figure; kcal = grams × the
+  record's 208, snapshot 33's details; 152 class rows and 5 dependents (M52 1,
+  routed 4), 0 mismatches):
+  W4 3 rows, −1,033.41 — breakfast-strata-with-spinach-and-gruyere|0 "8–10
+  (½-inch-thick) slices supermarket French or Italian bread" 9 × 29 =
+  261.00 g × 2.59 = 675.99 (was 450.00 g, 1,165.50); acquacotta-tuscan-white-bean-and-escarole-soup|16 (a person's pick of 174913, stored
+  `overridden`, engine grams) 10 × 29 = 290.00 g, 751.10 (was 500.00,
+  1,295.00); bruschetta-with-artichoke-hearts-and-parmesan|0 (section
+  "Toasted Bread for Bruschetta") 454 g, the basis alone gaining the flag.
+  S8a 81 density rows (80 by the spoon, one by the ½ cup), −140.24 — e.g. palak-dal-spinach-dal-with-cumin-and-mustard-seeds|1 "1
+  tablespoon grated fresh ginger" 7.98 → 6.00 g (6.39 → 4.80),
+  thai-chicken-curry-with-potatoes-and-peanuts|3 "½ cup" 63.88 → 48.00
+  (51.10 → 38.40); and 11 per-inch rows, −30.40 — mahogany-chicken-thighs|7 "1 (2-inch) piece" 16.00 → 12.00, mapo-tofu-sichuan-braised-tofu-with-beef|5 24.00 → 18.00.
+  S8c 32 rows, +318.32 —
+  buttermilk-vanilla-panna-cotta-with-berries-and-honey|1 "2 teaspoons"
+  4.67 → 7.09 g (15.63 → 23.74), ragu-alla-bolognese|2 "8 teaspoons" 18.67
+  → 28.35. S8b 17 rows, −13.27 — tiramisu|2 "1½ tablespoons" 9.54 → 9.00
+  (33.67 → 31.77). S7a 8 rows, −158.74 — thai-grilled-beef-salad|11 "1½
+  cups fresh mint leaves, torn" 136.80 → 38.40 g (60.19 → 16.90), bun-cha|5 and goi-cuo-n-vietnamese-summer-rolls|12 "1 cup" 91.20 → 25.60. Dependents, each through a
+  documented mechanism: four routed "1 recipe" rows restating a child's
+  move (flank-steak-and-arugula-sandwiches-with-red-onion|4, thai-green-curry-with-chicken-broccoli-and-mushrooms|1,
+  restaurant-style-herb-sauce-for-pan-seared-steaks|3 728.35 → 731.40 g, bittersweet-chocolate-roulade|10 634.00 → 633.80) and lumpiang-shanghai-with-seasoned-vinegar|17 (the M52 fry plan:
+  7.62 % of the fried mix, which lost 1.00 g of ginger) 99.34 → 99.27 g.
+  Over 5 % a serving: breakfast-strata 592.02 → 510.44 (−13.78 %),
+  acquacotta 530.84 → 462.85 (−12.81 %); next thai-grilled-beef-salad
+  −3.01 %. The design's model for W4 + S8a + S8c: −885.68 (here −885.73).
+- **The classes (R7, on the replay):** the bread rows on the 50 / 454 basis
+  3, all moved; 65 other bread rows counted by the slice or loaf (white /
+  hearty sandwich bread on the ruled table, FNDDS slices, printed weights,
+  a crusty loaf on 2707614's own loaf portion), 0 moved; 'ginger' density
+  rows 81, all on 169231, all moved; per-inch rows at 8 g 11, all moved
+  (chinese-style-barbecued-spareribs|0 is 0 g `discarded` since v117 and stays); the other
+  per-inch rows (4 peel strips at 0.8 g, the baguette at 14.73) 5, 0
+  moved; volume rows on 169599 32, all moved (its two others — the
+  soufflé's ¼-ounce package by its printed weight, indoor-pulled-chicken|4 held — unmoved); volume rows on 171893 17, all moved; 173475 volume
+  rows: 8 leaf lines, all moved, 26 fine-cut lines, 0 moved.
+- **Properties (R9; nutrition_v118_test "the five selectors on every
+  corpus line": every corpus recipe's own lines naming the item's food,
+  weighed through `lineGrams` with the recipe's real steps ON THE ITEM'S
+  RECORD — the selector of the site, not the matcher's reach; each class a
+  count and a SHA-256 of its sorted list).** W4: 3 rustic slice lines read
+  the record's slice, 2 rustic loaves the flagged 454 g, 5 print a weight,
+  none at 50 g. S8a: 18 per-inch lines at 6 g (galangal among them), 62 on
+  169231's spoon, 19 table lines all naming ground or crystallized ginger,
+  1 printed weight, none at 8 g an inch and none fresh by a table density.
+  S8c: 32 volume lines at the packet, 1 printed weight, none on the
+  envelope. S8b: 16 lines flagged with the labels (the other two: espresso
+  BEANS, chocolate-volcano-cakes-with-espresso-ice-cream|1, and a reference line), none at 0.43. S7a: 12 leaf lines
+  flagged (4 of them dried mint — red-lentil-soup-with-warm-spices|14, pastitsio|9, clbr-turkish-poached-eggs-with-yogurt-and-spiced-butter|7, monkfish-tagine|9 — which
+  the matcher never lands on 173475: a limit), 24 cut lines unflagged;
+  none cut-and-flagged, none whole-and-unflagged. Limit: the titled
+  sections' lines are not looped (the replay holds the bruschetta loaf and
+  the sections).
+- **Pins (apps/server/test/nutrition_v118_test.dart).** Each moved line
+  computed ALONE in its recipe's real steps on the fixtures: record,
+  description, status, hold, gram source, stored confidence, grams,
+  energy, `gramBasisFor` AND the matches GET's grams, hold and
+  `gram_basis` — breakfast-strata-with-spinach-and-gruyere|0, palak-dal-spinach-dal-with-cumin-and-mustard-seeds|1, xihongshi-chao-jidan-chinese-stir-fried-tomatoes-and-eggs|3, mahogany-chicken-thighs|7, buttermilk-vanilla-panna-cotta-with-berries-and-honey|1, best-beef-stew|15, tiramisu|2,
+  chocolate-crinkle-cookies|7, thai-grilled-beef-salad|11, bun-cha|5; the
+  negatives (chinese-style-barbecued-spareribs|0 0 g `discarded`, daube-provencal|15 9.60 and
+  bananas-foster|3 1.60 on the peel figure, red-lentil-soup-with-warm-spices|5 ground ginger
+  0.46, chilled-lemon-souffle|1 7.09 by its printed weight, green-bean-salad-with-cherry-tomatoes-and-feta|5 "chopped" 11.40 and lentil-salad-with-olives-mint-and-feta|9 "minced" 45.60 on 173475's own
+  spoon); on the resolver: acquacotta-tuscan-white-bean-and-escarole-soup|16 290.00 g on 174913, the
+  bruschetta loaf 454 g flagged, the same slices with no record 500 g
+  unflagged, guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|5 galangal 12 g, crispy-thai-eggplant-salad|4's
+  bare-count piece 6 g, fresh ginger with no record none; S7a's fetch
+  gate on a corpus line — berry-fool|8 "6 sprigs fresh mint (optional)"
+  (one of the two non-volume rows on 173475) computed alone on a cold
+  cache asks FDC once and never for 173474, the control thai-grilled-beef-salad|11 twice, 173474 cached; synthesized
+  (STATED, each naming its corpus source): each of the five S8b keys
+  alone at 4.00 g, "2 loaves crusty bread" (no record) 908 g flagged,
+  "diced" / "grated" / "sliced" / "shredded" mint and a printed weight
+  beside the volume unflagged. The test fixtures gain SR 173474's detail and the search
+  'supermarket french or italian bread' (both copied from snapshot 33 with
+  tool/record_fdc_fixtures.dart --from-db).
+- **Mutants (35, each one site on a snapshot copy restored from a trap;
+  diffs and logs kept), all killed by a value:** W4 — the own read
+  dropped, `bare: false`, the own read only for a loaf (breakfast-strata-with-spinach-and-gruyere|0), the
+  loaf flag dropped (the bruschetta loaf), the flag on every fallback (the
+  500 g slices), the flag on 'loaf' only (the "2 loaves" pin); S8a — the
+  entry restored (palak-dal-spinach-dal-with-cumin-and-mustard-seeds|1), ginger at 8 g an inch (mahogany-chicken-thighs|7), galangal
+  at 8 g (guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|5), the peel at 0.6 (daube-provencal|15), the ginger figure only
+  for 'piece' (the bare count, crispy-thai-eggplant-salad|4); S8c — the entry
+  dropped, recordFirst true, the flag dropped, Knox's 2¼ teaspoons
+  (buttermilk-vanilla-panna-cotta-with-berries-and-honey|1); S8b — each key left at 0.43 (five), the
+  record's 1.0 g, one key unflagged, one key recordFirst; S7a — the cut
+  exclusion dropped (green-bean-salad-with-cherry-tomatoes-and-feta|5), the wrong id (thai-grilled-beef-salad|11),
+  'minced' dropped (lentil-salad-with-olives-mint-and-feta|9), 'sliced' / 'shredded' dropped and the
+  portion guard dropped (the synthesized pins), the lookup and the fetch
+  removed (thai-grilled-beef-salad|11); added in the closer's round 1 (each had
+  passed every test before its pin): 'diced' and 'grated' dropped
+  together, each alone (the synthesized cut-word pin), and the fetch's
+  volume gate dropped or widened to any amount (berry-fool|8). The design's m4 for W4 (the own read
+  after the return) is the base's code, the same as the own read dropped:
+  stated, not run twice. Six were killed by a synthesized pin alone (no
+  corpus line reaches the difference): 'instant coffee' and 'coffee
+  powder' at 0.43 and 'coffee powder' recordFirst (no corpus line's
+  longest key is either), the flag on 'loaf' only (both corpus loaves
+  print "1 loaf"), the S7a cut words 'sliced' / 'shredded' and the portion
+  guard (no corpus mint line prints either word or a weight); likewise
+  the three 'diced' / 'grated' mutants (no corpus mint line names either
+  word).
+- **The owner gate (2026-11-18).** The replay re-run: byte-identical to
+  the fixer's final and verifier round 3's (157 rows, 125 recs lines, 0
+  status changes, calls 0). Every moved row checked by an independent
+  script that parses no line: 151 rows each equal their v117 grams × their
+  class's ratio (the new figure over the old: 0.75142 for the ginger
+  spoon, 0.75 an inch, 1.51872 for gelatin, 0.94365 for espresso, 0.28070
+  for the mint leaves, 0.58 for the bread slice) at their record's energy,
+  0 mismatches; the six others are the four routed rows, the lumpia's
+  frying oil and the loaf's basis. Eight own mutants, each diff read
+  before its result: five killed by a value of the batch's pins (the leaf
+  arm flagging whatever the resolution's source; "torn" read as a cut
+  word; the bread's own portion read for the slice whatever the line's
+  unit; the labels' teaspoon taken as 5 mL; the packet at the labels'
+  7.0 g). Two survived and differ on NO corpus row — the whole-library
+  replay is byte-identical under each: the cut word read case-sensitively
+  (0 of the corpus's 59 mint lines capitalise one) and `leafWeighing`
+  without its volume guard (`lineGrams` keeps a leaf weighing only when a
+  portion sized the line) — each pinned (a capitalised "Chopped"; the
+  function's null for berry-fool|8's sprigs), re-run and killed by a
+  value. The eighth is no mutant: the loaf flag read off the 454 g figure
+  instead of the unit — `_rusticBreadGrams` returns 454 for a loaf unit
+  alone. The hand-edit verifier's own neighbours: three killed by a value;
+  the bread's own portion read for a slice unit only (never a loaf)
+  passes the batch's test file (25 tests) — the whole-library replay is byte-identical under it, and no
+  cached record prints a bare 'loaf' portion (the loaf portions lead with
+  a number): STATED, not pinned; the leaf arm placed before the fine-cut
+  arm is equivalent (the two sibling maps share no record).
+- **Stated limits ("Stays").** The 50 g slice still sizes a rustic slice
+  on a record printing no slice (no corpus row since v118), unflagged; the
+  slice's printed thickness is not read (a ¾-inch slice on 174913 reads
+  29 g); the bruschetta's "per loaf" yield label is the owner's (a mockup
+  first). Ground and crystallized ginger keep their keys; fresh ginger on
+  no record (no matched food) has no grams where the table gave 0.54
+  (no corpus row; the RULE C cap shapes' one 'ginger' head now reaches
+  `skinDiscarded`, `skinScans` 399 → 400, re-pinned). The owner may prefer
+  Knox's 2¼ teaspoons a packet (3.11 g a teaspoon) to the corpus's 2.
+  A brand finer than DeLallo / Ferrara would be lighter or heavier; the
+  label rules. Parsley's whole leaves (16 rows on '1 cup' 60 g) have the
+  shape and no whole-leaf figure: not in this batch. A dried-mint line on
+  173475 would read the fresh peppermint spoon (the property's four dried
+  lines; the matcher lands none there). The titled sections' lines are
+  not looped by the properties.
+- **GATE-P (sw5–sw13; each tree's OWN replayed snapshot-33 database —
+  gate.sh's rp_main.db copied with `.backup` — 12 shards, NoNet, calls 0
+  at every settle; base 8bd30b4 a worktree, the tip's sweep scripts on
+  both):** sw5 32,659, sw6 38,588, sw7 1,920, sw8 58,596, sw8r 5,433
+  combos, 0 divergent 0 refused both, line sets identical; sw9 176 (163
+  recipes of 11 keys settled, second pass moved 0), 0 divergent both,
+  identical; sw10 158 bare and typed, 0 divergent both, sw10.tsv differing
+  only at the per-serving figures of moved recipes (38 lines); sw11
+  40,484, 200 divergent (all `calls-only`), 12,918 refused both,
+  identical; sw12 135 combos, 54 divergent both, every block header
+  identical — the value lines differ only in the 'ginger' key's blocks (71
+  rows, own and other: a pick of ground ginger 170926 on a fresh-ginger
+  line now reads that record's own spoon, the table's 0.54 gone) and the
+  lumpia's frying oil (the M52 dependent); sw13 294, 0 divergent both, its
+  57 differing lines each on a moved recipe's stored figures.
+- **Suites at the gated tree:** server +3,615 ~4 (the base's +3,590 ~4
+  plus the 25 tests of nutrition_v118_test.dart), salt_shared +265, app
+  +674; analyzers clean (apps/server with tool/replay, salt_shared,
+  `flutter analyze`); the 61 new or changed server test files load without
+  the corpus.
+- **Deploy note:** matcherVersion 104 stales every recipe; a zero-request
+  sweep recomputes (the replay's calls 0) once the live DB holds L55's
+  SEED — the 8 details (172934, 2646173, 170903, 2708202, 789951, 173474,
+  172183, 172184), the 4 engine searches and their index rows, INSERT OR
+  IGNORE from snapshot 33 (.claude/diag/2026-11-16/live55/README.txt); this
+  batch reads 173474 (S7a); 174913, 169231, 169599, 171893 and 173475 are
+  cached already. Without the seed the first whole-leaf mint line asks FDC
+  for 173474 once (`gramsFor`, as a fine-cut sibling). No migration, no app
+  change. NOT deployed: the prep52 chain ships with one deploy at its very
+  end.
 
 **Matcher v117 (batch M104, prep52 P5 — the strain and discard step
 readers; matcherVersion 102 → 103. The spec .claude/diag/2026-11-16/prep52/
@@ -14587,8 +14852,10 @@ owner's Q11 standing rule — a label's grams for a printed volume): grams
 the modal and median of the nine ¼-cup labels L50 #8 read (28, 28, 30 × 4
 — 2132938 CIBO VITA, 2106313 Sugar 'N Spice, 1900068 Tree of Life, 1981078
 Price Chopper — 40, 40, 50 g), named in the basis (`approximate
-(crystallized ginger labels (…): ¼ cup = 30 g)`); longer than 'ginger'
-(the fresh root's 0.54), so it wins; one figure per key, so the ½-cup line
+(crystallized ginger labels (…): ¼ cup = 30 g)`); a longer key than the
+fresh root's, so it wins over the fresh root's record portion (corrected
+2026-11-18, matcher v118, M105 S8a: this said "longer than 'ginger' (the
+fresh root's 0.54), so it wins" — the 'ginger' entry is gone); one figure per key, so the ½-cup line
 is not read at the ⅓-cup label (41 g; that option B would be +8.05 kcal).
 Reach: carrot-ginger-soup|2 ¼ cup 30.00 g / 96.60 kcal, cranberry-chutney…|9
 ⅓ cup 40.00 / 128.80, gingerbread-layer-cake|22 ¼ cup (optional — counted;

@@ -220,14 +220,18 @@ const _reach = [
 /// 174321 — the appended entry's key gate). (file, position, raw, fdc id,
 /// grams, kcal) — null where the line has none.
 const _negatives = [
-  (_carrot, 3, '1 tablespoon grated fresh ginger', 169231, '7.98', '6.39'),
+  // RE-PIN (M105 batch, v118): carrot-ginger-soup|3 on 169231's own tsp
+  // (2.0 g; the 'ginger' density gone) — was '7.98', '6.39'.
+  (_carrot, 3, '1 tablespoon grated fresh ginger', 169231, '6.00', '4.80'),
   (
     _chutney,
     2,
+    // RE-PIN (M105 batch, v118): cranberry-chutney|2 on 169231's own tsp
+    // (2.0 g; the 'ginger' density gone) — was '5.32', '4.26'.
     '2 teaspoons finely grated fresh ginger',
     169231,
-    '5.32',
-    '4.26',
+    '4.00',
+    '3.20',
   ),
   (_gingerbread, 9, '2 tablespoons ground ginger', 170926, '10.94', '36.66'),
   (_slab, 5, '1 tablespoon ground ginger', 170926, '5.47', '18.33'),
@@ -310,16 +314,22 @@ const _totals = [
   // 153.01 / 918.05 in the replay: the fixtures hold Foundation 2258586
   // (the carrots) as a search hit and the library its detail.
   // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 153.02, 918.12.
-  (_carrot, 'complete', '149.30', '895.80'),
+  // RE-PIN (M105 batch, v118): carrot-ginger-soup|3 ginger on 169231's own
+  // tsp, 7.98 → 6.00 g (−1.58 kcal) — was '149.30', '895.80'.
+  (_carrot, 'complete', '149.04', '894.22'),
   // RE-PIN (M90 batch, v89, brown sugar): its 1 cup packed brown sugar |6
   // at the print, 220.03 → 198.45 g (the replay 471.63 → 444.30): was
   // 471.63, 1414.90.
   // RE-PIN (M86 batch, v90, 958: 1750342 apples): was 444.30, 1332.89.
-  (_chutney, 'complete', '437.12', '1311.37'),
+  // RE-PIN (M105 batch, v118): cranberry-chutney|2 ginger on 169231's own
+  // tsp, 5.32 → 4.00 g (−1.06 kcal) — was '437.12', '1311.37'.
+  (_chutney, 'complete', '436.77', '1310.31'),
   // RE-PIN (M90 batch, v89, cornstarch): its 3 tablespoons cornstarch |2 at
   // the print, 23.95 → 21.26 g (the replay 731.60 → 730.75): was 731.60,
   // 8779.23.
-  (_gingerbread, 'complete', '730.75', '8768.97'),
+  // RE-PIN (M105 batch, v118): gingerbread-layer-cake|21 ginger on 169231's
+  // own tsp, 15.97 → 12.00 g (−3.18 kcal ÷ 12) — was '730.75', '8768.97'.
+  (_gingerbread, 'complete', '730.48', '8765.80'),
   // 8,439.10 in the replay: the berries' hits (Foundation 2346411 / 2346410:
   // +0.25 / −0.21 kcal); per serving the same.
   // RE-PIN (M90 batch, v89, sugar): its Slab Pie Dough's sugar at the print

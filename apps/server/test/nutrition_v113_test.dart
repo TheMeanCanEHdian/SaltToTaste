@@ -444,10 +444,11 @@ const _unmoved = [
   (
     '0943-frozen-yogurt.yaml',
     1,
+    // RE-PIN (M105 batch, v118): frozen-yogurt|1 on 169599 2.33 → 3.54 g (7.82 → 11.87 kcal), the replay's row — was '2.33', '7.82' (a v113 negative; v118's S8c moves it: the corpus packet, 0.7190 g/mL).
     '1 teaspoon unflavored gelatin',
     169599,
-    '2.33',
-    '7.82',
+    '3.54',
+    '11.87',
   ),
   // W3: bulgur itself.
   (
@@ -672,12 +673,13 @@ void statuses() {
 /// and the keys no corpus line prints pinned EQUAL to a sibling whose
 /// landing a corpus row pins.
 void keys() {
-  test('matcherVersion 103 (v113 set it, batch M100: 21 rows move)', () {
+  test('matcherVersion 104 (v113 set it, batch M100: 21 rows move)', () {
     // RE-PIN (M101 batch, v114): matcherVersion 100 (was 99).
     // RE-PIN (M102 batch, v115): matcherVersion 101 (was 100).
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
-    expect(matcherVersion, 103);
+    // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
+    expect(matcherVersion, 104);
   });
 
   test('every new key is a rank-as item; the unprinted numbers read their '

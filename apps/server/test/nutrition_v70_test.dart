@@ -366,7 +366,8 @@ void readers() {
       expect(
         _g2(db.nutritionFor(r.id)!.caloriesPerServing!),
         // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 797.57.
-        '797.14',
+        // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15 gelatin at the corpus packet (0.7190 g/mL), 14.00 → 21.26 g — was '797.14'.
+        '801.20',
         reason: tag,
       );
       expect(

@@ -1298,11 +1298,20 @@ void main() {
                 as Map<String, dynamic>)['169599']
             as Map<String, dynamic>,
       );
+      // RE-PIN (M105 batch, v118): the 'gelatin' key (S8c, recordFirst
+      // false) weighs ahead of the record's parenthesized portion — the
+      // corpus packet, ¼ ounce in 2 teaspoons, 0.7190 g/mL: 1 tablespoon
+      // 10.63 g `density` (was 7 g `portion`), 2¾ teaspoons 9.75 g (was
+      // 6.42). The parenthesized read below the table sizes no corpus
+      // gelatin line since v118 (stated in docs/API.md "Matcher v118").
       final tbsp = gramsOf('1 tablespoon unflavored gelatin', on: gelatin)!;
-      expect((tbsp.grams, tbsp.source), (7, GramSource.portion));
+      expect(
+        (tbsp.grams.toStringAsFixed(2), tbsp.source),
+        ('10.63', GramSource.density),
+      );
       expect(
         gramsOf('2¾ teaspoons gelatin', on: gelatin)!.grams,
-        closeTo(6.42, 0.01),
+        closeTo(9.75, 0.01),
       );
     });
 

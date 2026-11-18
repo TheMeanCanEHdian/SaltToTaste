@@ -100,7 +100,8 @@ void v3() {
       );
       expect(row.grams, closeTo(24.0, 0.005));
       expect(nutritionIsFresh(db, r), isTrue);
-      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(596.95, 0.005));
+      // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 596.95 → 596.15.
+      expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(596.15, 0.005));
       // Base: one request at the PUT and one per compute.
       expect(fault.asked, before);
     }
@@ -172,7 +173,8 @@ void v3() {
       ('confirmed', null, null, 86.0),
     );
     expect([for (final p in partsOf(healed.parts)) p.fdcId], [peel, juice]);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.92, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 603.92 → 603.13.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.13, 0.005));
   });
 
   // The owner gate's pin: the mutant dropping the own-record test of

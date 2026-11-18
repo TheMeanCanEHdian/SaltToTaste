@@ -1629,14 +1629,15 @@ const List<_Row> _negatives = [
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
     null,
     17,
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai-with-seasoned-vinegar|17 on 2710180 99.34 → 99.27 g (894.06 → 893.43 kcal), the replay's row — was '99.34'; '894.06'.
     '1½ quarts vegetable oil for frying',
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '99.34',
+    '99.27',
     'auto',
     null,
-    '894.06',
+    '893.43',
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
@@ -5428,7 +5429,9 @@ void main() {
       // RE-PIN (M82 batch, v84, C5a): its ¼ cup flour |11 30.16 → 35.44 g
       // (the replay's 794.35 → 797.57): was 794.35, 4766.11.
       // RE-PIN (M86 batch, v90, 958: 2685580 tomato): was 797.57, 4785.41.
-      expect(totalsOf(_pomegranate), ('complete', '797.14', '4782.85'));
+      // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15
+      // gelatin at the corpus packet (0.7190 g/mL), 14.00 → 21.26 g — was '797.14', '4782.85'.
+      expect(totalsOf(_pomegranate), ('complete', '801.20', '4807.18'));
     });
 
     test("2 by hand: the host's turkey prints 12–14 lb (5,896.70 g at the "
@@ -5703,7 +5706,8 @@ void main() {
           // RE-PIN (M85 batch, v87): was 514.09 (the replay 513.41 → 511.35).
           // RE-PIN (M86 batch, v90, 958: 2514747 turkey, 2685578 tomatoes,
           // 2685580 tomato): was 512.03.
-          '515.76',
+          // RE-PIN (M105 batch, v118): italian-style-turkey-meatballs|5 gelatin at the corpus packet (0.7190 g/mL), 3.50 → 5.32 g (+6.09 kcal ÷ 4) — was '515.76'.
+          '517.28',
         ), // replay complete 493.64 → complete 493.90
         (
           // RE-PIN (M82 batch, v84): was 265.34 (the replay 265.43 → 265.05).
@@ -5803,7 +5807,8 @@ void main() {
           '0224-braised-brisket-with-pomegranate-cumin-and-cilantro.yaml',
           'complete',
           // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was '797.57'.
-          '797.14',
+          // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15 gelatin at the corpus packet (0.7190 g/mL), 14.00 → 21.26 g — was '797.14'.
+          '801.20',
         ), // replay complete 729.93 → complete 794.35
         (
           // RE-PIN (M82 batch, v84): was 631.13 (the replay 631.13 → 629.43).
@@ -5925,7 +5930,9 @@ void main() {
           // RE-PIN (M85 batch, v87): was 948.65 (the replay 948.70 → 946.65).
           // RE-PIN (M86 batch, v90, 958: 2514745 pork, 2685581 tomatoes): was
           // 946.59.
-          '937.37',
+          // RE-PIN (M105 batch, v118): its |2 gelatin at the corpus packet,
+          // 3.50 → 5.32 g (+6.09 kcal ÷ 12): was '937.37'.
+          '937.88',
         ), // replay partial 947.76 → partial 947.94
         (
           // RE-PIN (M82 batch, v84): was 643.30 (the replay 643.48 → 627.68).
@@ -6228,7 +6235,8 @@ void main() {
       expect(recomputeTotals(db, recipes[_pomegranate]!), isTrue);
       // RE-PIN (M82 batch, v84, C5a): the flour |11's 35.44 g: was 4766.11.
       // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste): was 4785.41.
-      expect(_g2(batchTotalsOf(db.nutritionFor(id)!)['energy']!), '4782.85');
+      // RE-PIN (M105 batch, v118): braised-brisket-with-pomegranate|15 gelatin at the corpus packet (0.7190 g/mL), 14.00 → 21.26 g (+24.33 kcal) — was '4782.85'.
+      expect(_g2(batchTotalsOf(db.nutritionFor(id)!)['energy']!), '4807.18');
     });
 
     test(

@@ -1366,10 +1366,15 @@ void main() {
     });
 
     test('ground ginger does not borrow the fresh-ginger density', () {
-      // fresh 'ginger' is 0.54; ground is lighter (0.37).
-      final fresh = g('tablespoon', 'grated fresh ginger')!;
+      // RE-PIN (M105 batch, v118): fresh 'ginger' has no table density
+      // since S8a (the unsourced 0.54 went; SR 169231's own 'tsp' 2.0 g
+      // sizes the root on its record, 6.00 g a tablespoon): with no record
+      // it reads none — was 0.54 × 14.79 = 7.98 g, and `ground` was pinned
+      // below it. Ground stays 0.37 (5.47 g), lighter than the record's 6.00.
+      final fresh = g('tablespoon', 'grated fresh ginger');
       final ground = g('tablespoon', 'ground ginger')!;
-      expect(ground, lessThan(fresh));
+      expect(fresh, isNull);
+      expect(ground, lessThan(6.0));
       expect(ground, closeTo(14.79 * 0.37, 0.3));
     });
 

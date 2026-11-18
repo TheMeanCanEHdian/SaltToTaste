@@ -751,7 +751,9 @@ void main() {
         (blend, 5, 1197.8),
         // RE-PIN (M90 batch, v89, confectioners' sugar): the cream's 6 tablespoons
         // at the print (the replay 636.70 → 634.00 g): was 636.7.
-        (cream, 4, 634.0),
+        // RE-PIN (M105 batch, v118): the cream's |1 espresso at the labels'
+        // 2.0 g a teaspoon, 4.24 → 4.00 g: was 634.0.
+        (cream, 4, 633.8),
       ]) {
         final n = db.nutritionFor(key)!;
         expect(
@@ -783,10 +785,13 @@ void main() {
           10,
           cream,
           '1.000000',
-          '634.00',
+          // RE-PIN (M105 batch, v118): the cream's |1 espresso at the labels'
+          // 2.0 g a teaspoon, 4.24 → 4.00 g (the replay's routed |10 634.00 →
+          // 633.80 g, 2,152.90 → 2,152.05 kcal): was '634.00'.
+          '633.80',
           // RE-PIN (M86 batch, v90, 958: the cream's 2346386 heavy cream and
           // mascarpone, the replay 2,196.45 → 2,152.90): was 2,196 kcal.
-          'from the recipe Espresso-Mascarpone Cream: 634 g, 2,153 kcal',
+          'from the recipe Espresso-Mascarpone Cream: 634 g, 2,152 kcal',
         ),
       ]) {
         final recipe = stored(file);

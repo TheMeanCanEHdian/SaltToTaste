@@ -942,7 +942,9 @@ void main() {
         // the tip with 101 put back gives 62d7d607).
         // RE-PIN (M104 batch, v117): matcherVersion 103 alone (was 73021997…;
         // the tip with 102 put back gives 73021997).
-        '85b42d7be75cc947df83e504c83d6518b3609102c031c92ce8733f0bc90bec59',
+        // RE-PIN (M105 batch, v118): matcherVersion 104 alone (was 85b42d7b…;
+        // the tip with 103 put back gives 85b42d7b).
+        '05859a847e7296b5178c78ebcb060a4463a140dc31c61c317f970d7642d3f564',
       );
     });
   });

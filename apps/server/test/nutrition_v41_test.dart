@@ -842,7 +842,8 @@ void main() {
         // reading ½ of it: −104.39 a batch, 131.34 → 105.24 a serving.
         // RE-PIN (M86 batch, v90, 958: the Sauce Base's 2685580 tomato paste
         // (its batch 428.23 → 425.67, the parent reads ½)): was 105.24.
-        (_herbSauce, 0, 10, 10, 104.92),
+        // RE-PIN (M105 batch, v118): restaurant-style-herb-sauce-for-pan-seared-steaks's Sauce Base section |12 "5 teaspoons unflavored gelatin" on 169599 at the corpus packet (0.7190 g/mL), 11.67 → 17.72 g (39.08 → 59.36 kcal): the whole section 1,456.70 → 1,462.80 g; per serving 104.92 → 107.46.
+        (_herbSauce, 0, 10, 10, 107.46),
       ]) {
         final recipe = r(file);
         final row = rowAt(recipe, position);

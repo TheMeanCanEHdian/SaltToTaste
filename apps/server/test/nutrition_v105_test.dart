@@ -276,8 +276,9 @@ void u2() {
     );
     final row = _row(db, stored.id, 3);
     expect(row.childShare, 0.5);
-    expect(row.grams, closeTo(728.35, 0.005));
-    expect((await _child(db, _fx, stored.id, 3))['kcal'], 212.83);
+    // RE-PIN (M105 batch, v118): restaurant-style-herb-sauce-for-pan-seared-steaks's Sauce Base section |12 "5 teaspoons unflavored gelatin" on 169599 at the corpus packet (0.7190 g/mL), 11.67 → 17.72 g (39.08 → 59.36 kcal): the whole section 1,456.70 → 1,462.80 g — was 728.35 g / 212.83.
+    expect(row.grams, closeTo(731.40, 0.005));
+    expect((await _child(db, _fx, stored.id, 3))['kcal'], 222.97);
   });
 }
 

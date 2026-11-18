@@ -1534,15 +1534,16 @@ const List<_Row> _unmoved = [
     '0926-buttermilk-vanilla-panna-cotta-with-berries-and-honey.yaml',
     null,
     1,
+    // RE-PIN (M105 batch, v118): buttermilk-vanilla-panna-cotta-with-berries-and-honey|1 on 169599 4.67 → 7.09 g (15.63 → 23.74 kcal), the replay's row — was '4.67', '2 teaspoon · USDA portion'; '15.63'.
     '2 teaspoons unflavored gelatin',
     169599,
     'Gelatins, dry powder, unsweetened',
     '1.000000',
-    '4.67',
+    '7.09',
     'auto',
     null,
-    '15.63',
-    '2 teaspoon · USDA portion',
+    '23.74',
+    '2 teaspoon ≈ 10 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0926-buttermilk-vanilla-panna-cotta-with-berries-and-honey.yaml',
@@ -1763,15 +1764,16 @@ const List<_Row> _unmoved = [
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
     null,
     10,
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai-with-seasoned-vinegar|10 on 169231 4.00 → 3.00 g (3.20 → 2.40 kcal), the replay's row — was '4.00', '1 piece × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)'; '3.20'.
     '1 (½-inch) piece ginger, peeled',
     169231,
     'Ginger root, raw',
     '0.886667',
-    '4.00',
+    '3.00',
     'auto',
     null,
-    '3.20',
-    '1 piece × 0.5 inch × 8 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
+    '2.40',
+    '1 piece × 0.5 inch × 6 g per inch · approximate (ATK: a 1-inch piece fresh ginger ≈ 1 tablespoon)',
   ),
   (
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
@@ -1849,14 +1851,15 @@ const List<_Row> _unmoved = [
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
     null,
     17,
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai-with-seasoned-vinegar|17 on 2710180 99.34 → 99.27 g (894.06 → 893.43 kcal), the replay's row — was '99.34'; '894.06'.
     '1½ quarts vegetable oil for frying',
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '99.34',
+    '99.27',
     'auto',
     null,
-    '894.06',
+    '893.43',
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
   ),
   (
@@ -1877,15 +1880,16 @@ const List<_Row> _unmoved = [
     '0508-shu-mai-steamed-chinese-dumplings.yaml',
     null,
     1,
+    // RE-PIN (M105 batch, v118): shu-mai-steamed-chinese-dumplings|1 on 169599 1.17 → 1.77 g (3.91 → 5.94 kcal), the replay's row — was '1.17', '1/2 teaspoon · USDA portion'; '3.91'.
     '½ teaspoon unflavored powdered gelatin',
     169599,
     'Gelatins, dry powder, unsweetened',
     '1.000000',
-    '1.17',
+    '1.77',
     'auto',
     null,
-    '3.91',
-    '1/2 teaspoon · USDA portion',
+    '5.94',
+    '1/2 teaspoon ≈ 2 mL · approximate (ATK: 2 teaspoons ≈ 1 packet; 1 package = ¼ ounce)',
   ),
   (
     '0508-shu-mai-steamed-chinese-dumplings.yaml',
@@ -2032,15 +2036,16 @@ const List<_Row> _unmoved = [
     '0508-shu-mai-steamed-chinese-dumplings.yaml',
     null,
     12,
+    // RE-PIN (M105 batch, v118): shu-mai-steamed-chinese-dumplings|12 on 169231 5.32 → 4.00 g (4.26 → 3.20 kcal), the replay's row — was '5.32', '2 teaspoon ≈ 10 mL'; '4.26'.
     '2 teaspoons grated fresh ginger',
     169231,
     'Ginger root, raw',
     '0.886667',
-    '5.32',
+    '4.00',
     'auto',
     null,
-    '4.26',
-    '2 teaspoon ≈ 10 mL',
+    '3.20',
+    '2 teaspoon · USDA portion',
   ),
   (
     '0508-shu-mai-steamed-chinese-dumplings.yaml',
@@ -2286,15 +2291,16 @@ const List<_Row> _unmoved = [
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
     null,
     13,
+    // RE-PIN (M105 batch, v118): pork-and-cabbage-dumplingswor-tip|13 on 169231 3.99 → 3.00 g (3.19 → 2.40 kcal), the replay's row — was '3.99', '1 1/2 teaspoon ≈ 7 mL'; '3.19'.
     '1½ teaspoons minced or grated fresh ginger',
     169231,
     'Ginger root, raw',
     '0.886667',
-    '3.99',
+    '3.00',
     'auto',
     null,
-    '3.19',
-    '1 1/2 teaspoon ≈ 7 mL',
+    '2.40',
+    '1 1/2 teaspoon · USDA portion',
   ),
   // RE-PIN (M82 batch, v84, C3a): was 3.00 g, 4.29 kcal (the v84 replay's row).
   (
@@ -3668,9 +3674,11 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'complete',
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 281.02.
-    '276.59',
+    // RE-PIN (M105 batch, v118): buttermilk-vanilla-panna-cotta|1 gelatin at the corpus packet (0.7190 g/mL), 4.67 → 7.09 g (+8.11 kcal ÷ 8) — was '276.59'.
+    '277.61',
     // RE-PIN (M86 batch, v90, 958: 2346386 cream): was 2248.19.
-    '2212.74',
+    // RE-PIN (M105 batch, v118): buttermilk-vanilla-panna-cotta|1 gelatin, +8.11 kcal — was '2212.74'.
+    '2220.85',
   ),
   (
     '1194-lumpiang-shanghai-with-seasoned-vinegar.yaml',
@@ -3679,10 +3687,13 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
     // pork): was 655.51.
-    '658.97',
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai|10 ginger 4.00 → 3.00 g and |17's uptake 99.34 → 99.27 g — was '658.97'.
+    '658.73',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2514745
     // pork): was 3933.07.
-    '3953.84',
+    // RE-PIN (M105 batch, v118): lumpiang-shanghai|10 ginger 4.00 → 3.00 g
+    // and |17's uptake 99.34 → 99.27 g: was '3953.84'.
+    '3952.41',
   ),
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 68.57, 2742.91.
   (
@@ -3691,9 +3702,12 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'complete',
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 68.40.
-    '68.38',
+    // RE-PIN (M105 batch, v118): shu-mai|1 gelatin at the corpus packet, 1.17
+    // → 1.77 g (+2.03 kcal), and |12 ginger on 169231's own tsp, 5.32 → 4.00
+    // g (−1.06): was '68.38', '2735.25'.
+    '68.41',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots): was 2736.08.
-    '2735.25',
+    '2736.22',
   ),
   // RE-PIN (M82 batch, v84): was 74.29, 1783.03 (the replay 74.33 → 74.32).
   (
@@ -3702,9 +3716,11 @@ const List<(String, String?, String, String, String, String)> _totals = [
     'complete',
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 74.28.
-    '74.99',
+    // RE-PIN (M105 batch, v118): its |13 ginger on 169231's own tsp, 3.99 →
+    // 3.00 g (−0.79 kcal): was '74.99', '1799.76'.
+    '74.96',
     // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 1782.75.
-    '1799.76',
+    '1798.96',
   ),
   // RE-PIN (M82 batch, v84): was 384.04, 384.04 (the replay 384.04 → 378.94).
   (

@@ -55,7 +55,8 @@ void w8() {
     );
     expect([for (final p in partsOf(row.parts)) p.fdcId], [peel, juice]);
     expect(nutritionIsFresh(db, r), isTrue);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.92, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 603.92 → 603.13.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(603.13, 0.005));
   }
 
   test('W8 (a): a CONFIRM while FDC answers "no such food" for the juice: 1 '
@@ -92,7 +93,8 @@ void w8() {
     // figure); base 596.95, the partial counting the peel's 24 g alone.
     expect(held.derivedSeq, isNotNull);
     expect(nutritionIsFresh(db, r), isTrue);
-    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(591.13, 0.005));
+    // RE-PIN (M105 batch, v118): crispy-orange-beef|11 "2 tablespoons grated fresh ginger" on 169231 at the record's tsp 2.0 g, 15.97 → 12.00 g (−3.18 kcal ÷ 4 servings): 591.13 → 590.33.
+    expect(db.nutritionFor(r.id)!.caloriesPerServing, closeTo(590.33, 0.005));
     // A second confirm is refused while held (the no-record action table:
     // pick or skip — V3 (c)'s `food_unavailable` reads the same).
     await expectLater(
