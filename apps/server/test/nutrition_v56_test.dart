@@ -119,9 +119,12 @@ const List<_Row> _kept = [
     '3 large onions, chopped coarse (4¾ cups)',
     790646,
     '0.936667',
-    '450.00',
-    '171.00',
-    '3 × 150 g each',
+    // RE-PIN (M107 batch, v120): turkey-thigh-confit-with-citrus-mustard-sauce|0
+    // weighs its printed 4¾ cups on SR 170000's 'cup, chopped' 160 g
+    // (`_pieceVolumeOnSibling`): was '450.00', '171.00', '3 × 150 g each'.
+    '760.00',
+    '288.80',
+    '4 3/4 cup · USDA portion of "Onions, raw"',
   ),
 ];
 
@@ -141,9 +144,12 @@ const List<_Row> _guarded = [
     '2 medium onions, halved and sliced thin (about 2 cups)',
     790646,
     '0.936667',
-    '220.00',
-    '83.60',
-    '2 × 110 g each',
+    // RE-PIN (M107 batch, v120): old-fashioned-pot-roast|3 weighs its
+    // printed 2 cups on SR 170000's 'cup, sliced' 115 g
+    // (`_pieceVolumeOnSibling`): was '220.00', '83.60', '2 × 110 g each'.
+    '230.00',
+    '87.40',
+    '2 cup · USDA portion of "Onions, raw"',
   ),
   (
     '0083-old-fashioned-pot-roast.yaml',
@@ -151,11 +157,14 @@ const List<_Row> _guarded = [
     '1 large carrot, peeled and chopped medium (about 1 cup)',
     2258586,
     '0.936667',
-    '72.00',
+    // RE-PIN (M107 batch, v120): old-fashioned-pot-roast|4 weighs its
+    // printed 1 cup on SR 170393's 'cup chopped' 128 g
+    // (`_pieceVolumeOnSibling`): was '72.00', '32.38', '1 × 72 g each'.
+    '128.00',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
     // tomato): was 34.55.
-    '32.38',
-    '1 × 72 g each',
+    '57.57',
+    '1 cup · USDA portion of "Carrots, raw"',
   ),
   (
     '0083-old-fashioned-pot-roast.yaml',
@@ -163,11 +172,14 @@ const List<_Row> _guarded = [
     '1 celery rib, chopped medium (about ¾ cup)',
     2346405,
     '0.970000',
-    '40.00',
+    // RE-PIN (M107 batch, v120): old-fashioned-pot-roast|5 weighs its
+    // printed ¾ cup on SR 169988's 'cup chopped' 101 g
+    // (`_pieceVolumeOnSibling`): was '40.00', '5.93', '1 × 40 g each'.
+    '75.75',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346405 celery, 2685580
     // tomato): was 6.68.
-    '5.93',
-    '1 × 40 g each',
+    '11.24',
+    '3/4 cup · USDA portion of "Celery, raw"',
   ),
   // RE-PIN (M82 batch, v84, C3a): was 6.00 g, 8.58 kcal (the v84 replay's row).
   (

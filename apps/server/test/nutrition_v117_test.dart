@@ -318,10 +318,11 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 105', () {
+  test('matcherVersion 106', () {
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
-    expect(matcherVersion, 105);
+    // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
+    expect(matcherVersion, 106);
   });
   group(
     'v117 (M104: the strain and discard step readers)',

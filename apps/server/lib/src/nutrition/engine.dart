@@ -17548,14 +17548,10 @@ Future<(FdcFood, GramResolution?)> gramsFor(
   // A volume the record cannot size is read from its SR sibling
   // ([lineGrams]): its detail is fetched once, like the food's own.
   final sibling = volumeSiblings[detail.fdcId];
-  // v84 (M82 C3a): a counted clove's printed volume reads it too.
+  // v84 (M82 C3a): a counted piece's printed volume reads it too (v120,
+  // M107: any piece, not a clove alone).
   if (sibling != null &&
-      (withDetail == null ||
-          _cloveVolumeOnSibling(
-            line,
-            withDetail,
-            normalizeItem(lineItemOf(line)),
-          )) &&
+      (withDetail == null || _pieceVolumeOnSibling(line, withDetail)) &&
       _foodFromCache(db, sibling) == null &&
       volumeMlOf(line.amounts) != null) {
     await _cachedFood(db, provider, sibling);
@@ -17584,8 +17580,8 @@ Future<(FdcFood, GramResolution?)> gramsFor(
 
 /// [line]'s grams on [food] ([resolveGrams] on the line's own words) — and,
 /// when that finds none for a volume line on a record in [volumeSiblings],
-/// or finds a counted clove's piece where the line prints its volume
-/// ([_cloveVolumeOnSibling]), the same amounts on the sibling's cached
+/// or finds a counted piece where the line prints its volume
+/// ([_pieceVolumeOnSibling]), the same amounts on the sibling's cached
 /// portions (no request; the basis names the sibling). The food stays
 /// [food].
 GramResolution? lineGrams(
@@ -17703,7 +17699,7 @@ GramResolution? lineGrams(
   final siblingId = food == null ? null : volumeSiblings[food.fdcId];
   if (siblingId == null ||
       volumeMlOf(line.amounts) == null ||
-      (own != null && !_cloveVolumeOnSibling(line, own, normalized))) {
+      (own != null && !_pieceVolumeOnSibling(line, own))) {
     return own;
   }
   final sibling = _foodFromCache(db, siblingId);
@@ -17746,25 +17742,22 @@ const String _bonesNotMarrowBasis =
     'marrow a bone holds';
 
 /// v84 (batch M82 C3a, L203): whether [own] — a [volumeSiblings] record's
-/// own reading of [line] — is a counted garlic clove whose printed volume
-/// the sibling weighs instead ("1 small garlic clove, minced … (about ½
+/// own reading of [line] — is a counted piece whose printed volume the
+/// sibling weighs instead ("1 small garlic clove, minced … (about ½
 /// teaspoon)" is ½ teaspoon of SR 169230, 1.40 g, never a 3 g clove): a
-/// PIECE, the item naming the clove ([normalized] — "medium cloves garlic"
-/// does; "3 cloves garlic", whose unit is the clove, and "1 head garlic"
-/// keep their count), and no second count in the comma clause
-/// before the paren, so the paren measures the line's only count ("5 …
-/// cloves, 3 peeled and smashed and 2 minced (about 2 teaspoons)" keeps
-/// its five) [re-point → measurement/item].
-bool _cloveVolumeOnSibling(
-  IngredientLine line,
-  GramResolution own,
-  String normalized,
-) =>
+/// PIECE, counted with no unit ("3 cloves garlic", whose unit is the clove,
+/// and "1 head garlic" keep their count), and no second count in the comma
+/// clause before the paren, so the paren measures the line's only count
+/// ("5 … cloves, 3 peeled and smashed and 2 minced (about 2 teaspoons)"
+/// keeps its five) [re-point → measurement/item]. v120 (batch M107, prep52
+/// P8, re-opening prep51's C3b): any counted piece, no longer a clove alone
+/// — "6 medium onions, sliced thin (about 7 cups)" is 7 cups of SR 170000's
+/// 'cup, sliced' 115 g, 805 g, not six 110 g onions. Both readers ask for a
+/// sibling and a volume amount first.
+bool _pieceVolumeOnSibling(IngredientLine line, GramResolution own) =>
     own.source == GramSource.piece &&
-    _cloveItem.hasMatch(normalized) &&
+    !line.amounts.any((a) => a.measure == Measure.count && a.unit != null) &&
     !_countBeforeParen.hasMatch(line.raw);
-
-final RegExp _cloveItem = RegExp(r'\bcloves?\b');
 
 /// A count in the comma clause before a line's first paren (C3a's
 /// second-count guard); linear: the first run stops at the first comma.

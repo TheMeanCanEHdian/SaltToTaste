@@ -334,7 +334,7 @@ SaltDatabase _db() {
 
 void main() {
   test(
-    'P18: matcherVersion 105 (v100 set it to 94, batch M97: the shallow-fry reader and '
+    'P18: matcherVersion 106 (v100 set it to 94, batch M97: the shallow-fry reader and '
     'the roux guard)',
     () {
       // RE-PIN (fix101 batch, v101): matcherVersion 95 (was 94).
@@ -348,7 +348,8 @@ void main() {
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
       // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
       // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
-      expect(matcherVersion, 105);
+      // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
+      expect(matcherVersion, 106);
     },
   );
 

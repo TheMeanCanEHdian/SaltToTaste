@@ -663,7 +663,11 @@ void main() {
         // RE-PIN (M100 batch, v113, S14′): the nachos' own |0 tortilla chips
         // on "Tortilla chips, plain" 2708202 (472; was the flavored 2708204,
         // 519): −106.59 a batch (the replay 1,077.42 → 1,050.77): was 1077.42.
-        (_nachos, 6, _guacamole, 522.3, 954.71, 1050.77, 'complete'),
+        // RE-PIN (M107 batch, v120): cheesy-nachos-with-guacamole-and-salsa|2
+        // and the salsa's |3 weigh their printed volumes on FNDDS 2710096
+        // '1 cup' 150 g (+2.29, −0.56; the replay 1,050.77 → 1,051.21): was
+        // 1050.77.
+        (_nachos, 6, _guacamole, 522.3, 954.71, 1051.21, 'complete'),
         // RE-PIN (M47 batch, v49): the lemon tart's strained zest line counts
         // its juice (Q6; was 399.33), the fruit tart's kiwis 150 g (Q12; was
         // 547.59, partial).

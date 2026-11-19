@@ -181,7 +181,8 @@ void main() {
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
       // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
       // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
-      expect(matcherVersion, 105);
+      // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
+      expect(matcherVersion, 106);
     },
   );
 
@@ -474,7 +475,11 @@ void main() {
         // test's compute): was 5292.76.
         (_braised, '529.06', '5290.64', '246.22', '87.47'),
         (_crowd, '546.98', '9845.70', '503.45', '181.80'),
-        (_confit, '481.09', '2886.52', '116.58', '35.99'),
+        // RE-PIN (M107 batch, v120): the confit's |0 "3 large onions,
+        // chopped coarse (4¾ cups)" at its 4¾ cups on SR 170000's 'cup,
+        // chopped', 450.00 → 760.00 g, +117.80 kcal (the replay 481.09 →
+        // 500.72): was '481.09', '2886.52', '116.58'.
+        (_confit, '500.72', '3004.32', '116.73', '35.99'),
       ]) {
         final n = db.nutritionFor(recipes[file]!.id)!;
         final totals = batchTotalsOf(n);

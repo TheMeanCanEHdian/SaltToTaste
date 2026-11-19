@@ -250,14 +250,18 @@ const List<(String, int, String, int?, String?, String, String?)> _single = [
     '2 × 62 g each',
   ),
   // C1n
+  // RE-PIN (M107 batch, v120): white-chicken-chili|6 weighs its printed
+  // 2 cups on SR 170000 (`_pieceVolumeOnSibling`; no cup named → the median
+  // of 'cup, chopped' 160 g and 'cup, sliced' 115 g, 137.5 g a cup) — was
+  // '220.00', '2 × 110 g each'.
   (
     '0496-white-chicken-chili.yaml',
     6,
     '2 medium onions, cut into large pieces (about 2 cups)',
     790646,
-    '220.00',
+    '275.00',
     'counted',
-    '2 × 110 g each',
+    '2 cup · USDA portion of "Onions, raw"',
   ),
   // C1n
   (

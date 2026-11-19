@@ -619,13 +619,14 @@ _rows = [
   // 21.64 % derived from SR 172455 × the FALAFEL group's 395.35 g; was
   // 0.00, "discarded in cooking — counted as 0 g").
   // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
+  // RE-PIN (M107 batch, v120): falafel|11 the uptake (21.64 %) on a mix 25.00 g heavier (|3 "½ onion, chopped fine (½ cup)" 55.00 → 80.00 g on SR 170000's 'cup, chopped'): was 86.69 g, 780.21 kcal.
   (
     '0570-falafel.yaml',
     null,
     11,
     '2 quarts vegetable oil for frying',
     2710180,
-    '86.69',
+    '92.10',
     'discarded',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix\'s weight — derived from USDA SR Legacy 172455 "Falafel, home-prepared")',

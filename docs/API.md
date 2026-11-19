@@ -4920,7 +4920,12 @@ sodium is not counted.** A fresh flat 168743 in a recipe whose TITLE matches
 with Vegetables") gains, after the ¼-inch cap's arm, `approximate (the
 steps cure and rinse the brisket — the cure's sodium is not counted; a
 rinsed cure counts 0 g, CP9)` — basis only, 0 kcal; the cure's salt, sugar,
-curing salt and brine spices stay `discarded` 0 g. Why: both recipes RINSE
+curing salt and brine spices stay `discarded` 0 g (measured 2026-11-19, the
+v120 owner gate: true of 0091's brine, |1–|8 each 0 g; on 0090, a DRY cure,
+the salt |0 is 0 g but the rubbed spices |1–|5 — peppercorns, thyme,
+allspice, paprika, bay — are counted, 19.88 g, 52.49 kcal: `_rinsedCure` is
+read for a salt or sugar head alone; owed — see "Matcher v120", the owner
+gate). Why: both recipes RINSE
 the cure ("Remove brisket from brine, rinse"; "Rinse brisket and pat it
 dry"), and the owner kept CP9's "rinsed cure 0 g" and the 2026-09-27 "brine
 co-solutes zero" literal. SR 170199 *Beef, cured, corned beef, brisket,
@@ -5369,6 +5374,385 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v120 (batch M107, prep52 P8 — a counted piece beside a printed
+volume; matcherVersion 105 → 106. The spec .claude/diag/2026-11-16/prep52/
+design_v2.md "P8 — a counted piece beside a printed volume" (S4), the
+rulings in the M107 brief (R1: the design's OQ2 = (b), RULED BY THE
+ORCHESTRATOR under the owner's standing matcher authorization, 2026-11-18,
+and told to the owner: re-open prep51's C3b). Blind accuracy audit 7 drew
+three onion lines that print a count AND a volume ("6 medium onions,
+sliced thin (about 7 cups)"), each more than 15 % low: the count weighed at
+the piece table's size (the owner's Q9 (a): 110 g a medium onion) while the
+line's own volume, on the SR sibling's cup, says more. engine.dart only:
+the shipped C3a predicate generalised and renamed; no new reader, no table,
+no raw-line grammar (the volume is an `amounts` entry the YAML already
+parsed; C3a's guard regex is shipped and not widened), no piece-table
+change, no new hold reason, no app copy, no migration. Replayed on
+SNAPSHOT 33 against the v119 set, both orders byte-identical, calls 0. This
+section cites symbols, grep commands and hit counts — never a line
+number.)**
+- **The rule.** Today (v84 C3a): `_cloveVolumeOnSibling` let a
+  `volumeSiblings` record's PIECE reading give way to the sibling's cup
+  only when the item named a clove ("1 small garlic clove, minced … (about
+  ½ teaspoon)"); every other counted piece kept its count, and the sibling
+  was read only when the record's own reading was null. The change:
+  `_pieceVolumeOnSibling(line, own)` — `own.source == GramSource.piece`, NO
+  count amount of the line carrying a unit (`!line.amounts.any((a) =>
+  a.measure == Measure.count && a.unit != null)`, which keeps "3 cloves
+  garlic" and "1 head garlic" on their count, as C3a's item test did), and
+  C3a's second-count guard `_countBeforeParen` kept as shipped. Its two
+  readers ask for a sibling and a volume amount first, so the volume
+  condition is theirs: `lineGrams` (the weighing) and `gramsFor`'s sibling
+  fetch (with no sibling detail cached the line fetches it once, then
+  weighs). `grep -c "_pieceVolumeOnSibling" apps/server/lib/src/nutrition/engine.dart`
+  → 4 (the definition, its two readers, one doc reference);
+  `grep -c "_cloveVolumeOnSibling\|_cloveItem" apps/server/lib/src/nutrition/engine.dart`
+  → 0. The figure is the sibling's own cup through `_foodGramsPerMl`: a
+  portion the line's words name ("sliced" → 170000 'cup, sliced' 115 g,
+  "chopped" → 'cup, chopped' 160 g, 170393 'cup chopped' 128 g, 169988 'cup
+  chopped' 101 g), else a shred or a fine cut ("minced" reads the chopped
+  cup, "shredded" / "sliced thin" 170393's 'cup grated' 110 g), else the
+  median of the line unit's cups ("cut into large pieces": 170000's 160 and
+  115, 137.5 g; carrot matchsticks 170393's 110 / 128 / 122, 122 g; FNDDS
+  2710096's only volume portion, '1 cup' 150 g). Every corpus line the clove
+  arm weighed is weighed as before (the property below: the garlic classes
+  byte-identical to v119's).
+- **The ruling R1 and what it reverses.** prep51's C3b (below, "C3a")
+  kept onions and every other sibling on their count because "SR 170000's
+  own cup contradicts ATK's onion volumes". The new evidence (the design's
+  `pD/s4_onion_weight_prints.out`, re-run: `grep -h 'raw:' recipes/*.yaml |
+  grep -iE '\bonions?\b' | grep -E '\([^)]*(ounces?|pounds?)' | grep -viE
+  '\bcans?\b' | sort | uniq -c` → 4 lines: "3 cups canned fried onions
+  (about 6 ounces)", "3 large onions (about 2½ pounds), halved and sliced ½
+  inch thick" (0223: 378 g a large onion against Q9 (a)'s 150 g), "1 very
+  large white onion (about 1 pound), peeled and quartered" (0473), and the
+  one the other way, "1 large red onion, halved and sliced thin (1½ cups/5
+  ounces)" (1137: 142 g); Foundation 790646's own "onion Edible" portion is
+  143 g. The piece table's onion sizes (Q9 (a)) are NOT touched: an onion
+  with no printed volume keeps them.
+- **THE ROWS (the replay on snapshot 33 against the v119 set, both orders
+  byte-identical, calls 0, buckets equal).** 33 class rows (31 main, 2
+  section rows) in 28 recipes and 2 sections move, columns 7, 8, 12 and 17
+  alone (grams, gram source `piece` → `portion`, basis, kcal): +889.66
+  kcal; no status, record, hold or confidence moves; notes, calls and the
+  buckets byte-identical. Each row derived by hand (kit derive.py over the
+  replay's rows, 0 mismatches of 33): grams = the printed volume in mL ×
+  the sibling portion's g/mL, kcal = grams × the ROW's record kcal per 100
+  g (nutrient 208, else 958, else 957) — hungarian-beef-stew|7 "6 medium
+  onions, minced (about 6 cups)" 6 × 160 = 960.00 g × 0.38 = 364.80 (was 6 ×
+  110 g, 660.00 g, 250.80); old-fashioned-pot-roast|5 "1 celery rib,
+  chopped medium (about ¾ cup)" ¾ × 101 = 75.75 g × 0.148322 = 11.24 (was
+  40.00 g, 5.93); cheesy-nachos-with-guacamole-and-salsa|2 "2 large jalapeño
+  chiles, sliced thin (about ¼ cup)" ¼ × 150 = 37.50 g × 0.241264 = 9.05
+  (was 28.00 g, 6.76). By record (the row's record, its energy per 100 g,
+  the sibling whose cup is read):
+  - yellow onion Foundation 790646 (38 kcal / 100 g), on SR 170000 "Onions, raw", 19 rows, 4,460.00 → 6,430.00 g, 1,694.80 → 2,443.40 kcal (+748.60): beef-chili-with-kidney-beans|1 220.00 → 320.00 g; butternut-squash-risotto|7 140.00 → 240.00 g; chicken-tikka-masala|10 110.00 → 160.00 g; classic-roast-stuffed-turkey|1 (section "Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions") 660.00 → 805.00 g; crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|9 330.00 → 480.00 g; falafel|3 55.00 → 80.00 g; hearty-tuscan-bean-stew|4 150.00 → 240.00 g; hungarian-beef-stew|7 660.00 → 960.00 g; indian-style-curry-with-potatoes-cauliflower-peas-and-chickpeas|8 220.00 → 320.00 g; italian-sausage-with-grapes-and-balsamic-vinegar|3 110.00 → 172.50 g; mushroom-risotto|9 220.00 → 320.00 g; old-fashioned-pot-roast|3 220.00 → 230.00 g; pasta-with-streamlined-bolognese-sauce|3 35.00 → 40.00 g; pork-chops-with-vinegar-and-sweet-peppers|4 150.00 → 200.00 g; rice-pilaf|5 70.00 → 80.00 g; smothered-pork-chops|6 220.00 → 402.50 g; summer-vegetable-gratin|5 220.00 → 345.00 g; turkey-thigh-confit-with-citrus-mustard-sauce|0 450.00 → 760.00 g; white-chicken-chili|6 220.00 → 275.00 g.
+  - red onion Foundation 790577 (44), on SR 170000 "Onions, raw", 4 rows, 235.00 → 338.75 g, 103.40 → 149.05 kcal (+45.65): campanelle-with-asparagus-basil-and-balsamic-glaze|5 110.00 → 172.50 g; classic-greek-salad|7 55.00 → 86.25 g; crab-towers-with-avocado-and-gazpacho-salsas|12 35.00 → 40.00 g; mediterranean-chopped-salad|8 35.00 → 40.00 g.
+  - carrot Foundation 2258586 (44.978589, nutrient 958), on SR 170393 "Carrots, raw", 4 rows, 402.00 → 595.00 g, 180.80 → 267.62 kcal (+86.82): cod-baked-in-foil-with-leeks-and-carrots|6 122.00 → 183.00 g; old-fashioned-pot-roast|4 72.00 → 128.00 g; pasta-with-streamlined-bolognese-sauce|2 25.00 → 64.00 g; vegetable-bibimbap-with-nurungji|18 183.00 → 220.00 g.
+  - celery Foundation 2346405 (14.832159, 958), on SR 169988 "Celery, raw", 4 rows, 240.00 → 286.17 g, 35.59 → 42.45 kcal (+6.86): classic-tuna-salad|1 40.00 → 25.25 g; crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|10 120.00 → 151.50 g; old-fashioned-pot-roast|5 40.00 → 75.75 g; shrimp-salad|8 40.00 → 33.67 g.
+  - jalapeño Foundation 2747661 (24.1264, 957), on FNDDS 2710096 "Peppers, jalapenos", 2 rows, 35.00 → 42.19 g, 8.45 → 10.18 kcal (+1.73): cheesy-nachos-with-guacamole-and-salsa|2 28.00 → 37.50 g; cheesy-nachos-with-guacamole-and-salsa|3 (section "One-Minute Salsa") 7.00 → 4.69 g.
+- **Three dependents, each through a documented mechanism** (named and
+  grepped): two routed rows restate their child's move —
+  classic-roast-stuffed-turkey|7 "1 recipe Bread Stuffing …" 2,900.30 →
+  3,045.30 g, 5,338.54 → 5,393.64 kcal, and
+  cheesy-nachos-with-guacamole-and-salsa|5 "1 recipe One-Minute Salsa"
+  453.20 → 450.90 g, 89.73 → 89.17 kcal (the sections' totals move with
+  them); and falafel|11 "2 quarts vegetable oil for frying", the v60 (M61)
+  fried-product uptake (`_friedProductOf`; `grep -c "_falafelSr"
+  apps/server/lib/src/nutrition/engine.dart` → 2): 21.64 % of the raw
+  mix, which counts falafel|3 "½ onion, chopped fine (½ cup)" 55.00 → 80.00
+  g, so 86.69 → 92.10 g (+0.2164 × 25.00), 780.21 → 828.90 kcal. The
+  replay's rows TSV: 36 rows differ, +992.89 kcal (the routed rows counted
+  with their children).
+- **Per serving** (the recs, v119 → v120): 28 recipes move, none by more
+  than 5 %; the largest turkey-thigh-confit-with-citrus-mustard-sauce
+  481.09 → 500.72 (+4.08 % — on a row its steps rinse away: the owner
+  gate, below), smothered-pork-chops 446.66 → 464.00 (+3.88
+  %), summer-vegetable-gratin 245.02 → 252.94 (+3.23 %),
+  hungarian-beef-stew 647.92 → 666.92 (+2.93 %); two fall,
+  classic-tuna-salad 607.27 → 606.18 and shrimp-salad 195.71 → 195.47 (a
+  small celery rib, 40 g, is more than its printed ¼ / ⅓ cup minced). The
+  design's model on the v111 rows (33 rows, 28 recipes, +906.70) differs by
+  white-chicken-chili|6 alone, which the engine weighs on the median 137.5
+  g a cup (275.00 g), not the model's 160.
+- **THE CLASSES on the replay** (`python3 -I classes.py rows_main.tsv`: every
+  v119 piece row with a primary count and a volume amount, by reason; then
+  every row on each sibling-keyed record by gram source): ON a
+  `volumeSiblings` record 49 — 33 piece, no unit, no guard → move; 14 the
+  guard → stay; 1 a 'clove' unit (chicken-under-a-brick-with-herb-roasted-potatoes|3,
+  9.00 g) → stays; 1 a 'head' unit (cuban-style-black-beans-and-rice|6, also
+  guarded) → stays. OFF a sibling 21, every one stays: anchovy 2706232 6,
+  cucumber 2346406 4, ancho 169396 2, yellow bell pepper 2258589 2, banana
+  1105314 2, red bell pepper 2258590 1, zucchini 2685568 1, kiwi 2710831 1,
+  fennel 2747655 1, serrano 2747663 1 (the design's 27 on the v111 rows).
+  By gram source, v119 → v120: 790646 piece 228 → 209, portion 21 → 40;
+  790577 piece 24 → 20, portion 7 → 11; 2258586 piece 70 → 66, portion 4 →
+  8; 2346405 piece 61 → 57, portion 3 → 7; 2747661 piece 34 → 32, portion 1
+  → 3; every other source and record unchanged.
+- **Each moved row read against its line (R5).** Every row's record is the
+  line's food (yellow / red onion, carrot, celery, jalapeño; stored
+  confidence 0.936667 on the yellow onion and carrot rows but 1.000000 on
+  smothered-pork-chops|6 ("yellow onions"), 1.000000 on the red
+  onion, 0.970000 on celery, 0.920000 on the jalapeño), and every printed
+  volume is the cut pieces' own, none a cooked yield. LISTED for the
+  orchestrator and built as the rule reads it:
+  cheesy-nachos-with-guacamole-and-salsa|3 (section "One-Minute Salsa") "½
+  small jalapeño chile, stemmed and seeded (about 1½ teaspoons)" 7.00 →
+  4.69 g — the volume of a half chile the steps process (the salsa's food
+  processor), read on FNDDS 2710096's lone '1 cup'; recommended kept (the
+  printed volume is the counted piece's, −0.56 kcal).
+- **STAYS (R2), each pinned as a negative.** The guard's rows — a second
+  count before the paren, WAIT-FOR-FIELDS (the shipped raw-line regex,
+  re-point → `measurement` / `item`): 14 on the v119 rows, among them
+  potatoes-lyonnaise|1 "1 large onion, halved pole to pole and sliced ¼ inch
+  thick (about 3 cups)" 150.00 g (the audit's L676) — and the guard reads a
+  "½-inch" cut as a second count, so hearty-minestrone|6 "1 medium carrot,
+  peeled and cut into ½-inch pieces (about ¾ cup)" keeps 61.00 g (11 such
+  non-garlic rows: hearty-minestrone|6, hearty-minestrone|7,
+  hungarian-beef-stew|8, chicken-pot-pie-with-savory-crumble-topping|4,
+  pan-seared-oven-roasted-pork-tenderloin|1 (section "Dried Cherry–Port
+  Sauce with Onions and Marmalade"), crab-towers-with-avocado-and-gazpacho-salsas|11,
+  hearty-tuscan-bean-stew|5, hearty-tuscan-bean-stew|6,
+  potatoes-lyonnaise|1, daube-provencal|6, daube-provencal|7); the rows off a
+  sibling (above); a count UNIT (the clove, the head); a printed weight
+  (onion-braised-beef-brisket|3 "3 large onions (about 2½ pounds)" 1,133.98
+  g; vegetable-broth-base|1 "(⅔ cup or 3 ounces)" 85.05 g); a volume-primary
+  line (already step 2: american-potato-salad-with-hard-cooked-eggs-and-sweet-pickles|7
+  "2 tablespoons minced red onion" 20.00 g); an onion with no printed volume
+  (classic-chicken-noodle-soup|7 "1 medium onion, chopped medium" 110.00 g:
+  Q9 (a) stays the owner's figure — "SR's cup against ATK's onion" stays a
+  stated disagreement); a line a step reader zeroes first
+  (braised-beef-short-ribs|3 "2 large onions, sliced thin from pole to pole
+  (about 4 cups)", strained out, 0 g `discarded`).
+- **PINS** (apps/server/test/nutrition_v120_test.dart, 22 tests): the 31
+  moved main rows, each ALONE in its recipe's real steps on the fixtures
+  (a fresh database: each compute fetches the sibling), every stored column
+  the rule writes (record, description, status, hold, gram source, stored
+  confidence, grams), the kcal and the basis, equal to the replay's; the two
+  section rows by the resolver on the replay's record with the sibling
+  cached; the matches GET's grams and `gram_basis` for hungarian-beef-stew|7
+  (960.00, no hold, "6 cup · USDA portion of "Onions, raw""); the no-cache
+  fetch (a counting provider: hungarian-beef-stew|7 asks 790646 and then
+  170000 once and weighs 960.00 g; the next compute asks nothing; v119
+  asked 790646 alone and weighed 660.00 g); the nine negatives under STAYS
+  (the guard twice, the clove and head units, two printed weights, a
+  volume-primary line, an onion with no printed volume, an anchovy off a
+  sibling); a
+  person's own pick (A13, below); two cost shapes (Cost); STATED
+  synthesized, each naming its corpus source: a garlic head beside a
+  volume with no second count (cuban-style-black-beans-and-rice|6 with
+  "5 medium cloves" dropped: 50.00 g, the head) and C3a's own shape (1.40
+  g), and a hand-built non-primary count with a unit (0491's "2 medium
+  garlic cloves, minced (about 2 teaspoons)" with a "1 head" amount added:
+  6.00 g, the piece — no corpus line and no parse of one carries such an
+  amount). Re-pinned in the shipped tests: `grep -rho "RE-PIN (M107 batch,
+  v120)" apps/server/test | wc -l` → 51 in `grep -rl … | wc -l` →
+  36 files (23 matcherVersion pins, four staleness hashes — each
+  "the tip with 105 put back gives" the old literal, or base f1a79b8's for
+  the seasoning file, whose test reads the version first — and the moved
+  rows' grams, sources, bases and per-serving figures); no contract golden
+  moves.
+- **THE PROPERTY (R8)** — one loop over every corpus recipe's own lines:
+  each line printing a volume whose item names garlic, onion (a red onion
+  on 790577), carrot, celery or jalapeño, weighed by `lineGrams` on that
+  class's `volumeSiblings` record whatever record the matcher gives it; a
+  line the record reads as a PIECE (no sibling cached) is 'arm' when the
+  cached sibling changes its basis, else 'kept' (count + SHA-256 of the
+  "file|pos grams basis" list per record): 790646 arm 23 / kept 3, 790577
+  arm 4, 2258586 arm 4 / kept 5, 2346405 arm 4 / kept 2, 2747661 arm 1,
+  1104647 arm 155 / kept 5 (the garlic lists byte-identical to v119's, C3a).
+  The 36 non-garlic 'arm' lines are the 31 moved main rows and five lines
+  the replay keeps on other rows: classic-gazpacho|3 on shallots 170499,
+  maryland-crab-cakes|1 and black-bean-burgers|3 (scallions) on 2709794,
+  irish-stew-with-carrots-and-turnips|2 on 170000 itself (already a cup),
+  braised-beef-short-ribs|3 strained out (0 g). The 15 'kept' lines are the
+  guard's 13 main lines, the head and the clove unit. The same loop weighs
+  R6's off-sibling class — the v119 piece rows with a primary count and a
+  volume amount on a record with no `volumeSiblings` entry, 21 rows — on
+  each row's own record, with every `volumeSiblings` record's detail cached
+  (all 24 distinct values, in a cache of their own) and with none: the 17
+  main rows each at its v119 grams and basis, a piece (anchovy 2706232 ×6,
+  cucumber 2346406 ×3, yellow bell 2258589 ×2, banana 1105314 ×2, ancho
+  169396, red bell 2258590, zucchini 2685568, fennel 2747655); a mutant
+  giving those records 170000 as a sibling (all of them, or the banana's
+  alone) dies on it by a value (piece expected, portion read), as does one
+  giving the cucumber 2346406 the cabbage's 169975 or the anchovy 2706232
+  the spinach's 168462 (2026-11-19, verifier round 2's D3: with five
+  siblings cached the cucumber's mutant had passed the whole server suite
+  while moving grilled-chicken-souvlaki|3 150.00 → 44.50 g). Its limit:
+  the titled sections' lines are not looped (the two section rows are
+  pinned by the resolver; the four off-sibling section rows — the salmon
+  relish's cucumber 2346406 and serrano 2747663, the tamales' ancho 169396,
+  the pavlova's kiwi 2710831 — unlooped, unchanged in the replay), the
+  class is chosen by the item's words, not the matcher's record, and the
+  off-sibling rows by the replay's list.
+- **MUTANTS** (each diff read before its result, applied to a snapshot copy
+  of engine.dart by a one-count anchor, restored by a trap and md5-checked;
+  run against nutrition_v120_test.dart and nutrition_v84_test.dart). The
+  design's four: (m1) the predicate back on C3a's clove-only item test —
+  killed by a value (7 tests: the moved rows, the GET, the section rows, the
+  fetch, the property, the own pick); (m2) the guard dropped — killed
+  (potatoes-lyonnaise|1 150.00 g `piece` expected, 345.00 g `portion` read;
+  the property; the
+  QUIET cap; v84's C3a guard pins); (m3) the volume condition dropped (the
+  readers' shipped `volumeMlOf(line.amounts) == null` in `lineGrams`) —
+  killed by v84's pin of pasta-caprese|2 with no sibling volume ("1 × 3 g
+  each" expected, "… of "Garlic, raw"" read); (m4) `gramsFor`'s fetch site
+  on the clove-only test — killed by the fetch pin ([790646, 170000]
+  expected, [790646] read), the moved rows, the GET and the own pick. The
+  person-path site mutant of the other reader (A11), `lineGrams` on the
+  clove-only test — killed (7 tests). Narrowed neighbours of the unit gate:
+  the unit read on the PRIMARY count alone — SURVIVED the corpus pins, the
+  whole-library replay under it byte-identical to the tip's (rows, recs,
+  sections, notes, calls, buckets): no corpus line and no parse carries a
+  non-primary count with a unit; shown to change behaviour on the
+  hand-built line (5.60 g read, 6.00 expected) and killed by its pin; the
+  'clove' unit alone — killed only by the synthesized head pin (every
+  corpus head line is guarded too); the unit gate dropped — killed
+  (chicken-under-a-brick-with-herb-roasted-potatoes|3, the property, the
+  head pin, v84); the piece gate dropped — killed by v84's synthesized
+  printed-weight clove line ("from 1 ounce" expected, "… of "Garlic, raw""
+  read). Readers of the changed predicate (A11): `grep -n
+  "_pieceVolumeOnSibling(line"` engine.dart → 2 — `gramsFor`'s sibling fetch
+  (reached by every compute of a moved corpus line on a cold cache, and a
+  person's pick of the row's record) and `lineGrams` (every compute, the
+  matches GET, a person's pick); each site's mutant killed above.
+- **A person's own pick (A13)** on hungarian-beef-stew|7, alone in its
+  recipe (PUT fdc_id, no apply_to_all; stored row, basis, the matches GET,
+  the next compute, all equal): (i) its own record 790646 — `overridden`,
+  no hold, 960.00 g `portion`, "6 cup · USDA portion of "Onions, raw"" (v119:
+  660.00 g `piece`, "6 × 110 g each"); (ii) the sibling 170000 — 960.00 g,
+  "6 cup · USDA portion" (the same at v119); (iii) a third record with no
+  sibling, Foundation 1104962 "Onions, white, raw" — 660.00 g `piece`, "6 ×
+  110 g each" (the same at v119). Each measured on both trees by a printing
+  probe first.
+- **The owner gate (2026-11-19).** The replay re-run on the returned tree:
+  byte-identical to the fixer's final and to verifier round 3's (36 rows, 28
+  recipes, 2 section rows, calls 0). All 36 rows read against their lines
+  and, for the 28 recipes, against every step sentence that strains,
+  discards, rinses, drains or removes: every record is the line's food and
+  every printed volume the cut pieces' own;
+  pasta-with-streamlined-bolognese-sauce|2 "½ small carrot, peeled and
+  chopped coarse (about ½ cup)" is the book's own print (read in the EPUB),
+  so the volume is read, as ruled. ONE moved row is counted where its steps
+  take it out of the dish: turkey-thigh-confit-with-citrus-mustard-sauce|0
+  "3 large onions, chopped coarse (4¾ cups)" is the cure — step 1 processes
+  it with the thyme, the curing salt, the sugar and the pepper and spreads
+  the mixture over the thighs, step 2 reads "Remove thighs from onion
+  mixture and rinse well" — counted at v119 (450.00 g, 171.00 kcal) and at
+  v120 (760.00 g, 288.80), beside |2 the curing salt (45.10 g), |3 the sugar
+  (18.00 g, 69.30 kcal) and |4 the pepper (3.45 g, 8.66 kcal), each the same
+  on both trees. `_rinsedCure` is read for a salt or sugar head alone — one
+  a step RUBS on, with a later sentence that BEGINS with the rinse — so the
+  onion and the pepper are outside it whatever the sentence says, and this
+  cure's salt and sugar are spread as a processed mixture and rinsed in the
+  middle of a sentence: no reader zeroes any of the four. Not this batch's
+  (f1a79b8 counts the row too) and not fixed in it; the batch's largest
+  per-serving move (+4.08 %) is this row's. The class is wider than this
+  recipe (hand-edit verifier round 1; each row measured on both sets, none
+  moved by this batch): new-englandstyle-home-corned-beef-and-cabbage's
+  rubbed spices |1–|5 are counted (19.88 g, 52.49 kcal) though step 3 reads
+  "Rinse brisket and pat it dry" (the salt |0 is `discarded`, 0 g);
+  miso-marinated-salmon's marinade |0–|3 counts 583.69 kcal though step 2
+  reads "scrape miso mixture from fillets (do not rinse)"; steak-tacos's
+  herb paste |0–|5 counts 540.46 kcal though step 3 reads "Scrape the herb
+  paste off the steak" (step 1 sets 2 tablespoons of it aside for the
+  sliced steak). A
+  cure, rub or paste the steps rinse or scrape off is OWED as a batch of
+  its own before the single deploy, after a design pass that measures the
+  class. Every class row derived
+  again by a script that parses no amount (the volume its new basis prints ×
+  the sibling cup the owner's own reading of the cut names, kcal at the
+  v119 row's own kcal per gram): 33 rows, 0 mismatches, +889.66 kcal; with
+  the three dependents, the replay's +992.89. Five own mutants, each diff
+  read before its result, against nutrition_v120_test.dart and
+  nutrition_v84_test.dart: a sibling that is not cached, or cannot weigh
+  the volume, losing the line's own piece — killed by a value (v84's
+  pasta-caprese|2 with no sibling cached: '3.00' expected, null read; and
+  the property); the volume read only where it weighs more than the count
+  — killed (7 tests; the salsa's jalapeño "4.69 g 1 1/2 teaspoon …"
+  expected, "7.00 g 1/2 × 14 g each" read); `gramsFor`'s fetch on the
+  source test alone — killed by both QUIET caps (1 detail expected, 2
+  read); a count the record's own per-item portion sizes
+  (`GramSource.portion`) giving way to the sibling's cup too, and the unit
+  gate narrowed to the clove and head units — both SURVIVED the two files,
+  and each differs on no corpus line: the whole-library replay under each
+  is byte-identical to the tip's (rows, recs, sections, calls, notes), and
+  a probe weighing every corpus line that holds a count amount and a volume
+  amount (418 lines, the titled sections' among them) by `lineGrams` on
+  each of the 25 `volumeSiblings` key records, every sibling detail cached,
+  reads the same 10,450 results under each as on the tip. Neither is
+  pinned: no ruling says what such a line weighs (STATED, below). The
+  hand-edit verifier's own neighbour — the arm kept only where the
+  sibling's reading is a `portion` — survives the same way (the replay, and
+  its probe of every corpus volume line, 11,329, on the 25 key records,
+  byte-identical: every sibling reading on the corpus is a portion). By
+  hand, in this section: three wordings ("an unsized onion" in
+  matcher.dart's version note, a test comment and the PINS clause — a sized
+  count moves too), the Per-serving clause on the confit, "both sides
+  together" twice under GATE-P, this bullet and the last two sentences of
+  STATED; and a dated note on the Q2 (c) passage; no lib code.
+- **STATED.** The rule reads the SIBLING's cup, so where SR's cup and
+  ATK's onion disagree the printed volume wins on a line that prints one
+  and the piece table on a line that does not (the owner's Q9 (a) sizes
+  unchanged). A small celery rib minced to ¼ or ⅓ cup weighs less than the
+  rib (classic-tuna-salad|1 40.00 → 25.25 g, shrimp-salad|8 40.00 → 33.67
+  g): the printed volume is the measure. A line whose words name no cup
+  reads the median of the line unit's cups (white-chicken-chili|6 "cut into
+  large pieces", 137.5 g a cup; cod-baked-in-foil-with-leeks-and-carrots|6
+  "matchsticks", 122 g). The guard's 14 rows keep their counts until the
+  YAML rework's fields replace the raw-line regex (WAIT-FOR-FIELDS: the
+  design measures +164.20 kcal over 5 recipes on the v111 rows,
+  potatoes-lyonnaise 189.82 → 208.34). A unit on ANY count amount keeps the
+  piece (no corpus line carries a second count amount; the hand-built pin).
+  A person's pick of a sibling-keyed record on such a line weighs the
+  printed volume too (A13 (i)); a pick of a record outside `volumeSiblings`
+  keeps the count (A13 (iii)). The arm reads a piece-table count alone: a
+  count the record's own per-item portion sizes keeps it beside a printed
+  volume, and a count of ANY unit keeps its count by the unit gate (on the
+  replay's rows it holds one clove unit and one head unit, the head
+  guarded too) — no corpus line reaches the first case or another unit
+  at the gate, and neither is ruled (the owner gate's two survivors): an
+  alarm for the YAML rework's fields.
+  turkey-thigh-confit-with-citrus-mustard-sauce|0 is counted though its
+  steps rinse the cure away, here on its printed 4¾ cups (the owner gate;
+  its fix is owed before the deploy, with the three recipes the gate names).
+- **GATE-P** (12 shards, NoNet, calls 0; base f1a79b8 and v120 each on
+  its OWN replayed snapshot-33 database): sw5 32,659 / sw6 38,588 / sw7
+  1,920 / sw8 58,596 / sw8r 5,433 / sw9 176 / sw13 294 combos, 0 divergent
+  0 refused both; their base-to-tip line differences all lie on moved
+  recipes (sw5 110, sw6 132, sw8 192 lines, both sides together, all
+  crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing, whose
+  onion and celery rows move; sw13 32 lines, both sides together, the
+  routed and child rows of
+  cheesy-nachos-with-guacamole-and-salsa, classic-roast-stuffed-turkey and
+  crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing, among
+  them the tags naming their children chunky-guacamole and
+  classic-roast-turkey's "Giblet Pan Gravy", which carry the moved hosts'
+  rows; sw7, sw8r, sw9 identical). sw10 158 bare and typed, 0 divergent
+  both. sw11 40,484, 200 divergent both (the DIV lines identical), refused
+  12,906 → 12,870: the 36 are crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing's
+  pick-another verbs on its food line 5, refused "noother" at base and run
+  OK on v120 (63 lines each side differ, all that recipe's). sw12 141
+  combos, 54 divergent both, the COMBO lines identical; 109 lines each side
+  differ, every one a row state of a moved row (an onion or celery row
+  220.00 g `piece` → 320.00 g `portion` and the like) in the blocks of the
+  keys holding them.
+- **Cost.** No new step reader and no memo: the arm reads the line's
+  parsed amounts and raw text inside `lineGrams`; the guard's regex is the
+  shipped linear one. Two RULE C shapes, 400 lines of one real line under
+  its recipe's steps, count-pinned exactly — TRUE hungarian-beef-stew|7
+  (each line 960.00 g; the compute fetches 170000 once more than base, 2
+  details against 1) and QUIET potatoes-lyonnaise|1 (150.00 g): the
+  compute's and the GET's families are base f1a79b8's exactly (measured on
+  both trees by the same probe, two runs each); base → v120 TRUE compute
+  566 / 492 → 608 / 521 ms, GET 356 / 343 → 339 / 330 ms; QUIET compute
+  497 / 500 → 493 / 483 ms, GET 319 / 299 → 315 / 301 ms (the backstop
+  10,000 ms).
+- **Deploy note.** matcherVersion 106 stales every recipe; a zero-request
+  sweep recomputes (the siblings 170000, 170393, 169988 and 2710096 are
+  cached on snapshot 33). The chain ships with one deploy at its very end.
 
 **Matcher v119 (batch M106, prep52 P7 — shell and produce refuse;
 matcherVersion 104 → 105. The spec .claude/diag/2026-11-16/prep52/
@@ -13563,7 +13947,17 @@ standing authorization:
   → 1.40 g, "1/2 teaspoon · USDA portion of "Garlic, raw"". Kept: a clove
   unit ("3 cloves garlic", 9.00 g), a second count ("5 … cloves, 3 peeled …
   and 2 minced (about 2 teaspoons)", 15.00 g), onions and every other
-  sibling (C3b closed), a printed weight (the piece gate). 168 rows −180.32.
+  sibling (C3b closed), a printed weight (the piece gate) (Changed
+  2026-11-19, matcher v120, batch M107: C3b RE-OPENED — the predicate,
+  renamed `_pieceVolumeOnSibling`, reads any counted piece on a
+  `volumeSiblings` record whose count carries no unit, not the clove alone,
+  so an onion, carrot, celery or jalapeño count beside a printed volume
+  weighs that volume on its sibling's cup; the clove unit, the second count
+  and the printed weight stay as above. The new evidence against C3b's
+  "SR 170000's own cup contradicts ATK's onion volumes": the corpus's onion
+  weight prints, 378 g a large onion in 0223 and 142 g in 1137 against Q9
+  (a)'s 150 g, and Foundation 790646's own "onion Edible" 143 g — see
+  "Matcher v120"). 168 rows −180.32.
   With no 169230 cached the clove keeps its count; `gramsFor`'s sibling
   fetch gains the same predicate, so a compute fetches 169230 once for such
   a line (snapshot 29 caches it: 0 requests; a 404 is cached nowhere, so a
@@ -13683,7 +14077,11 @@ the contract goldens nutrition_matches_section_own and nutrition_section_own
 re-captured (the legacy-v0 EVOO line 40.81 → 40.23 g).
 Cost: no step reader; C1b one regex test of the parsed prep on a 174924
 piece, C3a one regex of the item and one linear scan of the raw line on a
-sibling-record piece. At the caps (400 × a real clove line under the
+sibling-record piece (Changed 2026-11-19, matcher v120, batch M107: the
+item regex is gone — `_pieceVolumeOnSibling` reads the line's parsed
+amounts for a count carrying a unit in its place; the linear scan of the
+raw line, `_countBeforeParen`, is kept; v120's cost is under "Matcher
+v120"). At the caps (400 × a real clove line under the
 recipe's own steps) the compute and the GET count base's families exactly;
 the TRUE shape (0327|2) measures compute 736 / 693 → 766 / 792 ms, GET 420 /
 421 → 457 / 476 ms (each line weighed on the sibling; one more detail

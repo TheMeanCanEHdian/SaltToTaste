@@ -317,7 +317,10 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 105', () => expect(matcherVersion, 105));
+  test('matcherVersion 106', () {
+    // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
+    expect(matcherVersion, 106);
+  });
   group(
     'v119 (M106: shell and produce refuse)',
     skip: skipIfNoCorpus,

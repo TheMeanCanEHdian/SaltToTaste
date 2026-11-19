@@ -253,7 +253,12 @@ void u2() {
       // RE-PIN (M100 batch, v113, S14′): |0's tortilla chips on the plain
       // record 2708202 (472; was the flavored 2708204, 519): −106.59 / 4
       // (was 878.52).
-      closeTo(851.88, 0.01),
+      // RE-PIN (M107 batch, v120): cheesy-nachos-with-guacamole-and-salsa|2
+      // "2 large jalapeño chiles, sliced thin (about ¼ cup)" 28.00 → 37.50 g
+      // and the One-Minute Salsa's ½ jalapeño 7.00 → 4.69 g (its printed
+      // volumes on FNDDS 2710096 '1 cup' 150 g): (+2.29 − 0.56) / 4 (was
+      // 851.88).
+      closeTo(852.31, 0.01),
     );
   });
 }

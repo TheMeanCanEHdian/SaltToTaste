@@ -1641,6 +1641,7 @@ const List<_Row> _negatives = [
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
+  // RE-PIN (M107 batch, v120): falafel|11 the uptake (21.64 %) on a mix 25.00 g heavier (|3 "½ onion, chopped fine (½ cup)" 55.00 → 80.00 g on SR 170000's 'cup, chopped'): was 86.69 g, 780.21 kcal.
   (
     '0570-falafel.yaml',
     null,
@@ -1649,10 +1650,10 @@ const List<_Row> _negatives = [
     2710180,
     'Vegetable oil, NFS',
     '0.923333',
-    '86.69',
+    '92.10',
     'auto',
     null,
-    '780.21',
+    '828.90',
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix\'s weight — derived from USDA SR Legacy 172455 "Falafel, home-prepared")',
   ),
   (
@@ -5506,7 +5507,10 @@ void main() {
       // '1251.73'.
       // RE-PIN (M102 batch, v115): its gravy's unbleached flour on 789951
       // (the v115 replay 1,247.04 → 1,246.76): was '1247.04'.
-      expect(totalsOf(_stuffedTurkey).$2, '1246.76');
+      // RE-PIN (M107 batch, v120): the stuffing's |1 "6 medium onions, sliced
+      // thin (about 7 cups)" at its 7 cups on SR 170000's 'cup, sliced',
+      // 660.00 → 805.00 g (the replay 1,246.76 → 1,252.27): was '1246.76'.
+      expect(totalsOf(_stuffedTurkey).$2, '1252.27');
     });
 
     test("2: a host-only edit of the bird's printed weight (12–14 → 16–18 lb) "
@@ -5801,7 +5805,9 @@ void main() {
           // RE-PIN (fix104 batch, v104, U2: the cubed cup): was '1251.73'.
           // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the
           // v115 replay): was 1247.04.
-          '1246.76',
+          // RE-PIN (M107 batch, v120): the stuffing's |1 onions at their
+          // printed 7 cups (the replay 1,246.76 → 1,252.27): was 1246.76.
+          '1252.27',
         ), // replay complete 1221.89 → complete 1258.02
         (
           // RE-PIN (M82 batch, v84): was 794.35 (the replay 794.35 → 797.57).
@@ -5885,7 +5891,8 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 706.72.
           // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 711.51.
           // RE-PIN (M106 batch, v119): campanelle-with-asparagus-basil-and-balsamic-glaze|4 453.59 → 240.40 g (× 0.53) — was '706.30'.
-          '693.77',
+          // RE-PIN (M107 batch, v120): campanelle-with-asparagus-basil-and-balsamic-glaze|5 110.00 → 172.50 g (its printed 1½ cups on SR 170000's 'cup, sliced'; the replay 693.79 → 700.67) — was '693.77'.
+          '700.65',
         ), // replay complete 705.66 → complete 706.72
         (
           // RE-PIN (M82 batch, v84): was 378.67 (the replay 378.62 → 377.77).
@@ -6108,7 +6115,11 @@ void main() {
           // RE-PIN (M85 batch, v87): was 252.03 (the replay 252.03 → 249.29).
           // RE-PIN (M86 batch, v90, 958: 2685568 squash, 2685569 squash): was
           // 249.29.
-          '245.02',
+          // RE-PIN (M107 batch, v120): summer-vegetable-gratin|5 "2 medium
+          // onions, halved pole to pole and sliced thin (about 3 cups)" at
+          // its 3 cups on SR 170000's 'cup, sliced', 220.00 → 345.00 g (the
+          // replay 245.02 → 252.94): was '245.02'.
+          '252.94',
         ), // replay complete 240.41 → complete 240.59
         (
           // RE-PIN (M82 batch, v84): was 218.15 (the replay 218.15 → 216.64).

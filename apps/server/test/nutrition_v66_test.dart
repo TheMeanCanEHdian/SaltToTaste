@@ -530,14 +530,15 @@ const List<_Row> _negatives = [
     "discarded in cooking — only the part the recipe keeps and the oil the fried food absorbs counted · approximation (frying oil absorbed: 9.89 % of the raw beef's weight — USDA FNDDS 2705842 recipe: 9 g oil per 90.99 g raw beef steak (no record for beef; read as Beef, steak, country fried))",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
+  // RE-PIN (M107 batch, v120): falafel|11 the uptake (21.64 %) on a mix 25.00 g heavier (|3 "½ onion, chopped fine (½ cup)" 55.00 → 80.00 g on SR 170000's 'cup, chopped'): was 86.69 g, 780.21 kcal.
   (
     '0570-falafel.yaml',
     11,
     '2 quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '86.69',
-    '780.21',
+    '92.10',
+    '828.90',
     'auto',
     null,
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix's weight — derived from USDA SR Legacy 172455 \"Falafel, home-prepared\")",
@@ -1034,7 +1035,9 @@ void main() {
         ('1194-lumpiang-shanghai-with-seasoned-vinegar.yaml', 17, '99.27'),
         // RE-PIN (M82 batch, v84, C5a): the uptake on the mix's heavier
         // flour |9 (the v84 replay's row): was 85.55.
-        ('0570-falafel.yaml', 11, '86.69'),
+        // RE-PIN (M107 batch, v120): the uptake on |3's 80.00 g onion (its
+        // printed ½ cup; was 55.00 g): was 86.69.
+        ('0570-falafel.yaml', 11, '92.10'),
         (_doughnuts, 8, '368.54'),
       ]) {
         expect(

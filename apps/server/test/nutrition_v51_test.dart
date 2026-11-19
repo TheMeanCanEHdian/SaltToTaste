@@ -92,7 +92,10 @@ _rows = [
     // Smith at the edible cup, 453.59 → 353.80 g): was 3088.50.
     // RE-PIN (fix104 batch, v104, U2: the stuffing's ½-inch cubes at the
     // brown-betty cubed cup, 353.80 → 265.35 g): was '2988.70'.
-    '2900.30',
+    // RE-PIN (M107 batch, v120): the stuffing's |1 "6 medium onions, sliced
+    // thin (about 7 cups)" at its 7 cups on SR 170000's 'cup, sliced' 115 g,
+    // 660.00 → 805.00 g: was '2900.30'.
+    '3045.30',
     null,
     null,
     // RE-PIN (M86 batch, v90, 958: the stuffing's 1750342 Granny Smith apples,
@@ -101,7 +104,9 @@ _rows = [
     // '3089 g, 5,438 kcal'.
     // RE-PIN (fix104 batch, v104, U2: the cubed cup): was '2989 g, 5,385
     // kcal'.
-    'from the recipe Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions: 2900 g, 5,339 kcal',
+    // RE-PIN (M107 batch, v120): the same onions (+145 g, +55.10 kcal; the
+    // replay 5,338.54 → 5,393.64): was '2900 g, 5,339 kcal'.
+    'from the recipe Bread Stuffing with Bacon, Apples, Sage, and Caramelized Onions: 3045 g, 5,394 kcal',
     null,
   ),
   // Yield + slice: 6 × 28 = 168 raw → 55.44 + 25.80

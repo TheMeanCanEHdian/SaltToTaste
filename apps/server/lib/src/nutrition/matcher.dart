@@ -193,7 +193,12 @@ const Map<String, String> _synonyms = {
 /// by `buysRefuse`), and AH-102 prep rows for kale, peas, iceberg,
 /// asparagus, snap beans, tomatoes, mushrooms, radish, napa and mustard
 /// greens (`produceYields`).
-const int matcherVersion = 105;
+/// v106: matcher v120 (batch M107) — a counted piece beside a printed
+/// volume: an onion, carrot, celery or jalapeño counted with no unit on a
+/// `volumeSiblings` record whose line prints a volume weighs that volume on
+/// the sibling's cup, as a counted garlic clove has since v84
+/// (`_pieceVolumeOnSibling`, prep51's C3b re-opened).
+const int matcherVersion = 106;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

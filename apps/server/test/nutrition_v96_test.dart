@@ -483,7 +483,11 @@ const _totals = [
   // RE-PIN (M105 batch, v118): chicken-teriyaki-2|5 ginger on 169231's own tsp (2.0 g), 15.97 → 12.00 g (−3.18 kcal ÷ 4) — was '330.25'.
   (_teriyaki2, 'complete', '329.46'),
   // replay 653.74 → 647.92 (-5.82).
-  (_hungarian, 'complete', '647.92'),
+  // RE-PIN (M107 batch, v120): hungarian-beef-stew|7 "6 medium onions,
+  // minced (about 6 cups)" at its 6 cups on SR 170000's 'cup, chopped',
+  // 660.00 → 960.00 g, +114.00 kcal ÷ 6 (the replay 647.92 → 666.92): was
+  // '647.92'.
+  (_hungarian, 'complete', '666.92'),
   // replay 989.04 → 988.27 (-0.77).
   (_beerRibs, 'complete', '988.27'),
 ];
@@ -561,7 +565,8 @@ void main() {
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
       // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
       // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
-      expect(matcherVersion, 105);
+      // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
+      expect(matcherVersion, 106);
     },
   );
 

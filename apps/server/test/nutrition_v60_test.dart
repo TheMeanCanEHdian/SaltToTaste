@@ -97,6 +97,7 @@ const List<_Row> _reach = [
     "discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 7.62 % of the raw lumpia's weight — USDA FNDDS 2708702 recipe: 8 g oil per 104.99 g raw egg roll (no record for lumpia; read as Egg roll, with beef and/or pork))",
   ),
   // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
+  // RE-PIN (M107 batch, v120): falafel|11 the uptake (21.64 %) on a mix 25.00 g heavier (|3 "½ onion, chopped fine (½ cup)" 55.00 → 80.00 g on SR 170000's 'cup, chopped'): was 86.69 g, 780.21 kcal.
   (
     _falafel,
     null,
@@ -104,8 +105,8 @@ const List<_Row> _reach = [
     '2 quarts vegetable oil for frying',
     2710180,
     '0.923333',
-    '86.69',
-    '780.21',
+    '92.10',
+    '828.90',
     null,
     'discarded in cooking — only the oil the fried food absorbs counted · approximation (frying oil absorbed: 21.64 % of the raw falafel mix\'s weight — derived from USDA SR Legacy 172455 "Falafel, home-prepared")',
   ),
@@ -845,7 +846,10 @@ void main() {
       final falafelMix = sumOf(_falafel, [for (var p = 0; p <= 10; p++) p]);
       // RE-PIN (M82 batch, v84, C5a): its ¼ cup flour |9 30.16 → 35.44 g:
       // was 395.35.
-      expect(g2(falafelMix), '400.62');
+      // RE-PIN (M107 batch, v120): its |3 "½ onion, chopped fine (½ cup)"
+      // 55.00 → 80.00 g (the printed ½ cup on SR 170000's 'cup, chopped'
+      // 160 g): was 400.62.
+      expect(g2(falafelMix), '425.62');
       // Doughnuts: |0–|6, never the GLAZE |8–|10 after the oil.
       final doughMix = sumOf(_doughnuts, [for (var p = 0; p <= 6; p++) p]);
       // 1,278.71 at full precision (22½ oz of flour = 637.864 g …); the
@@ -1034,7 +1038,9 @@ void main() {
       // RE-PIN (M82 batch, v84, C5a): the flour |9 and the oil's uptake |11
       // on the heavier mix: was 613.83.
       // RE-PIN (M86 batch, v90, 958: 2259794 yogurt): was 621.22.
-      expect(of(_falafel), ('complete', '621.39')); // v59 421.35
+      // RE-PIN (M107 batch, v120): |3's onion +9.50 kcal and |11's uptake
+      // on it +48.69 (the replay 621.39 → 635.94): was 621.39.
+      expect(of(_falafel), ('complete', '635.94')); // v59 421.35
       // RE-PIN (M67 batch, v66): 599.61 → A2 (the cut dough and its oil).
       expect(of(_doughnuts), ('complete', '432.75')); // v59 439.26
       // RE-PIN (M67 batch, v66): 716.48 → B (14.15 %).

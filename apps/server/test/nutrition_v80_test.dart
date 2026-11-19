@@ -625,8 +625,11 @@ const _negatives = [
     '0570-falafel.yaml',
     3,
     '½ onion, chopped fine (½ cup)',
-    '55.00',
-    'piece',
+    // RE-PIN (M107 batch, v120): falafel|3 weighs its printed ½ cup on SR
+    // 170000's 'cup, chopped' 160 g (`_pieceVolumeOnSibling`): was
+    // '55.00', 'piece'.
+    '80.00',
+    'portion',
     null,
   ),
   // RE-PIN (M82 batch, v84, C5a): was 85.55 g, 769.95 kcal (the v84 replay's row).
@@ -634,7 +637,9 @@ const _negatives = [
     '0570-falafel.yaml',
     11,
     '2 quarts vegetable oil for frying',
-    '86.69',
+    // RE-PIN (M107 batch, v120): falafel|11 the uptake (21.64 %) on a mix
+    // 25.00 g heavier (|3's onion 55.00 → 80.00 g): was '86.69'.
+    '92.10',
     'discarded',
     null,
   ),
