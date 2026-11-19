@@ -1277,7 +1277,8 @@ void main() {
         // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2685580 tomato): was
         // 734.28.
         // RE-PIN (M105 batch, v118): better-chicken-marsala|1 gelatin at the corpus packet (0.7190 g/mL), 9.33 → 14.17 g (+16.22 kcal ÷ 4) — was '745.55'.
-        expect(of(_marsala), ('complete', '749.60')); // replay 704.46 → 734.35
+        // RE-PIN (M106 batch, v119): better-chicken-marsala|9 453.59 → 439.98 g (× 0.97) — was '749.60'.
+        expect(of(_marsala), ('complete', '748.85')); // replay 704.46 → 734.35
         // RE-PIN (M78 batch, v78, Q7 (c)): the four C4 recipes' pan fat
         // (and parmesan-crusted's crust, Q6 (c)) — francese was 438.29,
         // saltimbocca 511.50, meunière 349.73, parmesan-crusted partial

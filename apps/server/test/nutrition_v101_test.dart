@@ -490,7 +490,9 @@ const _kibbehHash =
     // the tip with 102 put back gives 08aebe5e).
     // RE-PIN (M105 batch, v118): matcherVersion 104 alone (was 6b72fceb…;
     // the tip with 103 put back gives 6b72fceb).
-    'c6d08376617eef77eccc9332849da3f0129eea8cee86f3d3c289db4ef27dc470';
+    // RE-PIN (M106 batch, v119): matcherVersion 105 alone (was c6d08376…;
+    // the tip with 104 put back gives c6d08376).
+    '8c66dfb2ae9b7828708a3e26092f7be070eae85f3ae08633824dbd9539016b9a';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person

@@ -5457,6 +5457,7 @@ const List<_Row> _unmoved = [
     '4.05',
     '3 tablespoon · USDA portion',
   ),
+  // RE-PIN (M106 batch, v119): catalan-style-beef-stew-with-mushrooms|17 226.80 → 219.99 g (× 0.97) — was grams '226.80', kcal '75.52', basis 'from 8 ounce'.
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
     null,
@@ -5465,12 +5466,12 @@ const List<_Row> _unmoved = [
     1999627,
     'Mushroom, oyster',
     '1.000000',
-    '226.80',
+    '219.99',
     'auto',
     null,
     // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was 92.99.
-    '75.52',
-    'from 8 ounce',
+    '73.26',
+    'from 8 ounce × 0.97 edible · approximate (USDA AH-102 item 1507: mushrooms, raw, whole, good quality → trimmed 97 % (87–100))',
   ),
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
@@ -5570,6 +5571,7 @@ const List<_Row> _unmoved = [
     '220.08',
     '2 slice × 28 g each',
   ),
+  // RE-PIN (M106 batch, v119): pub-style-steak-and-ale-pie|6 453.59 → 439.98 g (× 0.97) — was grams '453.59', kcal '99.79', basis 'from 1 pound'.
   (
     '0194-pub-style-steak-and-ale-pie.yaml',
     null,
@@ -5578,11 +5580,11 @@ const List<_Row> _unmoved = [
     168434,
     'Mushrooms, brown, italian, or crimini, raw',
     '1.000000',
-    '453.59',
+    '439.98',
     'auto',
     null,
-    '99.79',
-    'from 1 pound',
+    '96.80',
+    'from 1 pound × 0.97 edible · approximate (USDA AH-102 item 1507: mushrooms, raw, whole, good quality → trimmed 97 % (87–100))',
   ),
   (
     '0194-pub-style-steak-and-ale-pie.yaml',
@@ -7033,38 +7035,40 @@ const List<_Totals> _totals = [
     '994.3265',
   ),
   // RE-PIN (M82 batch, v84): was 958.77, 3835.10, 292.3790, 102.6473, 157.8699, 18.2445, 216.8326, 1025.1040 (the replay 958.80 → 951.33).
+  // RE-PIN (M106 batch, v119): catalan-style-beef-stew-with-mushrooms|17 226.80 → 219.99 g (× 0.97) — was 943.17, 3772.66, 292.0047, 215.8378, 970.0212.
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was 951.30.
-    '943.17',
+    '942.60',
     // RE-PIN (M86 batch, v90, 958: 2346393 nuts, 1999627 mushroom): was
     // 3805.19.
-    '3772.66',
-    '292.0047',
+    '3770.40',
+    '291.9919',
     '102.5688',
     '157.8026',
     '18.0644',
-    '215.8378',
-    '970.0212',
+    '215.6405',
+    '969.9443',
     '827.8054',
   ),
   // RE-PIN (M82 batch, v84): was 877.80, 5266.77, 367.9921, 291.0827, 5340.4634 (the replay 877.80 → 881.01).
+  // RE-PIN (M106 batch, v119): pub-style-steak-and-ale-pie|6 453.59 → 439.98 g (× 0.97) — was 880.66, 5283.96, 368.0701, 168.7837, 162.6707, 16.7589, 291.6573, 5340.5688.
   (
     '0194-pub-style-steak-and-ale-pie.yaml',
     null,
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2346387 cream): was 881.01.
-    '880.66',
+    '880.16',
     // RE-PIN (M86 batch, v90, 958: 2346387 cream): was 5286.07.
-    '5283.96',
-    '368.0701',
-    '168.7837',
-    '162.6707',
-    '16.7589',
-    '291.6573',
-    '5340.5688',
+    '5280.97',
+    '368.0565',
+    '168.7818',
+    '162.6704',
+    '16.7532',
+    '291.3171',
+    '5339.7524',
     '1448.9851',
   ),
   (

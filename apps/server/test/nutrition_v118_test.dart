@@ -291,7 +291,10 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 104', () => expect(matcherVersion, 104));
+  test('matcherVersion 105', () {
+    // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
+    expect(matcherVersion, 105);
+  });
   group(
     'v118 (M105: portion and density figures)',
     skip: skipIfNoCorpus,

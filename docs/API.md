@@ -2393,7 +2393,10 @@ whole, not just its written brine share),
 `in_shell` (shellfish bought in the shell — clams, mussels or oysters
 scrubbed, live lobsters, shell-on shrimp — "shell-on shrimp …, peeled,
 deveined …, shells reserved" too: its weight includes the shells the cook
-peels off), with or without an amount (never 0 g counted); shucked shellfish, lobster
+peels off; dated note 2026-11-18, matcher v119: a line saying "…, shells
+(removed and) reserved" with no "shell-on" is bought in the shell too —
+`boughtInShell` reads the clause and `buysRefuse` reads `boughtInShell`, so
+on SR 175179 it counts AH-102 item 2333's 0.81, "Matcher v119"), with or without an amount (never 0 g counted); shucked shellfish, lobster
 meat and clam juice name none of these: no record FDC answers publishes an edible share, so the gross weight
 is not counted as meat; a LINE hold, like `second_food`; since matcher v39
 — the owner's ruling 2026-10-05, plan Q3 (b) — a line whose grams need no
@@ -5366,6 +5369,318 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v119 (batch M106, prep52 P7 — shell and produce refuse;
+matcherVersion 104 → 105. The spec .claude/diag/2026-11-16/prep52/
+design_v2.md "P7 — shell and produce refuse" (S5, S6), the rulings in the
+M106 brief (R1: S5 as designed; R2: S6 = the design's four on-disk rows (a)
+plus seven rows of the re-obtained USDA AH-102 (b), transcribed in
+.claude/diag/2026-11-17/ah102/ah102_produce_p7.md; (c) four records ruled
+to stay gross). Blind accuracy audit 7 found weights counted gross where the
+line says the cook removes a part. grams.dart's yield tables and readers
+only: one alternation added to `boughtInShell`, read by `buysRefuse`; new
+rows in `produceYields` in the shipped row form, read by the shipped
+`produceYieldOf`. No new reader, no new table kind, no raw-line grammar,
+no new hold reason, no app copy, no migration. Replayed on SNAPSHOT 33
+against the v118 set, both orders byte-identical, calls 0, a replay after
+each item. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **S5 — "…, shells (removed and) reserved" is bought in the shell.**
+  Today: `boughtInShell` read clams / mussels / oysters scrubbed, live
+  lobsters and `\bshell-on\b`; `buysRefuse`'s shellfish arm `shell-on|in the
+  shell`. "1 pound large shrimp …, peeled, deveined, tails removed, and
+  shells reserved" names neither, so its pound counted gross on SR 175179
+  though the steps simmer the shells it was weighed with. The change:
+  `boughtInShell` gains `\bshells?\s+(?:removed\s+and\s+)?reserved\b`, and
+  `buysRefuse` returns true when `boughtInShell` does (after its boneless /
+  broth / stock / ground / lobster-meat exclusions and a line led by
+  `reserved` (`^reserved\b`); one regex, both readers on every line passing
+  those exclusions: `grep -c
+  "boughtInShell(raw)" apps/server/lib/src/nutrition/grams.dart` → 1; a
+  reserved-shell line naming one — no corpus line: 0 of the 16,510 raw
+  lines are bought in the shell and carry an exclusion word — is bought in
+  the shell with `buysRefuse` false, as a shell-on line naming one always
+  was; pinned, synthesized from shrimp-cocktail|0 with " for stock" appended). The
+  figure is the shipped `ah102Shells[175179]` row, AH-102 item 2333, shrimp,
+  headless, in shell → shelled, deveined 81 % (77–82), flagged as before.
+- **S6 — a weight, then a prep word naming a part the cook removes.** Today:
+  `produceYieldOf` reads `produceYields` (keyed by RECORD; a weight in the
+  line's head, before its first top-level comma; the word, word-bounded, in
+  its tail); a record with no row read gross. The change: eleven rows (the
+  table under "Produce (Y8, `produceYields`)" holds them, marked v119), each
+  flagged "USDA AH-102 item N: <before> → <after> NN % (range)":
+  - (a), figures in .claude/diag/2026-10-06/ah102_produce_meat.md, item
+    numbers read on the re-obtained scan (printed pp. 62, 67, 80): kale
+    323505 'stemmed' 0.64 (item 1305, untrimmed → leaves without stems; no
+    range printed); edible-podded peas 170010 'trimmed|strings
+    removed|snapped' 0.94 (item 1748, 92–95); iceberg 2346388 'cored' 0.93
+    (item 1425, crisphead retail pack → trimmed and cored, 88–96); green
+    peas 2709797 'shelled' 0.38 (item 1751, in pods → shelled, 20–80).
+  - (b), from ah102_produce_p7.md: asparagus 2710823 'trimmed' 0.53
+    (item 100, whole shoots → tips and tender portions, 31–88; "tough ends
+    trimmed" reads 'trimmed'; not 'stemmed', the owner gate's RO1: its one
+    corpus row on the record is a line of greens, below); snap beans 2346400 'trimmed' 0.88 (item 200,
+    62–97; "ends trimmed" reads it); tomatoes 170457, 1999634, 2709719
+    'cored' 0.88 (item 2541, cored and trimmed, 88–88; not 'peeled' nor
+    'seeded'); mushrooms 168434, 1999629, 1999627 'trimmed' 0.97 (item 1507,
+    good quality → trimmed, 87–100); radish 2709803 'trimmed' 0.92 (item
+    2149, without tops → trimmed, 85–95); napa cabbage 2727583 'cored' 0.93
+    (item 446, CABBAGE, CHINESE retail pack → trimmed and cut for use,
+    88–95); mustard greens 169256 'stemmed|trimmed' 0.93 (item 1532,
+    untrimmed → leaves, trimmed, 90–95).
+  `grep -c "produceYields = {\|_tomato,\|_mushroom," grams.dart` → 7 (the
+  map and the three records each of the two shared rows).
+- **(c) STATED — stays gross, each pinned as a negative.** Shiitake 1999628
+  'stemmed' / 'trimmed' (item 1507 is "mainly stem ends", 3 %; 1513's 18 %
+  is DRIED mushrooms: no fresh stems-removed row); Swiss chard 169991
+  'stemmed' (the table counts the stalks edible: no leaves-only row);
+  spinach 1999633 'stemmed' (two packs, 72 untrimmed-in-bulk with roots and
+  100 retail; no row is a retail bunch's stems);
+  fava-beans-with-artichokes-asparagus-and-peas|3 "1 pound fava beans,
+  shelled (1 cup)" on 168574 "Beans, fava, in pod, raw" (a record question,
+  design §5); every other record of prep52/pA/s6_by_record.tsv (no row
+  read). The asparagus range is the widest: no corpus line prints a net
+  weight for trimmed asparagus (`grep -rhi 'raw:.*asparagus' recipes/ | sort
+  | uniq -c` → 16 distinct lines, their parens bunches only).
+- **THE ROWS (the replay on snapshot 33 against the v118 set, both orders
+  byte-identical, calls 0, buckets equal).** 98 rows (95 main, 3 section
+  rows) in 89 recipes and 3 sections move, columns 7, 12 and 17 alone (grams,
+  basis, kcal): −2,579.89 kcal; no status, record, hold or dependent row
+  moves; notes, calls and the buckets byte-identical. Each row derived by
+  hand (kit derive.py, 0 mismatches of 98): the printed weight at
+  grams.dart's 453.592 g a pound / 28.3495 g an ounce × the share × the
+  record's kcal per 100 g, nutrient 208, else 958 (shrimp-cocktail|0
+  453.59 × 0.81 = 367.41 g × 0.85 = 312.30, was 385.55;
+  braised-greens-with-bacon-and-onion|4 907.18 × 0.64 = 580.60 g × 0.35 =
+  203.21, was 317.51; fava-beans-with-artichokes-asparagus-and-peas|10
+  453.59 × 0.38 = 172.36 g × 0.81 = 139.62, was 367.41; broiled-asparagus|0
+  907.18 × 0.53 = 480.81 g × 0.235292 = 113.13, was 213.45). By record:
+  - shrimp SR 175179 (S5, × 0.81), 7 rows, 4,082.33 → 3,306.67 g, 3,469.97 → 2,810.70 kcal (-659.27): caldo-de-siete-mares|9 453.59 → 367.41 g; creole-style-shrimp-and-sausage-gumbo|0 680.39 → 551.11 g; shrimp-cocktail|0 453.59 → 367.41 g; shrimp-fra-diavolo|0 680.39 → 551.11 g; shrimp-risotto|0 453.59 → 367.41 g; spanish-style-toasted-pasta-with-shrimp|3 680.39 → 551.11 g; ultimate-shrimp-scampi|2 680.39 → 551.11 g.
+  - kale 323505 (× 0.64), 6 rows, 2,523.10 → 1,614.78 g, 883.09 → 565.16 kcal (-317.93): braised-greens-with-bacon-and-onion|4 907.18 → 580.60 g; hearty-beef-and-vegetable-stew|16 226.80 → 145.15 g; italian-wedding-soup|23 340.19 → 217.72 g; kale-caesar-salad|0 340.19 → 217.72 g; super-greens-soup-with-lemon-tarragon-cream|15 255.15 → 163.29 g; swiss-chard-and-kale-gratin|1 453.59 → 290.30 g.
+  - edible-podded peas 170010 (× 0.94), 4 rows, 652.05 → 612.92 g, 273.85 → 257.43 kcal (-16.42): buttery-spring-vegetables|2 226.80 → 213.19 g; chilled-soba-noodles-with-cucumber-snow-peas-and-radishes|9 113.40 → 106.59 g; stir-fried-portobellos-with-ginger-oyster-sauce|14 85.05 → 79.95 g; stir-fried-shrimp-with-snow-peas-and-red-bell-pepper-in-hot-and-sour-sauce|14 226.80 → 213.19 g.
+  - iceberg 2346388 (× 0.93), 1 rows, 127.57 → 118.64 g, 18.44 → 17.15 kcal (-1.29): grilled-fish-tacos|16 127.57 → 118.64 g.
+  - green peas 2709797 (× 0.38), 1 rows, 453.59 → 172.36 g, 367.41 → 139.62 kcal (-227.79): fava-beans-with-artichokes-asparagus-and-peas|10 453.59 → 172.36 g.
+  - asparagus 2710823 (× 0.53), 12 rows, 5,584.84 → 2,959.95 g, 1,314.08 → 696.49 kcal (-617.59): asparagus-ham-and-gruyere-frittata|5 226.80 → 120.20 g; broiled-asparagus|0 907.18 → 480.81 g; buttery-spring-vegetables|1 453.59 → 240.40 g; campanelle-with-asparagus-basil-and-balsamic-glaze|4 453.59 → 240.40 g; chicken-pot-pie-with-spring-vegetables|14 453.59 → 240.40 g; fava-beans-with-artichokes-asparagus-and-peas|9 453.59 → 240.40 g; fluffy-omelets|2 (section "Asparagus and Smoked Salmon Filling") 141.75 → 75.13 g; pan-roasted-asparagus|2 907.18 → 480.81 g; scrambled-eggs-with-asparagus-smoked-salmon-and-chives|6 226.80 → 120.20 g; simple-pot-au-feu|15 453.59 → 240.40 g; spring-vegetable-pasta|1 453.59 → 240.40 g; stir-fried-asparagus-with-shiitake-mushrooms|7 453.59 → 240.40 g.
+  - snap beans 2346400 (× 0.88), 13 rows, 6,747.17 → 5,937.51 g, 2,264.88 → 1,993.12 kcal (-271.76): blanched-green-beans|1 453.59 → 399.16 g; classic-green-bean-casserole|6 907.18 → 798.32 g; gado-gado|13 226.80 → 199.58 g; green-bean-casserole|5 907.18 → 798.32 g; green-bean-salad-with-cherry-tomatoes-and-feta|0 680.39 → 598.74 g; green-beans-amandine|3 907.18 → 798.32 g; paella-de-verduras-cauliflower-and-bean-paella|3 170.10 → 149.69 g; pasta-with-pesto-potatoes-and-green-beans|4 340.19 → 299.37 g; quick-green-bean-casserole|8 680.39 → 598.74 g; roasted-green-beans|0 453.59 → 399.16 g; skillet-charred-green-beans-with-crispy-bread-crumb-topping|5 453.59 → 399.16 g; soupe-au-pistou-provencal-vegetable-soup|13 226.80 → 199.58 g; teriyaki-stir-fried-beef-with-green-beans-and-shiitakes|13 340.19 → 299.37 g.
+  - tomatoes 170457 (× 0.88), 10 rows, 7,257.47 → 6,386.56 g, 1,306.33 → 1,149.58 kcal (-156.75): classic-gazpacho|0 680.39 → 598.74 g; creamy-gazpacho-andaluz|0 1360.78 → 1197.48 g; farfalle-with-tomatoes-olives-and-feta|2 680.39 → 598.74 g; grilled-tomatoes|0 907.18 → 798.32 g; huevos-rancheros|1 680.39 → 598.74 g; mexican-rice|0 340.19 → 299.37 g; oven-roasted-salmon|0 (section "Fresh Tomato Relish") 340.19 → 299.37 g; pasta-and-fresh-tomato-sauce-with-garlic-and-basil|2 907.18 → 798.32 g; pasta-caprese|5 680.39 → 598.74 g; pasta-with-fresh-tomatoes-and-herbs|0 680.39 → 598.74 g.
+  - tomato, roma 1999634 (× 0.88), 6 rows, 4,876.12 → 4,290.97 g, 924.24 → 813.34 kcal (-110.90): best-summer-tomato-gratin|3 1360.78 → 1197.48 g; briam|9 680.39 → 598.74 g; fattoush-pita-bread-salad-with-tomatoes-and-cucumber|5 453.59 → 399.16 g; horiatiki-salata-hearty-greek-salad|0 793.79 → 698.53 g; kousa-mihshi-lebanese-stuffed-squash|11 907.18 → 798.32 g; panzanella-italian-bread-salad|3 680.39 → 598.74 g.
+  - tomatoes 2709719 (× 0.88), 6 rows, 3,742.14 → 3,293.07 g, 748.44 → 658.62 kcal (-89.82): deep-dish-pizza-with-tomatoes-mozzarella-and-basil|6 680.39 → 598.74 g; grilled-pork-tenderloin-with-grilled-tomatoginger-salsa|5 680.39 → 598.74 g; grilled-tomato-and-cheese-pizza|7 680.39 → 598.74 g; spicy-pork-tacos-al-pastor|2 566.99 → 498.95 g; tomato-and-mozzarella-tart|3 226.80 → 199.58 g; upside-down-tomato-tart|7 907.18 → 798.32 g.
+  - cremini 168434 (× 0.97), 14 rows, 5,698.26 → 5,527.28 g, 1,253.63 → 1,216.03 kcal (-37.60): beef-en-cocotte-with-mushroom-sauce|2 141.75 → 137.50 g; beef-wellington|10 907.18 → 879.97 g; better-chicken-marsala|9 453.59 → 439.98 g; chicken-pot-pie-with-savory-crumble-topping|7 283.50 → 274.99 g; meatless-meat-sauce-with-chickpeas-and-mushrooms|0 283.50 → 274.99 g; modern-beef-burgundy|4 453.59 → 439.98 g; mushroom-bisque|1 226.80 → 219.99 g; pasta-alla-norcina|7 226.80 → 219.99 g; pub-style-steak-and-ale-pie|6 453.59 → 439.98 g; quick-beef-and-vegetable-soup|3 453.59 → 439.98 g; quick-chicken-fricassee|4 453.59 → 439.98 g; roast-beef-tenderloin-with-caramelized-onion-and-mushroom-stuffing|0 226.80 → 219.99 g; roasted-mushrooms-with-parmesan-and-pine-nuts|1 680.39 → 659.98 g; wild-rice-and-mushroom-soup|9 453.59 → 439.98 g.
+  - white button 1999629 (× 0.97), 8 rows, 2,296.31 → 2,227.41 g, 571.16 → 554.04 kcal (-17.12): coq-au-riesling|13 453.59 → 439.98 g; fluffy-omelets|2 (section "Mushroom Filling") 113.40 → 110.00 g; green-bean-casserole|8 453.59 → 439.98 g; juicy-grilled-turkey-burgers|3 170.10 → 164.99 g; mushroom-bisque|0 453.59 → 439.98 g; shepherds-pie|11 113.40 → 110.00 g; super-greens-soup-with-lemon-tarragon-cream|8 85.05 → 82.50 g; ultimate-veggie-burgers|8 453.59 → 439.98 g.
+  - oyster 1999627 (× 0.97), 2 rows, 453.60 → 439.98 g, 151.14 → 146.60 kcal (-4.54): catalan-style-beef-stew-with-mushrooms|17 226.80 → 219.99 g; guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|8 226.80 → 219.99 g.
+  - radish 2709803 (× 0.92), 2 rows, 1,133.98 → 1,043.26 g, 181.44 → 166.92 kcal (-14.52): red-snapper-ceviche-with-radishes-and-orange|7 226.80 → 208.65 g; roasted-radishes-with-yogurt-tahini-sauce|12 907.18 → 834.61 g.
+  - napa 2727583 (× 0.93; nutrients of SR 169979), 4 rows, 1,927.76 → 1,792.82 g, 308.43 → 286.84 kcal (-21.59): pork-and-cabbage-dumplingswor-tip|7 340.19 → 316.38 g; pork-lo-mein|15 453.59 → 421.84 g; shizi-tou-lions-head-meatballs|11 680.39 → 632.76 g; stir-fried-portobellos-with-ginger-oyster-sauce|15 453.59 → 421.84 g.
+  - mustard greens 169256 (× 0.93), 2 rows, 793.78 → 738.22 g, 214.32 → 199.32 kcal (-15.00): multicooker-hawaiian-oxtail-soup|10 453.59 → 421.84 g; saag-paneer-indian-style-spinach-with-fresh-cheese|4 340.19 → 316.38 g.
+- **Per serving, 12 recipes move by more than 5 %** (kit serving.py over
+  the recs, v118 → v119): broiled-asparagus 56.58 → 39.86 (−29.55 %),
+  pan-roasted-asparagus 149.85 → 116.40 (−22.32 %),
+  fava-beans-with-artichokes-asparagus-and-peas 211.98 → 165.65 (−21.86 %),
+  stir-fried-asparagus-with-shiitake-mushrooms 95.70 → 83.16 (−13.10 %),
+  blanched-green-beans 38.07 → 33.50 (−12.00 %),
+  braised-greens-with-bacon-and-onion 253.84 → 225.27 (−11.26 %),
+  shrimp-cocktail 223.83 → 205.52 (−8.18 %), ultimate-shrimp-scampi 362.04
+  → 334.57 (−7.59 %), shrimp-fra-diavolo 371.17 → 343.70 (−7.40 %),
+  grilled-tomatoes 141.65 → 131.85 (−6.92 %), roasted-green-beans 69.57 →
+  65.00 (−6.57 %), buttery-spring-vegetables 163.79 → 154.48 (−5.68 %).
+- **THE CLASSES on the replay** (`python3 -I classes.py rows_main.tsv`:
+  every row on a ruled record and on 175179, by reason; 230 rows): shrimp
+  175179 — 9 at 0.81 (the 7 above, the two shipped shell-on rows), 33
+  "peeled and deveined" weights with no reserved shells STAY gross (no line
+  says its weight carries shells; audit 7 judged
+  brazilian-shrimp-and-fish-stew-moqueca|5 right at 453.59 g), 1 shell-on
+  eaten (crispy-salt-and-pepper-shrimp|0, 680.39 g gross); look-alikes off
+  175179 (best-crab-cakes|0 "picked over for shells", ground-beef-tacos|15
+  taco shells, pan-seared-inexpensive-steaks|1 shell sirloin) match no
+  clause. Each produce record: the rows that move (above) and the rows
+  that do not — cremini 4 no ruled word, 1 piece count, 1 `discarded`;
+  tomatoes 170457 9 no ruled word, 4 piece, 3 portion, 2 weight not in the
+  head (classic-greek-salad|10 "2 medium, firm, ripe tomatoes (6 ounces
+  each), cored": its weight follows the first comma); roma 5 piece, 2
+  unmeasured; 2709719 1 no ruled word (walkaway-ratatouille|8 "peeled"), 4
+  piece, 1 portion; kale 1 no ruled word (hearty-tuscan-bean-stew|11 "stems
+  trimmed"); asparagus 1 no ruled word (quick-cooked-tough-greens|1
+  "…, stemmed", a line of greens: RO1); white button 14 no ruled word ("wiped clean"); iceberg 2
+  portion, 2 unmeasured; radish 1 no ruled word, 5 piece, 2 unmeasured; napa
+  3 portion; R2 (c): shiitake 15, chard 7, spinach 5, fava 1 — no row.
+- **PINS** (apps/server/test/nutrition_v119_test.dart, 30 tests): the 92
+  moved rows the fixtures compute whole, each ALONE in its recipe's real
+  steps, every stored column the rules write (record, description, status,
+  hold, gram source, confidence, grams), the kcal and the basis, equal to
+  the replay's; the six others (huevos-rancheros|1,
+  pan-roasted-asparagus|2, saag-paneer-indian-style-spinach-with-fresh-cheese|4
+  — searches no fixture records — and the three section rows) by the
+  resolver on the replay's record; the matches GET's grams and `gram_basis`
+  for shrimp-cocktail|0 (S5) and braised-greens-with-bacon-and-onion|4 (S6);
+  the person path of the key 'jumbo shrimp' (shrimp-cocktail|0 and
+  ultimate-shrimp-scampi|2 reserved-shell, paella-on-the-grill|2 and
+  grilled-shrimp-and-vegetable-kebabs|2 plain, all on 175179, each line
+  alone in its recipe): a pick + apply_to_all on paella-on-the-grill|2
+  reaches 3 lines — of 2684443 the two reserved-shell rows are held
+  `in_shell` at 453.59 and 680.39 g, of 2706350 they move to 174216 at
+  131.54 and 197.31 g, the plain row stays on the pick at 680.39 g — the
+  next compute writes each row as the apply did, and the matches GET then
+  offers 0 other lines on each of the four; a person's OWN pick of 2684443,
+  of 2706350 and of 175179 on shrimp-cocktail|0 and on the shipped shell-on
+  garlicky-shrimp-tomato-and-white-bean-stew|2, each line alone in its
+  recipe — the stored row, the basis, the matches GET and the next compute
+  (the figures under STATED);
+  17 negatives (the design's, R2 (c)'s records, the look-alikes, the head
+  test, a portion head) and quick-cooked-tough-greens|1 on every column the
+  moved rows' pin reads (2710823, 0.511667, 907.18 g, 213.45 kcal, "from 2
+  pound"); the PROPERTY — one loop over every corpus recipe's
+  own lines: `boughtInShell`'s line set (25 lines) and, per ruled food, every
+  line naming it weighed by `lineGrams` on the ruled record, split into
+  '.yield' and '.gross' (count + SHA-256 of the sorted "file|pos grams
+  basis" list); every '.yield' set equals the replay's flagged main rows on
+  that record; R2 (c)'s records size none. Its limit: the titled sections' lines are not
+  looped (the three section rows are pinned by the resolver). Stated
+  synthesized: the singular "shell reserved", "shells removed" without
+  "reserved", a reserved-shell line naming no shrimp (shrimp-cocktail|0 with
+  "prawns"; `(boughtInShell, buysRefuse)` (true, true)), 170010's 'trimmed' and 'snapped' each alone, a counted kale
+  head (each comment names its corpus source). Two fixture details added
+  from snapshot 33 (2710823, 2346400: a weight line fetches no detail and the
+  hits' energies are rounded); `nutrition_sweep_audit_test.dart`'s compared
+  560 → 562, differ 427 → 429 (measured).
+- **MUTANTS** (each diff read before its result, restored from a
+  snapshot copy by a trap, md5-checked). The batch's 29: 24 killed by a
+  value of its corpus pins — the clause without "reserved" (the shell sirloin held
+  `in_shell`), `buysRefuse` not reading `boughtInShell`, the optional
+  "removed and" dropped, kale widened to 'trimmed', the head-weight test
+  removed, 'shelled' read on any record, the peas row on frozen 170016,
+  170010 without 'strings removed', mustard greens without 'trimmed' and without 'stemmed', twelve
+  record keys each moved off its record (2346388, 1999634, 2709719, 170457,
+  1999629, 1999627, 168434, 2709803, 2727583, 2346400, 323505, 2710823),
+  the tomato share at item 2542's 0.82; asparagus 'trimmed' alone is the
+  tree since RO1, and 'stemmed' alone has lost its anchor
+  ('trimmed|stemmed'): re-anchored on the tree ('trimmed' → 'stemmed') it
+  is killed by a value of the moved rows, the negative, the resolver and
+  the property; 4 killed only by a stated synthesized pin and measured on the
+  whole library — the clause matching "removed" without "reserved", the
+  plural-only "shells", 170010 without 'snapped', 170010 without 'trimmed':
+  under each the replay on snapshot 33 is byte-identical to the tip's (rows,
+  recs, sections, notes, calls). The owner gate's 9, each killed by a value:
+  asparagus 'trimmed|stemmed' (the batch's tree) by
+  quick-cooked-tough-greens|1's negative (907.18 g expected, 480.81 read);
+  each engine reader of `boughtInShell` reading v118's test in its place —
+  the LINE hold (`in_shell` expected on the reached reserved-shell rows,
+  no hold read), the shell move (174216 at 131.54 g expected, 2706350 held
+  `in_shell` at 453.59 g read), the bought record of a moved row and
+  apply_to_all's reach (0 other lines expected on each of the four GETs;
+  read 0, 1, 1, 0 and 2, 1, 1, 2) —
+  by the person-path pins; the clause read only on a line naming shrimp by
+  the "prawns" pin ((true, true) expected, (false, false) read);
+  `buysRefuse`'s shell arm reading v118's test (6 tests fail, among them the
+  own pick on shrimp-cocktail|0: the flagged basis expected, "from 1 pound"
+  read); a person's own decision keeping the `in_shell` hold (`derivedFor`'s
+  `clearHold: !keepsHold` narrowed to leave that hold: no hold expected on
+  both lines' pick of 2684443, `in_shell` read); grams.dart as 4c32d05 has
+  it (10 tests fail; the own pick on shrimp-cocktail|0 reads "from 1 pound"
+  with no flag, and the pin of the shell-on line's own pick passes — it is
+  v118's behaviour).
+- **The owner gate (2026-11-19).** The batch's replay re-run
+  byte-identical (99 rows), then all 99 rows read against their recipes.
+  RO1: asparagus read 'trimmed|stemmed' — the brief's word list, ruled
+  without reading its rows — and 'stemmed' reached one row only,
+  quick-cooked-tough-greens|1, a line of greens on the asparagus record
+  (907.18 → 480.81 g): asparagus reads 'trimmed' alone and the row is a
+  negative pin (STATED). RO2, RO3: the radish and the reserved-ends rows
+  stay as built (STATED). Five single-site mutants of the batch's tree,
+  each diff read before its result — each of the four engine readers of
+  `boughtInShell` reading v118's test, and the reserved clause read only
+  on a line naming shrimp — SURVIVED its 25 tests with the whole-library
+  replay byte-identical under each: no corpus row is a reserved-shell
+  line off 175179, so only a person's verb reaches those sites. A closer
+  and two delta verifier rounds pinned them (the pick + apply_to_all pins,
+  the "prawns" line) and found a person's OWN pick on such a line stored
+  with no hold, where the gate had expected `in_shell`: ruled KEPT — the
+  shipped rule of every in-shell line's pick — and pinned by hand on both
+  lines (STATED). The final tree: the replay byte-identical to both delta
+  verifiers' (98 rows — 95 main, 3 section — 89 recs lines, 0 status
+  changes, calls 0, buckets equal; against the batch's replay the one row
+  and its recs line differ, each equal to v118's); every moved row checked
+  by an independent script that parses no line — its v118 grams and kcal ×
+  its record's ruled share within the two roundings, its basis the v118
+  basis with the share and the flag's head after the weight (a "nutrients
+  of" suffix last; each flag's item text is read by the moved rows' pin),
+  every other column equal: 0 mismatches of 98; the nine mutants under
+  MUTANTS re-run, each killed by a value.
+- **STATED.** quick-cooked-tough-greens|1 ("2 pounds assertive greens, such
+  as kale, collards, or mustard, stemmed, washed in several changes of cold
+  water, and chopped coarse") is a WRONG-FOOD row: item key 'assertive
+  green' on asparagus 2710823 "Asparagus, green, raw" at confidence
+  0.511667, as at v118 (the design's §5 wrong record). An asparagus
+  butt-end share must not come off a line of kale, so asparagus reads
+  'trimmed' alone and v119 leaves the row as v118 has it (907.18 g, 213.45
+  kcal; the recipe 149.59 a serving); the record is the defect — a rank-as
+  of 'assertive green' onto kale is queued with the record / spelling batch
+  owed before the deploy. roasted-radishes-with-yogurt-tahini-sauce|12 ("2
+  pounds radishes with their greens, radishes trimmed and halved
+  lengthwise, 8 cups greens reserved", 907.18 → 834.61 g on 2709803) weighs
+  the radishes WITH their greens, and the recipe eats the greens (its
+  steps: "Add radish greens and toss to coat"; "Top with roasted radishes
+  and radish greens"). Item 2149 is the trim of radishes WITHOUT tops (92 %;
+  stem ends, rootlets and trimmings 8); item 2148, with tops (63 %), counts
+  the tops as refuse and does not apply. The row takes the 8 % off the
+  greens' weight too: it errs low by 8 % of the greens' weight where the
+  gross figure erred high by 8 % of the roots'. spring-vegetable-pasta|1
+  ("1 pound asparagus, tough ends trimmed, chopped coarse, and reserved",
+  453.59 → 240.40 g) simmers the reserved ends in the broth and strains them
+  out ("Bring the leek greens, asparagus trimmings, … to simmer"; "Discard
+  the solids"): not eaten, deducted; the extract they leave in the broth is
+  not counted. napa 2727583 is a destemmed-leaf record whose nutrients are SR
+  169979's, and a cored head reads item 446; the tomato rows deduct the
+  core alone ("cored, seeded" and "cored, peeled, seeded" read 0.88; no peel
+  or seed row is ruled); a reserved-shell row a decision on its key moves
+  to a record with no shell row is held `in_shell` (a pick of 2684443 with
+  apply_to_all on paella-on-the-grill|2: shrimp-cocktail|0 453.59 g and
+  ultimate-shrimp-scampi|2 680.39 g, pinned; none in the corpus's own
+  compute), but a person's OWN pick on the line is stored as picked with no
+  hold, as a shell-on line's pick is (`derivedFor` clears a hold a pick does
+  not keep; pinned on shrimp-cocktail|0 and on the shipped shell-on
+  garlicky-shrimp-tomato-and-white-bean-stew|2, each alone): picked to a
+  record with no shell row — 2684443, or 2706350, which a person's own row
+  keeps with no shell move to 174216 — 453.59 g at its gross weight, basis
+  "from 1 pound · approximate (gross weight, no USDA refuse portion)";
+  picked to 175179, 367.41 g at the 0.81; the matches GET and the next
+  compute the same. At v118 the reserved-shell line's pick of 2684443 read
+  "from 1 pound" with no flag, the same 453.59 g. Measured in the gate and
+  not this batch's (the same on 4c32d05's engine.dart and grams.dart): a
+  Confirm of 175179 with apply_to_all on paella-on-the-grill|2 applies 0
+  lines and leaves the three other 'jumbo shrimp' rows at their stored
+  confidence 0.953333, and their next compute writes 1.000000 — the plain
+  grilled-shrimp-and-vegetable-kebabs|2 row too, no other column: the reach
+  (`undecidedMatchesForItemKey`) leaves out an unheld row already on the
+  decided record at or above the gate, and sw12's row signature (`rowText`) reads
+  no confidence; backlog. A
+  reserved-shell line naming broth / stock / ground / boneless / lobster
+  meat, or led by `reserved` ("Reserved shrimp, …, shells reserved"),
+  reads no shell yield (`buysRefuse` false; none in the corpus: 5 raw
+  lines lead with "reserved", none bought in the shell).
+- **GATE-P** (12 shards, NoNet, calls 0; base 4c32d05 and v119 each on
+  its OWN replayed snapshot-33 database): sw5 32,659 / sw6 38,588 / sw7
+  1,920 / sw8 58,596 / sw8r 5,433 / sw9 176 / sw13 294 combos, 0 divergent
+  0 refused both; their base-to-tip line differences all lie on moved
+  recipes (sw5 66, sw6 88, sw8 120 lines:
+  fava-beans-with-artichokes-asparagus-and-peas, whose largest foods
+  re-order; sw13 28 lines in five moved recipes; sw7, sw8r, sw9 identical).
+  sw10 158 bare and typed, 0 divergent both; its 44 differing lines are
+  the kcal per serving of 11 moved recipes. sw11 40,484, 200 divergent
+  both (the DIV lines identical), refused 12,918 → 12,906, every
+  difference in fava-beans-with-artichokes-asparagus-and-peas. sw12 135 →
+  141 combos, 54 divergent both, no base line lost: the six new combos are
+  the item keys 'shrimp', 'jumbo shrimp' and 'extra-large shrimp' (own /
+  other), in scope because those keys now hold a shell-bought row (the
+  reserved-shell lines), none divergent.
+- **Cost.** No new step reader: `boughtInShell` gains one alternation (one
+  linear regex per call) and `buysRefuse` calls it once per call;
+  `produceYieldOf` reads its eleven new rows by the record key. The
+  shipped RULE C and cost-bound files (test/nutrition_v26_cost_test.dart and
+  apps/server/test/support/cost_bounds.dart's families) pass unchanged in
+  the full suite.
+- **Deploy note.** matcherVersion 105 stales every recipe; a zero-request
+  sweep recomputes (every record the rows land on is cached on snapshot 33;
+  2709797 green peas counts on its search hit's nutrients, as at v118). The
+  chain ships with one deploy at its very end.
 
 **Matcher v118 (batch M105, prep52 P6 — portion and density figures;
 matcherVersion 103 → 104. The spec .claude/diag/2026-11-16/prep52/
@@ -15406,6 +15721,22 @@ parts, washed" eats the whole leek and stays `"from 1 1/2 pound"`:
 | zucchini (2685568) | trimmed | 2446 | raw whole → flesh and skin (ends 7) | 93 % (86–98) |
 | yellow summer squash (2685569) | trimmed | 2444 | all samples → flesh and skin | 95 % (84–99) |
 | strawberries (2346409) | hulled, stemmed | 2473 | good quality → flesh | 94 % (86–99) |
+| kale (323505) — v119 | stemmed | 1305 | untrimmed → leaves without stems | 64 % (no range printed) |
+| edible-podded peas (170010) — v119 | trimmed, strings removed, snapped | 1748 | untrimmed → trimmed pea pods | 94 % (92–95) |
+| iceberg lettuce (2346388) — v119 | cored | 1425 | crisphead incl. iceberg, retail pack → trimmed and cored | 93 % (88–96) |
+| green peas in the pod (2709797) — v119 | shelled | 1751 | immature, raw, in pods → shelled | 38 % (20–80) |
+| asparagus (2710823) — v119 | trimmed | 100 | whole shoots → tips and tender portions of shoots | 53 % (31–88) |
+| snap beans (2346400) — v119 | trimmed | 200 | green and wax, all samples → trimmed, ready to cook | 88 % (62–97) |
+| tomatoes (170457, 1999634, 2709719) — v119 | cored | 2541 | raw, whole → cored and trimmed | 88 % (88–88) |
+| mushrooms (168434, 1999629, 1999627) — v119 | trimmed | 1507 | raw, whole, good quality → trimmed | 97 % (87–100) |
+| radishes (2709803) — v119 | trimmed | 2149 | common, without tops → trimmed | 92 % (85–95) |
+| napa cabbage (2727583) — v119 | cored | 446 | Chinese cabbage, retail pack → trimmed and cut for use | 93 % (88–95) |
+| mustard greens (169256) — v119 | stemmed, trimmed | 1532 | untrimmed → leaves, trimmed | 93 % (90–95) |
+
+Dated note 2026-11-18 (matcher v119, batch M106): the eleven rows marked
+v119 are new; shiitake (1999628), Swiss chard (169991), spinach (1999633)
+and the in-pod fava record (168574) have no row and stay gross — see
+"Matcher v119".
 
 **Scallions (Y9, `_scallionPartOf`)**: a COUNTED scallion (FNDDS 2709794,
 "1 whole" 15 g) whose tail begins "white parts only" counts × 0.37

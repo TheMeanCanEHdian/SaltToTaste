@@ -952,7 +952,10 @@ void main() {
       await matchAndCompute(db, provider, r);
       final napa = db.ingredientMatchesFor('r1').last;
       expect((napa.fdcId, napa.hold), (2727583, null));
-      expect(napa.grams, closeTo(340.2, 0.1));
+      // RE-PIN (M106 batch, v119): pork-and-cabbage-dumplingswor-tip|7
+      // "12 ounces napa cabbage …, cored …" 340.19 → 316.38 g (× 0.93,
+      // AH-102 item 446) — was closeTo(340.2, 0.1).
+      expect(napa.grams, closeTo(316.4, 0.1));
       expect(bucketOf(napa), MatchBucket.counted);
       expect(nutrientSiblings[2727583], 169979);
       final basis = gramBasisFor(db, nutritionLines(r).last, napa);

@@ -999,7 +999,8 @@ void main() {
           ('complete', '733.93'), // 748.63; 748.58 → 748.42 (bay)
           // RE-PIN (M86 batch, v90, 958: 2685580 tomato paste, 2346402
           // potatoes, 2258586 carrots): was '682.12'.
-          ('partial', '677.77'), // 678.81; 678.78 → 678.46 (bay)
+          // RE-PIN (M106 batch, v119): hearty-beef-and-vegetable-stew|16 226.80 → 145.15 g (× 0.64) — was '677.77'.
+          ('partial', '670.63'), // 678.81; 678.78 → 678.46 (bay)
           ('complete', '715.06'), // 715.27; 715.27 → 715.06 (bay)
           // RE-PIN (M71 batch, v71): 404.60 (was 596.80) — the galangal
           // strained (pE R-E3, −12.80) and the jam's oil at its printed 2
@@ -1011,7 +1012,8 @@ void main() {
           // brown sugar and the soup's sugar at their prints (the replay
           // 404.62 → 401.90): was 404.60.
           // RE-PIN (M86 batch, v90, 958: 1999627 mushrooms): was '401.87'.
-          ('complete', '397.51'), // 601.75; 601.77 → 596.82 (H1)
+          // RE-PIN (M106 batch, v119): guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|8 226.80 → 219.99 g (× 0.97) — was '397.51'.
+          ('complete', '396.94'), // 601.75; 601.77 → 596.82 (H1)
         ],
       );
     });

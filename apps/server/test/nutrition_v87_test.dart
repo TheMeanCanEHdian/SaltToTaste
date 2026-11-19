@@ -272,7 +272,8 @@ const List<_Row> _rows = [
 /// energies recorded from earlier snapshots differ from the library's; the
 /// pinned rows are equal), then v86's replay figure.
 const Map<String, (String, String, String)> _totals = {
-  _kale: ('complete', '263.21', '629.40'), // = replay; v86 265.26
+  // RE-PIN (M106 batch, v119): kale-caesar-salad|0 "12 ounces curly kale, stemmed …" 340.19 → 217.72 g (× 0.64, AH-102 item 1305) — was ('complete', '263.21', '629.40').
+  _kale: ('complete', '252.49', '507.00'), // = replay; v86 265.26
   // RE-PIN (M90 batch, v89): the replay 647.55 → 641.85: was 648.42, 1521.80.
   // RE-PIN (M86 batch, v90, 958: 2514747 turkey): was 642.72.
   _meatloaf: ('complete', '654.06', '1515.90'), // replay 647.55; v86 649.60
@@ -309,7 +310,7 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 104 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 105 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
@@ -332,7 +333,8 @@ void main() {
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
-    expect(matcherVersion, 104);
+    // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
+    expect(matcherVersion, 105);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "

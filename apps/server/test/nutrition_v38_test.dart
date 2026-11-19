@@ -317,14 +317,15 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     'counted',
     "24 × 20 g each · approximate (FDC's 'piece whole' portion read as one cremini)",
   ),
+  // RE-PIN (M106 batch, v119): mushroom-bisque|1 226.80 → 219.99 g (× 0.97, AH-102 item 1507) — was '226.80', 'from 8 ounce'.
   (
     '0017-mushroom-bisque.yaml',
     1,
     '8 ounces cremini mushrooms, trimmed',
     168434,
-    '226.80',
+    '219.99',
     'counted',
-    'from 8 ounce',
+    'from 8 ounce × 0.97 edible · approximate (USDA AH-102 item 1507: mushrooms, raw, whole, good quality → trimmed 97 % (87–100))',
   ),
   (
     '1087-dan-dan-mian-sichuan-noodles-with-chili-sauce-and-pork.yaml',

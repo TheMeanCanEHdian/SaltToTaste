@@ -596,6 +596,7 @@ const List<_Row> _unmoved = [
     '47.75',
     '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
+  // RE-PIN (M106 batch, v119): guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|8 226.80 → 219.99 g (× 0.97) — was grams '226.80', kcal '75.52', basis 'from 8 ounce'.
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
@@ -604,12 +605,12 @@ const List<_Row> _unmoved = [
     1999627,
     'Mushroom, oyster',
     '1.000000',
-    '226.80',
+    '219.99',
     'auto',
     null,
     // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 92.99.
-    '75.52',
-    'from 8 ounce',
+    '73.26',
+    'from 8 ounce × 0.97 edible · approximate (USDA AH-102 item 1507: mushrooms, raw, whole, good quality → trimmed 97 % (87–100))',
   ),
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
@@ -780,6 +781,7 @@ const List<_Row> _unmoved = [
     '11.20',
     '2 tablespoon · USDA portion',
   ),
+  // RE-PIN (M106 batch, v119): classic-gazpacho|0 680.39 → 598.74 g (× 0.88) — was grams '680.39', kcal '122.47', basis 'from 1 1/2 pound'.
   (
     '0031-classic-gazpacho.yaml',
     null,
@@ -788,11 +790,11 @@ const List<_Row> _unmoved = [
     170457,
     'Tomatoes, red, ripe, raw, year round average',
     '0.530476',
-    '680.39',
+    '598.74',
     'auto',
     null,
-    '122.47',
-    'from 1 1/2 pound',
+    '107.77',
+    'from 1 1/2 pound × 0.88 edible · approximate (USDA AH-102 item 2541: tomatoes, raw, whole → cored and trimmed 88 % (88–88))',
   ),
   (
     '0031-classic-gazpacho.yaml',
@@ -4179,6 +4181,7 @@ const List<_Row> _unmoved = [
     '337.61',
     '1 cup · USDA portion',
   ),
+  // RE-PIN (M106 batch, v119): italian-wedding-soup|23 340.19 → 217.72 g (× 0.64) — was grams '340.19', kcal '119.07', basis 'from 12 ounce'.
   (
     '0402-italian-wedding-soup.yaml',
     null,
@@ -4187,11 +4190,11 @@ const List<_Row> _unmoved = [
     323505,
     'Kale, raw',
     '0.970000',
-    '340.19',
+    '217.72',
     'auto',
     null,
-    '119.07',
-    'from 12 ounce',
+    '76.20',
+    'from 12 ounce × 0.64 edible · approximate (USDA AH-102 item 1305: kale, raw, untrimmed → leaves without stems 64 % (no range printed))',
   ),
   // RE-PIN (M82 batch, v84, C6a): was 72.55 g, 641.37 kcal (the v84 replay's row).
   (
@@ -8531,7 +8534,8 @@ void main() {
           'complete',
           // RE-PIN (M90 batch, v89): the replay 404.62 → 401.90: was 404.60.
           // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 401.87.
-          '397.51',
+          // RE-PIN (M106 batch, v119): guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|8 226.80 → 219.99 g (× 0.97) — was '397.51'.
+          '396.94',
         ), // 596.82 → 404.62
         (
           '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',

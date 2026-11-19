@@ -480,6 +480,7 @@ _moved = [
     'counted',
     true,
   ),
+  // RE-PIN (M106 batch, v119): chilled-soba-noodles-with-cucumber-snow-peas-and-radishes|9 113.40 → 106.59 g (× 0.94, AH-102 item 1748) — was '113.40'.
   (
     '0061-chilled-soba-noodles-with-cucumber-snow-peas-and-radishes.yaml',
     9,
@@ -487,7 +488,7 @@ _moved = [
     null,
     'snow peas',
     170010,
-    '113.40',
+    '106.59',
     'M2',
     'counted',
     true,
@@ -1657,6 +1658,7 @@ _moved = [
     'counted',
     true,
   ),
+  // RE-PIN (M106 batch, v119): stir-fried-shrimp-with-snow-peas-and-red-bell-pepper-in-hot-and-sour-sauce|14 226.80 → 213.19 g (× 0.94, AH-102 item 1748) — was '226.80'.
   (
     '0544-stir-fried-shrimp-with-snow-peas-and-red-bell-pepper-in-hot-and-sour-sauce.yaml',
     14,
@@ -1664,7 +1666,7 @@ _moved = [
     null,
     'snow peas or sugar snap peas',
     170010,
-    '226.80',
+    '213.19',
     'M2',
     'counted',
     true,
@@ -1693,6 +1695,7 @@ _moved = [
     'counted',
     true,
   ),
+  // RE-PIN (M106 batch, v119): stir-fried-portobellos-with-ginger-oyster-sauce|14 85.05 → 79.95 g (× 0.94, AH-102 item 1748) — was '85.05'.
   (
     '0546-stir-fried-portobellos-with-ginger-oyster-sauce.yaml',
     14,
@@ -1700,7 +1703,7 @@ _moved = [
     null,
     'snow peas',
     170010,
-    '85.05',
+    '79.95',
     'M2',
     'counted',
     true,
@@ -1882,6 +1885,7 @@ _moved = [
     'counted',
     true,
   ),
+  // RE-PIN (M106 batch, v119): buttery-spring-vegetables|2 226.80 → 213.19 g (× 0.94, AH-102 item 1748) — was '226.80'.
   (
     '0667-buttery-spring-vegetables.yaml',
     2,
@@ -1889,7 +1893,7 @@ _moved = [
     null,
     'sugar snap peas',
     170010,
-    '226.80',
+    '213.19',
     'M2',
     'counted',
     true,

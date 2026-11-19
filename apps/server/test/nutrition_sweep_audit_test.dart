@@ -1342,8 +1342,13 @@ void main() {
     // the search 'supermarket french or italian bread': compared 559 ->
     // 560, differ 426 -> 427 (173474's detail differs from its 'herb'
     // hit in some digit; measured).
-    expect(compared, 560);
-    expect(differ, 427);
+    // RE-PIN (M106 batch, v119): its pins recorded from snapshot 33 the
+    // details of 2710823 (Asparagus, green, raw — a hit in 'asparagus') and
+    // 2346400 (Beans, snap, green, raw — a hit in 'green beans'): compared
+    // 560 -> 562, differ 427 -> 429 (each detail differs from its hit in
+    // some digit; measured).
+    expect(compared, 562);
+    expect(differ, 429);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

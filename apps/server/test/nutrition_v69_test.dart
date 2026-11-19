@@ -5734,7 +5734,8 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 576.70.
           // RE-PIN (M86 batch, v90, 958: 1999634 tomato, 2346406 cucumber): was
           // 584.37.
-          '578.28',
+          // RE-PIN (M106 batch, v119): panzanella-italian-bread-salad|3 "1½ pounds tomatoes, cored, …" × 0.88 (AH-102 item 2541) — was '578.28'.
+          '574.40',
         ), // replay complete 576.36 → complete 576.62
         (
           // RE-PIN (M82 batch, v84): was 910.64 (the replay 910.67 → 908.78).
@@ -5824,7 +5825,8 @@ void main() {
           '0326-pasta-and-fresh-tomato-sauce-with-garlic-and-basil.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 550.02.
-          '552.76',
+          // RE-PIN (M106 batch, v119): pasta-and-fresh-tomato-sauce-with-garlic-and-basil|2 907.18 → 798.32 g (× 0.88) — was '552.76'.
+          '547.86',
         ), // replay complete 550.06 → complete 550.02
         (
           // RE-PIN (M82 batch, v84): was 748.74 (the replay 748.69 → 748.49).
@@ -5839,7 +5841,8 @@ void main() {
           '0327-pasta-caprese.yaml',
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 825.96.
-          '829.22',
+          // RE-PIN (M106 batch, v119): pasta-caprese|5 680.39 → 598.74 g (× 0.88) — was '829.22'.
+          '825.55',
         ), // replay complete 825.69 → complete 825.96
         (
           // RE-PIN (M82 batch, v84): was 217.98 (the replay 217.92 → 217.16).
@@ -5863,7 +5866,8 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 256.90.
           // RE-PIN (M86 batch, v90, 958: 2685580 tomato, 2685581 tomatoes,
           // 2644288 chickpeas (garbanzo beans): was 260.73.
-          '250.01',
+          // RE-PIN (M106 batch, v119): meatless-meat-sauce-with-chickpeas-and-mushrooms|0 283.50 → 274.99 g (× 0.97) — was '250.01'.
+          '249.70',
         ), // replay complete 256.98 → complete 256.95
         (
           // RE-PIN (M82 batch, v84): was 484.55 (the replay 484.52 → 483.39).
@@ -5880,7 +5884,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 706.72.
           // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 711.51.
-          '706.30',
+          // RE-PIN (M106 batch, v119): campanelle-with-asparagus-basil-and-balsamic-glaze|4 453.59 → 240.40 g (× 0.53) — was '706.30'.
+          '693.77',
         ), // replay complete 705.66 → complete 706.72
         (
           // RE-PIN (M82 batch, v84): was 378.67 (the replay 378.62 → 377.77).
@@ -5888,7 +5893,8 @@ void main() {
           'partial',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 375.90.
           // RE-PIN (M86 batch, v90, 958: 2685578 tomatoes): was 377.82.
-          '371.07',
+          // RE-PIN (M106 batch, v119): shrimp-fra-diavolo|0 680.39 → 551.11 g (× 0.81) — was '371.07'.
+          '343.60',
         ), // replay partial 375.59 → partial 375.85
         (
           // RE-PIN (M82 batch, v84): was 1039.71 (the replay 1039.44 → 1033.09).
@@ -6020,7 +6026,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 765.65.
           // RE-PIN (M85 batch, v87): was 772.11 (the replay 772.11 → 769.02).
-          '769.02',
+          // RE-PIN (M106 batch, v119): grilled-tomato-and-cheese-pizza|7 680.39 → 598.74 g (× 0.88) — was '769.02'.
+          '764.94',
         ), // replay complete 765.12 → complete 765.65
         (
           // RE-PIN (M82 batch, v84): was 543.44 (the replay 543.44 → 542.52).
@@ -6028,7 +6035,8 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 540.67.
           // RE-PIN (M85 batch, v87): was 542.52 (the replay 542.52 → 540.46).
-          '540.46',
+          // RE-PIN (M106 batch, v119): tomato-and-mozzarella-tart|3 226.80 → 199.58 g (× 0.88) — was '540.46'.
+          '539.10',
         ), // replay complete 540.71 → complete 540.67
         (
           // RE-PIN (M82 batch, v84): was 286.01 (the replay 286.31 → 285.95).
@@ -6126,7 +6134,8 @@ void main() {
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 280.01.
           // RE-PIN (M85 batch, v87): was 283.85 (the replay 283.75 → 281.69).
           // RE-PIN (M86 batch, v90, 958: 1999634 tomato): was 281.79.
-          '274.99',
+          // RE-PIN (M106 batch, v119): best-summer-tomato-gratin|3 1360.78 → 1197.48 g (× 0.88) — was '274.99'.
+          '269.82',
         ), // replay complete 279.94 → complete 279.91
         (
           '0859-marbled-blueberry-bundt-cake.yaml',

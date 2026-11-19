@@ -363,7 +363,8 @@ void main() {
           expect(fault.asked, asked, reason: 'no request');
           final row = d.rowOf(db, r, 0);
           expect(row.hold, isNull);
-          expect(row.grams, closeTo(340.19, 0.01));
+          // RE-PIN (M106 batch, v119): pork-and-cabbage-dumplingswor-tip|7 "12 ounces napa cabbage …, cored …" 340.19 → 316.38 g (× 0.93, AH-102 item 446) — was closeTo(340.19, 0.01).
+          expect(row.grams, closeTo(316.38, 0.01));
           final get = await v28.getOf(db, r, 0);
           expect((get['hold'], get['grams']), (null, row.grams));
           expect(nutritionIsFresh(db, r), isTrue);

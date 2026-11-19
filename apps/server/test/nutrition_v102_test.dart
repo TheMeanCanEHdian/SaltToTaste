@@ -210,7 +210,8 @@ void picks() {
       '11.19',
       '7911.95',
     ),
-    ('0402-italian-wedding-soup.yaml', 15, 170000, 0, '0.00', '1774.88'),
+    // RE-PIN (M106 batch, v119): italian-wedding-soup|23 340.19 → 217.72 g (× 0.64, AH-102 item 1305) — was '1774.88'.
+    ('0402-italian-wedding-soup.yaml', 15, 170000, 0, '0.00', '1732.02'),
   ]) {
     test('P1: $file|$at pick $food → |$sib $food $grams g, confidence 1, '
         'E $energy in the PUT (mutants m1, m6)', () async {

@@ -126,7 +126,8 @@ void main() {
       // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
       // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
       // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
-      expect(matcherVersion, 104);
+      // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
+      expect(matcherVersion, 105);
     },
   );
 
@@ -158,7 +159,8 @@ void main() {
           'torn into 1-inch pieces',
           '18.77',
           '45.36',
-          ('334.73', '352.41'),
+          // RE-PIN (M106 batch, v119): creamy-gazpacho-andaluz|0 "3 pounds … tomatoes, cored" 1360.78 → 1197.48 g (× 0.88, AH-102 item 2541) — was ('334.73', '352.41').
+          ('327.38', '345.06'),
         ),
         (_tomatoSoup, 6, 'torn into 1-inch pieces', '56.31', '136.08', null),
       ]) {

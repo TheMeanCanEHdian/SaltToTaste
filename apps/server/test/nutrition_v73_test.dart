@@ -1036,6 +1036,7 @@ const List<_Row> _unmoved = [
     '47.75',
     '1 tablespoon ≈ 15 mL · approximate (ATK: 1 cup sugar = 7 ounces)',
   ),
+  // RE-PIN (M106 batch, v119): guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|8 226.80 → 219.99 g (× 0.97) — was grams '226.80', kcal '75.52', basis 'from 8 ounce'.
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
@@ -1044,12 +1045,12 @@ const List<_Row> _unmoved = [
     1999627,
     'Mushroom, oyster',
     '1.000000',
-    '226.80',
+    '219.99',
     'auto',
     null,
     // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 92.99.
-    '75.52',
-    'from 8 ounce',
+    '73.26',
+    'from 8 ounce × 0.97 edible · approximate (USDA AH-102 item 1507: mushrooms, raw, whole, good quality → trimmed 97 % (87–100))',
   ),
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
@@ -2202,6 +2203,7 @@ const List<_Row> _unmoved = [
     '4.80',
     '1 × 15 g each',
   ),
+  // RE-PIN (M106 batch, v119): pork-and-cabbage-dumplingswor-tip|7 340.19 → 316.38 g (× 0.93) — was grams '340.19', kcal '54.43', basis 'from 12 ounce · nutrients of "Cabbage, chinese (pe-tsai), raw"'.
   (
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
     null,
@@ -2210,11 +2212,11 @@ const List<_Row> _unmoved = [
     2727583,
     'Cabbage, napa, leaf, destemmed, raw',
     '0.950000',
-    '340.19',
+    '316.38',
     'auto',
     null,
-    '54.43',
-    'from 12 ounce · nutrients of "Cabbage, chinese (pe-tsai), raw"',
+    '50.62',
+    'from 12 ounce × 0.93 edible · approximate (USDA AH-102 item 446: cabbage, Chinese, raw, retail pack → trimmed and cut for use 93 % (88–95)) · nutrients of "Cabbage, chinese (pe-tsai), raw"',
   ),
   (
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
@@ -3632,15 +3634,16 @@ const List<_Row> _unmoved = [
 // total but the status equal on both trees
 const List<(String, String?, String, String, String, String)> _totals = [
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 404.60, 1618.39.
+  // RE-PIN (M106 batch, v119): guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp|8 226.80 → 219.99 g (× 0.97) — was 397.51, 1590.03.
   (
     '0011-guay-tiew-tom-yum-goong-thai-hot-and-sour-noodle-soup-with-shrimp.yaml',
     null,
     'complete',
     'partial',
     // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 401.87.
-    '397.51',
+    '396.94',
     // RE-PIN (M86 batch, v90, 958: 1999627 mushroom): was 1607.50.
-    '1590.03',
+    '1587.77',
   ),
   // RE-PIN (M90 batch, v89): the six keys' prints in its rows — was 455.70, 455.70.
   (
@@ -3710,6 +3713,7 @@ const List<(String, String?, String, String, String, String)> _totals = [
     '2736.22',
   ),
   // RE-PIN (M82 batch, v84): was 74.29, 1783.03 (the replay 74.33 → 74.32).
+  // RE-PIN (M106 batch, v119): pork-and-cabbage-dumplingswor-tip|7 340.19 → 316.38 g (× 0.93) — was 74.96, 1798.96.
   (
     '0506-pork-and-cabbage-dumplingswor-tip.yaml',
     null,
@@ -3718,9 +3722,9 @@ const List<(String, String?, String, String, String, String)> _totals = [
     // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 74.28.
     // RE-PIN (M105 batch, v118): its |13 ginger on 169231's own tsp, 3.99 →
     // 3.00 g (−0.79 kcal): was '74.99', '1799.76'.
-    '74.96',
+    '74.80',
     // RE-PIN (M86 batch, v90, 958: 2514745 pork): was 1782.75.
-    '1798.96',
+    '1795.15',
   ),
   // RE-PIN (M82 batch, v84): was 384.04, 384.04 (the replay 384.04 → 378.94).
   (

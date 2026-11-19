@@ -2698,8 +2698,9 @@ _whole = [
   // 2812.93, 2794.57.
   (
     '0216-roast-beef-tenderloin-with-caramelized-onion-and-mushroom-stuffing.yaml',
-    2880.08,
-    2861.72,
+    // RE-PIN (M106 batch, v119): roast-beef-tenderloin-with-caramelized-onion-and-mushroom-stuffing|0 226.80 → 219.99 g (× 0.97, AH-102 item 1507) — before and after alike (was 2880.08, 2861.72).
+    2878.59,
+    2860.23,
     0,
     0,
     [(7, 175112, 117.11, 85)],

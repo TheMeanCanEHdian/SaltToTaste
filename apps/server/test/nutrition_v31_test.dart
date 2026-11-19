@@ -1951,14 +1951,15 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     'counted',
     'from 12 ounce',
   ),
+  // RE-PIN (M106 batch, v119): roasted-radishes-with-yogurt-tahini-sauce|12 907.18 → 834.61 g (× 0.92, AH-102 item 2149) — was '907.18', 'from 2 pound'.
   (
     '1097-roasted-radishes-with-yogurt-tahini-sauce.yaml',
     12,
     '2 pounds radishes with their greens, radishes trimmed and halved lengthwise, 8 cups greens reserved',
     2709803,
-    '907.18',
+    '834.61',
     'counted',
-    'from 2 pound',
+    'from 2 pound × 0.92 edible · approximate (USDA AH-102 item 2149: radishes, common, raw, without tops → trimmed 92 % (85–95))',
   ),
   (
     '1099-spanish-migas-with-fried-eggs.yaml',
@@ -2068,14 +2069,15 @@ const List<(String, int, String, int?, String?, String, String?)> _rowsB = [
     'counted',
     'no amount on the line — counted as 0 g · approximation (counted as Vegetable oil, NFS)',
   ),
+  // RE-PIN (M106 batch, v119): multicooker-hawaiian-oxtail-soup|10 453.59 → 421.84 g (× 0.93, AH-102 item 1532) — was '453.59', 'from 1 pound'.
   (
     '1172-multicooker-hawaiian-oxtail-soup.yaml',
     10,
     '1 pound gai choy, trimmed and cut into 2-inch pieces',
     169256,
-    '453.59',
+    '421.84',
     'counted',
-    'from 1 pound',
+    'from 1 pound × 0.93 edible · approximate (USDA AH-102 item 1532: mustard greens, raw, untrimmed → leaves, trimmed 93 % (90–95))',
   ),
   (
     '1173-classic-caesar-salad.yaml',

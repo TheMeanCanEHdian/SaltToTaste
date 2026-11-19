@@ -748,7 +748,8 @@ void main() {
       final stored = db.nutritionFor('r1')!;
       expect(stored.status, 'complete');
       final energy = (jsonDecode(stored.nutrientsJson) as Map)['energy'] as Map;
-      expect(energy['amount'], closeTo(340.19 * 16 / 100, 0.01));
+      // RE-PIN (M106 batch, v119): pork-and-cabbage-dumplingswor-tip|7 "12 ounces napa cabbage …, cored …" 340.19 → 316.38 g (× 0.93, AH-102 item 446) — was 340.19 * 16 / 100.
+      expect(energy['amount'], closeTo(316.38 * 16 / 100, 0.01));
       await applyMatchOverride(db, sibling, r, 0, {'grams': 400});
       expect(sibling.fetched.where((id) => id == 169979), hasLength(1));
       expect(

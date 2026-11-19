@@ -324,7 +324,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 104 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 105 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -349,7 +349,8 @@ void main() {
     // RE-PIN (M103 batch, v116): matcherVersion 102 (was 101).
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
-    expect(matcherVersion, 104);
+    // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
+    expect(matcherVersion, 105);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
@@ -529,7 +530,8 @@ void main() {
         (label.servingBasis, label.caloriesPerServing?.toStringAsFixed(2)),
         // RE-PIN (M86 batch, v90, 958: 2258590 red bell pepper, 2346406
         // cucumber): was 107.86.
-        (8, '104.30'),
+        // RE-PIN (M106 batch, v119): classic-gazpacho|0 680.39 → 598.74 g (× 0.88, AH-102 item 2541) — was '104.30'.
+        (8, '102.46'),
       );
       expect(
         nutritionIsFresh(db, db.recipeByIdOrSlug(id)!.recipe, label),

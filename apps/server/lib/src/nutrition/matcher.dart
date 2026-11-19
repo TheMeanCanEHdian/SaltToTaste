@@ -188,7 +188,12 @@ const Map<String, String> _synonyms = {
 /// on its record's spoon (the 'ginger' density gone; 6 g an inch), gelatin
 /// by the spoon at the corpus print (0.7190 g/mL), instant espresso / coffee
 /// at the labels' 2.0 g a teaspoon, whole mint leaves on 173474's spoon.
-const int matcherVersion = 104;
+/// v105: matcher v119 (batch M106) — shell and produce refuse: shrimp
+/// "…, shells reserved" read as bought in the shell (`boughtInShell`, read
+/// by `buysRefuse`), and AH-102 prep rows for kale, peas, iceberg,
+/// asparagus, snap beans, tomatoes, mushrooms, radish, napa and mustard
+/// greens (`produceYields`).
+const int matcherVersion = 105;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

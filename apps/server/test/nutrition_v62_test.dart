@@ -733,7 +733,8 @@ void main() {
       // RE-PIN (M82 batch, v84): was 399.85 (the replay 399.80 → 396.83).
       // RE-PIN (M86 batch, v90, 958: 1999634 tomato, 2346406 cucumber): was
       // 396.87.
-      expect(of(_fattoush), ('complete', '391.99')); // 330.30; 330.26 → 390.11
+      // RE-PIN (M106 batch, v119): fattoush-pita-bread-salad-with-tomatoes-and-cucumber|5 453.59 → 399.16 g (× 0.88) — was '391.99'.
+      expect(of(_fattoush), ('complete', '389.41')); // 330.30; 330.26 → 390.11
       // Partial on its unmatched Old Bay, as at v61.
       // RE-PIN (M82 batch, v84): was 334.26 (the replay 334.26 → 337.42).
       // RE-PIN (M86 batch, v90, 958: 2684446 crustaceans): was 337.43.

@@ -1280,6 +1280,7 @@ void main() {
             'auto',
             '2 teaspoon · USDA portion · approximation (counted as Spices, sage, ground)',
           ),
+          // RE-PIN (M106 batch, v119): fluffy-omelets|2 (Mushroom Filling) 113.40 → 110.00 g (× 0.97, AH-102 item 1507) — was '113.40', 'from 4 ounce'.
           (
             '0735-fluffy-omelets.yaml',
             1,
@@ -1287,9 +1288,9 @@ void main() {
             '4 ounces white or cremini mushrooms, trimmed and chopped',
             1999629,
             'Mushrooms, white button',
-            '113.40',
+            '110.00',
             'auto',
-            'from 4 ounce',
+            'from 4 ounce × 0.97 edible · approximate (USDA AH-102 item 1507: mushrooms, raw, whole, good quality → trimmed 97 % (87–100))',
           ),
           (
             '0601-grilled-glazed-pork-tenderloin-roast.yaml',

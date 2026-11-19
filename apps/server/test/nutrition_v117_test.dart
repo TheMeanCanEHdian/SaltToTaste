@@ -159,7 +159,8 @@ const _moved = [
 /// 2346402 (the stew's |0 |14: 1,351.70 / 332.94 for 1,354.48 / 332.82)
 /// carry other energies (measured row by row; no moved row reads them).
 const _recipes = [
-  (_caldo, 'complete', 399.93),
+  // RE-PIN (M106 batch, v119): caldo-de-siete-mares|9 453.59 → 367.41 g (× 0.81, AH-102 item 2333; the replay 399.66 → 387.45) — was 399.93.
+  (_caldo, 'complete', 387.72),
   (_ribs, 'complete', 820.59),
   (_stew, 'partial', 472.78),
   (_hearty, 'complete', 338.75),
@@ -317,9 +318,10 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 104', () {
+  test('matcherVersion 105', () {
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
-    expect(matcherVersion, 104);
+    // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
+    expect(matcherVersion, 105);
   });
   group(
     'v117 (M104: the strain and discard step readers)',
@@ -777,16 +779,17 @@ void person() {
 /// basis of a person-decided discarded row); typed grams count; skip and
 /// back restores the engine's row (the wing held again).
 const Map<String, String> _personStates = {
+  // RE-PIN (M106 batch, v119): caldo-de-siete-mares|9 453.59 → 367.41 g (× 0.81, AH-102 item 2333) — the caldo entries' E was 2399.58 (typed 2615.95).
   '1207-caldo-de-siete-mares.yaml|0 confirm':
-      'null ¦ 169396 ¦ 0.00 ¦ discarded ¦ null ¦ confirmed ¦ poured away — counted as 0 g ¦ E=2399.58',
+      'null ¦ 169396 ¦ 0.00 ¦ discarded ¦ null ¦ confirmed ¦ poured away — counted as 0 g ¦ E=2326.32',
   '1207-caldo-de-siete-mares.yaml|0 typed':
-      'null ¦ 169396 ¦ 77.00 ¦ override ¦ null ¦ overridden ¦ entered by hand ¦ E=2615.95',
+      'null ¦ 169396 ¦ 77.00 ¦ override ¦ null ¦ overridden ¦ entered by hand ¦ E=2542.69',
   '1207-caldo-de-siete-mares.yaml|0 skip-back':
-      'null ¦ 169396 ¦ 0.00 ¦ discarded ¦ null ¦ auto ¦ discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) ¦ E=2399.58',
+      'null ¦ 169396 ¦ 0.00 ¦ discarded ¦ null ¦ auto ¦ discarded in cooking — counted as 0 g · approximate (strained out and discarded — what it gives the liquid is not counted) ¦ E=2326.32',
   '1207-caldo-de-siete-mares.yaml|0 pick-same':
-      'null ¦ 169396 ¦ 0.00 ¦ discarded ¦ null ¦ overridden ¦ poured away — counted as 0 g ¦ E=2399.58',
+      'null ¦ 169396 ¦ 0.00 ¦ discarded ¦ null ¦ overridden ¦ poured away — counted as 0 g ¦ E=2326.32',
   '1207-caldo-de-siete-mares.yaml|0 pick-other':
-      'null ¦ 170931 ¦ 0.00 ¦ discarded ¦ null ¦ overridden ¦ poured away — counted as 0 g ¦ E=2399.58',
+      'null ¦ 170931 ¦ 0.00 ¦ discarded ¦ null ¦ overridden ¦ poured away — counted as 0 g ¦ E=2326.32',
   '0538-chinese-style-barbecued-spareribs.yaml|0 confirm':
       'null ¦ 169231 ¦ 0.00 ¦ discarded ¦ null ¦ confirmed ¦ poured away — counted as 0 g ¦ E=4923.53',
   '0538-chinese-style-barbecued-spareribs.yaml|0 typed':

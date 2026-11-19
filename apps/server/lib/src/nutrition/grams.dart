@@ -2326,6 +2326,11 @@ bool buysRefuse(String raw) {
   ).hasMatch(line)) {
     return false;
   }
+  // v119 (M106 S5): the shellfish arm reads the shared shell test
+  // ([boughtInShell]: "…, shells reserved" too).
+  if (boughtInShell(raw)) {
+    return true;
+  }
   return RegExp(
     r'giblets|whole chicken|whole turkey\b|\) turkey\b|\bturkey \(|'
     'shoulder chops?|with or without bone|'
@@ -2829,12 +2834,28 @@ const int meatOnlyBroiler = 171052;
 /// lines already did. The 18 lines of the library it holds: 6 clam, 6
 /// mussel, 1 oyster (1184), 2 live-lobster and 3 shell-on shrimp lines (one
 /// live-lobster line is a subsection's, never matched).
+/// v119 (M106 S5, dated note 2026-11-18): "…, peeled, deveined, …, shells
+/// (removed and) reserved" with no "shell-on" is bought in the shell too —
+/// 7 shrimp lines more, 25 corpus main lines in all; such a line counts
+/// [ah102Shells]' 0.81 ([buysRefuse] reads this test after its boneless /
+/// broth / stock / ground / lobster-meat exclusions and its line-led
+/// `^reserved` one), held `in_shell` only on a record with no shell row
+/// that a decision on the key reaches; a person's own pick of such a
+/// record on the line (`overridden`) is counted at its gross weight,
+/// flagged approximate, as a shell-on line's pick is (2026-11-19:
+/// shrimp-cocktail|0 picked to 2684443 stores 453.59 g, no hold, the next
+/// compute the same; picked to 175179, 367.41 g at the 0.81). A
+/// reserved-shell line naming one of those words or led by "reserved" (no
+/// corpus line) buys no refuse, as a shell-on line naming one.
 bool boughtInShell(String raw) {
   final line = raw.toLowerCase();
   return RegExp(r'\b(clams|mussels|oysters)\b').hasMatch(line) &&
           RegExp(r'\bscrubbed\b').hasMatch(line) ||
       RegExp(r'\blive lobsters?\b').hasMatch(line) ||
-      RegExp(r'\bshell-on\b').hasMatch(line);
+      RegExp(r'\bshell-on\b').hasMatch(line) ||
+      // v119 (M106 S5): "…, peeled, deveined, …, shells reserved" (0429's
+      // shape without "shell-on") weighs the shells the cook peels off too.
+      RegExp(r'\bshells?\s+(?:removed\s+and\s+)?reserved\b').hasMatch(line);
 }
 
 /// USER QUESTION SWITCH (whole birds, checkpoint 5). True (the audit's
@@ -4260,7 +4281,121 @@ produceYields = {
           'woody stem ends and core the steps also cut are not deducted',
     ),
   ],
+  // v119 (batch M106 S6, prep52 design_v2 P7; AH-102 printed pp. 62, 67
+  // and 80 — .claude/diag/2026-10-06/ah102_produce_meat.md, the item
+  // numbers read on the re-obtained scan): kale, edible-podded peas,
+  // iceberg and green peas in the pod.
+  323505: [
+    (
+      words: 'stemmed',
+      share: 0.64,
+      flag:
+          'USDA AH-102 item 1305: kale, raw, untrimmed → leaves without '
+          'stems 64 % (no range printed)',
+    ),
+  ],
+  170010: [
+    (
+      words: 'trimmed|strings removed|snapped',
+      share: 0.94,
+      flag:
+          'USDA AH-102 item 1748: peas, edible-podded, raw, untrimmed → '
+          'trimmed pea pods 94 % (92–95)',
+    ),
+  ],
+  2346388: [
+    (
+      words: 'cored',
+      share: 0.93,
+      flag:
+          'USDA AH-102 item 1425: lettuce, crisphead including iceberg, '
+          'retail pack → trimmed and cored 93 % (88–96)',
+    ),
+  ],
+  2709797: [
+    (
+      words: 'shelled',
+      share: 0.38,
+      flag:
+          'USDA AH-102 item 1751: peas, green, immature, raw, in pods → '
+          'shelled 38 % (20–80)',
+    ),
+  ],
+  // v119 (batch M106 S6 R2 (b); AH-102 re-obtained 2026-11-17, transcribed
+  // in .claude/diag/2026-11-17/ah102/ah102_produce_p7.md): asparagus, snap
+  // beans, tomatoes, mushrooms, radish, napa cabbage and mustard greens.
+  // Not shiitake (no fresh stems-removed row), Swiss chard (stalks counted
+  // edible) or spinach (two packs): they stay gross.
+  2710823: [
+    (
+      words: 'trimmed',
+      share: 0.53,
+      flag:
+          'USDA AH-102 item 100: asparagus, raw, whole shoots → tips and '
+          'tender portions of shoots 53 % (31–88)',
+    ),
+  ],
+  2346400: [
+    (
+      words: 'trimmed',
+      share: 0.88,
+      flag:
+          'USDA AH-102 item 200: beans, snap, green and wax, raw, whole → '
+          'trimmed, ready to cook 88 % (62–97)',
+    ),
+  ],
+  170457: _tomato,
+  1999634: _tomato,
+  2709719: _tomato,
+  168434: _mushroom,
+  1999629: _mushroom,
+  1999627: _mushroom,
+  2709803: [
+    (
+      words: 'trimmed',
+      share: 0.92,
+      flag:
+          'USDA AH-102 item 2149: radishes, common, raw, without tops → '
+          'trimmed 92 % (85–95)',
+    ),
+  ],
+  2727583: [
+    (
+      words: 'cored',
+      share: 0.93,
+      flag:
+          'USDA AH-102 item 446: cabbage, Chinese, raw, retail pack → '
+          'trimmed and cut for use 93 % (88–95)',
+    ),
+  ],
+  169256: [
+    (
+      words: 'stemmed|trimmed',
+      share: 0.93,
+      flag:
+          'USDA AH-102 item 1532: mustard greens, raw, untrimmed → leaves, '
+          'trimmed 93 % (90–95)',
+    ),
+  ],
 };
+const _tomato = [
+  (
+    words: 'cored',
+    share: 0.88,
+    flag:
+        'USDA AH-102 item 2541: tomatoes, raw, whole → cored and trimmed '
+        '88 % (88–88)',
+  ),
+];
+const _mushroom = [
+  (
+    words: 'trimmed',
+    share: 0.97,
+    flag:
+        'USDA AH-102 item 1507: mushrooms, raw, whole, good quality → '
+        'trimmed 97 % (87–100)',
+  ),
+];
 
 /// v70 (batch M72, prep50 design_v2 §2 M72, pA R3): the records whose
 /// as-bought skin is never the food — a head-weighed line on one reads its
