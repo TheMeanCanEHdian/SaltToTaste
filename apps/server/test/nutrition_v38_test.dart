@@ -276,10 +276,15 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     '0030-farmhouse-vegetable-and-barley-soup.yaml',
     16,
     '1 turnip, peeled and cut into ¾-inch pieces',
-    2709809,
+    // RE-PIN (M109 batch, v122): farmhouse-vegetable-and-barley-soup|16
+    // reads the weighed lines' 'turnips' answer (R1, `_rankAs['turnip']`):
+    // Foundation 2747674 (was FNDDS 2709809), its 120 g now the piece
+    // table's cross-record 'turnip' row, FNDDS 2709809's '1 whole' (was '1 ·
+    // USDA per-item weight').
+    2747674,
     '120.00',
     'counted',
-    '1 · USDA per-item weight',
+    "1 × 120 g each · approximate (FNDDS 2709809's '1 whole' portion read as one turnip)",
   ),
   (
     '0487-chicken-enchiladas-with-red-chile-sauce.yaml',

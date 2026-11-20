@@ -183,7 +183,8 @@ void main() {
       // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
       // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
       // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-      expect(matcherVersion, 107);
+      // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+      expect(matcherVersion, 108);
     },
   );
 
@@ -480,7 +481,13 @@ void main() {
         // chopped coarse (4¾ cups)" at its 4¾ cups on SR 170000's 'cup,
         // chopped', 450.00 → 760.00 g, +117.80 kcal (the replay 481.09 →
         // 500.72): was '481.09', '2886.52', '116.58'.
-        (_confit, '500.72', '3004.32', '116.73', '35.99'),
+        // RE-PIN (M109 batch, v122): turkey-thigh-confit-with-citrus-mustard-
+        // sauce |0 |2 |3 |4 are the cure step 2 rinses off (`_rinsedCureLines`):
+        // 0 g, −366.76 kcal (288.80 + 0 + 69.30 + 8.66), 3004.32 → 2637.56,
+        // 500.72 → 439.59 a serving (6); fat 116.73 → 116.18, saturated
+        // 35.99 → 35.94 (the onion's and the pepper's, measured). Was '500.72',
+        // '3004.32', '116.73', '35.99'.
+        (_confit, '439.59', '2637.56', '116.18', '35.94'),
       ]) {
         final n = db.nutritionFor(recipes[file]!.id)!;
         final totals = batchTotalsOf(n);
@@ -596,6 +603,10 @@ void main() {
 /// process-wide `names` aside).
 const Map<String, Map<String, int>> _capCounts = {
   'TRUE compute': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:skinSentences': 1,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
@@ -631,6 +642,11 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'TRUE GET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+    // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+    // `_scrapedOffLines`); no other family moves.
+    'memo:rinsedCureLines': 1,
+    'memo:scrapedOff': 1,
     // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
     // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
     // record.
@@ -687,6 +703,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:naming': 1,
   },
   'QUIET compute': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:skinSentences': 1,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
@@ -722,6 +742,11 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'QUIET GET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+    // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+    // `_scrapedOffLines`); no other family moves.
+    'memo:rinsedCureLines': 1,
+    'memo:scrapedOff': 1,
     // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked
     // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
     // record.

@@ -122,9 +122,14 @@ const List<_Row> _kept = [
     // RE-PIN (M107 batch, v120): turkey-thigh-confit-with-citrus-mustard-sauce|0
     // weighs its printed 4¾ cups on SR 170000's 'cup, chopped' 160 g
     // (`_pieceVolumeOnSibling`): was '450.00', '171.00', '3 × 150 g each'.
-    '760.00',
-    '288.80',
-    '4 3/4 cup · USDA portion of "Onions, raw"',
+    // RE-PIN (M109 batch, v122): turkey-thigh-confit-with-citrus-mustard-sauce|0
+    // is a line of the cure step 1 spreads over the thighs and step 2
+    // rinses off (`_rinsedCureLines`, C1): 0 g discarded (was '760.00',
+    // '288.80', '4 3/4 cup · USDA portion of "Onions, raw"'). The strain
+    // still keeps it (this group's point: no strain zeroes it).
+    '0.00',
+    '0.00',
+    'discarded in cooking — counted as 0 g',
   ),
 ];
 

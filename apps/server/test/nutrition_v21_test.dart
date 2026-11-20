@@ -927,7 +927,10 @@ _moved = [
     '8 ounces portobello mushroom caps, gills removed, caps cut into ½-inch pieces (about 1½ cups)',
     null,
     'portobello mushroom caps',
-    2003598,
+    // RE-PIN (M109 batch, v122): spaghetti-with-quick-mushroom-ragu|3 reads
+    // the counted caps' answer and words (`_rankAs['portobello mushroom
+    // caps']`, R2): SR 169255 (was Foundation 2003598); grams unchanged.
+    169255,
     '226.80',
     'M2',
     'counted',

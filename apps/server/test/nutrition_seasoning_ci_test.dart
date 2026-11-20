@@ -109,7 +109,8 @@ void main() {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107); // RE-PIN (M58 batch, v57): was 55.
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108); // RE-PIN (M58 batch, v57): was 55.
     expect(
       ingredientsHashOf(recipe, ResolverMemo(db)),
       // RE-PIN (M59 batch, v58): the hash at matcherVersion 57 (was
@@ -276,7 +277,9 @@ void main() {
       // base f1a79b8, whose suite is green, gives e6036bf7).
       // RE-PIN (M108 batch, v121): matcherVersion 107 alone (was c7cacce5…;
       // the tip with 106 put back gives c7cacce5).
-      '717cd4bdd58d107ee9989b91c125f598ac8616639ccc8b7c1261d7d222f17cb5',
+      // RE-PIN (M109 batch, v122): matcherVersion 108 alone (was 717cd4bd…;
+      // the base 9fd3e55 with only the bump to 108 gives 527adc9e).
+      '527adc9e4ad9da470185683081fc358b24b893b5bd11f69a621fec9904e751a9',
     );
   });
 

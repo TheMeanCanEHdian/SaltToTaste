@@ -6501,15 +6501,20 @@ const List<_Row> _unmoved = [
     null,
     1,
     '2 pounds assertive greens, such as kale, collards, or mustard, stemmed, washed in several changes of cold water, and chopped coarse',
-    2710823,
-    'Asparagus, green, raw',
-    '0.511667',
-    '907.18',
+    // RE-PIN (M109 batch, v122): quick-cooked-tough-greens|1 on kale 323505,
+    // a flagged stand-in (`_rankAs['assertive greens']`, R4), its 'stemmed'
+    // share read (907.18 × 0.64 = 580.60 g × 35 kcal/100 g = 203.21): was
+    // 2710823 'Asparagus, green, raw' at 0.511667, 907.18 g, 213.19 kcal,
+    // 'from 2 pound'.
+    323505,
+    'Kale, raw',
+    '0.970000',
+    '580.60',
     'auto',
     null,
     // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 254.92.
-    '213.19',
-    'from 2 pound',
+    '203.21',
+    'from 2 pound × 0.64 edible · approximate (USDA AH-102 item 1305: kale, raw, untrimmed → leaves without stems 64 % (no range printed)) · approximation (counted as Kale, raw)',
   ),
   // RE-PIN (M82 batch, v84, C6a): was 40.81 g, 360.77 kcal (the v84 replay's row).
   (
@@ -8680,7 +8685,9 @@ void main() {
           'complete',
           // RE-PIN (M77 batch, v77): the EVOO rows at SR 171413's 884 kcal — was 157.29.
           // RE-PIN (M86 batch, v90, 958: 2710823 asparagus): was 159.95.
-          '149.52',
+          // RE-PIN (M109 batch, v122): |1 on kale 323505 at its stemmed
+          // share (213.19 → 203.21 kcal this compute, ÷ 4): was 149.52.
+          '147.03',
         ), // 156.93 → 157.29
         (
           '1171-bulalo-hearty-beef-shank-and-vegetable-soup.yaml',

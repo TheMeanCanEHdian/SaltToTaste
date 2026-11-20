@@ -89,6 +89,14 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       'memo:measuresOut',
       'memo:leftInBowl',
       'memo:liftedFromMarinade',
+      // v122 (M109 C1, C11): the rinsed cure's lines, the lines scraped off
+      // the food, and the two per-sentence maps they read (each line's
+      // A13 mention, each sentence's named heads) — once per recipe.
+      'memo:rinsedCureLines',
+      'memo:scrapedOff',
+      'memo:mentionLines',
+      'memo:namedHeads',
+      'memo:makingStep',
       // v50 closer 1: the vegetables lifted out before a strain (V1-D1);
       // the numbered remaining parts (V1-D3).
       'memo:liftsVegetables',
@@ -225,6 +233,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // whichever reader asks (`memo:mixes`, each test counted `mixTests`);
     // the lines the coat-mixture pass reads, once per index.
     'memo:mixes': sentences,
+    // v122 (M109 C3): the mixture's lines, once per cut (a sentence of the
+    // making step, or -1 for every later step).
+    'memo:mixtureLines': sentences + 1,
     'mixTests': sentences,
     // v71 closer 2 (verify2 D1): pF R3's add-or-combine sentences in a step
     // naming the oil, each read once per index (`memo:fatsIntoOil`).

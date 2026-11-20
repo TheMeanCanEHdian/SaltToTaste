@@ -684,7 +684,11 @@ void main() {
       // kcal in this recipe.
       // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes,
       // 2346407 cabbage): was 592.11.
-      expect(of(_newEngland), ('complete', '584.17'));
+      // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+      // cabbage |1–|5, the rubbed spices step 3 rinses off
+      // (`_rinsedCureLines`), count 0 g: was 584.17 (this fresh compute;
+      // the replay 584.11 → 577.55).
+      expect(of(_newEngland), ('complete', '577.61'));
       // RE-PIN (M74 batch, v74; the owner's Q1 (a′)): 588.82 (was 692.11) —
       // its own 0" pair (−619.70 / 6).
       // RE-PIN (M82 batch, v84): was 588.82 (the replay 588.82 → 590.30).

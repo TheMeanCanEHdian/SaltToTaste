@@ -3588,7 +3588,225 @@ final RegExp _rub = RegExp(r'\brub');
 /// The [DiscardedMedium] [line] of [recipe] is, or null. [normalized] is the
 /// line's normalized item. Read from the line and the steps alone — no
 /// food, no resolved grams ([_massZeroes]): every caller gets one answer.
+/// v122 (M109 C1, C2): the shipped readers ([_discardedMediumBody]) first;
+/// only a line they give NO medium, read by sentence and not for the coat
+/// alone, is asked whether it is a cure the steps apply to the food and
+/// rinse off ([_rinsedCureLines], by POSITION): 0 g, the shipped
+/// "discarded in cooking — counted as 0 g" — a sugar as a brine's sugar,
+/// every other line as a brine's (the co-solute mapping).
 DiscardedMedium? discardedMediumOf(
+  Recipe recipe,
+  IngredientLine line,
+  String normalized, {
+  bool bySentence = true,
+  bool coatOnly = false,
+}) {
+  final shipped = _discardedMediumBody(
+    recipe,
+    line,
+    normalized,
+    bySentence: bySentence,
+    coatOnly: coatOnly,
+  );
+  if (shipped != null || coatOnly || !bySentence) {
+    return shipped;
+  }
+  final position = _positionOf(recipe, line);
+  if (position == null || !_rinsedCureLines(recipe).contains(position)) {
+    return null;
+  }
+  return headNounOf(normalized) == 'sugar'
+      ? DiscardedMedium.brineSugar
+      : DiscardedMedium.brine;
+}
+
+/// v122 (M109 C1–C4, the orchestrator's extension of the 2026-10-01
+/// rinsed-cure ruling): the positions of [recipe]'s lines of a cure a step
+/// applies to the food and a LATER sentence rinses off it — "Spread
+/// remaining onion mixture evenly over thighs." … "Remove thighs from onion
+/// mixture and rinse well" (turkey-thigh-confit-with-citrus-mustard-sauce),
+/// "Rub each side evenly with salt mixture." … "Rinse brisket and pat it
+/// dry." (new-englandstyle-home-corned-beef-and-cabbage). Once per recipe.
+/// (1) THE RINSE: the LAST sentence holding [_cureRinse] anywhere, with no
+/// "excess" and no [_rinseNegated], that names a food (the shipped
+/// `#lastRinse` shape; the design measured every rinse and the last alike);
+/// (2) THE FOOD: the heads it names before its first `from` — after it
+/// where the rinse word comes first ("rinse X from FOOD"); (3) THE
+/// APPLICATION: each earlier sentence [_appliesCure] whose step, up to and
+/// including it, names a food head; (4) THE LINES: those each application
+/// names (A13's nth mention) plus, where it names a [_mixtureWord], the
+/// mixture's ([_mixtureLinesAt]) — minus every line of a food head.
+/// Linear: one walk of the sentences, each line's mention looked up once.
+Set<int> _rinsedCureLines(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#rinsedCureLines, () {
+      final index = _stepIndexOf(recipe);
+      (int, int)? rinse;
+      var food = const <String>{};
+      for (var i = index.sentences.length - 1; i >= 0 && rinse == null; i--) {
+        final sentences = index.sentences[i];
+        for (var j = sentences.length - 1; j >= 0; j--) {
+          final s = sentences[j];
+          final m = _cureRinse.firstMatch(s);
+          if (m == null || s.contains('excess') || _rinseNegated.hasMatch(s)) {
+            continue;
+          }
+          final from = _fromWord.firstMatch(s);
+          final part = from == null
+              ? s
+              : m.start < from.start
+              ? s.substring(from.end)
+              : s.substring(0, from.start);
+          final named = {
+            for (final h in _namedHeadsAt(recipe)[(i, j)] ?? const <String>{})
+              if (_names(part, h)) h,
+          };
+          if (named.isNotEmpty) {
+            rinse = (i, j);
+            food = named;
+            break;
+          }
+        }
+      }
+      if (rinse == null) {
+        return const <int>{};
+      }
+      final heads = _headsOf(recipe);
+      final at = _mentionLinesOf(recipe);
+      final out = <int>{};
+      Set<int>? added;
+      for (final (a, sentences) in index.sentences.indexed) {
+        var stepNamesFood = false;
+        for (final (b, t) in sentences.indexed) {
+          if (!_before((a, b), rinse)) {
+            break;
+          }
+          stepNamesFood =
+              stepNamesFood ||
+              (_namedHeadsAt(recipe)[(a, b)]?.any(food.contains) ?? false);
+          if (stepNamesFood && _appliesCure(t)) {
+            out.addAll(at[(a, b)] ?? const []);
+            if (_mixtureWord.hasMatch(t)) {
+              // One add per distinct mixture (its memo's set).
+              final mixture = _mixtureLinesAt(recipe, (a, b));
+              if (!identical(mixture, added)) {
+                out.addAll(mixture);
+                added = mixture;
+              }
+            }
+          }
+        }
+      }
+      return {
+        for (final k in out)
+          if (!food.contains(heads[k])) k,
+      };
+    });
+
+/// [_rinsedCureLines] for the tests (v122, M109: the property over every
+/// corpus recipe and titled section).
+@visibleForTesting
+Set<int> rinsedCureLinesForTest(Recipe recipe) => _rinsedCureLines(recipe);
+
+/// [_scrapedOffLines] for the tests (v122, M109 C11).
+@visibleForTesting
+Set<int> scrapedOffLinesForTest(Recipe recipe) => _scrapedOffLines(recipe);
+
+final RegExp _cureRinse = RegExp(r'\brins(?:e|es|ed|ing)\b');
+final RegExp _rinseNegated = RegExp(r"\b(?:do not|don't|don’t|without)\s+rins");
+final RegExp _fromWord = RegExp(r'\bfrom\b');
+final RegExp _rubWord = RegExp(r'\brub(?:s|bed|bing)?\b');
+final RegExp _spreadWord = RegExp(r'\bspread\w*\b');
+final RegExp _overOrOn = RegExp(r'\b(?:over|on)\b');
+final RegExp _mixtureWord = RegExp(r'\b(?:mixture|paste|cure|rub)\b');
+final RegExp _pulseWord = RegExp(r'\bpulse');
+final RegExp _setsAside = RegExp(r'\bset aside\b|\breserv');
+
+/// Whether [sentence] applies a cure: it rubs ([_rubWord], the word bound
+/// — the shipped [_rub] reads "rubber spatula"), or spreads … over / on
+/// (two finds: the first [_spreadWord], then [_overOrOn] in the rest of the
+/// sentence — the steps are already split into sentences, so a period
+/// inside one, "1 (14.5-ounce) can", does not end the read: the owner
+/// gate's correction of 2026-11-20).
+bool _appliesCure(String sentence) {
+  if (_rubWord.hasMatch(sentence)) {
+    return true;
+  }
+  final spread = _spreadWord.firstMatch(sentence);
+  return spread != null && _overOrOn.hasMatch(sentence.substring(spread.end));
+}
+
+/// v122 (M109 C3, C11): the lines of the mixture a sentence at [at] names
+/// — those the MAKING step's mix sentences name ([_marinadeMix] or
+/// [_pulseWord]; the first step up to [at] holding one, its sentences
+/// before [at]), minus any sentence that sets a share aside ("Transfer 2
+/// tablespoons of the herb paste to a medium bowl; whisk in the lime juice
+/// and set aside.", steak-tacos) — never the nearest earlier mix sentence.
+Set<int> _mixtureLinesAt(Recipe recipe, (int, int) at) {
+  final index = _stepIndexOf(recipe);
+  // The first step holding a mix sentence, and each one's index and whether
+  // it keeps its share (no set-aside) — once per recipe.
+  final making = index.memo(#makingStep, () {
+    for (final (a, sentences) in index.sentences.indexed) {
+      final made = [
+        for (final (b, t) in sentences.indexed)
+          if (_marinadeMix.hasMatch(t) || _pulseWord.hasMatch(t))
+            (b, !_setsAside.hasMatch(t)),
+      ];
+      if (made.isNotEmpty) {
+        return (step: a, made: made);
+      }
+    }
+    return null;
+  });
+  if (making == null || making.step > at.$1) {
+    return const {};
+  }
+  final cut = making.step < at.$1 ? -1 : at.$2;
+  // Key: cut — the sentence the mixture is named at, inside the making
+  // step (-1: a later step, every mix sentence).
+  return index.memo(('mixtureLines', cut), () {
+    final lines = _mentionLinesOf(recipe);
+    return {
+      for (final (b, kept) in making.made)
+        if (kept && (cut < 0 || b < cut)) ...?lines[(making.step, b)],
+    };
+  });
+}
+
+/// Each sentence (step, sentence) of [recipe] → the lines whose nth mention
+/// (A13, as [_linesNamedIn] reads it) stands there; once per recipe.
+Map<(int, int), List<int>> _mentionLinesOf(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#mentionLines, () {
+      final seen = <String, int>{};
+      final out = <(int, int), List<int>>{};
+      for (final (i, head) in _headsOf(recipe).indexed) {
+        if (head == null) {
+          continue;
+        }
+        final nth = seen[head] = (seen[head] ?? -1) + 1;
+        final all = _naming(recipe, head);
+        if (nth < all.length) {
+          (out[all[nth]] ??= []).add(i);
+        }
+      }
+      return out;
+    });
+
+/// Each sentence (step, sentence) of [recipe] → the line heads it names
+/// ([_naming]); once per recipe.
+Map<(int, int), Set<String>> _namedHeadsAt(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#namedHeads, () {
+      final out = <(int, int), Set<String>>{};
+      for (final head in {..._headsOf(recipe).nonNulls}) {
+        for (final at in _naming(recipe, head)) {
+          (out[at] ??= {}).add(head);
+        }
+      }
+      return out;
+    });
+
+/// The shipped readers of [discardedMediumOf] (its body to v121).
+DiscardedMedium? _discardedMediumBody(
   Recipe recipe,
   IngredientLine line,
   String normalized, {
@@ -6456,9 +6674,108 @@ String? m50FlagOf(Recipe recipe, IngredientLine line) {
           ? _splitGlazeFlag
           : _leftInBowlFlag,
     if (_liftedFromMarinade(recipe).contains(position)) _marinadeFlag,
+    if (_scrapedOffLines(recipe).contains(position)) _scrapedOffFlag,
   ];
   return flags.isEmpty ? null : flags.join(' · ');
 }
+
+/// v122 (M109 C11, the owner's ruling of 2026-11-19: a paste or marinade
+/// scraped off the food STAYS COUNTED, flagged — [_scrapedOffFlag], the
+/// approved wording): the positions of [recipe]'s lines a sentence takes OFF
+/// the food dry — "Using your fingers, scrape miso mixture from fillets (do
+/// not rinse)" (miso-marinated-salmon), "Scrape the herb paste off the
+/// steak" (steak-tacos), "Scrape off dill." (gravlax); once per recipe. A
+/// scrape or wipe … off / from ([_scrapesOff]; brush, shake and pat are not
+/// read), with no "excess" and no vessel scrape ([_scrapeNot],
+/// [_scrapedVessel], [_vesselTail]); its object a mixture word
+/// ([_scrapedMixture]: the mixture's lines, [_mixtureLinesAt]) or the lines
+/// it names that an earlier sentence put on the food ([_putsOn]); minus the
+/// food it names after off / from. Linear: one walk of the sentences.
+Set<int> _scrapedOffLines(Recipe recipe) =>
+    _stepIndexOf(recipe).memo(#scrapedOff, () {
+      final index = _stepIndexOf(recipe);
+      final heads = _headsOf(recipe);
+      // The sentences that put something on the food, so far, and the
+      // heads they name — read only once a scrape asks, each sentence once.
+      final applied = <(int, int)>[];
+      final appliedHeads = <String>{};
+      var read = 0;
+      Set<String> heldOn() {
+        for (; read < applied.length; read++) {
+          appliedHeads.addAll(
+            _namedHeadsAt(recipe)[applied[read]] ?? const <String>{},
+          );
+        }
+        return appliedHeads;
+      }
+
+      final out = <int>{};
+      for (final (i, sentences) in index.sentences.indexed) {
+        for (final (j, s) in sentences.indexed) {
+          final m = _scrapesOff.firstMatch(s);
+          final object = (m?[1] ?? m?[2] ?? '').trim();
+          if (m != null &&
+              object.isNotEmpty &&
+              !_scrapeNot.hasMatch(s) &&
+              !_scrapedVessel.hasMatch(object) &&
+              !_vesselTail.hasMatch(s.substring(m.end).trimLeft())) {
+            final here = _namedHeadsAt(recipe)[(i, j)] ?? const <String>{};
+            final Set<int> lines;
+            if (_scrapedMixture.hasMatch(object)) {
+              lines = _mixtureLinesAt(recipe, (i, j));
+            } else {
+              final named = {
+                for (final h in here)
+                  if (_names(object, h)) h,
+              };
+              lines = named.any(heldOn().contains)
+                  ? {
+                      for (final (k, h) in heads.indexed)
+                        if (named.contains(h)) k,
+                    }
+                  : const {};
+            }
+            final tail = s.substring(m.end);
+            final food = {
+              for (final h in here)
+                if (_names(tail, h)) h,
+            };
+            out.addAll(lines.where((k) => !food.contains(heads[k])));
+          }
+          if (_putsOn.hasMatch(s)) {
+            applied.add((i, j));
+          }
+        }
+      }
+      return out;
+    });
+
+final RegExp _scrapesOff = RegExp(
+  r'\b(?:scrap|wip)\w*\s+off\s+(?:the\s+|any\s+)?([\w–-]+(?:\s+[\w–-]+){0,2}?)'
+  r'\s*(?:\.|,|;|\band\b|\bfrom\b|$)|'
+  r"\b(?:scrap|wip)\w*\s+(?:the\s+|any\s+)?((?:[\w’'–-]+\s+){1,3}?)(?:off|from)\b",
+);
+final RegExp _scrapeNot = RegExp(
+  r'\bexcess\b|\bscrap\w* (?:down|up)\b|\bwip\w* (?:out|clean|down)\b',
+);
+final RegExp _scrapedVessel = RegExp(
+  r'\b(?:bowl|pot|pan|skillet|wok|sheet|grate|grill|board|sides|bottom|rack|'
+  r'foil|parchment|towel)s?\b',
+);
+final RegExp _vesselTail = RegExp(
+  '^(?:(?:the |both )?(?:bottom|sides?|bowl|strainer|skillet|pan|pot)|'
+  '(?:bowl|pot|pan|skillet|wok|sheet|grate|grill|board|sides|bottom|rack|'
+  r'foil|parchment|towel)s?\b)',
+);
+final RegExp _scrapedMixture = RegExp(
+  r'\b(?:mixture|paste|marinade|cure|rub|coating|glaze)\b',
+);
+final RegExp _putsOn = RegExp(
+  r'\b(?:rub|cover|press|coat|spread|pack|sprinkl)\w*',
+);
+
+const String _scrapedOffFlag =
+    'approximate (scraped off the food — how much clings is not written)';
 
 /// The basis of a v50 row counted 0 g or a kept part (`discarded`): what
 /// the step did to the line, and its flag. Null for any other medium. A
@@ -7519,11 +7836,15 @@ bool shellEatenIn(Recipe recipe) => RegExp(
 /// Foundation 2646170 (boneless skinless breast, cached). Each is weighed
 /// there by its composition ([ah102Records], Y12/Y13: the part's AH-102
 /// meat figure in one step; a whole bird its ready-to-cook yield).
+/// v122 (M109 R3): a turkey thigh on SR 171533 "…, meat and skin, raw"
+/// moves to SR 174518 "…, meat only, raw" (cached): the key 'bone-in turkey
+/// thigh' is a move key.
 const Map<int, int> _skinlessRecords = {
   2727567: 2646171,
   172378: 173619,
   171447: meatOnlyBroiler,
   2727569: 2646170,
+  171533: 174518,
 };
 
 /// v49 (M47 Q11): the raw record a weight of shellfish bought in the shell

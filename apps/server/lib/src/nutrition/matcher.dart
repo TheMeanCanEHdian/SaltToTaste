@@ -202,7 +202,12 @@ const Map<String, String> _synonyms = {
 /// salt seasoning line whose steps print its salt (R-H1 read with the form
 /// `salt`, `measuredStepSalt`) and no medium takes is SR 173468 at those
 /// grams, no longer the 0 g seasoning rule row (sodium only).
-const int matcherVersion = 107;
+/// v108: matcher v122 (batch M109) — the spelling / record keys (turnip and
+/// portobello mushroom cap each on one record, the bone-in turkey thigh a
+/// skin move key, assertive greens as kale) and the rinsed cure: every line
+/// of a cure a step applies to the food and a later sentence rinses off is
+/// 0 g; a mixture scraped off the food is counted and flagged.
+const int matcherVersion = 108;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -1381,7 +1386,14 @@ const Map<String, (String, String)> _rankAs = {
     'new england style hot dog buns',
     'roll white hot dog bun',
   ),
-  'portobello mushroom caps': ('portobello mushrooms', 'mushroom portabella'),
+  // v122 (M109 R2): the weighed caps read the counted caps' answer and
+  // words (below, v35), so both spellings of the key 'portobello mushroom
+  // cap' land SR 169255 (was Foundation 2003598 by ('portobello
+  // mushrooms', 'mushroom portabella')).
+  'portobello mushroom caps': (
+    'mushrooms portabella raw',
+    'mushrooms portabella raw',
+  ),
   'dried mint': ('dried mint', 'spearmint dried'),
   'snow peas': ('snow peas', 'peas edible-podded raw'),
   'sugar snap peas': ('sugar snap peas', 'peas edible-podded raw'),
@@ -1392,9 +1404,18 @@ const Map<String, (String, String)> _rankAs = {
   'jalapeno jelly': ('jalapeno jelly', 'jellies'),
   'red currant or apple jelly': ('red currant or apple jelly', 'jellies'),
   'apple jelly': ('jalapeno jelly', 'jellies'),
+  // v122 (M109 R3): a MOVE key, as the chicken thighs are — both spellings
+  // read ONE answer ranked onto the skin-on SR 171533 "…, meat and skin,
+  // raw" (was 'turkey thigh meat only raw' for the singular alone), and a
+  // line that discards the skin ("…, skinned, boned, …") moves to the
+  // meat-only 174518 through engine.dart's `_skinlessRecords`.
   'bone-in turkey thigh': (
     'bone-in turkey thigh',
-    'turkey thigh meat only raw',
+    'turkey thigh meat and skin raw',
+  ),
+  'bone-in turkey thighs': (
+    'bone-in turkey thigh',
+    'turkey thigh meat and skin raw',
   ),
   'mexican-style chorizo sausage': (
     'mexican-style chorizo sausage',
@@ -1407,6 +1428,12 @@ const Map<String, (String, String)> _rankAs = {
     'crab lump',
   ),
   'collard greens': ('collard greens', 'collards raw'),
+  // v122 (M109 R4): "2 pounds assertive greens, such as kale, collards, or
+  // mustard, …" (0685|1, on Foundation 2710823 "Asparagus, green, raw" at
+  // 0.511667 before) on Foundation 323505 "Kale, raw", the first green the
+  // line names, as the 'kale or collard greens' lines read the 'kale'
+  // answer; a flagged stand-in ([approximationRecords]).
+  'assertive greens': ('kale', 'kale'),
   'gai lan': ('gai lan', 'broccoli chinese raw'),
   'skinless red snapper fillets': (
     'skinless red snapper fillets',
@@ -1657,7 +1684,8 @@ const Map<String, (String, String)> _rankAs = {
   // 'mushrooms portabella raw' answer (2003598, the Foundation record the
   // v32 check read, publishes a racc portion only). Its '1 piece whole'
   // 84 g sizes them through the piece table (grams.dart). The weighed
-  // 'portobello mushroom caps' line above keeps its record.
+  // 'portobello mushroom caps' line above kept its record until v122 (M109
+  // R2: it reads this answer too).
   'portobello mushroom cap': (
     'mushrooms portabella raw',
     'mushrooms portabella raw',
@@ -2035,7 +2063,12 @@ const Map<String, (String, String)> _rankAs = {
   // "2 large kiwis"). "12 leaves red or green leaf lettuce" stays unwired
   // (168431 ranks 0.97 behind 2346390 under every set and was not fetched).
   // 'parsnips': ('parsnips', 'parsnips raw'),
-  'turnip': ('turnip', 'turnips raw'),
+  // v122 (M109 R1): the count line reads the weighed lines' 'turnips'
+  // answer under their words, so both spellings of the key 'turnip' land
+  // Foundation 2747674 "Turnips, raw" (was 2709809 FNDDS "Turnip, raw" by
+  // ('turnip', 'turnips raw')); its 120 g is the piece table's cross-record
+  // 'turnip' row (grams.dart).
+  'turnip': ('turnips', 'turnips'),
   'romaine lettuce leaves': (
     'romaine lettuce leaves',
     'lettuce cos or romaine raw',
@@ -3294,6 +3327,9 @@ const Map<String, int> approximationRecords = {
   'dried beans': 173745,
   'dried white beans': 173745,
   'spicy greens': 169387,
+  // v122 (M109 R4): assertive greens as kale (the first green the line
+  // names).
+  'assertive greens': 323505,
   'all-bran original cereal': 2708456,
   'seven-grain hot cereal mix': 171667,
   'fingerling potatoes': 2346402,

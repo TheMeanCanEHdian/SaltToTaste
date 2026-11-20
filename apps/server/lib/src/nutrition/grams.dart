@@ -741,6 +741,11 @@ const List<(String, double)> _pieceWeights = [
   // its own: the head noun of "kiwis" is not "kiwi".
   ('kiwis', 75),
   ('kiwi', 75),
+  // v122 (M109 R1): FNDDS 2709809 "Turnip, raw" '1 whole' 120 g — the count
+  // line "1 turnip, peeled …" on Foundation 2747674 (no per-item portion),
+  // a cross-record piece weight like the kiwi's ([_approximatePieces] names
+  // the source).
+  ('turnip', 120),
   // v68 (batch M70, pF F6; the owner's Q11 standing rule: a label's grams
   // for a count the line prints): The Hershey Company's plain milk-chocolate
   // Kisses labels (FDC Branded, read at live step L49) print 41 g = 9 pieces
@@ -806,6 +811,8 @@ const Map<String, String> _approximatePieces = {
   'portobello mushroom cap': "FDC's 'piece whole' portion read as one cap",
   // v38.
   'cremini mushroom': "FDC's 'piece whole' portion read as one cremini",
+  // v122 (M109 R1): another record's portion.
+  'turnip': "FNDDS 2709809's '1 whole' portion read as one turnip",
   // v37.
   'sugar cube': 'ATK: ¾ cup sugar makes 64 cubes',
   'sea scallop': 'ATK: 1½ pounds large sea scallops ≈ 16 to 24',

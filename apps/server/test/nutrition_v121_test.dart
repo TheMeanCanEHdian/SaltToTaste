@@ -164,7 +164,10 @@ const _arms = [
 ];
 
 void main() {
-  test('matcherVersion 107', () => expect(matcherVersion, 107));
+  test('matcherVersion 108', () {
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
+  });
   group('v121 (M108: measured step salt)', skip: skipIfNoCorpus, () {
     arms();
     section();
@@ -592,6 +595,10 @@ String _fill(String sentence) => List.filled(
 /// nothing on either shape (TRUE compute 288 ms, its counts the index's
 /// alone); v2's per-print scan form (no tables) took 848,811 ms on the TRUE
 /// compute.
+/// RE-PIN (M109 batch, v122): + memo:rinsedCureLines 1 (the rinsed-cure
+/// reader, once per index) on TRUE's compute and GET and QUIET's GET, and
+/// memo:scrapedOff 1 (the scraped-off flag) on TRUE's GET; QUIET's compute
+/// unchanged; no other family moves.
 void caps() {
   group('RULE C, measured step salt at the caps', skip: skipIfNoCorpus, () {
     for (final (shape, sentence, row, compute, get) in [
@@ -599,15 +606,15 @@ void caps() {
         'TRUE',
         'Stir in ½ teaspoon salt. ',
         '173468 auto 144318.78',
-        '{"allSentences":1,"cheese":1,"ends":120,"heads":1,"hits":360,"indexes":1,"lineMentions":4,"lower":1,"memo:braise":1,"memo:brinedByVolume":1,"memo:browningFat":1,"memo:dips":1,"memo:dissolving":1,"memo:firstOwn":4,"memo:firstShare":1,"memo:kept":1,"memo:keptSolids":1,"memo:labelScope":1,"memo:lastRinse":1,"memo:leftInBowl":1,"memo:lostSalt":1,"memo:mentions":1,"memo:naming":2,"memo:parted":48000,"memo:parting":1,"memo:pourAway":1,"memo:saltLines":1,"memo:shares":1,"memo:starter":1,"memo:stepAmountGrams":2,"memo:stepAmounts":1,"memo:stepAmountsAt":1,"memo:strain":1,"mentionVisits":192000,"mentions":48000,"sentences":48000,"stepPrints":48000,"stepPrintsWalked":48000,"words":192000}',
-        '{"allSentences":1,"carriedReads":1,"cheese":1,"heads":1,"indexes":1,"lineMentions":2,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brinedByVolume":1,"memo:brines":1,"memo:browningFat":1,"memo:cutShare":1,"memo:dips":1,"memo:dissolving":1,"memo:kept":1,"memo:keptSolids":1,"memo:labelScope":1,"memo:lastRinse":1,"memo:leftInBowl":1,"memo:liftedFromMarinade":1,"memo:lostSalt":1,"memo:mentions":1,"memo:naming":2,"memo:panFatLines":1,"memo:parting":1,"memo:pourAway":1,"memo:saltLines":1,"memo:starter":1,"memo:stepAmountGrams":1,"memo:stepAmounts":1,"memo:stepAmountsAt":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"mentions":48000,"sentences":48000,"stepPrints":48000,"stepPrintsWalked":48000,"words":192000}',
+        '{"allSentences":1,"cheese":1,"ends":120,"heads":1,"hits":360,"indexes":1,"lineMentions":4,"lower":1,"memo:braise":1,"memo:brinedByVolume":1,"memo:browningFat":1,"memo:dips":1,"memo:dissolving":1,"memo:firstOwn":4,"memo:firstShare":1,"memo:kept":1,"memo:keptSolids":1,"memo:labelScope":1,"memo:lastRinse":1,"memo:leftInBowl":1,"memo:lostSalt":1,"memo:mentions":1,"memo:naming":2,"memo:parted":48000,"memo:parting":1,"memo:pourAway":1,"memo:rinsedCureLines":1,"memo:saltLines":1,"memo:shares":1,"memo:starter":1,"memo:stepAmountGrams":2,"memo:stepAmounts":1,"memo:stepAmountsAt":1,"memo:strain":1,"mentionVisits":192000,"mentions":48000,"sentences":48000,"stepPrints":48000,"stepPrintsWalked":48000,"words":192000}',
+        '{"allSentences":1,"carriedReads":1,"cheese":1,"heads":1,"indexes":1,"lineMentions":2,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brinedByVolume":1,"memo:brines":1,"memo:browningFat":1,"memo:cutShare":1,"memo:dips":1,"memo:dissolving":1,"memo:kept":1,"memo:keptSolids":1,"memo:labelScope":1,"memo:lastRinse":1,"memo:leftInBowl":1,"memo:liftedFromMarinade":1,"memo:lostSalt":1,"memo:mentions":1,"memo:naming":2,"memo:panFatLines":1,"memo:parting":1,"memo:pourAway":1,"memo:rinsedCureLines":1,"memo:saltLines":1,"memo:scrapedOff":1,"memo:starter":1,"memo:stepAmountGrams":1,"memo:stepAmounts":1,"memo:stepAmountsAt":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"mentions":48000,"sentences":48000,"stepPrints":48000,"stepPrintsWalked":48000,"words":192000}',
       ),
       (
         'QUIET',
         'Stir in the pepper. ',
         'null confirmed null',
         '{"heads":1,"indexes":1,"lower":1,"memo:browningFat":1,"memo:dips":1,"memo:keptSolids":1,"memo:labelScope":1,"memo:leftInBowl":1,"memo:naming":2,"memo:saltLines":1,"memo:stepAmounts":1,"memo:stepAmountsAt":1,"sentences":60000,"stepPrints":0,"words":240000}',
-        '{"allSentences":1,"cheese":1,"heads":1,"indexes":1,"lineMentions":2,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brinedByVolume":1,"memo:brines":1,"memo:dissolving":1,"memo:kept":1,"memo:lastRinse":1,"memo:mentions":1,"memo:naming":1,"memo:parting":1,"memo:pourAway":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"mentions":0,"sentences":60000,"words":240000}',
+        '{"allSentences":1,"cheese":1,"heads":1,"indexes":1,"lineMentions":2,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brinedByVolume":1,"memo:brines":1,"memo:dissolving":1,"memo:kept":1,"memo:lastRinse":1,"memo:mentions":1,"memo:naming":1,"memo:parting":1,"memo:pourAway":1,"memo:rinsedCureLines":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"mentions":0,"sentences":60000,"words":240000}',
       ),
     ]) {
       test(

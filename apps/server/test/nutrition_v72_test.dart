@@ -3424,11 +3424,14 @@ const List<_Row> _unmoved = [
     170931,
     'Spices, pepper, black',
     '1.000000',
-    '8.72',
+    // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+    // cabbage|1 is a line of the cure step 2 rubs on and step 3 rinses
+    // off (`_rinsedCureLines`): 0 g discarded (was '8.72', '21.90', '1 tablespoon ≈ 15 mL').
+    '0.00',
     'auto',
     null,
-    '21.90',
-    '1 tablespoon ≈ 15 mL',
+    '0.00',
+    'discarded in cooking — counted as 0 g',
   ),
   (
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
@@ -3438,11 +3441,14 @@ const List<_Row> _unmoved = [
     170938,
     'Spices, thyme, dried',
     '0.933333',
-    '2.96',
+    // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+    // cabbage|2 is a line of the cure step 2 rubs on and step 3 rinses
+    // off (`_rinsedCureLines`): 0 g discarded (was '2.96', '8.16', '1 tablespoon ≈ 15 mL').
+    '0.00',
     'auto',
     null,
-    '8.16',
-    '1 tablespoon ≈ 15 mL',
+    '0.00',
+    'discarded in cooking — counted as 0 g',
   ),
   (
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
@@ -3452,11 +3458,14 @@ const List<_Row> _unmoved = [
     171315,
     'Spices, allspice, ground',
     '0.933333',
-    '4.33',
+    // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+    // cabbage|3 is a line of the cure step 2 rubs on and step 3 rinses
+    // off (`_rinsedCureLines`): 0 g discarded (was '4.33', '11.38', '2 1/4 teaspoon ≈ 11 mL').
+    '0.00',
     'auto',
     null,
-    '11.38',
-    '2 1/4 teaspoon ≈ 11 mL',
+    '0.00',
+    'discarded in cooking — counted as 0 g',
   ),
   (
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
@@ -3466,11 +3475,14 @@ const List<_Row> _unmoved = [
     171329,
     'Spices, paprika',
     '0.900000',
-    '3.47',
+    // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+    // cabbage|4 is a line of the cure step 2 rubs on and step 3 rinses
+    // off (`_rinsedCureLines`): 0 g discarded (was '3.47', '9.80', '1 1/2 teaspoon ≈ 7 mL').
+    '0.00',
     'auto',
     null,
-    '9.80',
-    '1 1/2 teaspoon ≈ 7 mL',
+    '0.00',
+    'discarded in cooking — counted as 0 g',
   ),
   (
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
@@ -3480,11 +3492,14 @@ const List<_Row> _unmoved = [
     170917,
     'Spices, bay leaf',
     '0.866667',
-    '0.40',
+    // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+    // cabbage|5 is a line of the cure step 2 rubs on and step 3 rinses
+    // off (`_rinsedCureLines`): 0 g discarded (was '0.40', '1.25', '2 × 0.2 g each').
+    '0.00',
     'auto',
     null,
-    '1.25',
-    '2 × 0.2 g each',
+    '0.00',
+    'discarded in cooking — counted as 0 g',
   ),
   (
     '0090-new-englandstyle-home-corned-beef-and-cabbage.yaml',
@@ -6864,14 +6879,19 @@ const List<_Totals> _totals = [
     'complete',
     // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
     // cabbage): was 592.11, 4736.91.
-    '584.18',
-    '4673.45',
-    '209.0599',
-    '76.0415',
-    '97.6493',
-    '9.0263',
-    '447.1590',
-    '2324.7801',
+    // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+    // cabbage |1–|5, the rubbed spices step 3 rinses off
+    // (`_rinsedCureLines`), count 0 g: was 584.18, 4673.45, fat 209.0599,
+    // sat 76.0415, mono 97.6493, poly 9.0263, protein 447.1590, sodium
+    // 2324.7801 (cholesterol unchanged).
+    '577.62',
+    '4620.97',
+    '207.6986',
+    '75.6455',
+    '97.4769',
+    '8.5230',
+    '445.1980',
+    '2315.6234',
     '1367.5799',
   ),
   // RE-PIN (M74 batch, v74; the owner's Q1 (b)): 173128 at its braised pair

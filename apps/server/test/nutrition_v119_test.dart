@@ -317,10 +317,11 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 107', () {
+  test('matcherVersion 108', () {
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
   group(
     'v119 (M106: shell and produce refuse)',
@@ -414,9 +415,16 @@ void moved() {
   // 2710823 (its key 'assertive green'); asparagus reads 'trimmed' alone,
   // so the row keeps its v118 columns. The record is the defect (a rank-as
   // onto kale is queued with the record / spelling batch).
-  test('quick-cooked-tough-greens|1: the wrong-food row stays gross', () async {
+  // RE-PIN (M109 batch, v122, 2026-11-19): quick-cooked-tough-greens|1 is
+  // no longer the wrong-food row — matcher v122's `_rankAs['assertive
+  // greens']` lands it on kale 323505 (a flagged stand-in), and v119's own
+  // 'stemmed' kale share then reads it (was 2710823 at 0.511667, 907.18 g,
+  // 213.45 kcal, "from 2 pound"): 907.18 × 0.64 = 580.60 g × 35 kcal/100 g
+  // = 203.21 kcal.
+  test('quick-cooked-tough-greens|1: the wrong-food row stayed gross (on kale '
+      'since v122, its stemmed share read)', () async {
     const want =
-        '0685-quick-cooked-tough-greens.yaml|1\t2710823\tAsparagus, green, raw\tauto\t\tweight\t0.511667\t907.18\t213.45\tfrom 2 pound';
+        '0685-quick-cooked-tough-greens.yaml|1\t323505\tKale, raw\tauto\t\tweight\t0.970000\t580.60\t203.21\tfrom 2 pound × 0.64 edible · approximate (USDA AH-102 item 1305: kale, raw, untrimmed → leaves without stems 64 % (no range printed)) · approximation (counted as Kale, raw)';
     expect(await _columns(want), want);
   });
   test('A2: the GET reads the two moved rows', () async {

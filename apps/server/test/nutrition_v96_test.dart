@@ -567,7 +567,8 @@ void main() {
       // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
       // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
       // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-      expect(matcherVersion, 107);
+      // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+      expect(matcherVersion, 108);
     },
   );
 
@@ -1332,6 +1333,10 @@ void main() {
 /// process-wide `names` aside).
 const Map<String, Map<String, int>> _capCounts = {
   'TRUE compute': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:skinSentences': 1,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
@@ -1372,6 +1377,11 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'TRUE GET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+    // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+    // `_scrapedOffLines`); no other family moves.
+    'memo:rinsedCureLines': 1,
+    'memo:scrapedOff': 1,
     'leanOnlyReads': 1,
     // RE-PIN (fix101 batch, v101, U1): was 1 — + the GET offer's as-picked
     // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and
@@ -1425,6 +1435,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:mayHoldCoat': 1,
   },
   'TRUE recompute': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:dips': 1,
     'lower': 1,
@@ -1454,6 +1468,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'QUIET compute': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:skinSentences': 1,
     // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
@@ -1492,6 +1510,11 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:defatsLiquid': 1,
   },
   'QUIET GET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+    // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+    // `_scrapedOffLines`); no other family moves.
+    'memo:rinsedCureLines': 1,
+    'memo:scrapedOff': 1,
     'leanOnlyReads': 1,
     // RE-PIN (fix101 batch, v101, U1): was 1 — + the GET offer's as-picked
     // read (`pickedMoveSource` → `_carriedIdOf`), once per line text and

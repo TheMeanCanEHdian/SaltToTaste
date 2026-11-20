@@ -314,7 +314,7 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 107 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 108 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
@@ -340,7 +340,8 @@ void main() {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "
@@ -624,6 +625,11 @@ IngredientMatchRow _row(SaltDatabase db, String id, int position) =>
 /// Each cap shape's counts on the tree — equal to base 2cb275e's (fix87
 /// cost_base.log / cost_tip.log, both runs; the process-wide `names` aside).
 const Map<String, int> _shared = {
+  // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+  // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+  // `_scrapedOffLines`); no other family moves.
+  'memo:rinsedCureLines': 1,
+  'memo:scrapedOff': 1,
   'indexes': 1,
   'memo:skinSentences': 1,
   // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the

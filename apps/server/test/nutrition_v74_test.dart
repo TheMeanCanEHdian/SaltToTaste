@@ -143,7 +143,11 @@ const _negatives = [
 const _totals = [
   // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
   // cabbage): was 592.11, 4736.91.
-  (_newEngland, 'complete', '584.18', '4673.45'),
+  // RE-PIN (M109 batch, v122): new-englandstyle-home-corned-beef-and-
+  // cabbage |1–|5, the rubbed spices step 3 rinses off
+  // (`_rinsedCureLines`), count 0 g: was 584.18, 4673.45 (−52.48 this
+  // compute; the replay's rows −52.49).
+  (_newEngland, 'complete', '577.62', '4620.97'),
   // RE-PIN (M86 batch, v90, 958: 2258586 carrots, 2346402 potatoes, 2346407
   // cabbage): was 628.01, 5024.10.
   (_corned, 'complete', '620.79', '4966.36'),

@@ -1119,7 +1119,13 @@ void main() {
           '10 (5- to 6-ounce) bone-in, skin-on chicken thighs, trimmed and '
           'skin removed';
       const raws = [legs, thigh, thighs];
-      const picks = [173619, 174518, 2727567];
+      // RE-PIN (M109 batch, v122): the skinned turkey thigh
+      // (juicy-grilled-turkey-burgers|0) LISTS the skin-on 171533 first,
+      // as the cassoulet's thigh lists 2727567: 'bone-in turkey thigh' is a
+      // skin move key (`_rankAs` ranks both spellings onto 171533; the
+      // compute stores the meat-only 174518 by `_skinlessRecords`, as the
+      // rows above still read). Was 174518.
+      const picks = [173619, 171533, 2727567];
       final db = tempDb();
       final r = recipeOf(db, 'r1', raws);
       await matchAndCompute(db, provider, r);

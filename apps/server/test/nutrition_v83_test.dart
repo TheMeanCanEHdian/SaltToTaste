@@ -660,6 +660,9 @@ void main() {
           'memo:naming',
           'memo:parting',
           'memo:pourAway',
+          // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once
+          // per index (`_rinsedCureLines`); no other family moves.
+          'memo:rinsedCureLines',
           'memo:reservedWhole',
           'memo:savesRemainder',
           'memo:setAsideLine',
@@ -950,7 +953,9 @@ void main() {
         // the tip with 105 put back gives de30364a).
         // RE-PIN (M108 batch, v121): matcherVersion 107 alone (was e0cb683a…;
         // the tip with 106 put back gives e0cb683a).
-        'a8824a8d2837dc6c9a48f0d7c57af7e30ff66621e28a89b50eb000a2070710e9',
+        // RE-PIN (M109 batch, v122): matcherVersion 108 alone (was a8824a8d…;
+        // the base 9fd3e55 with only the bump to 108 gives c3be6280).
+        'c3be628038903b3b9b6682c8f631e4604ae3808d4272b8b868b170c65d5d0690',
       );
     });
   });

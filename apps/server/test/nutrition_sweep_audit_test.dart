@@ -1347,8 +1347,14 @@ void main() {
     // 2346400 (Beans, snap, green, raw — a hit in 'green beans'): compared
     // 560 -> 562, differ 427 -> 429 (each detail differs from its hit in
     // some digit; measured).
-    expect(compared, 562);
-    expect(differ, 429);
+    // RE-PIN (M109 batch, v122): its pins recorded from snapshot 33 the
+    // details of 2747674 (Turnips, raw — a hit in 'turnip'), 323505 (Kale,
+    // raw — a hit in 'kale') and 168454 (Rutabagas, raw — a hit in
+    // 'rutabaga'): compared 562 -> 565, differ 429 -> 430 (2747674's detail
+    // differs from its hit in some digit; 323505's and 168454's are equal in
+    // every digit; measured).
+    expect(compared, 565);
+    expect(differ, 430);
   });
 
   group('lazy food details on real corpus recipes', skip: skipIfNoCorpus, () {

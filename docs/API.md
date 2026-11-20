@@ -2810,7 +2810,12 @@ wrappers` → `rice paper`; `gyoza wrappers`, `square lumpia wrappers or
 spring roll wrappers` → `wonton wrappers includes egg roll wrappers`;
 `new england style hot dog buns` → `roll white hot dog bun`; `portobello
 mushroom caps` (reads `portobello mushrooms`) → `mushroom portabella`;
-`bone-in turkey thigh` → `turkey thigh meat only raw`; `mexican-style
+`bone-in turkey thigh` → `turkey thigh meat only raw` (CORRECTED
+2026-11-19, matcher v122: `portobello mushroom caps` now reads the counted
+caps' `mushrooms portabella raw` answer and words (R2); `bone-in turkey
+thigh` and the new `bone-in turkey thighs` read one answer under `turkey
+thigh meat and skin raw`, and a skin-discarding line moves to the
+meat-only 174518 by `_skinlessRecords` (R3); see "Matcher v122"); `mexican-style
 chorizo sausage` → `sausage pork chorizo raw`; `1-pound whole boneless
 shell sirloin steaks or whole flap meat steaks` → `beef top sirloin steak
 raw`; `meaty smoked ham shank or 2 3 smoked ham hocks` → `pork ham
@@ -2907,7 +2912,10 @@ stemmed cap ("1 large portobello mushroom cap" = `"1 × 84 g each ·
 approximate (FDC's 'piece whole' portion read as one cap)"` — "large" is
 no piece-table size; "6–8 portobello mushrooms (each 4 to 6 inches)"
 reads the bare range's midpoint, 7 × 84 = 588 g). The weighed
-`portobello mushroom caps` line keeps 2003598. Since matcher v37 (the
+`portobello mushroom caps` line keeps 2003598 (CORRECTED 2026-11-19,
+matcher v122 R2: it reads the counted caps' `mushrooms portabella raw`
+answer and words too — spaghetti-with-quick-mushroom-ragu|3 on 169255,
+226.80 g, 59.02 → 49.90 kcal; see "Matcher v122"). Since matcher v37 (the
 queue sweep, part 1 — the planners' zero-request rows, the owner's "go
 with your recommendations", 2026-10-04; every answer and detail already
 cached in snapshot 15): `ripe firm pears` → `pears` (169118 "Pears, raw";
@@ -2979,7 +2987,12 @@ cookie` 36 g — a count of three the whole-item finder never reads as one
 item, so an `oreo cookies` piece figure of 12 g carries it: "16 Oreo
 cookies" = `"16 × 12 g each"`, 192 g); `turnip` → `turnips raw` (FNDDS
 2709809 "Turnip, raw", which ties SR 170465 and leads: `1 whole` 120 g;
-the library's `turnips` weight lines are another item and keep 2747674);
+the library's `turnips` weight lines are another item and keep 2747674 —
+CORRECTED 2026-11-19, matcher v122 R1: `turnip` now reads the weighed
+lines' answer and words, `('turnips', 'turnips')`, so the count line
+farmhouse-vegetable-and-barley-soup|16 lands 2747674 too, its 120 g the
+piece table's `('turnip', 120)` row from 2709809's `1 whole`, 33.60 → 40.78
+kcal; see "Matcher v122");
 `romaine lettuce leaves` → `lettuce cos or romaine raw` (169247: the
 finder reads its first leaf portion, `leaf inner` 6 g — "5 romaine
 lettuce leaves" is 30 g; `leaf outer` is 28 g); `frisee` (reads `endive
@@ -4925,7 +4938,10 @@ v120 owner gate: true of 0091's brine, |1–|8 each 0 g; on 0090, a DRY cure,
 the salt |0 is 0 g but the rubbed spices |1–|5 — peppercorns, thyme,
 allspice, paprika, bay — are counted, 19.88 g, 52.49 kcal: `_rinsedCure` is
 read for a salt or sugar head alone; owed — see "Matcher v120", the owner
-gate). Why: both recipes RINSE
+gate. NOTE 2026-11-19, matcher v122 C1: now 0 g too — the rubbed spices are
+lines of the cure step 2 rubs on and step 3 rinses off (`_rinsedCureLines`),
+"discarded in cooking — counted as 0 g"; the recipe 584.11 → 577.55 a
+serving; see "Matcher v122"). Why: both recipes RINSE
 the cure ("Remove brisket from brine, rinse"; "Rinse brisket and pat it
 dry"), and the owner kept CP9's "rinsed cure 0 g" and the 2026-09-27 "brine
 co-solutes zero" literal. SR 170199 *Beef, cured, corned beef, brisket,
@@ -5374,6 +5390,662 @@ invariant the dual-fleet review found broken on a non-corpus input:
   2 MB body bounded them before. Every corpus recipe validates.
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
+
+**Matcher v122 (batch M109, the tenth of the prep52 chain — two parts owed
+before the chain's single deploy, ONE block: PART S, the spelling / record
+keys; PART C, the rinsed cure and the scraped-off note; matcherVersion 107 →
+108. THE SPEC IS THE M109 BRIEF (no design section): PART S's sources the
+v116 passage "THE THREE SPELLING KEYS" (`grep -c "THE THREE SPELLING KEYS"
+docs/API.md` → 3: the passage and this block's two mentions) and v119's
+STATED sentence on
+quick-cooked-tough-greens|1; PART C's the design pass archived at
+.claude/diag/2026-11-19/cure/ (ruling.md C1–C8 over proposal.md, critique.md
+and variants.md — a pass that ran python only: every figure below is this
+batch's replay, not the port's) and the owner-approved wording
+`docs/mockups/v121-removed-copy.html` string 1. RULED by the orchestrator
+under the owner's standing matcher authorization, 2026-11-19, and reported to
+the owner — PART C as an EXTENSION of the owner's 2026-10-01 rinsed-cure
+ruling (its largest row is a vegetable, not a co-solute); C11's treatment is
+the OWNER's ruling of 2026-11-19. matcher.dart, grams.dart, engine.dart; no
+table kind, no new hold reason, no app code, no FDC request, no raw-line
+grammar, no migration. Replayed on SNAPSHOT 33 against the v121 set, both
+orders byte-identical, calls 0. This section cites symbols, grep commands
+and hit counts — never a line number.)**
+- **R1 — turnip → ONE record.** `_rankAs['turnip']` (matcher.dart) reads the
+  weighed lines' answer under their words, `('turnips', 'turnips')` (was
+  `('turnip', 'turnips raw')`), so the count line
+  farmhouse-vegetable-and-barley-soup|16 "1 turnip, peeled and cut into
+  ¾-inch pieces" lands Foundation 2747674 "Turnips, raw" at 0.970000, the
+  record and confidence of the three weighed rows (was FNDDS 2709809
+  "Turnip, raw" at 1.000000). Its 120 g is one piece-table row, `('turnip',
+  120)` (grams.dart `_pieceWeights`; `grep -c "('turnip', 120)"
+  apps/server/lib/src/nutrition/grams.dart` → 1): FDC 2709809's own `1 whole`
+  portion (cached in snapshot 33: "1 whole = 120.0 g"), a cross-record piece
+  weight like the shipped ones, its basis naming the source through
+  `_approximatePieces['turnip']`: "1 × 120 g each · approximate (FNDDS
+  2709809's '1 whole' portion read as one turnip)" (was "1 · USDA per-item
+  weight"). Energy: 2747674 prints no 208 and no 958; its 957 is 33.9816 kcal
+  / 100 g (the weighed rows read it: 154.14 kcal / 453.59 g) — 120.00 ×
+  0.339816 = 40.78 kcal (was 33.60 = 120 × 28 / 100). The three weighed rows
+  (buttery-spring-vegetables|0, roasted-root-vegetables|5,
+  irish-stew-with-carrots-and-turnips|8) byte-identical.
+- **R2 — portobello mushroom cap → ONE record.** `_rankAs['portobello
+  mushroom caps']` reads the counted caps' answer and words, `('mushrooms
+  portabella raw', 'mushrooms portabella raw')` (was `('portobello
+  mushrooms', 'mushroom portabella')`), so
+  spaghetti-with-quick-mushroom-ragu|3 "8 ounces portobello mushroom caps
+  …" lands SR 169255 "Mushrooms, portabella, raw" (the owner's v35 record for
+  the counted caps; was Foundation 2003598 "Mushroom, portabella"): 226.80 g
+  unchanged × 22 kcal / 100 g (208) = 49.90 (was 59.02 on 2003598's 958,
+  26.0248). hearty-beef-and-vegetable-stew|3 and
+  stir-fried-portobellos-with-ginger-oyster-sauce|11 (the key 'portobello
+  mushroom', its entry unchanged) byte-identical.
+- **R3 — bone-in turkey thigh → a skin MOVE key** (not a spelling: "skinned,
+  boned" is meat only, the confit's thighs are meat and skin, and both
+  records are right; the wrong was the mechanism — the skin difference rode
+  on a `_rankAs` entry for the SINGULAR spelling alone). As the chicken-thigh
+  move keys of v116 do (2727567 → 2646171): both spellings read ONE cached
+  answer, 'bone-in turkey thigh', ranked under 'turkey thigh meat and skin
+  raw' — `_rankAs['bone-in turkey thigh']` (its rank words were 'turkey
+  thigh meat only raw') and a new `_rankAs['bone-in turkey thighs']` — so
+  both rank SR 171533 "Turkey, retail parts, thigh, meat and skin, raw" first
+  (0.962857; the `skin` rank word stops `rankCandidates`' skinless dock), and
+  the SHIPPED skin move carries the record: `_skinlessRecords` (engine.dart)
+  gains `171533: 174518` (`grep -c "171533: 174518"
+  apps/server/lib/src/nutrition/engine.dart` → 1), read forward by
+  `_skinOffFood` (a weighed line that buys refuse and whose skin is
+  discarded — `removesSkin` / `skinDiscarded` on "skinned, boned" — moves to
+  the meat-only SR 174518 at AH-102 item 2598's meat 77 %) and back by
+  `decisionRecordOf` (a decision on the moved row decides 171533). No new
+  mechanism. The rows: juicy-grilled-turkey-burgers|0 byte-identical
+  (174518, 0.962857, 698.53 g, 810.30 kcal); the stored CONFIDENCE of
+  turkey-thigh-confit-with-citrus-mustard-sauce|5 alone moves, 0.545714 →
+  0.962857 (its ranked top under the new words; record 171533, 1,487.78 g
+  and 2,395.33 kcal unchanged).
+- **R4 — assertive greens → kale (a flagged stand-in).** `_rankAs['assertive
+  greens']` = `('kale', 'kale')` — the cached 'kale' answer under its words,
+  as the 'kale or collard greens' lines read it — and
+  `approximationRecords['assertive greens']` = 323505 (`grep -c "'assertive
+  greens'" apps/server/lib/src/nutrition/matcher.dart` → 2):
+  quick-cooked-tough-greens|1 "2 pounds assertive greens, such as kale,
+  collards, or mustard, stemmed, …" lands Foundation 323505 "Kale, raw" at
+  0.970000 (the first green the line names; was Foundation 2710823
+  "Asparagus, green, raw" at 0.511667, a WRONG-FOOD row), and v119's shipped
+  kale share reads the line's own "stemmed" (AH-102 item 1305, 0.64): 907.18
+  × 0.64 = 580.60 g × 35 kcal / 100 g (208) = 203.21 kcal (was 907.18 g,
+  213.45 kcal), the figures of braised-greens-with-bacon-and-onion|4's rule;
+  basis "from 2 pound × 0.64 edible · approximate (USDA AH-102 item 1305:
+  kale, raw, untrimmed → leaves without stems 64 % (no range printed)) ·
+  approximation (counted as Kale, raw)". No request: 'kale' and 323505's
+  detail are cached.
+- **PART S — THE ROWS (R5; the replay against the v121 set):** THREE rows
+  move record and one stored confidence, nothing else —
+  farmhouse-vegetable-and-barley-soup|16 (+7.18 kcal; the recipe 263.55 →
+  264.74 a serving), spaghetti-with-quick-mushroom-ragu|3 (−9.12; 694.27 →
+  691.98), quick-cooked-tough-greens|1 (−10.24 kcal, −326.58 g; 149.59 →
+  147.03), turkey-thigh-confit-with-citrus-mustard-sauce|5 (the confidence
+  alone). SODIUM a serving (M108's `kit/sodium.sql` over each tree's own
+  replayed database): the soup 1,017.09 → 1,006.25 mg, the ragu 358.75 →
+  360.84, the greens 13.21 → 84.56. A17, each moved row against its steps:
+  the turnip is simmered in the soup and served; the caps cook into the ragu
+  until their liquid evaporates; the greens are blanched, squeezed and
+  braised in the broth and served — each kept whole.
+- **THE REACH (R6: every corpus line normalizing to a changed key, recipes
+  and titled sections).** 'turnip': farmhouse-vegetable-and-barley-soup|16
+  alone (the weighed lines normalize 'turnips', no entry; falafel's section
+  "Quick Pickled Turnips and Carrots with Lemon and Coriander" |7 "1 pound
+  turnips" likewise, no stored row); 'portobello mushroom caps':
+  spaghetti-with-quick-mushroom-ragu|3 alone; 'bone-in turkey thigh':
+  juicy-grilled-turkey-burgers|0, 'bone-in turkey thighs':
+  turkey-thigh-confit-with-citrus-mustard-sauce|5; 'assertive greens':
+  quick-cooked-tough-greens|1 alone (a line naming kale first; no "turnip
+  greens" or other non-kale line reaches it). The piece row reaches a
+  COUNTED line whose head noun is `turnip`:
+  farmhouse-vegetable-and-barley-soup|16 alone. `_skinlessRecords`' new entry
+  reaches a row on 171533 whose line discards the skin, and any line a
+  decision carries there. The key 'turkey thigh'
+  (old-fashioned-stuffed-turkey's section "Make-Ahead Turkey Gravy" |0) and
+  'portobello mushroom' are not
+  touched.
+- **THE PERSON PATH (R7: the real PUT, NoNet, each act on a fresh database
+  holding the key's two rows, measured by a printing probe on both trees —
+  the base 9fd3e55 and the tip, each on its own replayed snapshot-33
+  database — and pinned on the tip):** a Confirm + apply_to_all on each
+  spelling's row, then the key's other row —
+
+  | key | the deciding row | base 9fd3e55 | v122 |
+  |---|---|---|---|
+  | turnip | buttery-spring-vegetables\|0 (weighed) | farmhouse-vegetable-and-barley-soup\|16 onto 2747674 with NO grams (−33.60 kcal) | applied 0, 0 re-pointed |
+  | turnip | farmhouse-vegetable-and-barley-soup\|16 (count) | the three weighed rows onto 2709809 (−61.05) | applied 0, 0 re-pointed |
+  | portobello mushroom cap | hearty-beef-and-vegetable-stew\|3 | spaghetti-with-quick-mushroom-ragu\|3 onto 169255 (−9.12) | applied 0 |
+  | portobello mushroom cap | spaghetti-with-quick-mushroom-ragu\|3 | hearty-beef-and-vegetable-stew\|3 onto 2003598 (+3.38) | applied 0 |
+  | bone-in turkey thigh | juicy-grilled-turkey-burgers\|0 (skinned) | turkey-thigh-confit-with-citrus-mustard-sauce\|5 onto 174518, 1,397.06 g (−774.74) | applied 0; the decision stored is 171533 (`decisionRecordOf`) |
+  | bone-in turkey thigh | turkey-thigh-confit-with-citrus-mustard-sauce\|5 | juicy-grilled-turkey-burgers\|0 onto 171533, 743.89 g (+387.36) | applied 1: the burgers' row is carried 171533 and moved back to 174518 — record, grams and basis unchanged, its confidence written 1.000000 (the carried write) |
+
+  A13, a person's own pick on farmhouse-vegetable-and-barley-soup|16: 2747674
+  (`overridden`, 120.00 g, 40.78 kcal), FNDDS 2709809 (120.00 g, 33.60 — its
+  basis now the piece row's; at the base "1 · USDA per-item weight": the
+  piece table precedes the record's own `1 whole`, the same 120 g), and a
+  third record, SR 168454 "Rutabagas, raw" (120.00 g × 37 / 100 = 44.40).
+- **WHAT STAYS (PART S):** every other rank-as entry, `rankCandidates`, the
+  skin readers' words, the piece table's other rows. The candidates list
+  (`candidatesForLine`, before the moves) of the skinned burgers line now
+  LISTS 171533 first, as the cassoulet's skinned chicken thigh lists 2727567
+  (nutrition_v8_test.dart re-pinned); its stored row is 174518. The R3 record
+  follows the line's OWN skin words in both crossings no corpus line prints
+  (pinned, synthesized): "4 pounds bone-in turkey thighs, skinned" in the
+  confit's steps → 174518, 4 × 453.592 × 0.77 = 1,397.06 g × 116 / 100 =
+  1,620.59 kcal; "1 (2-pound) bone-in turkey thigh" in the burgers' steps →
+  171533, 2 × 453.592 × 0.82 = 743.89 g × 161 / 100 = 1,197.66.
+- **PART C — C1, THE RULE (the rinsed cure).** The shipped `_rinsedCure` is
+  read for a salt or sugar head alone, a `_rub` sentence and a rinse that
+  BEGINS its sentence. Now every line of a cure a step applies to the food
+  and a LATER sentence rinses off the food counts 0 g discarded — the
+  shipped basis "discarded in cooking — counted as 0 g", no new wording, no
+  hold, no review entry. `_rinsedCureLines` (engine.dart,
+  `memo:rinsedCureLines`, once per index), four steps over
+  `_stepIndexOf(recipe).sentences`:
+  (1) THE RINSE — the LAST sentence holding `\brins(?:e|es|ed|ing)\b`
+  ANYWHERE (`_cureRinse`), with no "excess" and not negated
+  (`_rinseNegated`, `\b(?:do not|don't|don’t|without)\s+rins`), that names a
+  food (the shipped `#lastRinse` shape; the design measured "every rinse" and
+  "the last" alike on this corpus); (2) THE FOOD — the line heads `_naming`
+  finds in it (`_namedHeadsAt`) before its first `\bfrom\b` (`_fromWord`),
+  or AFTER it where the rinse word comes first (ruling.md C5's "rinse X from
+  FOOD": the food is never zeroed); (3) THE APPLICATION — each earlier
+  sentence `_appliesCure` reads (`_rubWord`, `\brub(?:s|bed|bing)?\b`, the
+  word bound in this reader only — the shipped `_rub` `\brub` is unchanged
+  and reads "rubber spatula"; or the first `_spreadWord` followed by
+  `_overOrOn` in the rest of its sentence, two finds, linear — CORRECTED at
+  the owner gate, 2026-11-20: the batch stopped the read at the sentence's
+  next period, which a period INSIDE a sentence, "1 (14.5-ounce) can", also
+  is) whose step, up to and including it, names a food head; (4) THE LINES —
+  each application's
+  lines (A13's nth mention, `_mentionLinesOf`) plus, where it names
+  `_mixtureWord` (`\b(?:mixture|paste|cure|rub)\b`), the mixture's
+  (`_mixtureLinesAt`, C3), minus every line of a food head.
+- **C2 — ONE wrapper.** `discardedMediumOf` is now a wrapper over the shipped
+  body, renamed `_discardedMediumBody` (its text unchanged; `grep -c
+  "_discardedMediumBody(" apps/server/lib/src/nutrition/engine.dart` → 2):
+  the body's answer first; only a line it gives NO medium, read by sentence
+  (`bySentence`) and not for the coat alone (`coatOnly`), is asked of
+  `_rinsedCureLines` by its POSITION (`_positionOf`) — so oil / fat, salt /
+  sugar and head-less lines are reached as every other line, and the
+  2026-09-28 held vegetable salts and soda soaks keep the body's answer
+  (creamy-coleslaw|2 and sesame-lemon-cucumber-salad|1 the salt baths;
+  sichuan-stir-fried-pork-in-garlic-sauce|10,
+  thai-style-stir-fried-noodles-with-chicken-and-broccolini|3 and
+  vietnamese-style-caramel-chicken-with-broccoli|0 the soda soaks;
+  creamy-coleslaw|2 pinned: `saltBath`). A line object that is not one of
+  the recipe's own (`_printedSaltLine`'s synthesized print, a weighed
+  sub-line) has no position and gets no new answer.
+- **C3 — THE CARRY.** `_mixtureLinesAt`: the lines named by the MAKING
+  step's mix sentences — the first step holding a `_marinadeMix` or
+  `_pulseWord` (`\bpulse`) sentence (`memo:makingStep`, once), its such
+  sentences before the one naming the mixture when that one is in the making
+  step (`('mixtureLines', cut)`, once per cut) — MINUS a sentence that sets a
+  share aside (`_setsAside`, `\bset aside\b|\breserv`): never "the nearest
+  earlier mix sentence" (on steak-tacos that carries the EATEN lime juice |6
+  and none of the paste). The same helper is C11's.
+- **C6 — THE MEDIUM:** a 'sugar' head `DiscardedMedium.brineSugar`, every
+  other line `DiscardedMedium.brine` (the co-solute mapping). Measured on
+  the replay: the ten rows (the nine below and the thyme sprigs') at 0.00 g
+  with the shipped basis and no share —
+  `_eatenPlusPart`, `_eatenOutsideMedium` and `_brineShareOf` give none of
+  them a part; both media follow the policy, so `heldMediumLine` holds none.
+- **PART C — THE ROWS (C8; the replay against the v121 set):** NINE rows →
+  0.00 g `discarded`, "discarded in cooking — counted as 0 g", −419.25 kcal,
+  each keeping its record and stored confidence (columns grams, gram source,
+  basis and kcal alone move):
+  turkey-thigh-confit-with-citrus-mustard-sauce|0 "3 large onions, chopped
+  coarse (4¾ cups)" 760.00 g × 38 / 100 = 288.80 kcal; |2 "2½ tablespoons
+  table salt for curing" 45.10 g, 0.00; |3 "4½ teaspoons sugar" 18.00 g × 385
+  / 100 = 69.30 (→ `brineSugar`); |4 "1½ teaspoons pepper" 3.45 g × 251 / 100
+  = 8.66 — step 1 "Process onions, thyme sprigs, 2½ tablespoons salt, sugar,
+  and pepper in food processor …" makes the mixture, "Spread remaining onion
+  mixture evenly over thighs." applies it, step 2 "Remove thighs from onion
+  mixture and rinse well (…)" rinses it off;
+  new-englandstyle-home-corned-beef-and-cabbage|1 peppercorns 8.72 g, 21.90
+  kcal; |2 thyme 2.96 g, 8.16; |3 allspice 4.33 g, 11.38; |4 paprika 3.47 g,
+  9.80; |5 bay leaves 0.40 g, 1.25 — step 1 "Combine salt, peppercorns,
+  thyme, allspice, paprika, and bay leaves in bowl.", step 2 "Rub each side
+  evenly with salt mixture.", step 3 "Rinse brisket and pat it dry." (288.80
+  + 69.30 + 8.66 + 21.90 + 8.16 + 11.38 + 9.80 + 1.25 = 419.25.) ONE MORE ROW,
+  a member of the ruled class, basis only (written up before anything else
+  was built; RULED by the orchestrator at the gate, 2026-11-20: ACCEPTED —
+  step 1 processes the sprigs into the cure the thighs are rinsed of; the
+  design's expected_rows.tsv listed it by hand "NEGATIVE: unchanged", 0 g as
+  it already was, though its port's reach names it and its adjudicated.tsv
+  reads RINSED):
+  turkey-thigh-confit-with-citrus-mustard-sauce|1 "12 sprigs fresh
+  thyme", 0.00 g on both sides — gram source `unmeasured` → `discarded`,
+  basis "12 sprig — a sprig is not measured, counted as 0 g" → "discarded in
+  cooking — counted as 0 g" (variants.md's VA reach is 11 lines: these ten
+  and new-englandstyle-home-corned-beef-and-cabbage|0, the salt the shipped
+  body already answers `brine`). The recipes: the confit 500.72 → 439.59
+  kcal a serving (−12.21 %; −366.76 / 6; its batch grams 2,537.60 →
+  1,711.00), SODIUM 3,269.76 → 355.06 mg a serving (the curing salt's 45.10
+  g); the corned beef 584.11 → 577.55 (−1.12 %; −52.49 / 8; 4,660.10 →
+  4,640.20 g), sodium 290.63 → 289.48 mg. No dependent: no other recipe's or
+  section's row, rec, section, note or bucket moves.
+- **C7 — the cured food's flag:** `trimStandInFlagOf`'s `cure` arm ("the
+  steps cure and rinse the brisket — the cure's sodium is not counted; …")
+  is keyed on the TITLE (`\bcorned beef\b`) and reads no medium —
+  turkey-thigh-confit-with-citrus-mustard-sauce|5 does not gain it; left as
+  shipped.
+- **C11 — THE SCRAPED-OFF NOTE (the OWNER's ruling, 2026-11-19: a paste or
+  marinade scraped off the food STAYS COUNTED; the wording APPROVED by
+  mockup the same day, docs/mockups/v121-removed-copy.html string 1).**
+  `_scrapedOffLines` (`memo:scrapedOff`, once per index) and
+  `_scrapedOffFlag` = "approximate (scraped off the food — how much clings is
+  not written)", joined in `m50FlagOf` after `_marinadeFlag` with " · "
+  (`grep -c "_scrapedOffFlag" apps/server/lib/src/nutrition/engine.dart` → 3)
+  — the shipped flag plumbing, so only a counted row (no hold, grams above
+  0, not typed, not `discarded`) shows it, in the stored basis and the
+  matches GET alike. The predicate (variants.md's VB with the rulings): a
+  sentence that SCRAPES or WIPES … off / from (`_scrapesOff`; brush, shake
+  and pat are not read), with no "excess" and no scrape down / up or wipe
+  out / clean / down (`_scrapeNot`), no vessel in its object
+  (`_scrapedVessel`) nor at the start of its tail (`_vesselTail`); its
+  object a mixture word (`_scrapedMixture`: mixture, paste, marinade, cure,
+  rub, coating, glaze — the lines `_mixtureLinesAt` carries, set-aside
+  sentences excluded) or the lines it names that an earlier sentence put on
+  the food (`_putsOn`: rub, cover, press, coat, spread, pack, sprinkle);
+  minus the food it names after off / from. THE ROWS, basis only (grams,
+  kcal, record, status and hold byte-identical): NINE rows in three recipes
+  — miso-marinated-salmon|0 |1 |2 |3 (the miso, sugar, sake, mirin: "Using
+  your fingers, scrape miso mixture from fillets (do not rinse)"; |3's basis
+  keeps its "· approximation (counted as Wine, dessert, sweet)" before the
+  note), steak-tacos|0 |3 |4 |5 (cilantro, garlic, cumin, oil: "Scrape the
+  herb paste off the steak"), gravlax|4 (the dill: "Scrape off dill.", after
+  "Cover with dill, pressing firmly to adhere."). MEASURED against the
+  brief's eleven: steak-tacos|1 "3 medium scallions" and steak-tacos|2 "1
+  medium jalapeño chile" are named by NO step sentence in the engine's words
+  (their heads 'onion' — the matcher's 'green onions' — and 'pepper'; the
+  steps say "scallions" and "jalapeño"), so the carry does not reach them:
+  they stay counted with no note (14.40 and 3.38 kcal). No naming change (no
+  new mechanism) — RULED by the orchestrator at the gate, 2026-11-20:
+  ACCEPTED and stated; naming a line by its own item words belongs to the
+  adjustment round the YAML ingredient fields bring, for every step-naming
+  reader at once, and the mockup's reach note is corrected to nine. No row
+  carries both the marinade and the scraped note.
+- **NEGATIVES (C5, C11; each a pin):** an "excess" rinse (roast-salted-turkey
+  "Rinse off any excess salt …": roast-salted-turkey|1 stays as shipped); a
+  negated rinse (miso-marinated-salmon "(do not rinse)": counted, noted by
+  C11); the step gate's two near-misses — skillet-barbecued-pork-chops|3–|7
+  ("Combine the rub ingredients …" reads the NOUN, and step 2 never names
+  the chops: counted) and
+  crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing|5–|7
+  ("Spread the bread in an even layer on two rimmed baking sheets": the
+  dressing counted — CORRECTED at the owner gate, 2026-11-20: no step gate
+  holds this one, its step names the turkey; the sentence is read as an
+  application and names no line: see STATED); chinese-pork-dumplings
+  ("rubber spatula" … "Rinse
+  skillet": the word-bound rub); home-corned-beef-with-vegetables (a brine,
+  "Remove brisket from brine, rinse, and pat dry": no rub or spread — its
+  cure is the shipped brine's); gravlax (a cure patted dry, never rinsed:
+  counted by the rinsed-cure ruling's own negative); steak-tacos|6 (the lime
+  juice whisked into the 2 tablespoons set aside — on a SYNTHESIZED copy of
+  the recipe whose scrape is a rinse, the reader names steak-tacos|0 |3 |4
+  |5 |8, never |6) and steak-tacos|8 (the salt rubbed on under the paste: no
+  note); the vessel scrapes make-ahead-chocolate-souffles|7,
+  omelet-with-cheddar-and-chives|0, jellied-cranberry-sauce|0–|3 and
+  alu-parathas-punjabi-potato-stuffed-griddle-breads|9; an "excess" wipe on a
+  held row (eggplant-parmesan|1, held `discarded_medium`: keeps its hold, no
+  note); grilled-marinated-flank-steak|2 (the sub-recipe paste, held
+  `discarded_recipe`: no note); and every one of expected_rows.tsv's 42
+  negatives — by the property.
+- **THE PROPERTIES (A5; nutrition_v122_test.dart, one loop over every corpus
+  recipe AND titled section):** the positions `_rinsedCureLines` names ==
+  new-englandstyle-home-corned-beef-and-cabbage|0–|5 and
+  turkey-thigh-confit-with-citrus-mustard-sauce|0–|4 (11; SHA-256
+  a8068d90f73e29a6ac028bfcfac6c15441358cc854d4e92da6f344eb58bd1f59: the
+  corned beef's |0 the shipped body answers first), and the positions
+  `_scrapedOffLines` names == the nine rows above (SHA-256
+  c1f2e98a2f697df2748d48f8300b15edb42a688a699dab0881ffa50162784631) — any
+  other recipe either rule ever reaches fails the build. And R8: every corpus
+  line of the keys 'turnip', 'portobello mushroom cap', 'bone-in turkey
+  thigh' and 'assertive green', each computed ALONE in its scope's steps,
+  lands ONE record (2747674, 169255, 323505; the turkey pair 174518 where
+  `removesSkin` reads the line, else 171533): 10 lines, SHA-256
+  dee10c2a51f37e08107b894af3f786855bde657f2212e3468cd3b106969d25b8.
+- **A11 — EVERY READER OF `discardedMediumOf`** (`grep -c
+  "discardedMediumOf(" apps/server/lib/src/nutrition/engine.dart` → 21: the
+  wrapper's definition and 20 calls, as at the base; no other lib file calls
+  it). The new answer exists only on the eleven positions of the two cure
+  recipes (the property), only by sentence and never for the coat, so each
+  reader, on those lines:
+  `_yieldOilFlagOf` (== `fryingOil`), `_dunkedWithSalt` (== `saltBath`),
+  `_m52Plan`, `_m52RowOf`, `_m52OnConfirm` (coating / frying oil / batter
+  only) and `_coatingAt` (`coatOnly: true`) — no change; `_intoCheeseMilk`,
+  `_mentionsOf` and `_dissolvedWithBrineSalt` (`bySentence: false`) — no
+  change; `_dipsOf` (a dip kept only where the line has no medium: neither
+  recipe holds a dip) and `_gramBasis`'s pan-fat arm (neither recipe keeps a
+  pan fat) — no change; `measuredStepSalt` (its two reads: an amount-less
+  salt line — no class line is one — and `_printedSaltLine`'s synthesized
+  line, which has no position) — no change; THE COMPUTE — `_unplannedOf`
+  (the 0 g) and `_m50DiscardedBasis` (the basis), read by `engineOutcome`
+  and `_mediumAt` — the ten rows, pinned by the C8 rows and the matches
+  GET's turkey-thigh-confit-with-citrus-mustard-sauce|0 (A2: 790646, 0.00 g,
+  no hold, "discarded in cooking — counted as 0 g"); `heldMediumLine` (the
+  GET's portion fill and the hold) —
+  `brine` and `brineSugar` follow the policy, so no hold and the GET above;
+  THE PERSON PATH, `unskippedRow` / `derivedFor` (`dropGrams`, `keepTyped`,
+  `mediumLine`) — pinned on turkey-thigh-confit-with-citrus-mustard-sauce|0
+  in its whole recipe: a Confirm keeps 790646 at 0.00 g, `confirmed`, the
+  decided row's basis "poured away — counted as 0 g"; a pick of SR 170000
+  "Onions, raw" 0.00 g `overridden`, the same basis; a typed 100 g counted
+  as typed ("entered by hand", confidence 0.936667 kept); a typed 100 g,
+  then the line's amount edited (a synthesized "4 large onions, chopped
+  coarse (6 cups)"), keeps the 100 g (`override`) — each exactly what the
+  SHIPPED body's brine line new-englandstyle-home-corned-beef-and-cabbage|0
+  reads under the same verb (measured by a probe), no new person-path
+  wording.
+- **STATED, NOT BUILT (ruling.md C7 / C8; each measured by the design pass,
+  none reached by this batch; the kcal figures re-read on the v121 set's
+  rows):** the cures patted dry and never rinsed — gravlax|0 |1 |3 (348.39
+  kcal) and smoked-pork-loin-with-dried-fruit-chutney|0 (377.05) — stay
+  counted by the rinsed-cure ruling's own negative;
+  grilled-boneless-skinless-chicken-breasts|2–|5 (a whisked "brine" the
+  chicken is lifted from wet, 145.18 kcal); orange-flavored-chicken's drained
+  ¾ cup; skillet-chicken-fajitas|8 (the flag's nth mention, 1.43 kcal); OUT
+  OF CLASS, the backlog after the deploy:
+  pepper-crusted-beef-tenderloin-roast|3 "9 tablespoons olive oil", whose row
+  counts 1,134.00 kcal of an oil the steps strain off (the design read 6
+  tablespoons, 756.00 kcal, 14.00 % a serving, as discarded — its figure,
+  not re-derived here), and jerk-chicken|18–|20's smoke-packet herbs (71.37
+  kcal). The predicate's own limits, each with the design's measure that no
+  corpus line is one (variants.md, critique.md c11): a rinse spelled "wash"
+  or "soak off" (every corpus "wash" is a vessel or an egg wash); a cure
+  applied by "pack", "press into", "massage" or "cover" (the two corpus
+  massages are rubs no step rinses); a rinse naming no food line ("Rinse
+  well."); a cure in a titled section rinsed in the host's steps (each scope
+  reads its own steps); a line used twice is zeroed whole (no class line is
+  used twice); a line weighed through another line object (`weighedLine`'s
+  sub-recipe plus part or food alternative) is not found by position (no
+  class line is one); only the LAST qualifying rinse is read. C11's limits:
+  brush, shake and pat are not read (the design's net of 109 such sentences
+  found no class member under them); a line the engine's heads do not name
+  in the steps is not carried (steak-tacos|1 and steak-tacos|2 above);
+  `_vesselTail`'s first list is not word-bound, so a food that begins with
+  one of its words reads as a vessel ("Scrape dill off potatoes.", "… off
+  pancetta.": no note); its second list takes no determiner ("Scrape dill
+  off the grill.", "… the foil.", "… the baking sheet.": the note); and
+  neither reads past an adjective ("Scrape dill off the small bowl.": the
+  note — the shape of two corpus sentences, homemade-vanilla-ice-cream's
+  "Scrape the frozen custard from the small bowl into the large bowl of
+  custard." and raspberry-sorbet's "Scrape frozen base from small bowl into
+  large bowl of base.", whose objects name no put-on line) — each measured
+  at the owner gate on synthesized sentences, no corpus row moves by one
+  (the property), a later engine batch; a sentence that itself puts a head
+  on and scrapes it reads as not put on. C1's: an application is ANY spread
+  … over / on in a step that has named the food, so one that is no cure,
+  before the rinse, zeroes the lines it names — "Spread pecans on rimmed
+  baking sheet and toast until fragrant." after the cure's spread in the
+  same step, or in a later step that first names the thighs, zeroes the
+  pecans; in a later step that does not name the thighs, or after the rinse,
+  it does not (measured at the owner gate on a synthesized recipe). No corpus
+  line is zeroed by one (the property), but ONE corpus sentence has the
+  shape: crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing's
+  "Spread the bread in an even layer on two rimmed baking sheets …", in the
+  step that begins "While the turkey brines," before "Remove the turkey from
+  the brine and rinse it well." — read as an application, it zeroes nothing
+  only because "the bread" names no line (measured: with "the onions" in its
+  place the reader names the onions' line 9; with the step's opening clause
+  removed as well, nothing). A later engine batch, due before any change to
+  how a step names a line. The
+  discarded-SOLID review reason (the mockup's string 3) is a later app
+  batch; the button the mockup showed beside it is WITHDRAWN — that card has
+  no Confirm button — and a corrected card awaits the owner.
+- **DATED IN-PLACE NOTES (2026-11-19):** v35's "The weighed `portobello
+  mushroom caps` line keeps 2003598"; the v21 rank-as list's `portobello
+  mushroom caps` and `bone-in turkey thigh` entries; v38's `turnip` →
+  `turnips raw` sentence; v116's "THE THREE SPELLING KEYS"; v119's STATED
+  sentence on quick-cooked-tough-greens|1; the Q2 (c) home-corned passage
+  ("the rubbed spices |1–|5 … are counted" — now 0 g); the "Matcher v120" gate
+  bullet's cure sentences (the two RINSED recipes fixed, the two SCRAPED ones
+  the owner's, noted). The mockup's status column, string 1: "approved
+  2026-11-19; built in Matcher v122" (its wording untouched).
+- **PINS (apps/server/test/nutrition_v122_test.dart).** PART S: R7 each
+  moved row and the two turkey rows ALONE in its recipe, every stored column
+  (record, description, status, hold, gram source, confidence, grams), the
+  kcal and the basis, as equalities from the replay; A2 the matches GET's
+  grams and `gram_basis` for farmhouse-vegetable-and-barley-soup|16; the
+  person path above, six acts; A13's three own picks; R3's two synthesized
+  crossings; the R8 property. PART C: C8 the ten rows in their whole recipes
+  with each line's medium (confit |0–|4 brine / brineSugar, |5 none; the
+  corned beef's |0 |1 |5 brine, |6 none) and both recipes a serving as the
+  fixtures compute them (439.59 and 577.62; the replay on snapshot 33 reads
+  439.59 and 577.55); A2 the GET's
+  turkey-thigh-confit-with-citrus-mustard-sauce|0; A11's four
+  person verbs; the C5 / C2 negatives (seven recipes and creamy-coleslaw|2's
+  `saltBath`); C3 steak-tacos on its synthesized rinse copy (|0 |3 |4 |5 |8,
+  never |6); C11's three recipes, the stored basis of miso-marinated-salmon|0
+  and six negatives; the two properties; RULE C's two cap shapes; and every
+  gate no corpus line alone decides on a synthesized recipe, each STATED in
+  its comment with the corpus sentence its wording follows — the rinse
+  anywhere, "rinse X from FOOD", the negation, "excess", the spread's over /
+  on, the word-bound rub, `pulse`, the set-aside exclusion's `reserv` arm (a
+  mix sentence that "reserve[s]" a share: [0, 1], never the lime juice), the
+  wrapper's shipped answer first, `coatOnly` and `bySentence: false`, and
+  C11's wipe, the earlier put-on, the food after off, the excess wipe, a
+  vessel in the object, a scrape down and a marinade word. THE OWNER GATE's
+  five tests (2026-11-20, by hand, 76 synthesized cases, each naming its gate
+  in its `reason`): the rinse's other forms, the negation's other spellings,
+  the rub's other forms, the spread's "on" and its read past a period inside
+  the sentence, the mixture words paste, cure and rub, the making step's
+  `blend`, the last rinse and the first mix step (17 cases); a mixture named
+  before the first mix step (1); each put-on
+  verb, each other mixture noun, the wipe-off shape and each other refused
+  scrape (16); each vessel word in the object and after off (32); each
+  determiner and each way the object ends (10).
+- **MUTANTS** (each on a snapshot copy of its lib file, a literal anchor of
+  count 1, its diff saved and read before its result, restored from a signal
+  trap by copy + cmp + md5, a runner that refuses a file whose md5 is not
+  the clean one): 45 distinct, every one killed by a value. The fixer's 38 —
+  PART S:
+  the turnip entry, the turnip piece row, its basis source, the caps entry,
+  the greens entry, the greens' approximation record, the plural thighs
+  entry, the singular's rank words back to 'turkey thigh meat only raw'
+  (killed by nutrition_v8_test.dart's re-pinned candidates list) and the
+  skin-move entry; PART C: the rinse at the start, "excess", the negation,
+  the `from` cut both ways, the rub, the spread, over / on, the rub unbound,
+  the step gate, `pulse`, `_marinadeMix`, the set-aside exclusion whole, the
+  wrapper's shipped answer first, `coatOnly`, `bySentence`, the sugar
+  mapping, the mixture word, the food minus; C11's scrape, wipe, excess,
+  vessel object, vessel tail, put-on, food, marinade word, the flag, the
+  vessel down. One was re-spelled after a compile kill (the spread); five
+  first survived (over / on, the rub unbound, `pulse`, the vessel object, the
+  vessel down) and were pinned on synthesized cases, re-run and killed. The
+  verifier's five (`coatOnly` dropped from the wrapper, the `171533: 174518`
+  entry removed, the turnip piece 120 → 121, `_scrapedVessel`'s 'foil'
+  dropped, `_setsAside`'s `\breserv` arm dropped): four killed, the fifth
+  SURVIVED the whole v122 file (no corpus row reaches it) — pinned by the
+  closer on the synthesized `reserv` case and re-run: killed (Actual [0, 1,
+  2]). The closer's own two: the singular's rank words back to meat-only
+  (killed by R3's skin-on crossing: Actual 174518, 0.754524, 698.53 g);
+  `unskippedRow`'s `medium` read `bySentence: false` — it
+  first SURVIVED the three verb pins (the 0 g is `engineOutcome`'s; that
+  read decides only `keepTyped` and the M52 confirm), then the pin of a
+  typed amount under an edited line was added and it died (Actual 0.00 g
+  `discarded`).
+- **COST (RULE C).** Two count-pinned cap shapes (400 lines, 120 steps of
+  10,000 characters; the confit's thighs and 399 pepper lines): RINSE TRUE
+  (every sentence combines, spreads the mixture over the thighs or rinses
+  them: 335 lines zeroed) and SCRAPE TRUE (every sentence combines, rubs or
+  scrapes: 0 zeroed), compute and GET each count-exact and within the 10 s
+  backstop; `memo:mixtureLines` 137 and 112 (once per cut, ≤ sentences + 1).
+  New families in `boundsOf` (test/support/cost_bounds.dart): once per index
+  `memo:rinsedCureLines`, `memo:scrapedOff`, `memo:mentionLines`,
+  `memo:namedHeads`, `memo:makingStep`; `memo:mixtureLines` ≤ sentences + 1.
+  The shipped exact cap maps (51 compute / GET / recompute shapes in v83 v84
+  v85 v86 v87 v89 v94 v96 v98 v100 v120 v121, base vs tip) gain
+  `memo:rinsedCureLines` 1 (2 on one v83 GET) and `memo:scrapedOff` 1 on a
+  GET, four shapes nothing — no other counter moves.
+- **RE-PINS.** `grep -rho "RE-PIN (M109 batch, v122)" apps/server/test | wc
+  -l` → 83 in `grep -rl … | wc -l` → 38 files: matcherVersion 107 → 108; the
+  hash literals that read the matcher term; the moved rows' tuples (the
+  turnip, caps, greens and cure rows where a shipped pin reads them; v119's
+  negative on quick-cooked-tough-greens|1 now reads 323505, 580.60 g, 203.21
+  kcal); v8's candidates list; the cost maps above; and
+  nutrition_sweep_audit_test.dart's fixture census, compared 562 → 565 and
+  differ 429 → 430 (the three details the batch adds to
+  test/fixtures/fdc/foods.json — 2747674, 323505, 168454, each byte-equal to
+  snapshot 33's `fdc_food_cache` — 2747674's detail differing from its
+  'turnip' hit in some digit). No contract golden and no app file moves.
+- **GATE-P (R10)** — sw5–sw13 with sw8r, sw9 and sw10, the tip's sweep
+  scripts on both, 12 shards, NoNet, each tree on ITS OWN replayed database
+  (the base 9fd3e55's and the tip's replay of snapshot 33): sw5 32,659 →
+  33,099 combos, sw6 38,588 → 39,028, sw7 1,920 → 1,950, sw8 58,596 →
+  59,346, 0 divergent and 0 refused on both, settled 279, a second pass moves
+  0, calls 0 — every differing line is in the two cure recipes: the sweeps'
+  plan rows are the `discarded` rows, so the tip adds the c / p specs of the
+  ten new ones (turkey-thigh-confit-with-citrus-mustard-sauce|0–|4,
+  new-englandstyle-home-corned-beef-and-cabbage|1–|5) and the confit's two
+  largest foods move from |0 and |5 to |5 and |9 (|0 is 0 g now); sw8r 5,433
+  and sw9 176 combos, 0 divergent, the line sets identical; sw11 40,484 →
+  41,044 combos, 200 divergent on both (the DIV lines byte-identical),
+  refused 12,878 → 13,262, every differing line in the two cure recipes;
+  sw12 141 → 145 combos (settled 1,176 → 1,178), 54 divergent on both (the
+  49 divergent ROW lines and the 5 PARTNER lines byte-identical): the four
+  new combos are the keys of the new plan rows ('cracked black peppercorn',
+  'dried thyme', 'ground allspice', 'pepper'), and the other differing ROW
+  lines are the cure rows themselves (`decided-or-gated/plain` → `/plan`,
+  the confit's onion, sugar and thyme no longer counted food rows); sw13 294
+  combos, 0 divergent, the line sets identical; sw10 158 → 159 round trips,
+  bare and typed, 0 divergent on both — the new one is
+  juicy-grilled-turkey-burgers|0, whose move inverse now names 171533 (R3's
+  `_skinlessRecords` entry): Confirmed, it decides 171533 and lands as the
+  row it was; new-englandstyle-home-corned-beef-and-cabbage|6's round trip
+  reads its recipe's 577.55 a serving. Every base-vs-tip difference is a
+  moved row or R3's person path.
+- **SUITES** (run whole after the last change to a lib or test file): server
+  +3,776 ~4 (the base's +3,706 ~4 plus the 70 tests of
+  nutrition_v122_test.dart: the batch's 65 and the owner gate's five),
+  salt_shared +265, app +674; `dart analyze`
+  (apps/server, tool/replay included; packages/salt_shared) and `flutter
+  analyze` clean; `dart format` on the 43 changed Dart files, 0 changed; the
+  39 changed or new server test files load without the corpus
+  (`SALT_CORPUS_DIR=/nonexistent`: +223 ~599, 0 "Failed to load"); after
+  the last docs edit the docs-reading files re-run: server +860 ~1,
+  salt_shared +8, app +74.
+- **The owner gate (2026-11-20).** The replay re-run on the returned tree:
+  byte-identical to verifier round 2's (rows, recs, sections, calls, notes; the
+  buckets equal the v121 reference), and a worktree of the base 9fd3e55 replays
+  the v121 set byte for byte. Every moved row listed by a script of the gate's
+  own that parses no line (the replay against the v121 set and the design's
+  `adjudicated.tsv`): 23 rows, −431.43 kcal — ten to 0.00 g `discarded` (846.43
+  g and 419.25 kcal at v121), each adjudicated RINSED; nine gaining the
+  scraped-off note alone, five adjudicated SCRAPED (miso-marinated-salmon|0 |1
+  |2 |3, gravlax|4) and four SET_ASIDE (steak-tacos|0 |3 |4 |5, the paste whose
+  2 tablespoons are set aside); three changing record (+7.18, −9.12 and −10.24
+  kcal) and one its stored confidence. Of the adjudication's 20 RINSED rows the
+  other ten do not move: the corned beef's salt |0 (0 g already), two 0 g rule
+  rows, five rows held `discarded_medium`, fish-and-chips|1 (the shipped body's
+  answer) and a section line with no stored row. Of expected_rows.tsv's 42
+  negatives two differ, both stated above:
+  turkey-thigh-confit-with-citrus-mustard-sauce|1 (its basis) and |5 (R3's
+  confidence). Each moved row read against its recipe's steps (the turnip
+  simmered and served; the caps cooked into the ragu; the greens blanched,
+  squeezed and braised; both cures as quoted under THE ROWS; the three scrapes
+  as quoted under C11). The energy and the sodium measured again on the gate's
+  own two replayed databases (a script of its own over `recipe_nutrition`,
+  every nutrient of every scope): 5 of 1,342 scopes differ, the five recipes
+  the DEPLOY NOTE names, at the figures above; each batch delta re-derived by
+  hand from the cached records (2747674: 957 = 33.9816 kcal and sodium 12.8 mg
+  / 100 g against 2709809's 28 and 67; 169255: 22 and 9 against 2003598's
+  26.0248 and 5.312; 323505: 35 and 53 against 2710823's 23.5292 and 2.46; the
+  confit's batch sodium falls 17,488.23 mg, 17,479.86 of it its curing salt's
+  45.10 g × 387.58 mg/g). THE PERSON PATH measured again: the batch's probe run
+  on the gate's own base and tip replays, each output byte-identical to the
+  batch's (46 scenarios a tree, calls 0) — on the base each of the six Confirm
+  + apply_to_all acts re-points the key's other row; on the tip five apply no
+  line and the confit's applies one, the burgers' row, carried and moved back
+  with its confidence written 1.000000. TWO RULINGS by the orchestrator: (1)
+  turkey-thigh-confit-with-citrus-mustard-sauce|1, the thyme sprigs, is
+  ACCEPTED as built — step 1 processes them into the cure the thighs are rinsed
+  of (the design listed the row by hand as unchanged, 0 g as it already was,
+  though its port's reach names it and both lenses adjudicated it RINSED); (2)
+  the scraped-off note on NINE rows, not the eleven the mockup's reach note
+  said, is ACCEPTED and stated — naming a line by its own item words
+  (steak-tacos|1 "scallions", steak-tacos|2 "jalapeño") belongs to the
+  adjustment round the YAML ingredient fields bring, for every step-naming
+  reader at once; the mockup's reach note is corrected to nine. OWN MUTANTS —
+  112 of engine.dart, each a single site, every diff read before its result:
+  eleven structural and 101 dropping ONE word (or one form, determiner, ending
+  or bound) from a word list of the two readers. Against the file as the batch
+  left it (65 tests) 30 were killed by a value and 82 SURVIVED — and with the
+  file its corpus property, so none of the 82 decides a corpus row: the batch
+  pinned each list by one word, and four structural gates by nothing. PINNED BY
+  HAND, five tests of 76 synthesized cases, each case naming its gate in its
+  `reason`: the rinse's forms (rinses, rinsed, rinsing), the negation's
+  spellings (don't in both apostrophes, without), the rub's forms (rubs,
+  rubbed, rubbing), the spread's "on", the mixture words paste, cure and rub,
+  the making step's `blend`, the LAST rinse (an earlier rinse of the food,
+  before the cure goes on) and the FIRST mix step (a sauce whisked after the
+  rinse) — two gates that only RULE C's count pins read before; a mixture named
+  before the recipe's first mix step (it carries nothing: the mutant zeroed the
+  later sauce's lines); and for the note each put-on verb, each mixture noun,
+  the wipe-off shape, each refused scrape (up, out, clean, down), each vessel
+  word in the object and after off (the first list's behind "the" and "both"),
+  each determiner and each way the object ends. ONE LIB CORRECTION BY HAND,
+  from a survivor: the batch stopped the spread's read for over / on at the
+  sentence's next period, and the steps are already split into sentences, so
+  the stop fired only at a period INSIDE one — hand-edit verifier round 1
+  measured four plausible sentences it loses, one holding the cookbook's own
+  can-size print (synthesized: "Spread remaining onion mixture and 1
+  (14.5-ounce) can diced tomatoes evenly over thighs."). `_appliesCure` now
+  reads to the end of its sentence, pinned on that sentence, and the stop put
+  back is a mutant that dies at it; no corpus sentence reads differently
+  (hand-edit verifier round 2's scan of the 24,173 step sentences: 0), and the
+  whole-library replay on the corrected tree is byte-identical to the returned
+  tree's. On the corrected tree and the pinned file (70 tests; the 112 with
+  that one reversed): 104 killed by a value — the 30, the 73 the hand tests
+  newly kill, each by a case of its own gate, and the stop put back. EIGHT
+  survive: (a) the cut reading the naming sentence itself (`b <= cut`) — in
+  `_rinsedCureLines` the same lines the application already names, in the
+  scrape reader a difference only where the sentence that scrapes the mixture
+  is itself a mix sentence of the making step; (b) a sentence that itself puts
+  a head on and scrapes it (read as not put on: measured) — the whole-library
+  replay under each of the two byte-identical to the tip's; (c) six words of
+  `_vesselTail`'s second list that its first list also holds (bowl, pot, pan,
+  skillet, sides, bottom), each passing the file and its corpus property, and
+  the replay with the six dropped together byte-identical. Stated, not pinned:
+  no ruling says what such a sentence reads. Hand-edit verifier round 1's own
+  eight neighbours (on the tree before the correction): six killed by a value,
+  two survive with the replay byte-identical — the scraped note joined before
+  the marinade note (no row carries both) and the plural thighs entry reading
+  its own cached answer (the same ranked list; the person-path probe's output
+  unchanged). Three limits of `_vesselTail` MEASURED on the way and stated
+  under STATED — note only; and one of the zeroing reader, raised by hand-edit
+  verifier round 2 and measured again by the gate, stated there too: a spread …
+  over / on that is no cure, in a step that has named the food and before the
+  rinse, zeroes the lines it names (the batch's code and the corrected code
+  alike; no corpus line is zeroed by one, by the property — hand-edit verifier
+  round 3 found the one corpus sentence of the shape, which names no line: see
+  STATED and the note under NEGATIVES). GATE-P was not re-run at the gate: the
+  one lib edit changes `_appliesCure` alone, and its answer differs on no
+  corpus sentence (that scan) and moves no corpus row (the corpus property and
+  the whole-library replay, under the edit as a mutant before it was made and
+  on the tree after). By hand: the one lib edit; the five tests
+  (nutrition_v122_test.dart: 70 tests) and the reason string of the batch's C5
+  negative on crisp-skin-high-roast-butterflied-turkey-with-sausage-dressing;
+  this bullet, the two rulings' sentences under THE ROWS and C11, C1's spread
+  clause, the ten-row wording of C6 and A11, the PINS and SUITES clauses and
+  the limits under STATED; in docs/mockups/v121-removed-copy.html the reach
+  note and string 3's button status; the Decision-log bullet of
+  docs/IMPLEMENTATION.md and the commit message. The hand edits were verified
+  by agents before the commit.
+- **DEPLOY NOTE.** No migration. The single deploy of the prep52 chain
+  carries this batch; its sweep restamps every recipe (matcherVersion 108):
+  five recipes move — farmhouse-vegetable-and-barley-soup,
+  spaghetti-with-quick-mushroom-ragu, quick-cooked-tough-greens,
+  turkey-thigh-confit-with-citrus-mustard-sauce and
+  new-englandstyle-home-corned-beef-and-cabbage — and three more gain a basis
+  note alone (miso-marinated-salmon, steak-tacos, gravlax); no request (every
+  answer and detail the batch reads — 'turnips', 'kale', 'mushrooms
+  portabella raw', 'bone-in turkey thigh', 2747674, 2709809, 169255, 323505,
+  171533, 174518 — is cached in snapshot 33).
 
 **Matcher v121 (batch M108, prep52 P9 E1 — measured step salt behind the
 seasoning zero rule; matcherVersion 106 → 107. The spec .claude/diag/
@@ -6058,7 +6730,14 @@ number.)**
   sliced steak). A
   cure, rub or paste the steps rinse or scrape off is OWED as a batch of
   its own before the single deploy, after a design pass that measures the
-  class. Every class row derived
+  class. (NOTE 2026-11-19, matcher v122 PART C: the two RINSED recipes are
+  fixed — the confit's |0 |2 |3 |4 and the home-corned |1–|5 count 0 g
+  (`_rinsedCureLines`; the confit 500.72 → 439.59 a serving); the two
+  SCRAPED ones stay counted by the owner's ruling of 2026-11-19 and carry
+  the approved note "approximate (scraped off the food — how much clings is
+  not written)" (`_scrapedOffLines`) — on miso-marinated-salmon|0–|3 and
+  steak-tacos|0 |3 |4 |5; steak-tacos|1 and |2 are named by no step in the
+  engine's words, see "Matcher v122".) Every class row derived
   again by a script that parses no amount (the volume its new basis prints ×
   the sibling cup the owner's own reading of the cut names, kcal at the
   v119 row's own kcal per gram): 33 rows, 0 mismatches, +889.66 kcal; with
@@ -6394,6 +7073,11 @@ never a line number.)**
   'trimmed' alone and v119 leaves the row as v118 has it (907.18 g, 213.45
   kcal; the recipe 149.59 a serving); the record is the defect — a rank-as
   of 'assertive green' onto kale is queued with the record / spelling batch
+  (CORRECTED 2026-11-19, matcher v122 R4: the rank-as landed —
+  `_rankAs['assertive greens']` onto Foundation 323505 "Kale, raw", a
+  flagged stand-in, and v119's 'stemmed' kale share now reads the row:
+  907.18 × 0.64 = 580.60 g, 203.21 kcal; the v119 negative pin re-pinned to
+  those values; see "Matcher v122")
   owed before the deploy. roasted-radishes-with-yogurt-tahini-sauce|12 ("2
   pounds radishes with their greens, radishes trimmed and halved
   lengthwise, 8 cups greens reserved", 907.18 → 834.61 g on 2709803) weighs
@@ -7108,6 +7792,12 @@ never a line number.)**
     −774.74 / +387.36. RULED by the orchestrator: NO spelling split (the
     design's Appendix A is not built); the remedy is a later matcher batch
     that lands both spellings on one food, before the chain's deploy.
+    (NOTE 2026-11-19, matcher v122: the remedy landed — turnip and portobello
+    mushroom cap are each ONE record (2747674, 169255: R1, R2); bone-in
+    turkey thigh is a skin MOVE key like the 12 above (both spellings rank
+    171533, a skin-discarding line moves to 174518 by `_skinlessRecords`:
+    R3). A Confirm + apply_to_all on either spelling of each re-points no
+    row; see "Matcher v122".)
   - THE PREP-WORD SHAPE: "2 cups all-purpose flour, preferably unbleached"
     ranks with the word (the raw line) and keys plain (the item drops the
     prep word) — 0 corpus lines; pinned as today's value, the alarm for the

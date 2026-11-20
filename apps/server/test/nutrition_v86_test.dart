@@ -173,7 +173,7 @@ const Map<String, (String, String, String)> _totals = {
 };
 
 void main() {
-  test('matcherVersion 107 (v86 set it to 81, batch M84: rows move)', () {
+  test('matcherVersion 108 (v86 set it to 81, batch M84: rows move)', () {
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
@@ -200,7 +200,8 @@ void main() {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
 
   group('matcher v86 (batch M84) — whole recipes', skip: skipIfNoCorpus, () {
@@ -633,6 +634,10 @@ void main() {
 /// the process-wide `names` aside).
 const Map<String, Map<String, int>> _capCounts = {
   'E2b-TRUE': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -662,6 +667,11 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:browningFat': 1,
   },
   'E2b-QUIET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+    // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+    // `_scrapedOffLines`); no other family moves.
+    'memo:rinsedCureLines': 1,
+    'memo:scrapedOff': 1,
     // RE-PIN (fix101 batch, v101, Run 073 S4 / U4): + `skinKeptPart`'s scan,
     // once per index and item (memoised and counted; uncounted before).
     'memo:skinKeptPart': 1,

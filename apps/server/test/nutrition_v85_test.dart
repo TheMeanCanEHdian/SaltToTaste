@@ -324,7 +324,7 @@ Recipe _rewrite(Recipe recipe, int step, String from, String to) {
 }
 
 void main() {
-  test('matcherVersion 107 (v85 set it to 80, batch M83: rows move)', () {
+  test('matcherVersion 108 (v85 set it to 80, batch M83: rows move)', () {
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
@@ -352,7 +352,8 @@ void main() {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
 
   group('matcher v85 (batch M83) — whole recipes', skip: skipIfNoCorpus, () {
@@ -1143,6 +1144,10 @@ void main() {
 /// the process-wide `names` aside).
 const Map<String, Map<String, int>> _capCounts = {
   'B1a-TRUE': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -1179,6 +1184,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'allSentences': 1,
   },
   'B1a-QUIET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -1209,6 +1218,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'allSentences': 1,
   },
   'B5-TRUE': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -1248,6 +1261,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'memo:discards': 1,
   },
   'B5-QUIET': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,
@@ -1282,6 +1299,10 @@ const Map<String, Map<String, int>> _capCounts = {
     'allSentences': 1,
   },
   'B5-AMOUNTLESS': {
+    // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+    // index (`_rinsedCureLines`, asked by every line no shipped reader gives
+    // a medium); no other family moves.
+    'memo:rinsedCureLines': 1,
     'indexes': 1,
     'memo:starter': 1,
     'heads': 1,

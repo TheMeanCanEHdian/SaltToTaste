@@ -131,11 +131,15 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
   ),
   // Not reached by v35's keys ('portobello mushroom caps' reads its v21
   // answer): a weight line, unchanged.
+  // RE-PIN (M109 batch, v122): spaghetti-with-quick-mushroom-ragu|3 now
+  // reads v35's 'mushrooms portabella raw' answer too (R2: one record for
+  // both spellings of 'portobello mushroom cap'): SR 169255 (was Foundation
+  // 2003598), its weight and basis unchanged.
   (
     '0343-spaghetti-with-quick-mushroom-ragu.yaml',
     3,
     '8 ounces portobello mushroom caps, gills removed, caps cut into ½-inch pieces (about 1½ cups)',
-    2003598,
+    169255,
     '226.80',
     'counted',
     'from 8 ounce',

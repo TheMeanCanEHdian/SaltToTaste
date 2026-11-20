@@ -183,9 +183,10 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 107', () {
+  test('matcherVersion 108', () {
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
   group(
     'v120 (M107: a counted piece beside a printed volume)',
@@ -791,11 +792,14 @@ void caps() {
 
 // The cost families base f1a79b8 counts on each shape (the probe's JSON,
 // identical on the v120 tree).
+// RE-PIN (M109 batch, v122): + memo:rinsedCureLines 1 on each compute and
+// GET, + memo:scrapedOff 1 on each GET (the rinsed-cure reader and the
+// scraped-off flag, once per index); no other family moves.
 const _trueCompute =
-    '{"allSentences":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:dips":1,"memo:discards":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:naming":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:savesRemainder":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":340}';
+    '{"allSentences":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:dips":1,"memo:discards":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:naming":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:rinsedCureLines":1,"memo:savesRemainder":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":340}';
 const _trueGet =
-    '{"allSentences":1,"carriedReads":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:cutShare":1,"memo:dips":1,"memo:discards":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:liftedFromMarinade":1,"memo:naming":1,"memo:panFatLines":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:savesRemainder":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":340}';
+    '{"allSentences":1,"carriedReads":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:cutShare":1,"memo:dips":1,"memo:discards":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:liftedFromMarinade":1,"memo:naming":1,"memo:panFatLines":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:rinsedCureLines":1,"memo:savesRemainder":1,"memo:scrapedOff":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":340}';
 const _quietCompute =
-    '{"allSentences":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:bundles":1,"memo:dips":1,"memo:discards":1,"memo:foodNaming":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:naming":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:savesRemainder":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":275}';
+    '{"allSentences":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:bundles":1,"memo:dips":1,"memo:discards":1,"memo:foodNaming":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:naming":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:rinsedCureLines":1,"memo:savesRemainder":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":275}';
 const _quietGet =
-    '{"allSentences":1,"carriedReads":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:bundles":1,"memo:cutShare":1,"memo:dips":1,"memo:discards":1,"memo:foodNaming":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:liftedFromMarinade":1,"memo:naming":1,"memo:panFatLines":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:savesRemainder":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":275}';
+    '{"allSentences":1,"carriedReads":1,"cheese":1,"heads":1,"indexes":1,"lower":1,"memo:braise":1,"memo:brineWords":1,"memo:brines":1,"memo:browningFat":1,"memo:bundles":1,"memo:cutShare":1,"memo:dips":1,"memo:discards":1,"memo:foodNaming":1,"memo:keptSolids":1,"memo:leftInBowl":1,"memo:liftedFromMarinade":1,"memo:naming":1,"memo:panFatLines":1,"memo:parting":1,"memo:pourAway":1,"memo:reservedWhole":1,"memo:rinsedCureLines":1,"memo:savesRemainder":1,"memo:scrapedOff":1,"memo:setAsideLine":1,"memo:setsAsidePieces":1,"memo:skinSentences":1,"memo:starter":1,"memo:strain":1,"memo:strainAt":1,"memo:wordHeads":1,"sentences":17,"skinScans":1,"words":275}';

@@ -530,7 +530,7 @@ SaltDatabase _cache(List<FdcFood> foods) {
 }
 
 void main() {
-  test('matcherVersion 107 (v84 set it to 79, batch M82: rows move)', () {
+  test('matcherVersion 108 (v84 set it to 79, batch M82: rows move)', () {
     // RE-PIN (M83 batch, v85): matcherVersion 80 (was 79).
     // RE-PIN (M84 batch, v86): matcherVersion 81 (was 80).
     // RE-PIN (M85 batch, v87): matcherVersion 82 (was 81).
@@ -559,7 +559,8 @@ void main() {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
 
   group('matcher v84 (batch M82) — whole recipes', skip: skipIfNoCorpus, () {
@@ -1046,6 +1047,9 @@ _capShapes = [
     '1.40',
     2,
     {
+      // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+      // index (`_rinsedCureLines`); no other family moves.
+      'memo:rinsedCureLines': 1,
       'indexes': 1,
       'memo:skinSentences': 1,
       // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
@@ -1080,6 +1084,11 @@ _capShapes = [
       'memo:browningFat': 1,
     },
     {
+      // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+      // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+      // `_scrapedOffLines`); no other family moves.
+      'memo:rinsedCureLines': 1,
+      'memo:scrapedOff': 1,
       // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked read
       // (`pickedMoveSource` → `_carriedIdOf`), once per line text and
       // record (uncounted before: the offer read no carry).
@@ -1128,6 +1137,9 @@ _capShapes = [
     '15.00',
     1,
     {
+      // RE-PIN (M109 batch, v122): + the rinsed-cure reader's memo, once per
+      // index (`_rinsedCureLines`); no other family moves.
+      'memo:rinsedCureLines': 1,
       'indexes': 1,
       'memo:skinSentences': 1,
       // RE-PIN (v98, Run 071/072 P8): + `skinDiscarded`'s scans of the
@@ -1162,6 +1174,11 @@ _capShapes = [
       'memo:browningFat': 1,
     },
     {
+      // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+      // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+      // `_scrapedOffLines`); no other family moves.
+      'memo:rinsedCureLines': 1,
+      'memo:scrapedOff': 1,
       // RE-PIN (fix101 batch, v101, U1): + the GET offer's as-picked read
       // (`pickedMoveSource` → `_carriedIdOf`), once per line text and
       // record (uncounted before: the offer read no carry).

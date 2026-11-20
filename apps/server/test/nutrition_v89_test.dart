@@ -638,7 +638,7 @@ const List<_Host> _hosts = [
 ];
 
 void main() {
-  test('matcherVersion 107 (v89 set it to 84, batch M90: rows move)', () {
+  test('matcherVersion 108 (v89 set it to 84, batch M90: rows move)', () {
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
     // RE-PIN (M89 batch, v92): matcherVersion 87 (was 86).
@@ -662,7 +662,8 @@ void main() {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
-    expect(matcherVersion, 107);
+    // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
+    expect(matcherVersion, 108);
   });
 
   test("the six keys' figures are the corpus's printed cups, oz × 28.3495 ÷ "
@@ -1074,6 +1075,11 @@ const Map<String, (String, String)> _totals = {
 /// aside): the steps read once per index, the sentences and words of each
 /// recipe's own steps.
 const Map<String, int> _shared = {
+  // RE-PIN (M109 batch, v122): + the rinsed-cure reader's and the
+  // scraped-off flag's memos, once per index (`_rinsedCureLines`,
+  // `_scrapedOffLines`); no other family moves.
+  'memo:rinsedCureLines': 1,
+  'memo:scrapedOff': 1,
   'allSentences': 1,
   'cheese': 1,
   'heads': 1,
