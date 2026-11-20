@@ -183,7 +183,10 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 106', () => expect(matcherVersion, 106));
+  test('matcherVersion 107', () {
+    // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
+    expect(matcherVersion, 107);
+  });
   group(
     'v120 (M107: a counted piece beside a printed volume)',
     skip: skipIfNoCorpus,

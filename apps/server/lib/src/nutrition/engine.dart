@@ -6443,7 +6443,12 @@ String? m50FlagOf(Recipe recipe, IngredientLine line) {
     return null;
   }
   final head = _headsOf(recipe)[position];
-  final kept = head == null ? null : _keptVolumeOf(recipe, line, head);
+  // v121 (M108 Q4): a seasoning salt line ([measuredStepSalt]) is not
+  // asked — its head and its "and" read another line's kept volume
+  // (italian-chicken-soup-with-parmesan-dumplings|1: the bread crumbs' cup).
+  final kept = head == null || _seasoningSaltAt(recipe)[position]
+      ? null
+      : _keptVolumeOf(recipe, line, head);
   final flags = [
     if (kept != null) 'approximate (the steps keep only $kept of it)',
     if (_leftInBowl(recipe)[position] case final words?)
@@ -13643,7 +13648,21 @@ GramResolution? stepAmountGrams(
   FdcFood? food,
   String normalized,
 ) {
-  final prints = _stepReadsOf(recipe, line);
+  final all = _stepReadsOf(recipe, line);
+  // M108 rule pass V2: a seasoning salt line's prints the steps lose
+  // ([_lostSaltPrint]) are named in the basis, never weighed.
+  final position = _positionOf(recipe, line);
+  final salty = position != null && _seasoningSaltAt(recipe)[position];
+  final prints = salty
+      ? [
+          for (final p in all)
+            if (!_lostSaltPrint(recipe, p)) p,
+        ]
+      : all;
+  final lost = [
+    for (final p in all)
+      if (salty && _lostSaltPrint(recipe, p)) p.amount,
+  ];
   if (prints.isEmpty) {
     return null;
   }
@@ -13651,7 +13670,7 @@ GramResolution? stepAmountGrams(
   // the detail of one FDC id weigh apart) — once per request.
   return _stepIndexOf(recipe).memo(
     ('stepAmountGrams', _positionOf(recipe, line), food),
-    () => _weighPrints(prints, line, food, normalized),
+    () => _weighPrints(prints, line, food, normalized, lost),
   );
 }
 
@@ -13659,8 +13678,9 @@ GramResolution? _weighPrints(
   List<_StepRead> prints,
   IngredientLine line,
   FdcFood? food,
-  String normalized,
-) {
+  String normalized, [
+  List<String> lost = const [],
+]) {
   // Each distinct print weighed once (RULE C: a step full of "1
   // tablespoon" prints weighs one).
   final weighed = <String, GramResolution?>{};
@@ -13682,7 +13702,9 @@ GramResolution? _weighPrints(
       () => resolveGrams(
         amounts: parseIngredientLine('${p.amount} x').amounts,
         food: food,
-        normalizedItem: normalized,
+        // v121 (closer 1): a seasoning salt line weighs as its salt, never
+        // as the pepper its item also names.
+        normalizedItem: seasoningSaltOf(normalized) ?? normalized,
         kosherSalt: packsLikeKosherSalt(line.raw),
       ),
     );
@@ -13700,7 +13722,11 @@ GramResolution? _weighPrints(
         'from step${steps.length > 1 ? 's' : ''} ${steps.join(', ')}: '
         '${_namedPrints(kept.map((p) => p.shown), kept.length)}'
         ' (${left.isEmpty ? '' : 'the ${_namedPrints(left, left.length)} '
-                  'base left; '}no amount on the line)',
+                  'base left; '}no amount on the line)'
+        // v121 (M108 Q5): the prints the steps lose ([_lostSaltPrint]).
+        '${lost.isEmpty ? '' : ' · not counted: '
+                  '${_namedPrints(lost, lost.length)} '
+                  'the steps drain off or discard'}',
   );
   _amountlessWeighed[read] = true;
   return read;
@@ -13731,7 +13757,13 @@ List<({int step, String amount})> stepAmountsOf(
 /// portion … with <amount>" sentence; v92, M89: 1 + N under a counted
 /// repeat, 0 for a print the repeat leaves; else 1) and how its basis names
 /// it.
-typedef _StepRead = ({int step, String amount, int times, String shown});
+typedef _StepRead = ({
+  int step,
+  int sentence,
+  String amount,
+  int times,
+  String shown,
+});
 
 /// [stepAmountsOf]'s reads with their counts, once per position.
 List<_StepRead> _stepReadsOf(Recipe recipe, IngredientLine line) {
@@ -13739,7 +13771,7 @@ List<_StepRead> _stepReadsOf(Recipe recipe, IngredientLine line) {
     return const [];
   }
   final position = _positionOf(recipe, line);
-  final head = position == null ? null : _headsOf(recipe)[position];
+  final head = position == null ? null : _readHeadsOf(recipe)[position];
   if (position == null || head == null || head.isEmpty) {
     return const [];
   }
@@ -13751,6 +13783,206 @@ List<_StepRead> _stepReadsOf(Recipe recipe, IngredientLine line) {
   );
 }
 
+/// v121 (M108, prep52 P9 E1): the head R-H1 reads each of [recipe]'s
+/// [nutritionLines] by — `salt` for an amount-less seasoning line naming
+/// salt ([seasoningSaltOf]: "Salt and pepper" heads at `pepper`), else its
+/// head ([_headsOf]); null where the line is no such salt line and has no
+/// head. Once per Recipe instance.
+List<String?> _readHeadsOf(Recipe recipe) => _readHeads[recipe] ??= [
+  for (final (k, head) in _headsOf(recipe).indexed)
+    _seasoningSaltAt(recipe)[k] ? 'salt' : head,
+];
+final Expando<List<String?>> _readHeads = Expando();
+
+/// v121 (M108): whether each of [recipe]'s lines is an amount-less
+/// seasoning line naming salt ([seasoningSaltOf]), once per Recipe.
+List<bool> _seasoningSaltAt(Recipe recipe) => _seasoningSalts[recipe] ??= [
+  for (final line in nutritionLines(recipe))
+    line.amounts.isEmpty &&
+        seasoningSaltOf(normalizeItem(lineItemOf(line))) != null,
+];
+final Expando<List<bool>> _seasoningSalts = Expando();
+
+/// v121 (M108): guard (i) for a seasoning salt line — another line of its
+/// scope ([_stepScopeOf]'s groups) NAMES salt ([_namesSalt] on the raw):
+/// the amount-less "Salt and pepper" heads at `pepper`, so the head count
+/// would pass it. Once per scope (`memo:saltLines`).
+bool _saltNamedElsewhere(Recipe recipe, _StepIndex index, int position) {
+  final name = _scopeNameOf(recipe, position);
+  // Key: name — the heading the scope is read for (null: every line).
+  final named = index.memo(('saltLines', name), () {
+    final out = <int>[];
+    var at = 0;
+    final lines = nutritionLines(recipe);
+    for (final g in recipe.ingredients) {
+      for (var k = 0; k < g.items.length; k++, at++) {
+        if ((name == null || g.group?.toLowerCase().trim() == name) &&
+            _namesSalt.hasMatch(lines[at].raw.toLowerCase())) {
+          out.add(at);
+        }
+      }
+    }
+    return out;
+  });
+  return named.any((k) => k != position);
+}
+
+final RegExp _namesSalt = RegExp(r'\bsalt\b(?!\s+pork)');
+
+/// v121 (M108, prep52 P9 E1): whether an amount-less seasoning [line]
+/// naming salt ([seasoningSaltOf]) is measured by the steps — R-H1's
+/// reading run with the form `salt` ([stepAmountsOf]) is not empty — and
+/// no medium takes it ([discardedMediumOf], asked of the salt it names):
+/// then it is SR 173468 at those grams, never the 0 g seasoning rule row.
+bool measuredStepSalt(Recipe recipe, IngredientLine line, String normalized) {
+  if (line.amounts.isNotEmpty) {
+    return false;
+  }
+  final salt = seasoningSaltOf(normalized);
+  if (salt == null) {
+    return false;
+  }
+  final prints = stepAmountsOf(recipe, line);
+  final position = _positionOf(recipe, line);
+  return prints.isNotEmpty &&
+      // M108 rule pass V2: a line every print of which the steps lose
+      // ([_lostSaltPrint]) stays the 0 g seasoning rule row; a lost print
+      // beside a kept one is named, never weighed ([stepAmountGrams]).
+      _stepReadsOf(recipe, line).any((p) => !_lostSaltPrint(recipe, p)) &&
+      // closer 1 (verify1 D2): a coat station's dip ([_dipsOf]) or a
+      // batter left in the bowl ([_batterInBowl]), both text-only, is a
+      // coating medium — M52's plan would share its grams.
+      (position == null ||
+          !(_dipsOf(recipe).containsKey(position) ||
+              _batterInBowl(recipe).contains(position))) &&
+      discardedMediumOf(recipe, line, salt) == null &&
+      prints.every(
+        (p) =>
+            discardedMediumOf(
+              recipe,
+              _printedSaltLine(line, p.amount, salt),
+              salt,
+            ) ==
+            null,
+      );
+}
+
+/// M108 rule pass: whether a seasoning salt print [p] goes into something
+/// the dish does not keep whole, read on its own sentence (S), the rest of
+/// its step from S on (R) and the steps after it (L): (a) S names water,
+/// wine or a brine and R or L drains; (b) R drains, squeezes, wrings or
+/// lets soak; (c) a coat station — R names flour, crumbs, panko or bread —
+/// and R or L dredges, shakes / pats / lets the excess off or coats all
+/// (both) sides (v121 (c'): a coat word alone is no station — "Flip steaks
+/// to coat both sides with marinade"); (d) S names chicken and R or L
+/// discards the skin; (e) a sentence of R or L keeps a remainder "for
+/// another use" or discards the extra / remaining / remainder AND names a
+/// sauce, liquid, broth, marinade, brine or water (v121 (e')). Every
+/// pattern anchored on a word and bounded: linear per sentence.
+/// RULE C (v121, Q8): "a sentence of R / of R or L matches" is read from
+/// one table per pattern per index ([_lostSaltTablesOf], `memo:lostSalt`:
+/// the next matching sentence at or after each sentence), never a scan of
+/// the later steps per print.
+bool _lostSaltPrint(Recipe recipe, _StepRead p) {
+  final index = _stepIndexOf(recipe);
+  // Key: none — the tables read the index's own sentences alone.
+  final t = index.memo(#lostSalt, () => _lostSaltTablesOf(index));
+  final at = t.start[p.step] + p.sentence;
+  final end = t.start[p.step + 1];
+  final s = index.sentences[p.step][p.sentence];
+  bool inRest(List<int> next) => next[at] < end;
+  bool after(List<int> next) => next[at] < t.start.last;
+  return (_saltLiquid.hasMatch(s) && after(t.drain)) ||
+      inRest(t.lost) ||
+      (inRest(t.crumb) && after(t.coat)) ||
+      (_saltMeat.hasMatch(s) && after(t.skin)) ||
+      after(t.left);
+}
+
+/// [_lostSaltPrint]'s tables over [index]'s sentences in order: `start`,
+/// each step's first sentence (and the count at the end); per pattern, at
+/// each sentence the first sentence at or after it that matches (the count
+/// where none does) — one backward pass a pattern.
+({
+  List<int> start,
+  List<int> drain,
+  List<int> lost,
+  List<int> crumb,
+  List<int> coat,
+  List<int> skin,
+  List<int> left,
+})
+_lostSaltTablesOf(_StepIndex index) {
+  final all = [for (final step in index.sentences) ...step];
+  final start = [0];
+  for (final step in index.sentences) {
+    start.add(start.last + step.length);
+  }
+  List<int> next(bool Function(String) matches) {
+    final out = List.filled(all.length + 1, all.length);
+    for (var k = all.length - 1; k >= 0; k--) {
+      out[k] = matches(all[k]) ? k : out[k + 1];
+    }
+    return out;
+  }
+
+  return (
+    start: start,
+    drain: next(_saltDrain.hasMatch),
+    lost: next(_saltLost.hasMatch),
+    crumb: next(_saltCrumb.hasMatch),
+    coat: next(_saltCoat.hasMatch),
+    skin: next(_saltSkin.hasMatch),
+    left: next((x) => _saltLeft.hasMatch(x) && _saltLeftLiquid.hasMatch(x)),
+  );
+}
+
+final RegExp _saltLiquid = RegExp(r'\b(?:water|wine|brine)\b');
+final RegExp _saltDrain = RegExp(r'\bdrain(?:s|ing)?\b');
+final RegExp _saltLost = RegExp(
+  r'\bdrain(?:s|ing)?\b|\bsqueez|\bwring|\blet (?:[a-z]+ )?soak\b',
+);
+final RegExp _saltCrumb = RegExp(r'\b(?:flour|crumbs?|panko|bread)\b');
+final RegExp _saltCoat = RegExp(
+  r'\bdredg|\b(?:shaking|pat|letting) (?:[a-z]+ ){0,2}excess\b'
+  r'|\bcoat (?:all|both) sides\b',
+);
+final RegExp _saltMeat = RegExp(
+  r'\b(?:chicken|thighs?|breasts?|leg quarters)\b',
+);
+final RegExp _saltSkin = RegExp(
+  r'\bskin\b[^.]{0,60}\bdiscard|\bdiscard\b[^.]{0,60}\bskin\b',
+);
+final RegExp _saltLeftLiquid = RegExp(
+  r'\b(?:sauce|liquid|broth|marinade|brine|water)\b',
+);
+final RegExp _saltLeft = RegExp(
+  r'\bfor another use\b|\bdiscard (?:any )?(?:extra|remaining|remainder)\b',
+);
+
+/// v121 (closer 1): [line] as if it printed the step's [amount] of [salt]
+/// ("1 tablespoon table salt"), so [discardedMediumOf]'s arms that own a
+/// mention by the written amount a line starts with read the print. One
+/// instance per line and amount (the readers memoise by identity).
+IngredientLine _printedSaltLine(
+  IngredientLine line,
+  String amount,
+  String salt,
+) => (_printedSaltLines[line] ??= {})[amount] ??= IngredientLine(
+  raw: '$amount $salt',
+  item: salt,
+  amounts: parseIngredientLine('$amount $salt').amounts,
+);
+final Expando<Map<String, IngredientLine>> _printedSaltLines = Expando();
+
+/// v121 (M108): the record a [measuredStepSalt] line lands on — its detail
+/// read cache-first by the compute's candidate loop.
+const FdcCandidate _tableSalt = FdcCandidate(
+  fdcId: 173468,
+  description: 'Salt, table',
+  dataType: 'SR Legacy',
+);
+
 List<_StepRead> _stepAmountsAt(
   Recipe recipe,
   _StepIndex index,
@@ -13759,8 +13991,11 @@ List<_StepRead> _stepAmountsAt(
   String head,
 ) {
   final scope = _stepScopeOf(recipe, position);
-  // (i) the head is this line's alone in the scope.
-  if ((scope.heads[head] ?? 0) > 1) {
+  // (i) the head is this line's alone in the scope; v121 (M108): a
+  // seasoning salt line's — no other line of the scope names salt.
+  if (_seasoningSaltAt(recipe)[position]
+      ? _saltNamedElsewhere(recipe, index, position)
+      : (scope.heads[head] ?? 0) > 1) {
     return const [];
   }
   final prints = _stepPrintsOf(recipe, index);
@@ -13901,6 +14136,7 @@ List<_StepRead> _stepAmountsAt(
     for (final p in hits)
       (
         step: p.step,
+        sentence: p.sentence,
         amount: p.amount,
         times: served.containsKey(p) ? serves : repeated[p] ?? 1,
         shown:
@@ -13947,7 +14183,7 @@ List<_StepRead> _stepAmountsAt(
 _stepPrintsOf(Recipe recipe, _StepIndex index) => index.memo(#stepAmounts, () {
   final lines = nutritionLines(recipe);
   final heads = {
-    for (final (k, h) in _headsOf(recipe).indexed)
+    for (final (k, h) in _readHeadsOf(recipe).indexed)
       if (h != null && h.isNotEmpty && lines[k].amounts.isEmpty) h,
   };
   final wanted = {for (final h in heads) ..._formsOf(h)};
@@ -15453,10 +15689,17 @@ Future<NutritionProviderException?> _computePass(
         continue;
       }
 
-      final search = lineSearchFor(db, normalized, lineKeyOf(eaten));
+      // v121 (M108): a salt the steps measure ([measuredStepSalt]) is SR
+      // 173468 "Salt, table" ranked under 'table salt' — no search.
+      final stepSalt = measuredStepSalt(recipe, eaten, normalized);
+      final search = stepSalt
+          ? (query: 'table salt', answer: 'table salt')
+          : lineSearchFor(db, normalized, lineKeyOf(eaten));
       // v49 (M47 Q23 (a)): an item FDC holds no record of lands `no_match`
       // with no record shown, and asks nothing ([noFdcRecordItems]).
-      final candidates = noFdcRecordItems.contains(normalized)
+      final candidates = stepSalt
+          ? const [_tableSalt]
+          : noFdcRecordItems.contains(normalized)
           ? const <FdcCandidate>[]
           : await _cachedSearch(db, lineProvider, search.answer);
       // v54 (M56): R2 then R3 after the fresh-over-cured move.
@@ -20527,7 +20770,12 @@ IngredientMatchRow? _lineRuleRow(
   String normalized,
   String key,
 ) {
-  final seasoning = eaten.amounts.isEmpty && isSeasoningToTaste(normalized);
+  // v121 (M108): a salt the steps measure is a food line on SR 173468
+  // ([measuredStepSalt]; the compute lands it, never a search).
+  final seasoning =
+      eaten.amounts.isEmpty &&
+      isSeasoningToTaste(normalized) &&
+      !measuredStepSalt(recipe, eaten, normalized);
   final equipment = isNonFood(normalized);
   // v37 (Z14): a split line's tail is counted with the line above.
   final continuation = isContinuationFragment(

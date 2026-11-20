@@ -366,11 +366,12 @@ const Map<String, (String, String, String)> _totals = {
   // compute): was 527.89.
   // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (the v115
   // replay): was 1129.30.
-  _nut: ('complete', '529.00', '1131.40'), // replay 516.05; v87 566.38
+  // RE-PIN (M108 batch, v121): nut-crusted-chicken-breasts-with-lemon-and-thyme|1 its step salt (1.50 g; ½ teaspoon of the coat not counted) — was '1131.40' total grams.
+  _nut: ('complete', '529.00', '1132.90'), // replay 516.05; v87 566.38
 };
 
 void main() {
-  test('matcherVersion 106 (v88 set it to 83, batch M88: rows move)', () {
+  test('matcherVersion 107 (v88 set it to 83, batch M88: rows move)', () {
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
     // RE-PIN (M87 batch, v91): matcherVersion 86 (was 85).
@@ -394,7 +395,8 @@ void main() {
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
-    expect(matcherVersion, 106);
+    // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
+    expect(matcherVersion, 107);
   });
 
   test("pin (7) — the figures: FNDDS 2706442's two inputs by sequenceNumber "

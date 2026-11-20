@@ -180,6 +180,9 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
       // v85 (M83 B5): the lines carrying each item word, the own-word
       // fallback's "no other line" test — once per index.
       'memo:itemWords',
+      // v121 (M108, Q8): the lost-salt tables — the next sentence each of
+      // `_lostSaltPrint`'s patterns matches, once per index.
+      'memo:lostSalt',
     ])
       once: 1,
     // v82 (review Run 067/068 F8): the M52 keys built — the request's plan
@@ -240,6 +243,10 @@ Map<String, int> boundsOf(Recipe r, Map<String, int> c) {
     // v71 (M71 R-H1, pF R2): a line's scope, once per group heading and
     // once for every step.
     'memo:labelScope': r.ingredients.length + 1,
+    // v121 (M108): guard (i) by naming for a seasoning salt line — the
+    // lines of a scope naming salt, once per group heading and once for
+    // every step (as `memo:labelScope`).
+    'memo:saltLines': r.ingredients.length + 1,
     // v71 (M71 R-H1): each amount-less line's prints, once per line; their
     // weighing once per line and record (a compute's old and new one).
     'memo:stepAmountsAt': lines,

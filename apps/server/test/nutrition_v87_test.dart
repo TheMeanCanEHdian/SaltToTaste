@@ -273,20 +273,24 @@ const List<_Row> _rows = [
 /// pinned rows are equal), then v86's replay figure.
 const Map<String, (String, String, String)> _totals = {
   // RE-PIN (M106 batch, v119): kale-caesar-salad|0 "12 ounces curly kale, stemmed …" 340.19 → 217.72 g (× 0.64, AH-102 item 1305) — was ('complete', '263.21', '629.40').
-  _kale: ('complete', '252.49', '507.00'), // = replay; v86 265.26
+  // RE-PIN (M108 batch, v121): kale-caesar-salad|3 its step salt (3.76 g on SR 173468) — was '507.00' total grams.
+  _kale: ('complete', '252.49', '510.70'), // = replay; v86 265.26
   // RE-PIN (M90 batch, v89): the replay 647.55 → 641.85: was 648.42, 1521.80.
   // RE-PIN (M86 batch, v90, 958: 2514747 turkey): was 642.72.
-  _meatloaf: ('complete', '654.06', '1515.90'), // replay 647.55; v86 649.60
+  // RE-PIN (M108 batch, v121): turkey-meatloaf-with-ketchupbrown-sugar-glaze|3 its step salt (6.01 g) — was '1515.90' total grams.
+  _meatloaf: ('complete', '654.06', '1521.90'), // replay 647.55; v86 649.60
   // RE-PIN (M86 batch, v90, 958: 2346392 nuts): was 704.76.
   _farfalle: ('complete', '701.02', '658.70'), // = replay; v86 705.79
   // RE-PIN (M86 batch, v90, 958: 2646170 chicken, 2346386 cream): was 595.31.
   _ziti: ('complete', '599.90', '1752.40'), // replay 595.35; v86 597.41
-  _onion: ('complete', '362.29', '3620.50'), // = replay; v86 364.34
+  // RE-PIN (M108 batch, v121): streamlined-french-onion-soup|2 its step salt (3.01 g) — was '3620.50' total grams.
+  _onion: ('complete', '362.29', '3623.50'), // = replay; v86 364.34
   _frico: ('complete', '222.26', '453.60'), // = replay; v86 238.70
   // Unmoved: its Parmesan rows count 0 g.
   // RE-PIN (M86 batch, v90, 958: 2644281 beans, 2346405 celery, 2258586
   // carrots, 2685568 squash +1 more): was 264.97.
-  _minestrone: ('complete', '259.46', '1833.60'), // replay 265.05 both
+  // RE-PIN (M108 batch, v121): hearty-minestrone|0 its step salt (3.01 g; 1½ tablespoons of soak not counted) — was '1833.60' total grams.
+  _minestrone: ('complete', '259.46', '1836.60'), // replay 265.05 both
   // The re-solved budgets add grams (v86 1,782.60 and 2,765.00 g).
   // RE-PIN (M88 batch, v88): was 298.40 / 1,785.10 (replay 298.43) — the
   // dredge split (the v88 replay 288.50).
@@ -310,7 +314,7 @@ Future<List<FdcCandidate>> _answer(String query) =>
     FixtureProvider(pending: {...pendingSearches}).search(query);
 
 void main() {
-  test('matcherVersion 106 (v87 set it to 82, batch M85: rows move)', () {
+  test('matcherVersion 107 (v87 set it to 82, batch M85: rows move)', () {
     // RE-PIN (M88 batch, v88): matcherVersion 83 (was 82).
     // RE-PIN (M90 batch, v89): matcherVersion 84 (was 83).
     // RE-PIN (M86 batch, v90): matcherVersion 85 (was 84).
@@ -335,7 +339,8 @@ void main() {
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
-    expect(matcherVersion, 106);
+    // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
+    expect(matcherVersion, 107);
   });
 
   test("the four rank-as reads: the cached 'parmesan cheese' answer under "

@@ -494,7 +494,9 @@ const _kibbehHash =
     // the tip with 104 put back gives c6d08376).
     // RE-PIN (M107 batch, v120): matcherVersion 106 alone (was 8c66dfb2…;
     // the tip with 105 put back gives 8c66dfb2).
-    '56f2b5923faf3f9ba3d27fee009ae2ccd16605c3f908383a1ebaaac6af5e3503';
+    // RE-PIN (M108 batch, v121): matcherVersion 107 alone (was 56f2b592…;
+    // the tip with 106 put back gives 56f2b592).
+    '889f4b61c5d528ced9655a0219f4898639a2ee5c976a5d1be7418a78493f9050';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person
@@ -1118,9 +1120,13 @@ void arms() {
     }
 
     // 'to taste'
+    // RE-PIN (M108 batch, v121): best-crab-cakes|3 "Salt and pepper" reads
+    // at the form `salt` now (was its pepper print '⅛ teaspoon@2'): step 3's
+    // ½ teaspoon; step 2's "¼ teaspoon salt" sits in a "to taste" sentence
+    // and stays off (the arm's mutant gains it).
     expect(
       prints('0289-best-crab-cakes.yaml', 3, 'Salt and pepper'),
-      '⅛ teaspoon@2',
+      '½ teaspoon@2',
     );
     // 'up to'
     expect(

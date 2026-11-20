@@ -876,19 +876,21 @@ const List<_Row> _unmoved = [
     '11.20',
     '2 tablespoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): nasi-goreng-indonesian-style-fried-rice|7 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
     7,
     'Table salt',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '9.02',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: 1¼ teaspoons + ¼ teaspoon (no amount on the line)',
   ),
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -2782,19 +2784,21 @@ const List<_Row> _unmoved = [
     '15.40',
     '1 teaspoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): brussels-sprout-salad-with-warm-mustard-vinaigrette|3 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
     null,
     3,
     'Table salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '1.50',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: ¼ teaspoon (no amount on the line)',
   ),
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
@@ -2910,19 +2914,21 @@ const List<_Row> _unmoved = [
     '0.00',
     null,
   ),
+  // RE-PIN (M108 batch, v121): roasted-brussels-sprouts|3 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0669-roasted-brussels-sprouts.yaml',
     null,
     3,
     'Salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '4.51',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: ¾ teaspoon (no amount on the line)',
   ),
   // RE-PIN (M82 batch, v84, C6a): was 68.02 g, 601.29 kcal (the v84 replay's row).
   (
@@ -2955,19 +2961,21 @@ const List<_Row> _unmoved = [
     '3.35',
     '1 tablespoon ≈ 15 mL',
   ),
+  // RE-PIN (M108 batch, v121): skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano|3 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
     null,
     3,
     'Table salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '1.50',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 2: ¼ teaspoon (no amount on the line)',
   ),
   (
     '0669-skillet-roasted-brussels-sprouts-with-lemon-and-pecorino-romano.yaml',
@@ -3748,19 +3756,21 @@ const List<_Row> _unmoved = [
     '3449.57',
     'from the printed weight (4–5 lb, the midpoint) · approximate (USDA\'s braised pair 168743 → 169440 (flat, 0" trim) keeps 82.0 % of the energy and 58.8 % of the fat by the protein tracer — the fat the steps skim, deducted; the steps name a fat layer the 0" record does not carry — the cap\'s depth is not printed)',
   ),
+  // RE-PIN (M108 batch, v121): onion-braised-beef-brisket|1 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0223-onion-braised-beef-brisket.yaml',
     null,
     1,
     'Table salt and ground black pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '1.50',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 3: ¼ teaspoon (no amount on the line)',
   ),
   (
     '0223-onion-braised-beef-brisket.yaml',
@@ -3951,19 +3961,21 @@ const List<_Row> _unmoved = [
     '2.09',
     '2 teaspoon ≈ 10 mL',
   ),
+  // RE-PIN (M108 batch, v121): tuscan-style-beef-stew|1 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0007-tuscan-style-beef-stew.yaml',
     null,
     1,
     'Salt',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '9.02',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: 1½ teaspoons (no amount on the line)',
   ),
   (
     '0007-tuscan-style-beef-stew.yaml',
@@ -4165,19 +4177,21 @@ const List<_Row> _unmoved = [
     '18.00',
     '2 teaspoon ≈ 10 mL · approximate (ATK: 1 cup cornstarch = 4 ounces)',
   ),
+  // RE-PIN (M108 batch, v121): braised-beef-short-ribs|1 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0087-braised-beef-short-ribs.yaml',
     null,
     1,
     'Table salt and ground black pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '12.03',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: 2 teaspoons (no amount on the line)',
   ),
   (
     '0087-braised-beef-short-ribs.yaml',
@@ -4676,19 +4690,21 @@ const List<_Row> _unmoved = [
     '78.51',
     'from the printed weight',
   ),
+  // RE-PIN (M108 batch, v121): beef-short-rib-ragu|11 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0350-beef-short-rib-ragu.yaml',
     null,
     11,
     'Table salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '4.51',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 3: ¾ teaspoon (no amount on the line)',
   ),
   (
     '0481-carne-deshebrada-shredded-beef-tacos.yaml',
@@ -4804,19 +4820,21 @@ const List<_Row> _unmoved = [
     '5.22',
     '2 teaspoon ≈ 10 mL',
   ),
+  // RE-PIN (M108 batch, v121): carne-deshebrada-shredded-beef-tacos|8 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0481-carne-deshebrada-shredded-beef-tacos.yaml',
     null,
     8,
     'Salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '12.03',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: 2 teaspoons (no amount on the line)',
   ),
   (
     '0481-carne-deshebrada-shredded-beef-tacos.yaml',
@@ -5259,19 +5277,21 @@ const List<_Row> _unmoved = [
     '7.70',
     '1/2 teaspoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): catalan-style-beef-stew-with-mushrooms|3 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
     null,
     3,
     'Kosher salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '6.00',
+    'auto',
     null,
     '0.00',
-    null,
+    'from steps 1, 2: ½ teaspoon + 1½ teaspoons (no amount on the line)',
   ),
   (
     '0084-catalan-style-beef-stew-with-mushrooms.yaml',
@@ -6430,7 +6450,9 @@ const List<_Totals> _totals = [
     '41.2971',
     '34.9194',
     '133.6404',
-    '4993.0252',
+    // RE-PIN (M108 batch, v121): sodium was 4993.0252 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '8488.9672',
     '1369.7123',
   ),
   (
@@ -6750,7 +6772,9 @@ const List<_Totals> _totals = [
     '35.3583',
     '27.7466',
     '52.6551',
-    '1651.9473',
+    // RE-PIN (M108 batch, v121): sodium was 1651.9473 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '2234.6043',
     '100.9242',
   ),
   // v71: 164.21 /serving, batch 985.25, fat 47.7663
@@ -6767,7 +6791,9 @@ const List<_Totals> _totals = [
     '28.7280',
     '3.9774',
     '36.5572',
-    '236.9006',
+    // RE-PIN (M108 batch, v121): sodium was 236.9006 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '1984.8716',
     '0.0000',
   ),
   // v71: 232.28 /serving, batch 929.13, fat 72.0615
@@ -6788,7 +6814,9 @@ const List<_Totals> _totals = [
     '50.6199',
     '7.1704',
     '23.0624',
-    '411.0983',
+    // RE-PIN (M108 batch, v121): sodium was 411.0983 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '993.7553',
     '22.1128',
   ),
   // v71: 794.35 /serving, batch 4766.11, fat 489.1821
@@ -6895,7 +6923,9 @@ const List<_Totals> _totals = [
     '431.2167',
     // RE-PIN (M102 batch, v115): the unbleached flour rows on 789951 (this
     // test's compute): was 1723.2694.
-    '1723.6237',
+    // RE-PIN (M108 batch, v121): sodium was 1723.6237 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '2306.2807',
     '1367.5799',
   ),
   // v71: 836.27 /serving, batch 5017.64, fat 360.7148
@@ -6920,7 +6950,9 @@ const List<_Totals> _totals = [
     '158.1806',
     '18.0879',
     '333.2070',
-    '1790.7444',
+    // RE-PIN (M108 batch, v121): sodium was 1790.7444 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '5286.6864',
     '1330.1836',
   ),
   // v71: 720.08 /serving, batch 4320.46, fat 330.9343
@@ -6947,7 +6979,9 @@ const List<_Totals> _totals = [
     '143.1696',
     '20.0796',
     '281.0036',
-    '2004.7109',
+    // RE-PIN (M108 batch, v121): sodium was 2004.7109 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '6665.9669',
     '1158.9276',
   ),
   // v71: 1080.67 /serving, batch 4322.67, fat 313.7070
@@ -6991,7 +7025,9 @@ const List<_Totals> _totals = [
     '86.3369',
     '7.9358',
     '170.7866',
-    '2397.9521',
+    // RE-PIN (M108 batch, v121): sodium was 2397.9521 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '4145.9231',
     '672.4443',
   ),
   // v71: 862.66 /serving, batch 5175.97, fat 306.3309
@@ -7010,7 +7046,9 @@ const List<_Totals> _totals = [
     '123.7415',
     '19.9438',
     '300.5756',
-    '2155.0953',
+    // RE-PIN (M108 batch, v121): sodium was 2155.0953 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '6816.3512',
     '1079.5490',
   ),
   // v71: 612.94 /serving, batch 3677.64, fat 261.4987
@@ -7050,7 +7088,9 @@ const List<_Totals> _totals = [
     '157.8026',
     '18.0644',
     '215.6405',
-    '969.9443',
+    // RE-PIN (M108 batch, v121): sodium was 969.9443 (its step salt now
+    // counted on SR 173468; every other column unchanged).
+    '3295.4144',
     '827.8054',
   ),
   // RE-PIN (M82 batch, v84): was 877.80, 5266.77, 367.9921, 291.0827, 5340.4634 (the replay 877.80 → 881.01).

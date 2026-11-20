@@ -198,7 +198,11 @@ const Map<String, String> _synonyms = {
 /// `volumeSiblings` record whose line prints a volume weighs that volume on
 /// the sibling's cup, as a counted garlic clove has since v84
 /// (`_pieceVolumeOnSibling`, prep51's C3b re-opened).
-const int matcherVersion = 106;
+/// v107: matcher v121 (batch M108) — measured step salt: an amount-less
+/// salt seasoning line whose steps print its salt (R-H1 read with the form
+/// `salt`, `measuredStepSalt`) and no medium takes is SR 173468 at those
+/// grams, no longer the 0 g seasoning rule row (sodium only).
+const int matcherVersion = 107;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).
@@ -718,7 +722,10 @@ bool isNonFood(String normalizedItem) =>
 /// contributes nothing measurable, and FDC's search for it returns bell
 /// peppers and salted nuts. Such a line is confirmed as a deliberate
 /// no-match instead of sitting in the review queue forever. A line WITH an
-/// amount ("1 teaspoon table salt") is matched normally.
+/// amount ("1 teaspoon table salt") is matched normally. v121 (M108,
+/// 2026-11-19): a salt spelling whose steps MEASURE salt the dish keeps is a
+/// food row on SR 173468 at those grams (engine.dart `measuredStepSalt`);
+/// the rule row stays for pepper and for every other salt line.
 const Set<String> seasoningToTasteItems = {
   'salt',
   'table salt',
@@ -744,13 +751,27 @@ const Set<String> seasoningToTasteItems = {
 /// v44 (S6 a) also under the corpus typo "back pepper" ("Ground back
 /// pepper", mediterranean-chopped-salad's section) and with a purpose tail
 /// ("Table salt for poaching eggs", "… for cooking pasta"): the seasoning
-/// row, never a search for the purpose's words.
+/// row, never a search for the purpose's words. v121 (M108, prep52 P9 E1):
+/// also under the corpus typo "table alt" ("Table alt and pepper",
+/// brazilian-shrimp-and-fish-stew-moqueca|8).
 bool isSeasoningToTaste(String normalizedItem) =>
-    seasoningToTasteItems.contains(
-      normalizedItem
-          .replaceFirst(RegExp(r'\bback pepper$'), 'black pepper')
-          .replaceFirst(RegExp(r' for .+$'), ''),
-    );
+    seasoningToTasteItems.contains(_seasoningItem(normalizedItem));
+
+String _seasoningItem(String normalizedItem) => normalizedItem
+    .replaceFirst(RegExp(r'\bback pepper$'), 'black pepper')
+    .replaceFirst(RegExp(r'\btable alt\b'), 'table salt')
+    .replaceFirst(RegExp(r' for .+$'), '');
+
+/// v121 (M108, prep52 P9 E1): the salt a seasoning-to-taste item names —
+/// its [seasoningToTasteItems] spelling before " and " ('kosher salt' for
+/// "kosher salt and pepper"); null for a pepper line or any other item.
+String? seasoningSaltOf(String normalizedItem) {
+  final item = _seasoningItem(normalizedItem);
+  final salt = item.split(' and ').first;
+  return seasoningToTasteItems.contains(item) && salt.endsWith('salt')
+      ? salt
+      : null;
+}
 
 /// Phrases FDC's search cannot find under the recipe's words, rewritten to
 /// the words FDC files them under. Keyed by the NORMALIZED item — exactly

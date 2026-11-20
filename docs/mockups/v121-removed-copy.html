@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scraped and Drained Copy</title>
+<style>
+/* Layout: one reading column of numbered proposals; each shows the app's ingredient row with the new string in place,
+   then the wording choices; a verbatim strings table closes the page. Same tokens as the approved copy mockups. */
+:root{
+  --maroon:#960000;--rose:#8c4242;--chip:#f6e4e4;--chip-text:#7d1420;--ink:#23201f;--muted:#6d6763;--line:#e7e2de;
+  --bg:#faf7f4;--panel:#fdfbf9;--ok-bg:#e8f3e4;--ok-ink:#2c5a1e;--warn-bg:#fbefd9;--warn-ink:#7a4b00;--neutral-bg:#efebe8;
+  --old-ink:#8a8480;
+  --font:'Open Sans',system-ui,-apple-system,'Segoe UI',sans-serif;--mono:ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --maroon:#e88a8a;--rose:#d9a3a3;--chip:#3d2222;--chip-text:#f0c7c7;--ink:#efe9e4;--muted:#b3aaa3;--line:#3a3431;
+  --bg:#1b1817;--panel:#221e1c;--ok-bg:#223320;--ok-ink:#b7e0a8;--warn-bg:#3b2e14;--warn-ink:#f0c98a;--neutral-bg:#2d2825;
+  --old-ink:#8f8680;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --maroon:#e88a8a;--rose:#d9a3a3;--chip:#3d2222;--chip-text:#f0c7c7;--ink:#efe9e4;--muted:#b3aaa3;--line:#3a3431;
+  --bg:#1b1817;--panel:#221e1c;--ok-bg:#223320;--ok-ink:#b7e0a8;--warn-bg:#3b2e14;--warn-ink:#f0c98a;--neutral-bg:#2d2825;
+  --old-ink:#8f8680;color-scheme:dark}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);background:var(--bg);line-height:1.5;font-size:14px}
+.wrap{max-width:820px;margin:0 auto;padding-block:32px 72px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  display:flex;flex-direction:column;gap:14px}
+h1{font-size:22px;color:var(--maroon);text-wrap:balance}
+.lede{color:var(--muted);max-width:68ch}.lede b{color:var(--ink)}
+h2{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--rose);font-weight:700;margin-top:26px;text-wrap:balance}
+.note{font-size:13px;color:var(--muted);max-width:72ch}.note b{color:var(--ink)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.recipe{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.badge{font-size:10.5px;font-weight:700;border-radius:12px;padding:2px 9px;background:var(--neutral-bg);color:var(--muted);letter-spacing:0;text-transform:none}
+.badge.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.badge.held{background:var(--warn-bg);color:var(--warn-ink)}
+.raw{font-size:14px;font-weight:700}
+.meta{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.meta b{color:var(--ink);font-weight:600}
+.flag{font-size:12.5px;color:var(--warn-ink);background:var(--warn-bg);border-radius:6px;padding:3px 9px;align-self:flex-start;margin-top:4px;overflow-wrap:anywhere}
+.new-mark{color:var(--maroon);font-weight:800;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.hl{background:var(--warn-bg);color:var(--warn-ink);border-radius:4px;padding:0 4px}
+.old{color:var(--old-ink);text-decoration:line-through}
+.steps{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;max-width:72ch}
+.choices{display:flex;flex-direction:column;gap:6px}
+.choice{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;font-size:13px}
+.choice > span:last-child{min-width:0}
+.pick{font-weight:800;color:var(--maroon);font-size:12px;white-space:nowrap}
+.alt{font-weight:700;color:var(--muted);font-size:12px;white-space:nowrap}
+code{font-family:var(--mono);font-size:12px;background:var(--neutral-bg);border-radius:5px;padding:1px 5px;overflow-wrap:anywhere}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--rose);font-size:12px}
+.ask{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:18px}
+.ask b{color:var(--maroon)}
+</style>
+<meta name="description" content="Three wordings for nutrition rows whose ingredient the steps scrape off, drain away or discard, each shown on a real row; approved by the owner 2026-11-19. A copy delta to the approved nutrition mockups.">
+</head><body>
+
+<div class="wrap">
+<h1>Three wordings for ingredients the steps take away</h1>
+<p class="lede">A copy delta to the approved nutrition mockups. Each string is shown on a real row from the library with real figures. <b>No calorie figure on this page changes</b>: these are the words the row shows, not the amounts. Rows use the approved layout; only the parts marked <span class="new-mark">new</span> are new.</p>
+
+<h2>1 · A paste or marinade scraped off the food: stays counted, with a note</h2>
+<p class="note">The owner's ruling of 2026-11-19. The steps scrape the mixture off but a residue stays on the food and is eaten, so the row keeps its full amount and says it is approximate. The wording mirrors the note already shipped for a liquid marinade.</p>
+
+<div class="card">
+  <div class="recipe"><span>Miso-Marinated Salmon</span><span class="badge ok">counted</span></div>
+  <div class="raw">½ cup white miso paste</div>
+  <div class="meta">matched to <b>Miso</b> · 137.5 g · 272 kcal</div>
+  <div class="meta">amount: 1/2 cup · USDA portion</div>
+  <div class="flag"><span class="new-mark">new</span>approximate (scraped off the food — how much clings is not written)</div>
+</div>
+<p class="steps">“Using your fingers, scrape miso mixture from fillets (do not rinse)”. The same note goes on the sugar, sake and mirin of this marinade: 584 kcal of the recipe, 28 % of its per-serving figure.</p>
+
+<div class="card">
+  <div class="recipe"><span>Steak Tacos</span><span class="badge ok">counted</span></div>
+  <div class="raw">¼ cup vegetable oil</div>
+  <div class="meta">matched to <b>Vegetable oil, NFS</b> · 56 g · 504 kcal</div>
+  <div class="meta">amount: 1/4 cup · USDA portion</div>
+  <div class="flag"><span class="new-mark">new</span>approximate (scraped off the food — how much clings is not written)</div>
+</div>
+<p class="steps">“Scrape the herb paste off the steak”. Two tablespoons of the paste are set aside and tossed with the sliced steak, so part of every paste line is certainly eaten. The same note goes on all six paste lines: 540 kcal, 20 % of the per-serving figure.</p>
+
+<div class="card">
+  <div class="recipe"><span>For comparison, shipped today · Skillet Chicken Fajitas</span><span class="badge ok">counted</span></div>
+  <div class="raw">2 tablespoons lime juice</div>
+  <div class="meta">matched to <b>Lime juice, raw</b> · 30.5 g · 8 kcal</div>
+  <div class="meta">amount: 2 tablespoon ≈ 30 mL</div>
+  <div class="flag">approximate (lifted out of its marinade — how much clings is not written)</div>
+</div>
+
+<div class="choices">
+  <div class="choice"><span class="pick">Proposed</span><span><code>approximate (scraped off the food — how much clings is not written)</code></span></div>
+  <div class="choice"><span class="alt">Or</span><span><code>approximate (the steps scrape it off — counted whole)</code></span></div>
+</div>
+<p class="note">Reach: 11 rows in 3 recipes (the miso marinade 4, the taco paste 6, the dill scraped off gravlax 1).</p>
+
+<h2>2 · Salt read from the steps, when part of it goes down the drain</h2>
+<p class="note">Built in Matcher v121. A line such as “Table salt” prints no amount, so the label reads the amounts the steps print. Salt that goes into pasta water, a soak or a brine is left out, and the row says how much was left out. The first half of the line is shipped wording; the highlighted half is new. The batch was built with the wording below; the owner approved it as built.</p>
+
+<div class="card">
+  <div class="recipe"><span>Creamy Baked Four-Cheese Pasta</span><span class="badge ok">counted</span></div>
+  <div class="raw">Table salt and ground black pepper</div>
+  <div class="meta">matched to <b>Salt, table</b> · 3.01 g · 0 kcal</div>
+  <div class="meta">amount: from steps 1, 4: ¼ teaspoon + ¼ teaspoon (no amount on the line) <span class="hl"><span class="new-mark">new</span>· not counted: 1 tablespoon the steps drain off or discard</span></div>
+</div>
+<p class="steps">The tablespoon is the pasta water's; the two quarter-teaspoons go into the sauce and the topping.</p>
+
+<div class="card">
+  <div class="recipe"><span>Drunken Beans</span><span class="badge ok">counted</span></div>
+  <div class="raw">Salt</div>
+  <div class="meta">matched to <b>Salt, table</b> · 6.01 g · 0 kcal</div>
+  <div class="meta">amount: from step 3: 1 teaspoon (no amount on the line) <span class="hl"><span class="new-mark">new</span>· not counted: 3 tablespoons the steps drain off or discard</span></div>
+</div>
+<p class="steps">The three tablespoons are the overnight soak's; the teaspoon goes into the pot.</p>
+
+<div class="choices">
+  <div class="choice"><span class="pick">As built</span><span><code>· not counted: {amounts} the steps drain off or discard</code></span></div>
+  <div class="choice"><span class="alt">Or</span><span><code>· left out: {amounts} drained off or discarded in the steps</code></span></div>
+</div>
+<p class="note">Reach: 15 rows in 15 recipes carry the clause. The other 135 salt rows the batch counts read only the shipped first half.</p>
+
+<h2>3 · A meat the recipe simmers and then discards: the review card's reason</h2>
+<p class="note">Held rows show a reason on their review card. Rows like this one borrow the reason written for liquids, which does not describe a chicken wing. The proposal is a reason and a button label of their own. Nothing about how the row is held or counted changes.</p>
+
+<div class="card">
+  <div class="recipe"><span>Best Chicken Stew</span><span class="badge held">needs review</span></div>
+  <div class="raw">1 pound chicken wings, halved at joint</div>
+  <div class="meta">matched to <b>Chicken, wing, meat and skin, raw</b> · no amount counted yet</div>
+  <div class="meta"><span class="old">Looks like a cooking medium the recipe discards (frying oil, a brine, a soak, cheese-making milk, drained cooking water)</span></div>
+  <div class="flag"><span class="new-mark">new</span>Cooked in the pot, then discarded — the fat and juices it leaves behind are eaten, and how much is not written</div>
+  <div class="meta">button: <span class="old">Confirm (poured away)</span> → <b>Confirm (discarded)</b></div>
+</div>
+<p class="steps">“Discard wings”, after they have simmered in the stew. Seven held rows today are a meat held this way: this wing, two bacon lines, two salt-pork lines, and the ground pork and ground beef of Italian Wedding Soup.</p>
+
+<div class="choices">
+  <div class="choice"><span class="pick">Proposed</span><span><code>Cooked in the pot, then discarded — the fat and juices it leaves behind are eaten, and how much is not written</code></span></div>
+  <div class="choice"><span class="alt">Or</span><span><code>The recipe cooks this for flavor and then discards it — how much of it stays in the dish is not written</code></span></div>
+</div>
+
+<h2>The strings, verbatim</h2>
+<div class="tablewrap">
+<table>
+<tr><th>Where</th><th>String</th><th>Status</th></tr>
+<tr><td>Row note · scraped off</td><td><code>approximate (scraped off the food — how much clings is not written)</code></td><td>approved 2026-11-19; not built yet</td></tr>
+<tr><td>Row amount · salt left out</td><td><code>· not counted: {amounts} the steps drain off or discard</code></td><td>approved 2026-11-19; built in Matcher v121</td></tr>
+<tr><td>Review reason · a discarded solid</td><td><code>Cooked in the pot, then discarded — the fat and juices it leaves behind are eaten, and how much is not written</code></td><td>approved 2026-11-19; not built yet</td></tr>
+<tr><td>Review button · a discarded solid</td><td><code>Confirm (discarded)</code></td><td>approved 2026-11-19; not built yet</td></tr>
+</table>
+</div>
+<p class="note">Unchanged: “approximate (lifted out of its marinade — how much clings is not written)”, “discarded in cooking — counted as 0 g”, the liquid reason and “Confirm (poured away)” for oils, brines, soaks and cooking water.</p>
+
+<div class="ask"><b>Approved by the owner, 2026-11-19</b> — all three wordings as proposed. Still owed as separate mockups: “per loaf / per batch” on the label, and the “≥” mark for partial label lines.</div>
+</div>
+</body></html>

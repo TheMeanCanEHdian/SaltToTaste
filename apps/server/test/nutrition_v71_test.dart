@@ -1014,19 +1014,21 @@ const List<_Row> _unmoved = [
     '1.62',
     '2 teaspoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): lighter-corn-chowder|5 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0034-lighter-corn-chowder.yaml',
     null,
     5,
     'Table salt and ground black pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '12.03',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 2: 2 teaspoons (no amount on the line)',
   ),
   // RE-PIN (M82 batch, v84, C5a): was 30.16 g, 110.40 kcal (the v84 replay's row).
   (
@@ -1132,19 +1134,21 @@ const List<_Row> _unmoved = [
     '889.04',
     '4 × 198 g (printed 6–8 oz, the midpoint)',
   ),
+  // RE-PIN (M108 batch, v121): skillet-chicken-and-rice-with-peas-and-scallions|1 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
     null,
     1,
     'Table salt and ground black pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '3.01',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 2: ½ teaspoon (no amount on the line)',
   ),
   (
     '0077-skillet-chicken-and-rice-with-peas-and-scallions.yaml',
@@ -1815,19 +1819,21 @@ const List<_Row> _unmoved = [
     '1678.29',
     'from 2 pound',
   ),
+  // RE-PIN (M108 batch, v121): cuban-shredded-beef|1 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0226-cuban-shredded-beef.yaml',
     null,
     1,
     'Kosher salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '4.50',
+    'auto',
     null,
     '0.00',
-    null,
+    'from steps 1, 3: 1¼ teaspoons + ¼ teaspoon (no amount on the line)',
   ),
   (
     '0226-cuban-shredded-beef.yaml',
@@ -2673,19 +2679,21 @@ const List<_Row> _unmoved = [
     '39.23',
     '2 tablespoon ≈ 30 mL',
   ),
+  // RE-PIN (M108 batch, v121): crispy-salt-and-pepper-shrimp|2 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
     null,
     2,
     'Kosher salt',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '1.50',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 6: ½ teaspoon (no amount on the line) · not counted: 1 teaspoon the steps drain off or discard',
   ),
   (
     '0279-crispy-salt-and-pepper-shrimp.yaml',
@@ -2961,6 +2969,10 @@ const List<_Row> _unmoved = [
     '12.87',
     '3 × 3 g each',
   ),
+  // RE-PIN (M108 batch, v121): brazilian-shrimp-and-fish-stew-moqueca|8 —
+  // the typo mend ("table alt") makes it a seasoning salt line its steps
+  // measure: the replay's row, 9.02 g (was 0.00 g, basis 'no amount on the
+  // line — counted as 0 g').
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
     null,
@@ -2969,11 +2981,11 @@ const List<_Row> _unmoved = [
     173468,
     'Salt, table',
     '1.000000',
-    '0.00',
+    '9.02',
     'auto',
     null,
     '0.00',
-    'no amount on the line — counted as 0 g',
+    'from steps 2, 4: ½ teaspoon + ½ teaspoon + ½ teaspoon (no amount on the line)',
   ),
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
@@ -3240,19 +3252,21 @@ const List<_Row> _unmoved = [
     // RE-PIN (M77 batch, v77): the basis names 748608's nutrient sibling, SR 171413.
     '1 tablespoon · USDA portion · nutrients of "Oil, olive, salad or cooking"',
   ),
+  // RE-PIN (M108 batch, v121): grown-up-stovetop-macaroni-and-cheese|10 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0301-grown-up-stovetop-macaroni-and-cheese.yaml',
     null,
     10,
     'Salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '0.75',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 2: ⅛ teaspoon (no amount on the line)',
   ),
   // RE-PIN (M85 batch, v87): SR 170848 "Cheese, parmesan, hard" at 1.0 (was
   // 325036 at 0.983333, 29.84 kcal; the v87 replay's row).
@@ -3759,19 +3773,21 @@ const List<_Row> _unmoved = [
     '1.43',
     '1/4 teaspoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): ultimate-grilled-pizza|10 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0398-ultimate-grilled-pizza.yaml',
     null,
     10,
     'Salt',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '3.01',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 3: ½ teaspoon (no amount on the line)',
   ),
   // RE-PIN (M89 batch, v92): the repeat arm reads pizza|12's steps 8–9 —
   // 1 tablespoon × 3 + 1 tablespoon × 3, the ¼ cup base left (was 0.00 g,
@@ -4096,19 +4112,21 @@ const List<_Row> _unmoved = [
     '2.00',
     '1/2 teaspoon · USDA portion of "Garlic, raw"',
   ),
+  // RE-PIN (M108 batch, v121): italian-wedding-soup|17 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0402-italian-wedding-soup.yaml',
     null,
     17,
     'Salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '3.01',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 2: ½ teaspoon (no amount on the line)',
   ),
   (
     '0402-italian-wedding-soup.yaml',
@@ -4772,19 +4790,21 @@ const List<_Row> _unmoved = [
     '11.20',
     '2 tablespoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): nasi-goreng-indonesian-style-fried-rice|7 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
     null,
     7,
     'Table salt',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '9.02',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: 1¼ teaspoons + ¼ teaspoon (no amount on the line)',
   ),
   (
     '0523-nasi-goreng-indonesian-style-fried-rice.yaml',
@@ -5433,19 +5453,21 @@ const List<_Row> _unmoved = [
     '1.75',
     '1 × 6 g each',
   ),
+  // RE-PIN (M108 batch, v121): shrimp-pad-thai|2 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0554-shrimp-pad-thai.yaml',
     null,
     2,
     'Salt',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '0.75',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 5: ⅛ teaspoon (no amount on the line) · not counted: ½ teaspoon the steps drain off or discard',
   ),
   (
     '0554-shrimp-pad-thai.yaml',
@@ -8356,7 +8378,10 @@ void main() {
         // the list — B1a reads its "each portion … with about 1 teaspoon"
         // × the serves (nutrition_v85_test.dart pins it, 35.76 g).
         ('0034-lighter-corn-chowder.yaml', 10),
-        ('0284-brazilian-shrimp-and-fish-stew-moqueca.yaml', 8),
+        // RE-PIN (M108 batch, v121): ('0284-brazilian-shrimp-and-fish-stew-
+        // moqueca.yaml', 8) leaves the list — "Table alt and pepper" reads
+        // at the form `salt` now (the typo mend): its three ½ teaspoons,
+        // pinned after this loop.
         ('0301-grown-up-stovetop-macaroni-and-cheese.yaml', 5),
         ('0634-barbecued-pulled-chicken.yaml', 18),
         ('0905-chocolate-volcano-cakes-with-espresso-ice-cream.yaml', 9),
@@ -8367,6 +8392,14 @@ void main() {
         expect(line.amounts, isEmpty, reason: '$file|$position');
         expect(stepAmountsOf(r, line), isEmpty, reason: '$file|$position');
       }
+      // RE-PIN (M108 batch, v121): brazilian-shrimp-and-fish-stew-moqueca|8.
+      final moqueca =
+          recipes['0284-brazilian-shrimp-and-fish-stew-moqueca.yaml']!;
+      expect(stepAmountsOf(moqueca, nutritionLines(moqueca)[8]), [
+        (step: 1, amount: '½ teaspoon'),
+        (step: 3, amount: '½ teaspoon'),
+        (step: 3, amount: '½ teaspoon'),
+      ]);
       quotes(
         '0398-ultimate-grilled-pizza.yaml',
         7,
@@ -9294,7 +9327,7 @@ void main() {
       }
     }
 
-    test('R-H1 reads a print for exactly 6 of the 262 amount-less lines the '
+    test('R-H1 reads a print for exactly 6 of the 261 amount-less lines the '
         'engine weighs (a seasoning, water, equipment, flavouring, '
         'continuation, reference or main-recipe-part line is a 0 g rule row '
         'no reader weighs)', () {
@@ -9326,7 +9359,10 @@ void main() {
           }
         }
       }
-      expect(weighed, 262);
+      // RE-PIN (M108 batch, v121): 262 → 261 — brazilian-shrimp-and-fish-
+      // stew-moqueca|8 "Table alt and pepper" is a seasoning line now (the
+      // typo mend; its salt reading is v121's arm, nutrition_v121_test.dart).
+      expect(weighed, 261);
       // RE-PIN (M83 batch, v85): 4 → 5 — B1a reads gazpacho|10's "each
       // portion with about 1 teaspoon olive oil" (× the serves).
       // RE-PIN (M89 batch, v92): 5 → 6 — the repeat arm reads pizza|12's

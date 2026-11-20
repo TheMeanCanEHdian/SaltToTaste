@@ -2730,10 +2730,14 @@ void costShapes() {
     expect(nutritionLines(r), hasLength(400));
     // EXACTLY: one plan a path; the records read linear in the rows (the
     // compute reads its foods from the match's stand-ins).
+    // RE-PIN (M108 batch, v121): knownFoodReads 14 / 1,189 / 792 → 16 /
+    // 1,193 / 794 (+2 / +4 / +2) — the one row of this shape v121 moves is
+    // buffalo-cauliflower-bites|7 "Salt and pepper", a food row on SR 173468
+    // now (its step salt, 3.01 g); indexes and plans unchanged.
     expect(seen, {
-      'compute': {'indexes': 1, 'plans': 1, 'knownFoodReads': 14},
-      'GET': {'indexes': 1, 'plans': 1, 'knownFoodReads': 1189},
-      'recompute': {'indexes': 1, 'plans': 1, 'knownFoodReads': 792},
+      'compute': {'indexes': 1, 'plans': 1, 'knownFoodReads': 16},
+      'GET': {'indexes': 1, 'plans': 1, 'knownFoodReads': 1193},
+      'recompute': {'indexes': 1, 'plans': 1, 'knownFoodReads': 794},
     });
     expect(
       {

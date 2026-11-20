@@ -5375,6 +5375,403 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v121 (batch M108, prep52 P9 E1 — measured step salt behind the
+seasoning zero rule; matcherVersion 106 → 107. The spec .claude/diag/
+2026-11-16/prep52/design_v2.md "P9 — measured step salt behind the seasoning
+zero rule" (E1 only; E2 is the owner's OQ5, asked 2026-11-18 and not answered:
+NOT built), the rulings of the M108 brief and the orchestrator's ruling after
+run 1 (Q1–Q8, 2026-11-19, under the owner's standing matcher authorization,
+reported to the owner). Sodium only: salt has no energy, and every recipe's
+and section's energy is byte-identical. engine.dart and matcher.dart; no
+table, no new hold reason, no app copy beyond one basis clause (Q5), no
+migration. Replayed on SNAPSHOT 33 against the v120 set, both orders
+byte-identical, calls 0. This section cites symbols, grep commands and hit
+counts — never a line number.)**
+- **The rule (changes the DOCUMENTED rule; the "Seasoning to taste" paragraph
+  under the matches endpoints and R-H1's "out of reach by construction"
+  sentence carry dated notes).** Today: `_lineRuleRow` wrote every amount-less
+  line whose item `isSeasoningToTaste` names as the 0 g `confirmed` row
+  "Seasoning to taste — no measurable amount" before any reader, so R-H1's
+  step-print reader never saw a salt line whose steps print "1 teaspoon salt".
+  Now an amount-less seasoning line whose item names salt (`seasoningSaltOf`:
+  the set's spelling before " and " — "kosher salt" for "Kosher salt and
+  pepper"; the corpus typo "table alt" mended in `_seasoningItem` beside v44's
+  "back pepper") is read by R-H1 with the FORM `salt` (`_readHeadsOf`; "Table
+  salt and ground black pepper" heads at `pepper`), guard (i) counted by
+  NAMING (`_saltNamedElsewhere`: no other line of the scope names salt,
+  `_namesSalt`), guards (ii) and (iii) and the label scope as shipped.
+  `measuredStepSalt` makes it a FOOD row on SR 173468 "Salt, table" (the one
+  candidate `_tableSalt`, its detail cache-first: no search, calls 0) when the
+  reading is not empty, at least one print is not lost (`_lostSaltPrint`), no
+  coat station M52 plans holds the line (`_dipsOf`, `_batterInBowl`), and
+  `discardedMediumOf` finds no medium for the line nor for any print (asked of
+  `_printedSaltLine`, the line as if it printed the step's amount).
+  `stepAmountGrams` weighs only the prints `_lostSaltPrint` keeps, under the
+  salt part (`seasoningSaltOf`: never pepper's density), and names the lost
+  ones. Every other amount-less seasoning line stays the rule row; a pepper
+  line always.
+- **`_lostSaltPrint` (the ruled V2 test, per print; S = the print's sentence,
+  R = the rest of its step from S on, L = the later steps):** (a) S names
+  water, wine or a brine and R or L drains; (b) R drains, squeezes, wrings or
+  lets soak; (c') R names flour, crumbs, panko or bread AND R or L dredges,
+  shakes / pats / lets the excess off or coats all (both) sides — a coat word
+  alone is no station (the critic's narrowing: "Flip steaks to coat both sides
+  with marinade" is eaten); (d) S names chicken (thighs, breasts, leg
+  quarters) and R or L discards the skin; (e') a sentence of R or L keeps a
+  remainder "for another use" or discards the extra / remaining / remainder
+  AND names a sauce, liquid, broth, marinade, brine or water (the critic's
+  narrowing). RULE C (Q8): each "a sentence of R / of R or L matches" is read
+  from one table per pattern per index (`_lostSaltTablesOf`, `memo:lostSalt`:
+  the next matching sentence at or after each sentence) — v2's per-print scan
+  of the later steps took 848,811 ms on the TRUE cap shape's compute where the
+  tables take 2,644 ms.
+- **The basis (Q5 — new wording a person reads; APPROVED by the owner on
+  2026-11-19 as built, by mockup: `docs/mockups/v121-removed-copy.html`,
+  string 2).**
+  R-H1's shipped text, then for a line with dropped prints one clause: `from
+  steps 1, 4: ¼ teaspoon + ¼ teaspoon (no amount on the line) · not counted: 1
+  tablespoon the steps drain off or discard`
+  (creamy-baked-four-cheese-pasta|2; several dropped amounts joined with " +
+  ", the first 8 named). No app or server code parses the "(no amount on the
+  line)" suffix (`grep -rn "no amount on the line" apps/app/lib` → 2 hits,
+  both gram-source / partial-line labels, neither parsing a basis).
+- **Q4 — a kept share read off another line.** `m50FlagOf` no longer asks
+  `_keptVolumeOf` for a seasoning salt line: "Table salt and pepper" reads the
+  modifier `and`, and italian-chicken-soup-with-parmesan-dumplings|1 took
+  "approximate (the steps keep only 1 cup of it)" from step 3's "Measure out 1
+  cup bread crumbs". The only moved row that carried such a clause; it weighs
+  3.01 g with the plain basis.
+- **THE ROWS** (the replay against the v120 set; kit `out2/kit/moved_g2.tsv`):
+  150 salt rows on 173468, 799.00 g — 149 rule rows `confirmed` → `auto`
+  (confidence 1.000000) and brazilian-shrimp-and-fish-stew-moqueca|8 (`auto`
+  0.00 g → 9.02 g, the typo mend) — in 149 recipes and one section (tamales §0
+  "Red Chile Chicken Filling" |7, 3.01 g, read on the section's own steps),
+  plus tamales|10, the routed "1 recipe Red Chile Chicken Filling" row
+  restating its section's ½ teaspoon (1,616.50 → 1,619.50 g, 1,673.46 kcal
+  unchanged: the documented routed-row mechanism). kcal 0.00 on every moved
+  row; recs differ in column 10 (total grams) alone on 149 recipes, sections
+  in tamales §0's grams alone; notes == v120; status changes 0. By reading
+  kind (grams, then sodium at 387.58 mg/g): table / plain salt 124 rows
+  624.63 g, 242,094.10 mg; kosher 26 rows 174.37 g, 67,582.32 mg; one print
+  101 rows 519.18 g, 201,223.78 mg; several prints 34 rows 242.27 g,
+  93,899.01 mg; 15 rows with dropped prints 37.55 g, 14,553.63 mg (the 150
+  rows: 799.00 g, 309,676.42 mg). Sodium at SR 173468's nutrient 307 (38,758
+  mg per 100 g, re-read in the snapshot's cache): +310,843.35 mg in all
+  batches — the 150 rows' and, through tamales|10, the section's salt a
+  second time in tamales's own batch (+1,165.31 mg in each of the two
+  scopes; the 1.62 mg left over is the 2-dp rounding of the rows' grams)
+  (`out2/kit/sodium_rows.py`: every moved recipe's batch delta == its moved
+  grams × 387.58 mg/g, 150 of 150 within the 0.01 g rounding). The hand
+  derivation from the STEP TEXT (`out2/kit/hand.py`, a script that reads each
+  print in the steps, never the basis, at grams.dart's densities — 'salt' 1.22
+  g/mL = 6.0133 g a teaspoon, 18.04 g a tablespoon; 'kosher salt' 0.60865 g/mL
+  = 3.00 g a teaspoon: every moved row's gram source is `density`, not the
+  record's 6.0 g teaspoon portion): 129 rows weigh every print their steps
+  print; 21 a subset — the 15 dropped-print rows (grams + the clause's amounts
+  = every print), old-fashioned-stuffed-turkey|8,
+  poached-fish-fillets-with-crispy-artichokes-and-sherry-tomato-vinaigrette|10,
+  slow-cooker-beef-burgundy|2 and |19 (two headed groups: each line reads its
+  own group's labelled steps), and best-crab-cakes|3 and
+  catalan-style-beef-stew-with-mushrooms|3 (the reader misses a print — stated
+  below).
+- **THE LABEL (sodium a serving, `out2/kit/sodium.sql` over each tree's own
+  replayed database):** 149 recipes; added a serving median 327.02 mg (min
+  48.55, max 1,744.11). The ten largest: roasted-cornish-game-hens 294.44 →
+  2,038.55 mg; eggs-piperade 252.69 → 1,418.01; best-prime-rib and
+  sous-vide-prime-rib-with-mint-persillade 234.33 → 1,397.06 each;
+  creamy-cauliflower-soup 53.20 → 927.19; coq-au-riesling 161.23 → 1,035.22;
+  sweet-potato-soup 128.10 → 1,002.08; sous-vide-cochinita-pibil 139.92 →
+  1,013.90; pasta-with-cauliflower-bacon-and-bread-crumbs 1,491.46 → 2,365.44;
+  nasi-goreng-indonesian-style-fried-rice 1,248.26 → 2,122.24. 67 recipes more
+  than double (the list in `out2/kit/sodium_dist.out`); the largest ratios are
+  recipes whose other lines carry almost no sodium (roasted-green-beans 0.07 →
+  291.40 mg, green-beans-amandine 0.64 → 146.30, walkaway-ratatouille 7.97 →
+  687.73).
+- **THE CLASSES (R10)**, `dart … out2/probe/classes.dart <corpus>/recipes
+  test/fixtures/fdc/foods.json` (every amount-less line by
+  `isSeasoningToTaste`, `seasoningSaltOf`, `stepAmountsOf`,
+  `measuredStepSalt`, `discardedMediumOf` — each main recipe and each section
+  on its own steps) → `out2/probe/ classes_tip.out`, tallied over the replayed
+  scope (main recipes + the 144 stamped sections) by `out2/kit/classes.py`:
+  FOOD 149 main + 1 section (799.00 g, each equal to the replay's row, grams
+  AND basis); the rule row stays for 439 lines (v120's 588 − 149): no reading
+  263 (no salt print 194, guard (ii) 66, guard (i) by naming 3 — the census
+  reasons of `pE/s13_census.json`, the engine's reading empty on each), a
+  reading refused 104 (a print's medium: cooking water 60 (1 a section's), a
+  brine 19, a partial pour-away 1, a salt bath 1; the line's own medium: a
+  brine 1, cooking water 1; every print lost by `_lostSaltPrint` 17; a coat
+  station 4), a pepper line 72; and 3 amount-less salt spellings outside the
+  set stay where they were (ultimate-cream-of-tomato-soup|10 "Table salt and
+  cayenne pepper", maryland-crab-cakes|6 "Table salt and ground white pepper",
+  thai-grilled-beef-salad|8 "Salt and coarsely ground white pepper": not
+  seasoning lines, unchanged rows). In sections no host routes to (never
+  computed) 13 lines would read a step. A "salt and pepper" line counts its
+  salt only; its pepper half stays uncounted (STATED; the design measured 53
+  rows, 183.3 kcal of pepper prints).
+- **THE TRUTH THE GATE ASSERTS (Q2, Q3).** Every counted row checked against
+  the ruling pass's adjudication (`.claude/diag/2026-11-16/prep52/m108/rule/
+  adjudicated.tsv`, two independent readers per row, `out2/kit/q2.py`): 128
+  rows EATEN at their whole reading; 12 rows at exactly the prints their split
+  calls eaten; 3 EATEN rows at fewer prints (an undercount, every counted
+  print eaten — Q6 (i)); and the SEVEN PARTLY rows RULED COUNTED WHOLE AND
+  STATED (no source gives the share lost, no narrow test reaches them, no
+  by-name code): simple-pot-au-feu|1 9.00 g (the broth mostly unserved),
+  sous-vide-prime-rib-with-mint-persillade|1 18.00 (the bag liquid),
+  ciambotta-italian-vegetable-stew|6 12.03 (the eggplant's salt partly in the
+  coffee filters), grilled-fish-tacos|6 6.01 (paste left in the bowl),
+  deviled-pork-chops|2 3.37 (4 of about 4.7 tablespoons brushed),
+  grilled-tuna-steaks-with-vinaigrette|4 3.01,
+  skillet-roasted-chicken-breasts-with-potatoes|1 3.01 — 54.43 g, of which
+  about 51.04 g is not eaten. The replay differs from the ruled emulation
+  (`rule/v2_rows.tsv`, 148 rows, 787.73 g) by exactly the critic's prediction:
+  grilled-mojo-marinated-skirt-steak|5 counted (4.51 g, (c')),
+  italian-chicken-soup-with-parmesan-dumplings|1 counted (3.01 g, (e')),
+  spanish-chilled-almond-and-garlic-soup|5 0.75 → 4.50 g ((e')); +11.27 g.
+  None of the four recipes whose cure, rub or paste the steps rinse or scrape
+  off (Matcher v120's owner gate) has a moved salt row.
+- **WHAT STAYS (Q6), STATED:** (i) eaten salt the test refuses —
+  vietnamese-beef-pho|9 12.03 g (S2's "2 cups water" read by (a) through S5's
+  "drain noodles"), mushroom-bisque|3 9.00 ((b): "drain well. Reserve
+  liquid."), braised-new-mexicostyle-pork-in-red-chile-sauce-carne-adovada|1
+  counts 3.00 of 12.00 g, chinese-pork-dumplings|3 3.01 (its rice-wine filling
+  print falls with the squeezed one), panzanella-italian-bread-salad|2 1.50 of
+  4.51, apple-strudel|5 0.75 of 1.50 — 36.80 g; (ii) closer 1's WHOLE-LINE
+  medium refusal kept as built: 43 of the 85 refused rows hold eaten prints
+  (about 156.58 g by one reader's estimate, never adjudicated), and
+  `_lostSaltPrint` alone would over-count 21 of them (brines) — a per-print
+  rescue is a later batch; (iii) the reader's undercounts best-crab-cakes|3
+  (step 2's ¼ teaspoon sits in a "to taste" sentence),
+  catalan-style-beef-stew-with-mushrooms|3,
+  horseradish-crusted-beef-tenderloin|1 (refused here: a crumb station) and
+  french-omelets|3 (a repeat counted once); (iv) E2 — the six divided pot /
+  bath salt rows stay HELD (`discarded_medium`, the owner's ruling R2 of
+  2026-09-28) until OQ5 is answered; the guard (ii) rows (a narrower guard is
+  not proposed); the pepper half; the spellings outside the set; a celery salt
+  line names salt for guard (i) (light-macaroni-and-cheese|0 stays the rule
+  row).
+- **DECISIONS TRAVEL (R7), measured by a printing probe on both trees (whole
+  corpus recipes on the fixtures):** a pick of 746775 with apply_to_all on
+  soupe-au-pistou-provencal-vegetable-soup|8 "½ teaspoon table salt" reaches
+  almost-hands-free-risotto-with-parmesan-and-herbs|4 "Table salt" (key 'table
+  salt'): `auto` 746775 "Salt, table, iodized", the step's ¾ teaspoon weighed
+  on that record (4.57 g `portion`), basis "from step 2: ¾ teaspoon (no amount
+  on the line)", GET == stored == the next compute; on
+  broiled-pork-tenderloin|1 "2 teaspoons kosher salt" it reaches
+  simple-pot-au-feu|1 (9.00 g `density`, the kosher density). A Confirm with
+  apply_to_all applies 0 lines (the moved row keeps 173468); a skip with
+  apply_to_all is refused (422: no food decision). At the base every one of
+  those rows was the rule row before and after each verb. The own-recipe
+  settle (v102) re-points a moved row too: skillet-tamale-pie|14 picked 746775
+  moves |3 to 746775 at 3.05 g (v102's P7 re-pinned; the rule-row case moved
+  to falafel|16, which stays the rule row — guard (i)).
+- **A PERSON'S OWN VERBS (R8)** on
+  almost-hands-free-risotto-with-parmesan-and-herbs|4: Confirm → `confirmed`,
+  4.51 g, the step basis; a pick of 746775 → `overridden`, NO grams — as on
+  every shipped R-H1 line (ultimate-grilled-pizza|4 picked: `overridden`, no
+  grams) and as on the base's rule row; typed 5 g → `overridden` `override`
+  5.00 g "entered by hand"; skip → `skipped`, its 4.51 g kept on the row,
+  uncounted. On the same line with no steps (the rule row): Confirm leaves the
+  rule row; the pick is the same; typed grams are refused ("Pick a matching
+  food first"); skip → a skipped rule row. The PUT has no "not a food" verb.
+  The buckets: a moved row is `auto` at 1.000000 with grams — `counted`, never
+  in the review queue; the bucket SQL differs from v120's on the section
+  rule-row count alone (27 → 26).
+- **PINS (apps/server/test/nutrition_v121_test.dart).** Q7: each arm and
+  condition on the corpus row it ALONE decides (re-measured: the class probe
+  with that one arm removed moves exactly these rows) — (a)
+  creamy-baked-four-cheese-pasta|2, poached-eggs|0,
+  crispy-salt-and-pepper-shrimp|2; (b) mushroom-bisque|3,
+  duck-fatroasted-potatoes|1, crispy-potato-latkes|2; (c') chicken-kiev|8,
+  lighter-chicken-parmesan|5,
+  nut-crusted-chicken-breasts-with-lemon-and-thyme|1; (d)
+  lighter-chicken-and-dumplings|1,
+  french-style-chicken-and-stuffing-in-a-pot|17; (e')
+  spicy-pork-tacos-al-pastor|5, cherry-tomato-salad-with-feta-and-olives|2,
+  braised-new-mexicostyle-pork-in-red-chile-sauce-carne-adovada|1; the
+  negatives grilled-mojo-marinated-skirt-steak|5 ((c')),
+  italian-chicken-soup-with-parmesan-dumplings|1 and
+  spanish-chilled-almond-and-garlic-soup|5 ((e')), shrimp-fra-diavolo|1
+  ("Transfer drained tomatoes": `drained` is no drain verb); the count
+  (hearty-tuscan-bean-stew|0, every print lost), the per-print medium ask
+  (cool-and-creamy-macaroni-salad|0, hand-rolled-meat-ravioli|16,
+  sauteed-pork-cutlets-with-mustard-cider-sauce|0), the coat station
+  (chicken-katsu-crispy-pan-fried-chicken-cutlets|2, and its eggs |1 keeping
+  53.35 g — ENERGY), guard (i) (light-macaroni-and-cheese|0), the weigh under
+  the salt part (breakfast-strata-with-spinach-and-gruyere|4 "… and ground
+  black pepper" 6.01 g) and the kosher density (simple-pot-au-feu|1 9.00 g).
+  R11: six moved rows computed in their whole recipe on the fixtures, every
+  stored column (record, description, status, hold, gram source, confidence,
+  grams, 0.00 kcal) and the basis; the matches GET (A2); the label's sodium a
+  serving (breakfast-strata-with-spinach-and-gruyere 1,005.72 mg counted,
+  617.29 mg with |4 skipped — the v120 figure); the section line (tamales §0|7
+  on its own steps). R7 / R8: the decisions-travel and own-verb rows above,
+  each stored, GET and next compute; the rule-row sibling (falafel|16). R12
+  (A5): ONE loop over every corpus recipe's own lines — the selector picks
+  exactly 149 lines, the SHA-256 of the sorted "file|position grams basis"
+  list pinned (equal to the replay's rows), and 413 other amount-less
+  seasoning lines stay rule rows; the titled sections are not looped (the one
+  stamped section row is pinned alone). Synthesized (stated exceptions, each
+  the gate no corpus row alone decides): `dredg` alone, "coat both sides", the
+  crumb word `bread`, "let … soak", `chicken` alone, a later "draining", the
+  batter left in the bowl, flake sea salt's weighing (3.55 g a teaspoon), the
+  compute asking no search (one detail, 0 searches), and the line-level
+  medium ask (`measuredStepSalt`'s `discardedMediumOf(recipe, line, salt)`:
+  "Table salt, for brining" — the spelling of the corpus's "½ cup table salt,
+  for brining" without its amount — stays the rule row on a step's "½
+  teaspoon salt", which the per-print ask reads as no medium; no amount-less
+  corpus line names a purpose); and, from the owner gate, each of (e')'s four
+  liquid words that decide no corpus row — `broth`, `marinade`, `brine`,
+  `water` — on a discarded remainder of it ("Reserve ½ cup of mixture; discard
+  remaining <word>."), with a remainder naming no liquid as the control.
+- **MUTANTS** (each on a snapshot copy, a literal anchor of count 1, its diff
+  saved and read before its result, restored from a signal trap by copy + cmp
+  + md5; `out2/mut/`): 44. 43 killed by a value — the five arms removed; a
+  narrowed neighbour of each of the ten patterns (`_saltLiquid`, `_saltDrain`,
+  `_saltLost`, `_saltCrumb`, `_saltCoat`, `_saltMeat`, `_saltSkin`,
+  `_saltLeft`, `_saltLeftLiquid`, `_namesSalt`); (c') back to the
+  self-satisfying form (killed by grilled-mojo-marinated-skirt-steak|5); (e')
+  unscoped (spanish-chilled-almond-and-garlic-soup|5); the whole-line form V1
+  (creamy-baked-four-cheese-pasta|2's 3.01 g); V0, no lost print (the bean
+  soak); the per-print medium ask removed (the macaroni salad, the ravioli,
+  the pork cutlets' brine); the medium ask for cooking water alone (the
+  design's (i)); the coat-station exclusion removed (ENERGY: the katsu eggs);
+  the weigh back under the line's item; guard (i) by head count; guards (ii)
+  and (iii) removed (the property's counts); the form forced back to the head;
+  the typo mend removed; the Q4 kept-share ask restored; the Q5 clause
+  dropped; the grams counting lost prints; the rule row always written; the
+  kosher flag off (the flake pin). Nine first survived both the v121 file and
+  the whole-library replay (byte-identical to the tip's: `dredg`, the
+  coat-sides alternation, `bread`, "let soak", `chicken`, `drain`'s
+  inflections, the batter arm, the search path, and `seasoningSaltOf`'s
+  `endsWith` → `contains`); eight are killed by the synthesized pins above;
+  the ninth is EQUIVALENT by construction (every salt part of
+  `seasoningToTasteItems` ends with "salt"), stated, not counted. Verifier
+  round 1 (D1): a 45th, the line-level medium ask → `true`, passed the v121
+  file and reads the same on all 677 amount-less corpus seasoning lines (the
+  verifier's class probe, main and sections); it is
+  killed by a value on the "for brining" pin above (closer round 1,
+  `out2/c1mut/lineMedium.log`).
+- **COST (RULE C, Q8 / R14).** Two count-pinned cap shapes (400 lines, 120
+  steps of 10,000 characters): TRUE — "Table salt" and 399 "Ground black
+  pepper", every sentence "Stir in ½ teaspoon salt." (48,000 prints): the
+  compute 2,644 ms on the tip (the counts exact: `memo:lostSalt` 1,
+  `memo:saltLines` 1, `memo:stepAmountGrams` 2, `stepPrints` 48,000,
+  `memo:parted` 48,000 — the per-print medium ask, linear); QUIET (no print)
+  287 ms. The base reads nothing on either (288 / 262 ms). v2's per-print scan
+  of the later steps took 848,811 ms on the same TRUE compute. Two new
+  families in `boundsOf` (test/support/cost_bounds.dart): `memo:lostSalt`
+  once, `memo:saltLines` once per group heading and once for every step. The
+  shipped cost pins move in one count only: nutrition_v82_test's CAULIFLOWER
+  `knownFoodReads` 14 / 1,189 / 792 → 16 / 1,193 / 794 (its recipe
+  buffalo-cauliflower-bites|7 is a moved row).
+- **RE-PINS.** `grep -rho "RE-PIN (M108 batch, v121)" apps/server/test | wc
+  -l` → 76 in `grep -rl … | wc -l` → 35 files: matcherVersion 106 → 107 (23
+  files and v120's one-liner); four hash literals by the matcher term alone
+  (each measured: the tip with 106 put back gives the old literal —
+  nutrition_seasoning_ci, v101 U3, v47 F2, v83 F5c); the moved rule-row tuples
+  of v71 (9 + brazilian-shrimp-and-fish-stew-moqueca|8's row and its R-H1
+  negative, and its 262 → 261 weighed lines), v72 (10, and 10 recipes' sodium
+  totals), v73 (2); the total grams of v87 (4 recipes), v88 (1), v92
+  (ultimate-grilled-pizza); acquacotta-tuscan-white-bean-and-escarole-soup|5
+  in v15 (×2) and v16 T0; v37's brazilian-shrimp-and-fish-stew-moqueca|8
+  alone (a stepless recipe: the rule row); v101 U10's
+  best-crab-cakes|3 (it reads salt now); v102 P7 (skillet-tamale-pie|3 follows
+  the pick); v82's CAULIFLOWER counts. No contract golden and no fixture
+  moves; no app file moves (apps/app/lib reads no "Seasoning to taste" text
+  for a decision, shows a rule row as "<description> · counts as zero" and a
+  food row's basis verbatim).
+- **STATED LIMITS.** The seven PARTLY rows (54.43 g); the 36.80 g of eaten
+  salt the test refuses (Q6 (i)); the whole-line medium refusal's eaten prints
+  (Q6 (ii)); the reader's undercounts (Q6 (iii)); the pepper half of "salt and
+  pepper"; the three spellings outside the set; a celery salt line names salt
+  for guard (i); a titled section no host routes to is never computed (13 such
+  lines would read a step); E2's six held rows (OQ5); a person's own pick of
+  another record on a moved line stores no grams, as on every amount-less
+  line.
+- **GATE-P (R15)** — sw5–sw13 with sw8r, sw9, sw10, the tip's sweep scripts on
+  both, 12 shards, each tree on ITS OWN replayed database (the base 412d9d5's
+  and the tip's replay of snapshot 33; `out2/sweeps/`): sw5 32,659, sw6
+  38,588, sw7 1,920, sw8 58,596, sw8r 5,433, sw9 176 combos, 0 divergent and 0
+  refused on both, every line identical; sw10 158 round trips, bare and typed,
+  0 divergent on both; sw11 40,484 combos, 200 divergent on both, refused
+  12,870 → 12,878, 18 lines differ each way, all of best-prime-rib and
+  sous-vide-prime-rib-with-mint-persillade (their "Kosher salt and pepper" |1
+  is a food row now: the sweep's `n` row moves from |2 to |1, and pick-another
+  finds no other cached candidate for it, 4 refusals each); sw12 141 combos,
+  54 divergent on both: the keys 'kosher salt' and 'salt' gain moved rows, so
+  their first undecided row (the combo's anchor) moves from
+  vegetable-broth-base|5 and mango-orange-and-jicama-salad|3 to
+  creamy-gazpacho-andaluz|6 and tuscan-style-beef-stew|1 (the old anchors read
+  as reached rows: 4 ROW lines), and the other 96 differing ROW lines (48 each
+  way) are moved rows — `reached/plain` at the tip where the base's rule rows
+  read `decided-or-gated` — the R7 reach; sw13 294 combos, 0 divergent on
+  both, 12 lines differ each way, every one a moved recipe's row state
+  (spanish-style-toasted-pasta-with-shrimp, broccoli-cheese-soup, tamales,
+  nasi-goreng-indonesian-style-fried-rice, buffalo-cauliflower-bites,
+  vegan-baja-style-cauliflower-tacos). Every base-vs-tip difference is a moved
+  row.
+- **SUITES** (run whole after the last change to a lib or test file): server
+  +3,702 ~4 (the owner's base figure +3,667 ~4 plus the 35 tests of
+  nutrition_v121_test.dart — the batch's 34 and the owner gate's one; the base worktree measured +3,666 ~5, its extra
+  skip v44's "no snapshot 19 here" — the snapshot lives under the main
+  checkout's gitignored .claude/diag), salt_shared +265, app +674; `dart
+  analyze` (apps/server, tool/replay included; packages/salt_shared) and
+  `flutter analyze` clean; the 36 changed or new server test files load
+  without the corpus (`SALT_CORPUS_DIR=/nonexistent`: +198 ~637, 0 "Failed to
+  load").
+- **The owner gate (2026-11-19).** The replay re-run on the gated tree:
+  byte-identical to the fixer's final and to verifier round 3's (rows, recs,
+  sections, calls, notes; the buckets). The adjudication checked again by a
+  script of the gate's own that parses no line (the replay's rows against
+  `rule/adjudicated.tsv` by grams — the one row whose eaten and lost prints
+  weigh the same, nut-crusted-chicken-breasts-with-lemon-and-thyme|1, read by
+  its basis: step 1's print counted, step 2's named): 150 salt rows, 799.00 g —
+  128 EATEN at their whole reading (707.02 g), 12 at exactly their eaten prints
+  (32.30 g), the seven ruled rows whole (54.43 g), three EATEN rows at fewer
+  prints (5.25 g of their 18.01); 0 rows outside the adjudication; 0 counted
+  prints it calls lost; the kcal column moves on 0 rows, and the recs without
+  their total-grams column and the sections without theirs are byte-identical
+  to the v120 set. The sodium measured again on the gate's own two replayed
+  databases (a worktree of 412d9d5 for the base; a script of its own over
+  `recipe_nutrition`): 150 scopes change — the 149 holding a moved salt row
+  (148 recipes and the section) and tamales through its routed row; every batch
+  delta equals its moved grams × 387.58 mg/g within the 2-dp gram rounding; a
+  serving, median +327.02 mg, largest +1,744.11 (roasted-cornish-game-hens
+  294.44 → 2,038.55), 67 recipes more than double; the unrounded sum over the
+  150 scopes +310,843.37 mg (the batch's +310,843.35 sums each scope's 2-dp
+  figure). Eight own single-site mutants, each diff read before its result:
+  seven killed by a value — `_lostSaltTablesOf`'s backward pass off by one, the
+  rest of a step read from the step's first sentence instead of the print's
+  own, (c')'s coat act read in the print's step alone, guard (i) by naming read
+  over the whole recipe instead of the line's headed group, the per-print
+  medium ask given the amount-less line's own text, that ask's `every` → `any`,
+  and the "not counted" clause written only beside two kept prints. One
+  SURVIVED both the v121 file (34 of 34) and the whole-library replay
+  (byte-identical to the tip's): (e')'s liquid words narrowed to `sauce` and
+  `liquid`, the two on which a corpus sentence decides a seasoning-salt print
+  (`sauce` — spicy-pork-tacos-al-pastor|5; `liquid` —
+  cherry-tomato-salad-with-feta-and-olives|2 and
+  braised-new-mexicostyle-pork-in-red-chile-sauce-carne-adovada|1). Of the 13
+  corpus step sentences both `_saltLeft` and `_saltLeftLiquid` match, two name
+  another of the six words — braised-turkey's "(use any remaining broth for
+  another use.)" and foolproof-spaghetti-carbonara's "Pour 1 cup cooking water
+  into liquid measuring cup and discard remainder." — and neither follows a
+  seasoning-salt print (braised-turkey's two amount-less salt lines read no
+  print; the carbonara's salt line carries its amount); `marinade` and `brine`
+  are in none of the 13. So `broth`, `marinade`, `brine` and `water` were read
+  by no pin and decided no corpus row. PINNED BY HAND on a synthesized step per
+  word ("Reserve ½ cup of mixture; discard remaining <word>." keeps the print
+  off; the control, a remainder naming no liquid, is counted 3.01 g), the
+  mutant re-run and killed by a value, and four more mutants each dropping ONE
+  word die each at its own word. By hand: that one test
+  (nutrition_v121_test.dart: 35 tests), this bullet, the PINS and SUITES
+  figures it moves and the note on the basis clause's approval; no lib file.
+  The hand edits were verified by agents before the commit.
+- **DEPLOY NOTE.** No migration. The single deploy of the prep52 chain carries
+  this batch; its sweep restamps every recipe (matcherVersion 107): 149
+  recipes and one section gain sodium, no energy moves, no request (173468's
+  detail is cached).
+
 **Matcher v120 (batch M107, prep52 P8 — a counted piece beside a printed
 volume; matcherVersion 105 → 106. The spec .claude/diag/2026-11-16/prep52/
 design_v2.md "P8 — a counted piece beside a printed volume" (S4), the
@@ -14682,7 +15079,12 @@ tablespoon sugar … to taste"), moqueca|8, the mac and cheese|5,
 barbecued-pulled-chicken|18 and chocolate-volcano-cakes|9 (another line of
 the scope shares the head), meringue-christmas-trees|6 (no print), and the
 other 240 amount-less rows; the salt lines are rule rows (0 g `confirmed`),
-out of reach by construction. An amount-less line whose steps print a volume FETCHES its record's
+out of reach by construction. (Dated note, 2026-11-19, Matcher v121 / M108:
+no longer by construction — an amount-less seasoning line naming salt is
+read with the FORM `salt` and, where its steps measure salt the dish keeps,
+is a food row on SR 173468, `measuredStepSalt`;
+brazilian-shrimp-and-fish-stew-moqueca|8 "Table alt and pepper" is such a
+line now, the typo mended. See "Matcher v121".) An amount-less line whose steps print a volume FETCHES its record's
 detail as a typed line would (the prints decide `gramsFor`'s fetch — never
 a cache's luck: computed alone in a fresh library, 0685's pepper flakes,
 0398's oil and 0554's sugar weigh 0.45 / 14.00 / 39.21 g, the same as in the
@@ -16504,6 +16906,13 @@ A line with no amount whose item is seasoning to taste — salt, pepper,
 no-match ("Seasoning to taste — no measurable amount"), like water: it
 contributes nothing measurable, and FDC's search for it returns vegetables
 and salted nuts. A seasoning line WITH an amount is matched normally.
+(Dated note, 2026-11-19, Matcher v121 / M108: the rule row now stays for a
+pepper line and for a salt line whose steps print no salt it can read, or
+whose printed salt goes into a medium or is all lost; a salt line whose
+steps MEASURE salt the dish keeps — "Add 1 teaspoon salt" — is a food row on
+SR 173468 "Salt, table" at those grams, sodium only, its basis "from step N:
+… (no amount on the line)", a print the steps drain off or discard named
+after it. See "Matcher v121".)
 
 Decisions travel: at compute time a line whose item (the matcher's
 normalized text, e.g. `without salt butter`) has a `confirmed` or

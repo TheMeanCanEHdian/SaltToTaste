@@ -119,7 +119,7 @@ Future<(String, String?)?> _weigh(Recipe r, int position) async {
 }
 
 void main() {
-  test('matcherVersion 106 (v92 set it to 87, batch M89: one row moves)', () {
+  test('matcherVersion 107 (v92 set it to 87, batch M89: one row moves)', () {
     // RE-PIN (M91 batch, v93): matcherVersion 88 (was 87).
     // RE-PIN (M92 batch, v94): matcherVersion 89 (was 88).
     // RE-PIN (M93 batch, v95): matcherVersion 90 (was 89).
@@ -139,7 +139,8 @@ void main() {
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
-    expect(matcherVersion, 106);
+    // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
+    expect(matcherVersion, 107);
   });
 
   group('clause (1): the counted repeat on real sentences', skip: skipIfNoCorpus, () {
@@ -507,7 +508,10 @@ void main() {
       final n = db.nutritionFor(recipe.id)!;
       expect(
         (n.status, n.caloriesPerServing?.toStringAsFixed(2), n.totalGrams),
-        ('complete', '978.43', 1332.1),
+        // RE-PIN (M108 batch, v121): ultimate-grilled-pizza|10 "Salt" counts
+        // its step salt ("from step 3: ½ teaspoon", 3.01 g on SR 173468) —
+        // was 1332.1 total grams; energy unchanged.
+        ('complete', '978.43', 1335.1),
       );
     });
 

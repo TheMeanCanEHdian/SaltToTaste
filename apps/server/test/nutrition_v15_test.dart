@@ -117,8 +117,8 @@ void main() {
       ('a skip', {'skipped': true}),
     ]) {
       test("Acquacotta (0405): $verb on the second 'Salt and pepper' "
-          '(position 18) stays there; a recompute leaves position 5 the '
-          'seasoning rule row', () async {
+          '(position 18) stays there; a recompute leaves position 5 its own '
+          'row (v121: its step salt, not the decision)', () async {
         final (db, r) = imported(acquacotta);
         final provider = FixtureProvider(pending: pendingSearches);
         await matchAndCompute(db, provider, r);
@@ -131,14 +131,18 @@ void main() {
         final decided = rowAt(db, 18, id: r.id);
         await matchAndCompute(db, provider, r);
         final first = rowAt(db, 5, id: r.id);
+        // RE-PIN (M108 batch, v121): acquacotta-tuscan-white-bean-and-
+        // escarole-soup|5 is a food row on its own step salt ("from step 2:
+        // ¾ teaspoon", 4.51 g on SR 173468 — the replay's row), never 18's
+        // decision (was the 0 g `confirmed` seasoning rule row).
         expect(
-          (first.status, first.fdcId, first.grams, first.description),
           (
-            'confirmed',
-            null,
-            null,
-            'Seasoning to taste — no measurable amount',
+            first.status,
+            first.fdcId,
+            first.grams?.toStringAsFixed(2),
+            first.description,
           ),
+          ('auto', 173468, '4.51', 'Salt, table'),
         );
         final second = rowAt(db, 18, id: r.id);
         expect(

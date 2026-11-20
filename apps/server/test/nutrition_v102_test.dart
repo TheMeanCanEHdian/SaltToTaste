@@ -432,22 +432,39 @@ void leftAlone() {
 }
 
 /// P7 (green on both trees — C2-D5, K7): an engine RULE ROW sibling stays
-/// the rule row — the rule order inside the settle (m7, m8).
+/// the rule row — the rule order inside the settle (m7, m8). RE-PIN (M108
+/// batch, v121): skillet-tamale-pie|3 is a food row since v121; the rule-row
+/// sibling is pinned in nutrition_v121_test.dart.
 void ruleRow() {
   test("P7: 0072|14 '¾ teaspoon table salt' pick 746775 → |3 'Table salt' "
-      'stays the seasoning rule row (mutants m7, m8)', () async {
+      '(v121: a food row on its step salt) follows the pick', () async {
     final db = _db();
     final id = await _compute(db, '0072-skillet-tamale-pie.yaml');
     await cachedFood(db, _fx, 746775);
     final before = _row(db, id, 3);
     expect(nutritionLines(_rec(db, id))[14].raw, '¾ teaspoon table salt');
     expect(nutritionLines(_rec(db, id))[3].raw, 'Table salt');
+    // RE-PIN (M108 batch, v121): skillet-tamale-pie|3 'Table salt' is no
+    // rule row now — its own scope's steps measure it ("from step 2: ½
+    // teaspoon", 3.01 g on SR 173468, `auto`; was ('confirmed', null,
+    // true)) — so the own-recipe settle re-points it with the pick on |14
+    // (same key 'table salt'), the step's ½ teaspoon weighed on 746775's
+    // portion (was: |3 kept its rule row). The rule-row order the mutants m7
+    // and m8 broke is pinned on a line that stays a rule row in
+    // nutrition_v121_test.dart.
     expect(
       (before.status, before.fdcId, isEngineRuleRow(before)),
-      ('confirmed', null, true),
+      ('auto', 173468, false),
+    );
+    expect(
+      _shape(before),
+      '173468|3.01|density|null|auto|1.0000|Salt, table|·',
     );
     await _put(db, _NoNet(), id, 14, {'fdc_id': 746775});
-    expect(_shape(_row(db, id, 3)), _shape(before));
+    expect(
+      _shape(_row(db, id, 3)),
+      '746775|3.05|portion|null|auto|1.0000|Salt, table, iodized|·',
+    );
     await _settled(db, id);
   });
 }

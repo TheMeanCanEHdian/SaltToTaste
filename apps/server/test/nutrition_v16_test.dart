@@ -170,9 +170,18 @@ void main() {
           (row.raw, row.status, row.fdcId, row.grams),
           (sp, 'overridden', 173468, 5),
         );
+        // RE-PIN (M108 batch, v121): the rows on SR 173468 — the decided
+        // copy alone, and for the 'Salt' edit also the edited line at 5,
+        // a food row on its own step salt ("from step 2: ¾ teaspoon",
+        // 4.51 g, `auto`: acquacotta-tuscan-white-bean-and-escarole-soup|5's
+        // reading) — never a copy of the decision (was hasLength(1)).
         expect(
-          db.ingredientMatchesFor(r.id).where((x) => x.fdcId == 173468),
-          hasLength(1),
+          [
+            for (final x in db.ingredientMatchesFor(r.id))
+              if (x.fdcId == 173468)
+                '${x.position} ${x.status} ${x.grams?.toStringAsFixed(2)}',
+          ],
+          [if (to != null) '5 auto 4.51', '$at overridden 5.00'],
         );
       }, skip: skipIfNoCorpus);
     }

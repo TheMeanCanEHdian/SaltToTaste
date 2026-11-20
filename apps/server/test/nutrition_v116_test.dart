@@ -153,12 +153,13 @@ void main() {
 /// gate's lesson: measure the rule off the corpus before calling it
 /// harmless) — `lineKeyOf`, the stamp every compute writes.
 void keys() {
-  test('P4: matcherVersion is 106 (RE-PIN, M107 batch, v120: was 105)', () {
+  test('P4: matcherVersion is 107 (RE-PIN, M108 batch, v121: was 106)', () {
     // RE-PIN (M104 batch, v117): matcherVersion 103 (was 102).
     // RE-PIN (M105 batch, v118): matcherVersion 104 (was 103).
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
-    expect(matcherVersion, 106);
+    // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
+    expect(matcherVersion, 107);
   });
 
   test('P2 (S): the kind word on the decision key — any case, the whole '

@@ -82,7 +82,13 @@ void main() {
       );
       expect(gramBasisFor(db, line, row), basis, reason: raw);
       if (fdcId == null) {
-        expect(row.description, engineRuleNotes[4], reason: raw);
+        // RE-PIN (M108 batch, v121): moqueca|8 is the seasoning rule row
+        // (engineRuleNotes[1]); every other null row the continuation's [4].
+        expect(
+          row.description,
+          engineRuleNotes[raw == 'Table alt and pepper' ? 1 : 4],
+          reason: raw,
+        );
         expect(isEngineRuleRow(row), isTrue, reason: raw);
       }
     }
@@ -695,14 +701,19 @@ const List<(String, int, String, int?, String?, String, String?)> _rows = [
     null,
   ),
   // C: 0 g lines, the food right.
+  // RE-PIN (M108 batch, v121): brazilian-shrimp-and-fish-stew-moqueca|8
+  // "Table alt and pepper" — the typo mend makes it a seasoning line; this
+  // stepless recipe measures none, so it is the 0 g seasoning rule row (was
+  // 173468, '0.00', basis 'no amount on the line — counted as 0 g'; on its
+  // real steps it counts 9.02 g: nutrition_v121_test.dart).
   (
     '0284-brazilian-shrimp-and-fish-stew-moqueca.yaml',
     8,
     'Table alt and pepper',
-    173468,
-    '0.00',
+    null,
+    null,
     'counted',
-    'no amount on the line — counted as 0 g',
+    null,
   ),
   (
     '1133-chicken-francese.yaml',

@@ -3027,19 +3027,21 @@ const List<_Row> _unmoved = [
     '62.84',
     '4 teaspoon ≈ 20 mL · approximate (ATK: 1 cup packed brown sugar = 7 ounces)',
   ),
+  // RE-PIN (M108 batch, v121): grilled-stuffed-pork-tenderloin|1 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0603-grilled-stuffed-pork-tenderloin.yaml',
     null,
     1,
     'Salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '6.01',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: 1 teaspoon (no amount on the line)',
   ),
   (
     '0603-grilled-stuffed-pork-tenderloin.yaml',
@@ -3339,19 +3341,21 @@ const List<_Row> _unmoved = [
     '15.40',
     '1 teaspoon · USDA portion',
   ),
+  // RE-PIN (M108 batch, v121): brussels-sprout-salad-with-warm-mustard-vinaigrette|3 — the replay's row, its step salt on SR 173468
+  // (was the 0 g `confirmed` seasoning rule row).
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
     null,
     3,
     'Table salt and pepper',
-    null,
-    'Seasoning to taste — no measurable amount',
+    173468,
+    'Salt, table',
     '1.000000',
-    null,
-    'confirmed',
+    '1.50',
+    'auto',
     null,
     '0.00',
-    null,
+    'from step 1: ¼ teaspoon (no amount on the line)',
   ),
   (
     '0050-brussels-sprout-salad-with-warm-mustard-vinaigrette.yaml',
