@@ -26,6 +26,7 @@ import 'package:test/test.dart';
 import '../routes/api/v1/admin/logs.dart' as logs_route;
 import '../routes/api/v1/auth/login.dart' as login_route;
 import 'support/cost_bounds.dart' show backstopMs;
+import 'support/dual_stack_bind.dart';
 
 /// The shipped web app is NOT served by the middleware chain.
 ///
@@ -1854,17 +1855,21 @@ void main() {
         var entered = 0;
         var routed = '';
         final count = _CountingIO();
-        final counted = await IOOverrides.runWithIOOverrides(
-          () => serve(
-            buildOutermostMiddleware((c) {
-              entered++;
-              routed = c.request.uri.path;
-              return Response(statusCode: HttpStatus.notFound);
-            }, publicDir: publicDir.path),
-            bind,
-            0,
+        // `raw` connects to 127.0.0.1: the anyIPv6 bind needs a port nothing
+        // else answers there (support/dual_stack_bind.dart).
+        final counted = await bindOnFreeLoopbackPort(
+          (port) => IOOverrides.runWithIOOverrides(
+            () => serve(
+              buildOutermostMiddleware((c) {
+                entered++;
+                routed = c.request.uri.path;
+                return Response(statusCode: HttpStatus.notFound);
+              }, publicDir: publicDir.path),
+              bind,
+              port,
+            ),
+            count,
           ),
-          count,
         );
         addTearDown(() => counted.close(force: true));
         final (_, notAllowed, _) = await raw(

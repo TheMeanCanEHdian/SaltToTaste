@@ -14,6 +14,7 @@ import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
 
 import '../routes/api/v1/auth/login.dart' as login_route;
+import 'support/dual_stack_bind.dart';
 
 /// What a forwarded header actually BUYS a peer — the two halves of the proxy
 /// trust boundary, driven over a real socket bound the way production binds.
@@ -74,8 +75,11 @@ void main() {
         .use(errorHandler())
         .use(requestLogger())
         .use(requestIdProvider());
-    // anyIPv6, exactly as production does — see the note above.
-    final server = await serve(pipeline, InternetAddress.anyIPv6, 0);
+    // anyIPv6, exactly as production does — see the note above — on a port
+    // nothing else answers on 127.0.0.1 (support/dual_stack_bind.dart).
+    final server = await bindOnFreeLoopbackPort(
+      (port) => serve(pipeline, InternetAddress.anyIPv6, port),
+    );
     addTearDown(() async {
       await server.close(force: true);
       db.dispose();

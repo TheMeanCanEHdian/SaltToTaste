@@ -14,6 +14,8 @@ import 'package:salt_server/src/nutrition/provider.dart';
 import 'package:salt_server/src/search/search_service.dart';
 import 'package:test/test.dart';
 
+import 'support/dual_stack_bind.dart';
+
 /// No route here touches nutrition; this lets the REAL chain be assembled.
 class _UnusedNutrition implements NutritionProvider {
   @override
@@ -58,8 +60,11 @@ void main() {
       );
 
       // Bind the way production does, and ask a real socket what the peer
-      // looks like. Nothing else can produce this string.
-      final server = await HttpServer.bind(InternetAddress.anyIPv6, 0);
+      // looks like. Nothing else can produce this string. (The port: one
+      // nothing else answers on 127.0.0.1, support/dual_stack_bind.dart.)
+      final server = await bindOnFreeLoopbackPort(
+        (port) => HttpServer.bind(InternetAddress.anyIPv6, port),
+      );
       String? peer;
       server.listen((request) {
         peer = request.connectionInfo!.remoteAddress.address;
@@ -368,7 +373,9 @@ void main() {
         searchService: () => InlineSearchService(database),
         logStore: LogStore(directory: '${tempDir.path}/logs'),
       );
-      final server = await serve(pipeline, InternetAddress.anyIPv6, 0);
+      final server = await bindOnFreeLoopbackPort(
+        (port) => serve(pipeline, InternetAddress.anyIPv6, port),
+      );
       addTearDown(() => server.close(force: true));
       return Uri.parse('http://127.0.0.1:${server.port}');
     }
