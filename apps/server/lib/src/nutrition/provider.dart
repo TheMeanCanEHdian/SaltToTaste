@@ -150,6 +150,66 @@ class FdcFood {
   };
 }
 
+/// One number a [mergeNumbers] report names: the cached value (null where
+/// the cached food lacks it) beside the value FDC publishes.
+typedef NumberDiff = ({String number, double? cached, double published});
+
+/// [cached] widened by each number of [numbers] that [published] (a raw
+/// detail's amounts, `fdcDetailNutrients`) carries and [cached] lacks —
+/// appended, in [numbers]' order; the id, description, data type, portions
+/// and every value [cached] holds unchanged (v123, batch PB1: the cache keeps
+/// only the numbers the map read when it was written, and nothing re-fetches
+/// a detail). Never applied, only REPORTED: `differs`, a number of
+/// [numbers] both carry at different values; `revisions`, a number of
+/// [mapped] outside [numbers] that [published] carries and [cached] lacks or
+/// holds at another value (FDC's revisions since the row was cached).
+({
+  FdcFood food,
+  List<String> merged,
+  List<NumberDiff> differs,
+  List<NumberDiff> revisions,
+})
+mergeNumbers(
+  FdcFood cached,
+  Map<String, double> published,
+  Set<String> numbers, {
+  required Set<String> mapped,
+}) {
+  final own = cached.nutrientsPer100g;
+  final merged = [
+    for (final number in numbers)
+      if (published.containsKey(number) && !own.containsKey(number)) number,
+  ];
+  NumberDiff? diff(String number) {
+    final value = published[number];
+    return value == null || own[number] == value
+        ? null
+        : (number: number, cached: own[number], published: value);
+  }
+
+  return (
+    food: FdcFood(
+      fdcId: cached.fdcId,
+      description: cached.description,
+      dataType: cached.dataType,
+      nutrientsPer100g: {
+        ...own,
+        for (final number in merged) number: published[number]!,
+      },
+      portions: cached.portions,
+    ),
+    merged: merged,
+    differs: [
+      for (final number in numbers)
+        if (own.containsKey(number)) ?diff(number),
+    ],
+    revisions: [
+      for (final number in mapped)
+        if (!numbers.contains(number)) ?diff(number),
+    ],
+  );
+}
+
 /// Which requests a provider failure stands for (RULE A, v28; Run 058 Opus
 /// critic 1 / S27: one failure class where there are two stopped every
 /// stale sweep at the first recipe holding one bad food).

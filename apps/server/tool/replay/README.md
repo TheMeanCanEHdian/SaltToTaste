@@ -17,6 +17,10 @@ gitignored; a key-stripped, session-free copy of the live DB — never the live 
   The reference = the previous batch's set on its replay snapshot (the simplification series' was the v82
   set, `.claude/diag/2026-10-09/v82_*` on snapshot 29; at v104 it is v103's, `v103_*` on snapshot 32): a
   refactor batch reproduces it byte for byte, a matcher batch differs on exactly its stated rows.
+- `panel_digest.sh [--stamp same|bumped] <a.db> <b.db> [moving-key …]` (v123, batch PB1) — the label's
+  whole panel on two replayed databases (the TSVs carry energy only): (1) every totals key's library sum,
+  (2) each (id, key) whose total or per-serving amount differs, (3) ids differing outside the moving keys
+  (must be 0), (3b) one-sided ids (0 / 0), (3c) the stamp (`ingredients_hash`) on its own line; exit 0 = PASS.
 - `digest.sh <gate-dir> [live-db]` — after a deploy: live buckets == replay buckets and the kcal digest.
 - `person_sweeps/` — sw3–sw12, the only proof of the person paths (Confirm / pick / skip / typed grams
   through the real PUT); see its README for each sweep's spec and base / tip figures.

@@ -447,7 +447,9 @@ void main() {
           // the tip with 106 put back gives 8161ec7f).
           // RE-PIN (M109 batch, v122): matcherVersion 108 alone (was 3fbfc759…;
           // the base 9fd3e55 with only the bump to 108 gives 5f9874a6).
-          '5f9874a6454dbc52cce8396343a2530d1c0d488e7a8da96d5a5db7b20a9a2fe3',
+          // RE-PIN (PB1 batch, v123): matcherVersion 109 alone (was 5f9874a6…;
+          // the stamp has no map term: the tip with 108 put back gives 5f9874a6).
+          'e2f67a46e08213e5d1a8c455c7565da381863ab415f08a070ed50773fd5d0700',
         );
         // lemon's moved off its v46 stamp (the fold) — once, on deploy.
         expect(

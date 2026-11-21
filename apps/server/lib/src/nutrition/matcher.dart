@@ -207,7 +207,10 @@ const Map<String, String> _synonyms = {
 /// skin move key, assertive greens as kale) and the rinsed cure: every line
 /// of a cure a step applies to the food and a later sentence rinses off is
 /// 0 g; a mixture scraped off the food is counted and flagged.
-const int matcherVersion = 108;
+/// v109: matcher v123 (batch PB1) — Total Sugars from Foundation records:
+/// `sugars` reads 269 then 269.3, and the cached details gain the 269.3 their
+/// raw details publish (`tool/fdc_merge_numbers.dart`); sugars alone moves.
+const int matcherVersion = 109;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

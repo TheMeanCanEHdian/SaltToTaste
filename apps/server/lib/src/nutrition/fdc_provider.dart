@@ -83,6 +83,37 @@ String fdcTallyText(Map<String, int> tally) => [
     '$kind ${tally[kind] ?? 0}',
 ].join(', ');
 
+/// A food DETAIL's per-100 g amounts (`foodNutrients[]`:
+/// `{nutrient: {number, …}, amount}`), under FDC's number string, for each
+/// number [keep] accepts — the provider's own parse (v123, batch PB1: moved
+/// verbatim out of [UsdaFdcProvider.food] so `tool/fdc_merge_numbers.dart`
+/// reads a raw the way the provider does). An entry whose `nutrient` is no
+/// map or whose `amount` is no number is skipped; a repeated number keeps
+/// its LAST value; a `foodNutrients` entry that is no JSON object is the
+/// food's unreadable answer ([NutritionProviderException], FOOD).
+Map<String, double> fdcDetailNutrients(
+  Map<String, dynamic> json,
+  bool Function(String number) keep,
+) {
+  final nutrients = <String, double>{};
+  final rawNutrients = json['foodNutrients'];
+  if (rawNutrients is List) {
+    for (final entry in rawNutrients.map(
+      UsdaFdcProvider._shaped<Map<String, dynamic>>,
+    )) {
+      final nutrient = entry['nutrient'];
+      final amount = entry['amount'];
+      if (nutrient is Map<String, dynamic> && amount is num) {
+        final number = nutrient['number']?.toString();
+        if (number != null && keep(number)) {
+          nutrients[number] = amount.toDouble();
+        }
+      }
+    }
+  }
+  return nutrients;
+}
+
 /// USDA FoodData Central client.
 ///
 /// The API key is fetched per request via [apiKey] (it lives in the
@@ -203,20 +234,7 @@ class UsdaFdcProvider implements NutritionProvider {
     // Read defensively (v29, Run 059 Opus critic 2 #2): a JSON object of the
     // wrong shape is that food's unreadable answer — FOOD, like a body
     // that is not JSON — never a TypeError escaping the pass.
-    final nutrients = <String, double>{};
-    final rawNutrients = json['foodNutrients'];
-    if (rawNutrients is List) {
-      for (final entry in rawNutrients.map(_shaped<Map<String, dynamic>>)) {
-        final nutrient = entry['nutrient'];
-        final amount = entry['amount'];
-        if (nutrient is Map<String, dynamic> && amount is num) {
-          final number = nutrient['number']?.toString();
-          if (number != null && nutrientByFdcNumber.containsKey(number)) {
-            nutrients[number] = amount.toDouble();
-          }
-        }
-      }
-    }
+    final nutrients = fdcDetailNutrients(json, nutrientByFdcNumber.containsKey);
     final portions = <FdcPortion>[];
     final rawPortions = json['foodPortions'];
     if (rawPortions is List) {

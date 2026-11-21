@@ -183,10 +183,11 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 108', () {
+  test('matcherVersion 109', () {
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
     // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
-    expect(matcherVersion, 108);
+    // RE-PIN (PB1 batch, v123): matcherVersion 109 (was 108).
+    expect(matcherVersion, 109);
   });
   group(
     'v120 (M107: a counted piece beside a printed volume)',

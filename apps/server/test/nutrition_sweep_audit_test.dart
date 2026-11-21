@@ -893,7 +893,11 @@ void main() {
           continue;
         }
         compared += 1;
-        final numbers = {...fromHit.keys, ...detail.nutrientsPer100g.keys};
+        // Over the HIT's numbers only (v123, batch PB1): a detail widened
+        // by `tool/fdc_merge_numbers.dart` holds a 269.3 no trimmed hit
+        // carries, which is no rounding difference (the union counted 445
+        // on the replaced fixtures; the hit's numbers 430, as at v122).
+        final numbers = fromHit.keys;
         if (numbers.any((n) => fromHit[n] != detail.nutrientsPer100g[n])) {
           differ += 1;
         }

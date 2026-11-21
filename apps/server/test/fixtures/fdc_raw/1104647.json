@@ -1,0 +1,1252 @@
+{
+ "fdcId": 1104647,
+ "description": "Garlic, raw",
+ "publicationDate": "10/30/2020",
+ "foodNutrients": [
+  {
+   "nutrient": {
+    "id": 2045,
+    "number": "951",
+    "name": "Proximates",
+    "rank": 50,
+    "isNutrientLabel": true,
+    "indentLevel": 0,
+    "numberOfDecimals": 3,
+    "shortestName": "Proximates",
+    "unitName": "g"
+   },
+   "type": "FoodNutrient"
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1051,
+    "number": "255",
+    "name": "Water",
+    "rank": 100,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335656,
+   "amount": 63.1,
+   "dataPoints": 6,
+   "max": 69.0,
+   "min": 59.1,
+   "median": 63.0,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104597,
+     "nutrientId": 1051,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 59.1,
+     "labMethodTechnique": "Vacuum oven",
+     "labMethodDescription": "AOAC 934.06 mod",
+     "labMethodOriginalDescription": "934.06 (37.1.10) Moisture in Fruits, Vegetables, and their Products",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104606,
+     "nutrientId": 1051,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 59.4,
+     "labMethodTechnique": "Vacuum oven",
+     "labMethodDescription": "AOAC 934.06 mod",
+     "labMethodOriginalDescription": "934.06 (37.1.10) Moisture in Fruits, Vegetables, and their Products",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104615,
+     "nutrientId": 1051,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 64.9,
+     "labMethodTechnique": "Vacuum oven",
+     "labMethodDescription": "AOAC 934.06 mod",
+     "labMethodOriginalDescription": "934.06 (37.1.10) Moisture in Fruits, Vegetables, and their Products",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104624,
+     "nutrientId": 1051,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 69.0,
+     "labMethodTechnique": "Vacuum oven",
+     "labMethodDescription": "AOAC 934.06 mod",
+     "labMethodOriginalDescription": "934.06 (37.1.10) Moisture in Fruits, Vegetables, and their Products",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104633,
+     "nutrientId": 1051,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 61.3,
+     "labMethodTechnique": "Vacuum oven",
+     "labMethodDescription": "AOAC 934.06 mod",
+     "labMethodOriginalDescription": "934.06 (37.1.10) Moisture in Fruits, Vegetables, and their Products",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104642,
+     "nutrientId": 1051,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 64.8,
+     "labMethodTechnique": "Vacuum oven",
+     "labMethodDescription": "AOAC 934.06 mod",
+     "labMethodOriginalDescription": "934.06 (37.1.10) Moisture in Fruits, Vegetables, and their Products",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    }
+   ]
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1008,
+    "number": "208",
+    "name": "Energy",
+    "rank": 300,
+    "unitName": "kcal"
+   },
+   "foodNutrientDerivation": {
+    "id": 49,
+    "code": "NC",
+    "description": "Calculated",
+    "foodNutrientSource": {
+     "id": 2,
+     "code": "4",
+     "description": "Calculated or imputed"
+    }
+   },
+   "id": 13335664,
+   "amount": 143.0,
+   "nutrientAnalysisDetails": []
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1062,
+    "number": "268",
+    "name": "Energy",
+    "rank": 400,
+    "unitName": "kJ"
+   },
+   "foodNutrientDerivation": {
+    "id": 49,
+    "code": "NC",
+    "description": "Calculated",
+    "foodNutrientSource": {
+     "id": 2,
+     "code": "4",
+     "description": "Calculated or imputed"
+    }
+   },
+   "id": 13335665,
+   "amount": 597.0,
+   "nutrientAnalysisDetails": []
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1002,
+    "number": "202",
+    "name": "Nitrogen",
+    "rank": 500,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335658,
+   "amount": 1.06,
+   "dataPoints": 6,
+   "max": 1.27,
+   "min": 0.85,
+   "median": 1.06,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104598,
+     "nutrientId": 1002,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 1.07,
+     "labMethodTechnique": "Combustion",
+     "labMethodDescription": "AOAC 990.03",
+     "labMethodOriginalDescription": "990.03 (4.2.08) Protein (Crude) in Animal Feed",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104607,
+     "nutrientId": 1002,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 1.17,
+     "labMethodTechnique": "Combustion",
+     "labMethodDescription": "AOAC 990.03",
+     "labMethodOriginalDescription": "990.03 (4.2.08) Protein (Crude) in Animal Feed",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104616,
+     "nutrientId": 1002,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.94,
+     "labMethodTechnique": "Combustion",
+     "labMethodDescription": "AOAC 990.03",
+     "labMethodOriginalDescription": "990.03 (4.2.08) Protein (Crude) in Animal Feed",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104625,
+     "nutrientId": 1002,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 1.06,
+     "labMethodTechnique": "Combustion",
+     "labMethodDescription": "AOAC 990.03",
+     "labMethodOriginalDescription": "990.03 (4.2.08) Protein (Crude) in Animal Feed",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104634,
+     "nutrientId": 1002,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 1.27,
+     "labMethodTechnique": "Combustion",
+     "labMethodDescription": "AOAC 990.03",
+     "labMethodOriginalDescription": "990.03 (4.2.08) Protein (Crude) in Animal Feed",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104643,
+     "nutrientId": 1002,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.85,
+     "labMethodTechnique": "Combustion",
+     "labMethodDescription": "AOAC 990.03",
+     "labMethodOriginalDescription": "990.03 (4.2.08) Protein (Crude) in Animal Feed",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    }
+   ]
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1003,
+    "number": "203",
+    "name": "Protein",
+    "rank": 600,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 49,
+    "code": "NC",
+    "description": "Calculated",
+    "foodNutrientSource": {
+     "id": 2,
+     "code": "4",
+     "description": "Calculated or imputed"
+    }
+   },
+   "id": 13335662,
+   "amount": 6.62,
+   "max": 7.94,
+   "min": 5.31,
+   "median": 6.66,
+   "nutrientAnalysisDetails": []
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1004,
+    "number": "204",
+    "name": "Total lipid (fat)",
+    "rank": 800,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335660,
+   "amount": 0.38,
+   "dataPoints": 6,
+   "max": 0.5,
+   "min": 0.3,
+   "median": 0.4,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104600,
+     "nutrientId": 1004,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 0.3,
+     "labMethodTechnique": "Acid hydrolysis",
+     "labMethodDescription": "AOAC 922.06",
+     "labMethodOriginalDescription": "922.06 (32.1.14) Fat in Flour, Acid Hydrolysis Method",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104609,
+     "nutrientId": 1004,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 0.5,
+     "labMethodTechnique": "Acid hydrolysis",
+     "labMethodDescription": "AOAC 922.06",
+     "labMethodOriginalDescription": "922.06 (32.1.14) Fat in Flour, Acid Hydrolysis Method",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104618,
+     "nutrientId": 1004,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.4,
+     "labMethodTechnique": "Acid hydrolysis",
+     "labMethodDescription": "AOAC 922.06",
+     "labMethodOriginalDescription": "922.06 (32.1.14) Fat in Flour, Acid Hydrolysis Method",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104627,
+     "nutrientId": 1004,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.3,
+     "labMethodTechnique": "Acid hydrolysis",
+     "labMethodDescription": "AOAC 922.06",
+     "labMethodOriginalDescription": "922.06 (32.1.14) Fat in Flour, Acid Hydrolysis Method",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104636,
+     "nutrientId": 1004,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.4,
+     "labMethodTechnique": "Acid hydrolysis",
+     "labMethodDescription": "AOAC 922.06",
+     "labMethodOriginalDescription": "922.06 (32.1.14) Fat in Flour, Acid Hydrolysis Method",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104645,
+     "nutrientId": 1004,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.4,
+     "labMethodTechnique": "Acid hydrolysis",
+     "labMethodDescription": "AOAC 922.06",
+     "labMethodOriginalDescription": "922.06 (32.1.14) Fat in Flour, Acid Hydrolysis Method",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    }
+   ]
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1007,
+    "number": "207",
+    "name": "Ash",
+    "rank": 1000,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335659,
+   "amount": 1.71,
+   "dataPoints": 6,
+   "max": 1.9,
+   "min": 1.59,
+   "median": 1.69,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104599,
+     "nutrientId": 1007,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 1.7,
+     "labMethodTechnique": "Gravimetric",
+     "labMethodDescription": "AOAC 923.03",
+     "labMethodOriginalDescription": "923.03 (32.1.05 or 14.006) Ash of Flour",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104608,
+     "nutrientId": 1007,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 1.9,
+     "labMethodTechnique": "Gravimetric",
+     "labMethodDescription": "AOAC 923.03",
+     "labMethodOriginalDescription": "923.03 (32.1.05 or 14.006) Ash of Flour",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104617,
+     "nutrientId": 1007,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 1.59,
+     "labMethodTechnique": "Gravimetric",
+     "labMethodDescription": "AOAC 923.03",
+     "labMethodOriginalDescription": "923.03 (32.1.05 or 14.006) Ash of Flour",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104626,
+     "nutrientId": 1007,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 1.7,
+     "labMethodTechnique": "Gravimetric",
+     "labMethodDescription": "AOAC 923.03",
+     "labMethodOriginalDescription": "923.03 (32.1.05 or 14.006) Ash of Flour",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104635,
+     "nutrientId": 1007,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 1.68,
+     "labMethodTechnique": "Gravimetric",
+     "labMethodDescription": "AOAC 923.03",
+     "labMethodOriginalDescription": "923.03 (32.1.05 or 14.006) Ash of Flour",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104644,
+     "nutrientId": 1007,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 1.67,
+     "labMethodTechnique": "Gravimetric",
+     "labMethodDescription": "AOAC 923.03",
+     "labMethodOriginalDescription": "923.03 (32.1.05 or 14.006) Ash of Flour",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    }
+   ]
+  },
+  {
+   "nutrient": {
+    "id": 2039,
+    "number": "956",
+    "name": "Carbohydrates",
+    "rank": 1100,
+    "isNutrientLabel": true,
+    "indentLevel": 1,
+    "numberOfDecimals": 2,
+    "shortestName": "Carbohydrates",
+    "unitName": "g"
+   },
+   "type": "FoodNutrient"
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1005,
+    "number": "205",
+    "name": "Carbohydrate, by difference",
+    "rank": 1110,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 49,
+    "code": "NC",
+    "description": "Calculated",
+    "foodNutrientSource": {
+     "id": 2,
+     "code": "4",
+     "description": "Calculated or imputed"
+    }
+   },
+   "id": 13335663,
+   "amount": 28.2,
+   "nutrientAnalysisDetails": []
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1079,
+    "number": "291",
+    "name": "Fiber, total dietary",
+    "rank": 1200,
+    "unitName": "g"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335655,
+   "amount": 2.7,
+   "dataPoints": 6,
+   "max": 3.4,
+   "min": 2.3,
+   "median": 2.6,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104595,
+     "nutrientId": 1079,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 3.4,
+     "labMethodTechnique": "Enzymatic-gravimetric",
+     "labMethodDescription": "AOAC 991.43",
+     "labMethodOriginalDescription": "991.43 (32.1.17) Total, Soluble, and Insoluble Dietary Fiber in Foods",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104604,
+     "nutrientId": 1079,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 3.0,
+     "labMethodTechnique": "Enzymatic-gravimetric",
+     "labMethodDescription": "AOAC 991.43",
+     "labMethodOriginalDescription": "991.43 (32.1.17) Total, Soluble, and Insoluble Dietary Fiber in Foods",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104613,
+     "nutrientId": 1079,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 2.4,
+     "labMethodTechnique": "Enzymatic-gravimetric",
+     "labMethodDescription": "AOAC 991.43",
+     "labMethodOriginalDescription": "991.43 (32.1.17) Total, Soluble, and Insoluble Dietary Fiber in Foods",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104622,
+     "nutrientId": 1079,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 2.3,
+     "labMethodTechnique": "Enzymatic-gravimetric",
+     "labMethodDescription": "AOAC 991.43",
+     "labMethodOriginalDescription": "991.43 (32.1.17) Total, Soluble, and Insoluble Dietary Fiber in Foods",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104631,
+     "nutrientId": 1079,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 2.7,
+     "labMethodTechnique": "Enzymatic-gravimetric",
+     "labMethodDescription": "AOAC 991.43",
+     "labMethodOriginalDescription": "991.43 (32.1.17) Total, Soluble, and Insoluble Dietary Fiber in Foods",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104640,
+     "nutrientId": 1079,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 2.6,
+     "labMethodTechnique": "Enzymatic-gravimetric",
+     "labMethodDescription": "AOAC 991.43",
+     "labMethodOriginalDescription": "991.43 (32.1.17) Total, Soluble, and Insoluble Dietary Fiber in Foods",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    }
+   ]
+  },
+  {
+   "nutrient": {
+    "id": 2043,
+    "number": "300",
+    "name": "Minerals",
+    "rank": 5200,
+    "isNutrientLabel": true,
+    "indentLevel": 0,
+    "numberOfDecimals": 0,
+    "shortestName": "Minerals",
+    "unitName": "mg"
+   },
+   "type": "FoodNutrient"
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1103,
+    "number": "317",
+    "name": "Selenium, Se",
+    "rank": 6200,
+    "unitName": "µg"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335657,
+   "amount": 9.8,
+   "dataPoints": 6,
+   "max": 24.3,
+   "min": 0.0,
+   "median": 10.0,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104596,
+     "nutrientId": 1103,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 13.6,
+     "labMethodTechnique": "ICP-MS",
+     "labMethodDescription": "AOAC 2011.19",
+     "labMethodOriginalDescription": "2011.19 (50.1.41) Chromium, Selenium, and Molybdenum in Infant Formula and Adult Nutritional Products (modified)",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104605,
+     "nutrientId": 1103,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 24.3,
+     "labMethodTechnique": "ICP-MS",
+     "labMethodDescription": "AOAC 2011.19",
+     "labMethodOriginalDescription": "2011.19 (50.1.41) Chromium, Selenium, and Molybdenum in Infant Formula and Adult Nutritional Products (modified)",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104614,
+     "nutrientId": 1103,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.0,
+     "labMethodTechnique": "ICP-MS",
+     "labMethodDescription": "AOAC 2011.19",
+     "labMethodOriginalDescription": "2011.19 (50.1.41) Chromium, Selenium, and Molybdenum in Infant Formula and Adult Nutritional Products (modified)",
+     "loq": 2.5,
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104623,
+     "nutrientId": 1103,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 14.3,
+     "labMethodTechnique": "ICP-MS",
+     "labMethodDescription": "AOAC 2011.19",
+     "labMethodOriginalDescription": "2011.19 (50.1.41) Chromium, Selenium, and Molybdenum in Infant Formula and Adult Nutritional Products (modified)",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104632,
+     "nutrientId": 1103,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 0.0,
+     "labMethodTechnique": "ICP-MS",
+     "labMethodDescription": "AOAC 2011.19",
+     "labMethodOriginalDescription": "2011.19 (50.1.41) Chromium, Selenium, and Molybdenum in Infant Formula and Adult Nutritional Products (modified)",
+     "loq": 2.5,
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    },
+    {
+     "subSampleId": 1104641,
+     "nutrientId": 1103,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 6.3,
+     "labMethodTechnique": "ICP-MS",
+     "labMethodDescription": "AOAC 2011.19",
+     "labMethodOriginalDescription": "2011.19 (50.1.41) Chromium, Selenium, and Molybdenum in Infant Formula and Adult Nutritional Products (modified)",
+     "labMethodLink": "https://doi.org/10.1093/9780197610145.001.0001"
+    }
+   ],
+   "loq": 2.5
+  },
+  {
+   "nutrient": {
+    "id": 2046,
+    "number": "952",
+    "name": "Vitamins and Other Components",
+    "rank": 6250,
+    "isNutrientLabel": true,
+    "indentLevel": 0,
+    "numberOfDecimals": 3,
+    "shortestName": "Vitamins and Other Components",
+    "unitName": "g"
+   },
+   "type": "FoodNutrient"
+  },
+  {
+   "type": "FoodNutrient",
+   "nutrient": {
+    "id": 1162,
+    "number": "401",
+    "name": "Vitamin C, total ascorbic acid",
+    "rank": 6300,
+    "unitName": "mg"
+   },
+   "foodNutrientDerivation": {
+    "id": 1,
+    "code": "A",
+    "description": "Analytical",
+    "foodNutrientSource": {
+     "id": 1,
+     "code": "1",
+     "description": "Analytical or derived from analytical"
+    }
+   },
+   "id": 13335661,
+   "amount": 10.0,
+   "dataPoints": 6,
+   "max": 12.6,
+   "min": 8.3,
+   "median": 9.6,
+   "minYearAcquired": 2020,
+   "nutrientAnalysisDetails": [
+    {
+     "subSampleId": 1104601,
+     "nutrientId": 1162,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104594,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 9.4,
+     "labMethodTechnique": "HPLC",
+     "labMethodDescription": "doi.10.1021/jf049398z",
+     "labMethodOriginalDescription": "VPI Vit C method based on Nishiyama et al., J. Agr. Food Chem. 52 (2004) p. 5472-5; and Phillips et al., Food Chem. 92 (2005) p. 587-95.",
+     "labMethodLink": "https://pubs.acs.org/doi/abs/10.1021/jf049398z"
+    },
+    {
+     "subSampleId": 1104610,
+     "nutrientId": 1162,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104603,
+       "purchaseDate": "3/18/2020",
+       "storeCity": "Christiansburg",
+       "storeState": "VA",
+       "packerCity": "Orlando",
+       "packerState": "FL"
+      }
+     ],
+     "amount": 8.3,
+     "labMethodTechnique": "HPLC",
+     "labMethodDescription": "doi.10.1021/jf049398z",
+     "labMethodOriginalDescription": "VPI Vit C method based on Nishiyama et al., J. Agr. Food Chem. 52 (2004) p. 5472-5; and Phillips et al., Food Chem. 92 (2005) p. 587-95.",
+     "labMethodLink": "https://pubs.acs.org/doi/abs/10.1021/jf049398z"
+    },
+    {
+     "subSampleId": 1104619,
+     "nutrientId": 1162,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104612,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "College Park",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 9.4,
+     "labMethodTechnique": "HPLC",
+     "labMethodDescription": "doi.10.1021/jf049398z",
+     "labMethodOriginalDescription": "VPI Vit C method based on Nishiyama et al., J. Agr. Food Chem. 52 (2004) p. 5472-5; and Phillips et al., Food Chem. 92 (2005) p. 587-95.",
+     "labMethodLink": "https://pubs.acs.org/doi/abs/10.1021/jf049398z"
+    },
+    {
+     "subSampleId": 1104628,
+     "nutrientId": 1162,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104621,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 9.9,
+     "labMethodTechnique": "HPLC",
+     "labMethodDescription": "doi.10.1021/jf049398z",
+     "labMethodOriginalDescription": "VPI Vit C method based on Nishiyama et al., J. Agr. Food Chem. 52 (2004) p. 5472-5; and Phillips et al., Food Chem. 92 (2005) p. 587-95.",
+     "labMethodLink": "https://pubs.acs.org/doi/abs/10.1021/jf049398z"
+    },
+    {
+     "subSampleId": 1104637,
+     "nutrientId": 1162,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104630,
+       "purchaseDate": "3/21/2020",
+       "storeCity": "Columbia",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 10.4,
+     "labMethodTechnique": "HPLC",
+     "labMethodDescription": "doi.10.1021/jf049398z",
+     "labMethodOriginalDescription": "VPI Vit C method based on Nishiyama et al., J. Agr. Food Chem. 52 (2004) p. 5472-5; and Phillips et al., Food Chem. 92 (2005) p. 587-95.",
+     "labMethodLink": "https://pubs.acs.org/doi/abs/10.1021/jf049398z"
+    },
+    {
+     "subSampleId": 1104646,
+     "nutrientId": 1162,
+     "nutrientAcquisitionDetails": [
+      {
+       "sampleUnitId": 1104639,
+       "purchaseDate": "3/24/2020",
+       "storeCity": "Beltsville",
+       "storeState": "MD"
+      }
+     ],
+     "amount": 12.6,
+     "labMethodTechnique": "HPLC",
+     "labMethodDescription": "doi.10.1021/jf049398z",
+     "labMethodOriginalDescription": "VPI Vit C method based on Nishiyama et al., J. Agr. Food Chem. 52 (2004) p. 5472-5; and Phillips et al., Food Chem. 92 (2005) p. 587-95.",
+     "labMethodLink": "https://pubs.acs.org/doi/abs/10.1021/jf049398z"
+    }
+   ]
+  }
+ ],
+ "foodPortions": [
+  {
+   "id": 312811,
+   "dataPoints": 0,
+   "gramWeight": 85.0,
+   "sequenceNumber": 1,
+   "amount": 1.0,
+   "measureUnit": {
+    "id": 1121,
+    "name": "RACC",
+    "abbreviation": "RACC"
+   }
+  }
+ ],
+ "dataType": "Foundation",
+ "foodClass": "FinalFood",
+ "scientificName": "Allium sativum",
+ "inputFoods": [
+  {
+   "id": 103222,
+   "foodDescription": "GARLIC",
+   "inputFood": {
+    "fdcId": 1104638,
+    "description": "GARLIC",
+    "publicationDate": "10/30/2020",
+    "foodAttributeTypes": [],
+    "foodClass": "Composite",
+    "totalRefuse": 0,
+    "dataType": "Sample",
+    "foodGroup": {
+     "id": 11,
+     "code": "1100",
+     "description": "Vegetables and Vegetable Products"
+    }
+   }
+  },
+  {
+   "id": 103220,
+   "foodDescription": "GARLIC",
+   "inputFood": {
+    "fdcId": 1104620,
+    "description": "GARLIC",
+    "publicationDate": "10/30/2020",
+    "foodAttributeTypes": [],
+    "foodClass": "Composite",
+    "totalRefuse": 0,
+    "dataType": "Sample",
+    "foodGroup": {
+     "id": 11,
+     "code": "1100",
+     "description": "Vegetables and Vegetable Products"
+    }
+   }
+  },
+  {
+   "id": 103221,
+   "foodDescription": "GARLIC",
+   "inputFood": {
+    "fdcId": 1104629,
+    "description": "GARLIC",
+    "publicationDate": "10/30/2020",
+    "foodAttributeTypes": [],
+    "foodClass": "Composite",
+    "totalRefuse": 0,
+    "dataType": "Sample",
+    "foodGroup": {
+     "id": 11,
+     "code": "1100",
+     "description": "Vegetables and Vegetable Products"
+    }
+   }
+  },
+  {
+   "id": 103217,
+   "foodDescription": "GARLIC",
+   "inputFood": {
+    "fdcId": 1104593,
+    "description": "GARLIC",
+    "publicationDate": "10/30/2020",
+    "foodAttributeTypes": [],
+    "foodClass": "Composite",
+    "totalRefuse": 0,
+    "dataType": "Sample",
+    "foodGroup": {
+     "id": 11,
+     "code": "1100",
+     "description": "Vegetables and Vegetable Products"
+    }
+   }
+  },
+  {
+   "id": 103218,
+   "foodDescription": "GARLIC",
+   "inputFood": {
+    "fdcId": 1104602,
+    "description": "GARLIC",
+    "publicationDate": "10/30/2020",
+    "foodAttributeTypes": [],
+    "foodClass": "Composite",
+    "totalRefuse": 0,
+    "dataType": "Sample",
+    "foodGroup": {
+     "id": 11,
+     "code": "1100",
+     "description": "Vegetables and Vegetable Products"
+    }
+   }
+  },
+  {
+   "id": 103219,
+   "foodDescription": "GARLIC",
+   "inputFood": {
+    "fdcId": 1104611,
+    "description": "GARLIC",
+    "publicationDate": "10/30/2020",
+    "foodAttributeTypes": [],
+    "foodClass": "Composite",
+    "totalRefuse": 0,
+    "dataType": "Sample",
+    "foodGroup": {
+     "id": 11,
+     "code": "1100",
+     "description": "Vegetables and Vegetable Products"
+    }
+   }
+  }
+ ],
+ "foodComponents": [],
+ "foodAttributes": [],
+ "nutrientConversionFactors": [
+  {
+   "id": 22740,
+   "proteinValue": 2.78,
+   "fatValue": 8.37,
+   "carbohydrateValue": 3.84,
+   "type": ".CalorieConversionFactor",
+   "name": "Calories From Proximates"
+  }
+ ],
+ "ndbNumber": 11215,
+ "isHistoricalReference": false,
+ "foodCategory": {
+  "id": 11,
+  "code": "1100",
+  "description": "Vegetables and Vegetable Products"
+ }
+}

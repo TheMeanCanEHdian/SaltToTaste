@@ -4,9 +4,11 @@
 ///
 /// Or, with no key and no network, copy answers FDC already gave from a
 /// sweep snapshot's cache into the fixtures (merged; an entry already
-/// recorded is kept):
+/// recorded is kept, or OVERWRITTEN with `--replace` — v123, batch PB1: a
+/// cache row widened by `tool/fdc_merge_numbers.dart`):
 /// `dart run tool/record_fdc_fixtures.dart --from-db <snapshot.db>
-/// 'search=<query>' … 'food=<fdc id>' …` — the snapshot is opened read-only.
+/// [--replace] 'search=<query>' … 'food=<fdc id>' …` — the snapshot is
+/// opened read-only.
 ///
 /// For every distinct ingredient of the fixture recipes (the Bundt cake and
 /// whole-wheat pancakes — the corpus recipes the nutrition tests exercise),
@@ -114,7 +116,8 @@ void _fromSnapshot(List<String> args) {
     for (final MapEntry(:key, :value) in files.entries)
       key: jsonDecode(value.readAsStringSync()) as Map<String, dynamic>,
   };
-  for (final arg in args.skip(1)) {
+  final replace = args.contains('--replace');
+  for (final arg in args.skip(1).where((a) => a != '--replace')) {
     final at = arg.indexOf('=');
     final kind = at < 0 ? '' : arg.substring(0, at);
     final value = at < 0 ? '' : arg.substring(at + 1);
@@ -129,10 +132,12 @@ void _fromSnapshot(List<String> args) {
       exitCode = 1;
       continue;
     }
-    fixture.putIfAbsent(
-      value,
-      () => jsonDecode(rows.first['response'] as String),
-    );
+    final response = jsonDecode(rows.first['response'] as String);
+    if (replace) {
+      fixture[value] = response;
+    } else {
+      fixture.putIfAbsent(value, () => response);
+    }
   }
   db.dispose();
   const encoder = JsonEncoder.withIndent(' ');

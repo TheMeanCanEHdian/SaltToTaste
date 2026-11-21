@@ -109,7 +109,11 @@ const List<NutrientDef> nutrientDefs = [
   NutrientDef(
     key: 'sugars',
     label: 'Total Sugars',
-    fdcNumbers: ['269'],
+    // 269.3 is Foundation's "Sugars, Total" (v123, batch PB1): L56 / L57's
+    // raw details publish it on 75 of 209 Foundation records and on 0 of 88
+    // SR Legacy; both numbers on two records (1750340, 1750342 — apples),
+    // where 269 is read first (the totals take a def's first present number).
+    fdcNumbers: ['269', '269.3'],
     unit: 'g',
   ),
   NutrientDef(

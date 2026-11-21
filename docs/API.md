@@ -5391,6 +5391,505 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v123 (batch PB1, prep53 — Total Sugars from Foundation records; the
+first label batch, after the prep52 chain; matcherVersion 108 → 109. THE SPEC
+is the prep53 design .claude/diag/2026-11-17/prep53/final/design_v2.md
+§2.1–§2.3 and §4 PB1, re-based on 05bb896 by the PB1 brief
+(.claude/diag/2026-11-20/pb1/brief.md, which wins where they differ), under
+the owner's prep53 answers of 2026-11-17 (OQ1: fiber reads 291 ALONE — 293 is
+not mapped; OQ3: no Added Sugars; one deploy at the very end).
+fdc_provider.dart, provider.dart, nutrients.dart, matcher.dart
+(`matcherVersion` alone), two tools; no engine logic, no migration, no app
+code, no FDC request. Energy and every other totals key byte-identical: the
+whole-library panel gate below. This section cites symbols, grep commands and
+hit counts — never a line number.)**
+- **WHY.** FDC's Foundation records publish Total Sugars as nutrient number
+  **269.3**; `sugars` read `['269']` alone and the provider keeps only the
+  numbers the map reads, so a record holding 269.3 and no 269 gave the label
+  no sugars (Foundation 746784 "Sugars, granulated", 99.8 g / 100 g, read 0
+  g). L56 / L57 (2026-11-17, the raw details archived under
+  .claude/diag/2026-11-17/live56_raw/ and live57_raw/): 269.3 on 75 of 209
+  Foundation raws and 0 of 88 SR Legacy; both 269 and 269.3 on two — 1750340
+  "Apples, fuji, with skin, raw" (13.33 / 13.332) and 1750342 "Apples, granny
+  smith, with skin, raw" (10.65 / 10.651).
+- **THE MAP (nutrients.dart).** `sugars` reads `fdcNumbers: ['269', '269.3']`;
+  `fiber` stays `['291']` (OQ1 — 790646 "Onions, yellow, raw" publishes 291
+  1.9 and 293 2.71: the label reads 1.9), `sugars_added` stays `['539']`
+  (OQ3); no other def moves. The map reads 34 numbers over 30 defs (33
+  before). THE FIRST-PRESENT RULE is the shipped one: `recomputeTotals`'s
+  `add` takes, per def, the FIRST of its numbers the record holds (`break`),
+  so a record holding both reads 269 (the two apples) and one holding neither
+  adds nothing. Its reach in the words of its condition: a record holding
+  269.3 and no 269. Every reader of `fdcNumbers` (`git grep -c fdcNumbers --
+  apps/server/lib` → engine.dart 5, nutrients.dart 33; `-- apps/server/tool` →
+  rp43.dart 1): the energy readers (the alcohol reader `ethanolKcalPer100g`,
+  `kcalPer100g`, `recomputeTotals`'s `hasEnergy`, rp43's) read
+  `nutrientDefs.first` (energy) alone; the braise's deduction reads
+  `firstWhere((def) => def.key == key)` over its `kept` keys (energy, fat,
+  saturated, monounsaturated, polyunsaturated) — never sugars; `add` is the
+  one reader of the second sugars number. `nutrientByFdcNumber` (`git grep -c
+  nutrientByFdcNumber -- apps/server/lib` → fdc_provider.dart 2,
+  nutrients.dart 1; the merge tool 2) is the KEEP of both caches.
+- **WHAT THE CACHES KEEP.** The numbers the map reads — now 34, 269.3 among
+  them — in a detail (`UsdaFdcProvider.food` → `fdcDetailNutrients(json,
+  nutrientByFdcNumber.containsKey)`) and a search hit (`_searchNutrients`)
+  alike: a detail or hit fetched after this batch keeps 269.3 natively. The
+  rows cached before it hold the numbers the old map read, and nothing
+  re-fetches a detail: hence the merge.
+- **`fdcDetailNutrients(Map<String, dynamic> json, bool Function(String
+  number) keep)`** (fdc_provider.dart, public, top level): the detail loop of
+  `UsdaFdcProvider.food` moved VERBATIM — each `foodNutrients[]` entry whose
+  `nutrient` is a map and whose `amount` is a num, under FDC's number string,
+  when `keep(number)`; a `foodNutrients` entry that is no object is still the
+  food's unreadable answer (`NutritionProviderException`,
+  `FailureScope.food`). The provider calls it with the map's keep (behaviour
+  unchanged); the merge tool with every number kept. Its three dropped values,
+  each RULED and pinned: an entry with no numeric amount (garlic 1104647's
+  four group headers 951 Proximates, 956 Carbohydrates, 300 Minerals, 952
+  Vitamins and Other Components); a number `keep` refuses (790646's 293,
+  2.71); a repeated number keeps its LAST value (the shipped loop — no raw on
+  disk repeats a mapped number; the nearest, 1999629 "Mushrooms, white
+  button", 22 v122 rows, repeats only the unmapped '' seven times).
+- **`mergeNumbers(FdcFood cached, Map<String, double> published, Set<String>
+  numbers, {required Set<String> mapped})`** (provider.dart, beside `FdcFood`;
+  PURE): returns `(food, merged, differs, revisions)` — the food is `cached`
+  plus each number of `numbers` that `published` carries and `cached` lacks,
+  appended in `numbers`' order (id, description, data type, portions and every
+  existing value unchanged); `differs`, a number of `numbers` both carry at
+  different values, and `revisions`, a number of `mapped` outside `numbers`
+  that `published` carries and `cached` lacks or holds at another value (FDC's
+  revisions since the row was cached) — each REPORTED as `(number, cached,
+  published)`, never applied.
+- **THE TOOL `tool/fdc_merge_numbers.dart`** (run from apps/server: `dart run
+  tool/fdc_merge_numbers.dart --db <db> --raw-dir <dir> [--raw-dir <dir> …]
+  --numbers <n>[,<n>…] [--dry-run]`; files only — no key, no network), a thin
+  loop over `mergeNumbers`: every `*.json` of each dir (in path order) whose
+  top-level object holds `fdcId` AND `foodNutrients` is a raw detail, read by
+  `fdcDetailNutrients(json, (_) => true)` (every number: the revisions report
+  needs them; the merge adds `--numbers` alone — a stated departure from
+  design §2.1); any other file is SKIPPED and counted (the archives hold 10,
+  all FDC search answers). The database is opened with a plain `sqlite3.open`
+  (no `SaltDatabase.open`, no migration, no PRAGMA write; under `--dry-run`
+  opened read-write all the same — a
+  read-only open of a WAL database with no `-shm` beside it, the live one
+  after a clean stop, fails `SQLITE_CANTOPEN` (closer round 1, D1) — and no
+  write statement runs, so no byte of the database changes; an empty `-wal`
+  / `-shm` may be left beside a WAL file, as the server's own close leaves
+  them); `fdc_food_cache` is read in ascending `fdc_id` order, each row
+  with a raw merged with `mapped` = `nutrientByFdcNumber.keys`, and ONE
+  transaction writes `UPDATE fdc_food_cache SET response = ? WHERE fdc_id = ?`
+  (the merged `FdcFood.toJson`) for each row that gained a number —
+  `fetched_at` kept, never an INSERT, never the search tables
+  (`fdc_food_cache` has no trigger). Idempotent: a second run merges 0 and
+  leaves the file's bytes unchanged. REFUSES, nothing written: exit 64 — a
+  `--numbers` entry the map does not read ("refused: the map reads no 293"),
+  no `--numbers`, no `--db` or no `--raw-dir`; exit 65 — a detail raw
+  `fdcDetailNutrients` cannot read (its id and file printed; the WHOLE run
+  refused) and an id whose raws disagree on a `--numbers` value (each
+  printed). PRINTS: the files read and skipped (distinct ids, repeats);
+  `merged <id> <numbers>` per row in the order it writes; `rows merged` and
+  the count per number; (c-1) `differs: n` and a `differs <id> <type> <number>
+  cached <c> published <p>` line each; (c-2) THE REVISIONS REPORT `revisions:
+  <rows> rows, <values> values` and a `revision …` line each (never applied:
+  the energy reader would read them); (d) THE RULE ROWS WITH NO RAW — the
+  design's L57 rule (§3): every `fdc_food_cache` row whose response's
+  `data_type` is Foundation, plus every SR Legacy or Survey (FNDDS) row whose
+  nutrients lack '269' or '291', with no raw in any `--raw-dir` — `rule rows
+  with no raw: n` and a `no raw <id> <type> <description>` line each.
+- **THE WIDENED SNAPSHOT SNAPW** = .claude/diag/2026-11-20/pb1/snap33w.db,
+  made ONCE by the tool on a copy of snapshot 33 (md5
+  c9700138e5be0f6935e33310759560b3, unchanged before and after), journal mode
+  DELETE, with the twelve archive dirs (2026-10-07/live47_raw,
+  2026-10-07/live55_raw, 2026-10-08/live60_raw, 2026-10-09/live61_raw,
+  2026-10-15/live62_raw, 2026-10-29/live51_raw, 2026-10-30/live52_raw,
+  2026-11-02/live53_raw, 2026-11-02/live54_raw, 2026-11-16/live55_raw,
+  2026-11-17/live56_raw, 2026-11-17/live57_raw) and test/fixtures/fdc_raw, in
+  that order, `--numbers 269.3`: "files read: 365 detail, 10 skipped (not a
+  detail); distinct ids 359, repeats 6", "rows merged: 75" (all Foundation; 73
+  records newly read sugars — the two apples already hold 269), "differs: 0",
+  "revisions: 16 rows, 79 values" (2346392 "Nuts, pine nuts, raw" 12 — fat 204
+  61.3 cached vs 61.27 published, energy 957 689.0 vs 688.614, …; 2747661 and
+  five more Foundation rows the mapped 430 they lack; 2710824 and 2747667 605
+  / 606 / 645 / 646; seven rows 2758986 … 2759005 protein, fat, carbohydrate,
+  957 and more), "rule rows with no raw: 0". A second run on it merges 0, its
+  md5 unchanged; the whole widening repeated on a second fresh copy gives the
+  same file md5. `widen_check.py` (the kit, read-only) PASS: "rows the raws
+  say to merge: 75 | rows written: 75 | user_version 22 / 22 | sqlite_master
+  rows 59 / 59 | problems: 0" (every other row, every other table,
+  `fetched_at` byte-identical; each written row JSON-equal to its old row plus
+  exactly the raw's 269.3). FILE MD5 **617a90959e1ac695e8b8455a0a26fe14**;
+  `sqlite3 snap33w.db "SELECT fdc_id, response FROM fdc_food_cache ORDER BY 1"
+  | md5` **5960c9ea1db909516b6ea677a2c847bb**. RULED: FROM PB1 ON SNAPW IS THE
+  REPLAY BASE of every later batch; snapshot 33 stays untouched; nothing
+  writes SNAPW again (gate.sh copies it).
+- **THE REFERENCE PB1 LEAVES** (written by the owner's gate under
+  .claude/diag/2026-10-09/): `v123_{rows,recs,sections,calls,notes}.tsv` +
+  `v123_bucket.out`, the tip replayed on SNAPW — byte-identical to v122's —
+  PLUS `v123_panel.tsv` (the kit's `panel_dump.sh <G2 rp_main.db> <out>`:
+  every recipe and section id's every totals key at 4 dp, sorted); the fixer's
+  G2 dump: 38,534 lines, md5 7a67b32f27e3a7c59f08185393bf3050.
+- **THE GATE (the replay TSVs carry energy only — the panel digest is the
+  gate).** `tool/replay/panel_digest.sh [--stamp same|bumped] <a.db> <b.db>
+  [moving key …]` (committed here; the kit's script): (1) per side every
+  `totals` key's library sum, (2) every (id, key) whose total (T) or
+  per-serving amount (S) differs, (3) the ids differing outside the moving
+  keys or in serving_basis, calories_per_serving, total_grams, matched_count,
+  total_count, status, layout_seq or computing (must be 0), (3b) ids on one
+  side only (0 / 0), (3c) THE STAMP on its own line (`ingredientsHashOf`'s
+  payload begins `'matcher': matcherVersion`, so it differs on every id across
+  the bump and on none between two runs of one tree); exit 0 = PASS. Four
+  replays (`gate.sh`, fresh copies, main and `--reverse-parents`
+  cmp-identical, calls 0, against the v122 set): **G0** the base 05bb896 on
+  snapshot 33 — rows, recs, sections, calls, notes and buckets == v122; **G1**
+  the base (a worktree of 05bb896) on SNAPW — == v122, and `panel_digest.sh
+  --stamp same G0 G1`: "(3) … 0", "(3b) … 0 / 0", "(3c) THE STAMP: ids whose
+  ingredients_hash differs: 0 of 1342 common ids (expected: same)", PASS, (2)
+  empty (the widened cache moves nothing by itself: the base map reads no
+  269.3); **G2** the tip on SNAPW — == v122 (no row, rec, section, note or
+  bucket moves), and `panel_digest.sh --stamp bumped G1 G2 sugars`: (2) 948 T
+  and 945 S lines, every one `sugars`, "(3) … 0", "(3b) … 0 / 0", "(3c) … 1342
+  of 1342 common ids (expected: bumped)", PASS — energy, fat, carbohydrate,
+  protein and every other key byte-identical in every recipe's and section's
+  totals and per-serving amounts; `sugar_check.py` (the kit; it reads the two
+  replay DATABASES, the engine's unrounded `ingredient_matches.grams`) exit 0:
+  "(A) ids equal to the model: 1267 | differing: 0" (each non-routing id's
+  sugars delta = Σ its own rows' and parts' grams × the record's 269.3 / 100
+  over records holding 269.3 and no 269, held / skipped / unmatched rows out,
+  within 1e-6), 42 routing ids listed whose delta differs from their own rows
+  — all 75 routing ids checked by a script of the batch: own rows + Σ each
+  routed child's delta × routed grams / the child's total grams == the
+  measured delta within 1e-6, 0 differ (the routed restatement); "(B)
+  per-serving pairs checked on the tip: 38534 | mismatches: 0"; "(C) rows
+  differing between the sides: 0"; **G3** the tip on snapshot 33 — == v122,
+  and `panel_digest.sh --stamp bumped G0 G3` with no moving key: (2) empty,
+  (3) 0, (3b) 0 / 0, "(3c) … 1342 of 1342 … (expected: bumped)", PASS (the map
+  alone moves nothing where no row holds 269.3).
+- **THE REACH (G2's own rows, unrounded grams).** The 75 merged rows are all
+  Foundation; 73 newly read sugars, 43 of them on the rows (41 with a non-zero
+  value — 332791 "Olives, green, Manzanilla, stuffed with pimiento" and 746767
+  "Cheese, swiss" publish 269.3 = 0.0, FDC's figure, kept): 1,667 rows and
+  parts in 873 recipes and 64 sections, 334,317.65 g, +52,780.81 g of sugars
+  on their own rows; the library sum of the `sugars` totals key 62,009.7789 →
+  115,516.4337 g (+53,506.6548, the routed restatements included). The five
+  heaviest records (rows × grams × value, re-derived by hand): 746784 "Sugars,
+  granulated" 99.8 g / 100 g, 495 rows, 43,333.45 g → +43,246.78 g (395
+  recipes); 790646 "Onions, yellow, raw" 5.82, 258 rows, 42,904.21 g →
+  +2,497.03 (255); 2685581 "Tomatoes, crushed, canned" 3.744, 21 rows,
+  17,106.19 g → +640.46; 333281 "Tomatoes, canned, red, ripe, diced" 2.99, 39
+  rows, 19,632.60 g → +587.01; 2685578 "Tomatoes, whole, canned, solids and
+  liquids, with salt added" 2.613, 33 rows, 19,252.15 g → +503.06. The ten
+  recipes gaining most a serving (the totals delta ÷ the serving basis):
+  classic-banana-bread +207.16 g, frozen-yogurt +180.62,
+  classic-strawberry-jam +156.27, pistachio-gelato +148.54, raspberry-sorbet
+  +138.95, homemade-vanilla-ice-cream +124.49, dark-chocolate-fudge-sauce
+  +117.26, ultimate-banana-bread +117.20, pumpkin-bread +99.22, and tied at
+  +99.02 (198.0496 g ÷ 2 each) chocolate-toffee-bark and
+  classic-cranberry-sauce; the largest section
+  pavlova-with-fruit-and-whipped-cream "Orange, Cranberry, and Mint Topping"
+  +353.21 g. FOUR ids gain a `sugars` key they did not hold:
+  grilled-lamb-kebabs, sous-vide-soft-poached-eggs, soft-cooked-eggs and
+  rose-sangria's section "Simple Syrup". The 9 held rows on the 43 records (5
+  `discarded_medium`, 3 `partial_pour_away`, 1 `coating`) carry no grams. THE
+  INVARIANT REPORT (report only): ids whose sugars exceed their carbs — 6 on
+  G1, 11 on G2. Four of the five new ones hold 746784, which publishes sugars
+  99.8 beside carbohydrate 99.6 per 100 g, over foods of no carbohydrate
+  (rose-sangria "Simple Syrup" 140.72 vs 140.44 g; grill-smoked-salmon,
+  grilled-shrimp-skewers, pan-roasted-thick-cut-fish-fillets);
+  crispy-slow-roasted-pork-belly (75.46 vs 74.14 g) gains 326698 "Mustard,
+  prepared, yellow"'s 269.3 (1.42) where its pork, Foundation 2727576 "Pork,
+  belly, with skin, raw", publishes carbohydrate −0.705 g / 100 g (1,360.78 g:
+  −9.59 g) — FDC's figures.
+- **FIXTURES.** `tool/record_fdc_fixtures.dart --from-db <db> [--replace]`:
+  with `--replace` an entry already recorded is OVERWRITTEN (`putIfAbsent`
+  otherwise; a run without it on an already-recorded id leaves `foods.json`
+  and `searches.json` each `cmp`-identical to 05bb896's — measured;
+  `--replace` is proven by the JSON diff below, STATED: no test runs the
+  recorder). `--from-db SNAPW --replace` for the 43 foods.json ids the merge
+  gave 269.3 (323294 323505 325036 325430 326698 332791 333281 746771 746784
+  747447 748967 790577 790646 1104962 1105314 1750340 1750342 2259793 2259794
+  2346398 2346400 2346401 2346402 2346409 2346411 2685576 2685577 2685578
+  2685580 2685581 2710817 2710831 2727583 2747655 2747659 2747661 2747662
+  2747663 2747664 2747674 2747675 2758998 2759000): a JSON diff over EVERY
+  entry — 568 entries, 525 unchanged, 43 = the old entry + {'269.3': v}, 0
+  other differences, the 43 exactly the foods.json ids among the 75 merged;
+  `searches.json` `cmp`-identical (its hits are trimmed answers). Five raw
+  details copied VERBATIM into test/fixtures/fdc_raw as `<id>.json` (each
+  `cmp`'d against its archive `raw_<id>.json`; 748,459 B): 790646 and 1104647
+  (live56_raw), 2747661, 746771 and 2346392 (live57_raw) — 11 files there now
+  (nutrition_v54_test.dart reads its six by id). The sweep-audit's
+  hit-vs-detail count (nutrition_sweep_audit_test.dart) compares over the
+  HIT's numbers only (a merged 269.3 no trimmed hit carries is no rounding
+  difference): `expect(compared, 565)` / `expect(differ, 430)` unmoved (the
+  union over the replaced fixtures counts 445 — measured). Contract goldens
+  regenerated (`UPDATE_CONTRACT_GOLDENS=1`): 8 of the 9 carrying "sugars"
+  move, a JSON diff of all 41 lists only `per_serving/sugars/amount` —
+  nutrition 39.12 → 39.16, nutrition_choose_recipe 13.47 → 32.04,
+  nutrition_section_label 0.04 → 12.42, nutrition_section_other 9.3 → 29.45,
+  nutrition_section_own 2.01 → 5.61, nutrition_section_prose 0.42 → 39.11,
+  nutrition_subrecipe 2.55 → 22.67, nutrition_wb 3.75 → 21.29;
+  nutrition_served_with unmoved; 0 non-sugars differences.
+- **PINS (apps/server/test/nutrition_v123_test.dart; 20 tests, the R3 group
+  corpus-gated, every corpus read in `setUpAll`).** R1: the provider over a
+  fake client serving the committed raw 790646 byte for byte equals the
+  replaced entry (13 numbers, 269.3 = 5.82, no 293, portions 2); garlic
+  1104647 the 6 numbers and 1 portion of its entry, and with every number kept
+  its 11 amount-carrying entries, no header; the repeated-number order on a
+  SYNTHESIZED copy of raw 790646 carrying a second 269.3 (7.5 kept); the
+  unreadable-entry exception (SYNTHESIZED). R2 (a): mergeNumbers on snapshot
+  33's row of 790646 (= the replaced entry less 269.3, `jsonEncode` BYTE-EQUAL
+  to the snapshot row — asserted on a snapshot-33 copy for every id the file
+  seeds, 14 of 14) is the replaced entry, `toJson` byte-equal, merged
+  ['269.3'], and merges nothing on its own result; garlic merges nothing;
+  2747661 gains 269.3 (2.703) alone and reports the mapped 430 (19.7) as its
+  one revision — and with {'430', '269.3'} gains both in that order, 430 =
+  19.7 then 269.3, no revision left (the owner gate: the merge appends in
+  `numbers`' order); 746771 keeps no portion (its raw prints 3); 2346392 with
+  {'204'} keeps 61.3 and reports 61.27 under `differs`, with {'269.3'} lists
+  its 12 revised values. R2 (b), the tool as a subprocess
+  (`Process.run(Platform.resolvedExecutable, ['--packages=…',
+  'tool/fdc_merge_numbers.dart', …])`) on temp databases seeded with
+  snapshot-33 rows of fixture ids in the raws' FILE-NAME order: the four usage
+  / map refusals and an unknown argument's (`--dryrun`: "unknown argument:
+  --dryrun" — the owner gate), no byte changed; `--numbers 269.3` merges
+  exactly 746771, 790646, 2747661, printed in that (ascending) order, each row
+  the replaced entry, `fetched_at` kept, no INSERT (1104647's raw has no row),
+  "files read: 11 detail, 3 skipped" (a file that is no `.json`, the contract
+  fixtures' README.md copied beside the raws, is neither read nor counted —
+  the owner gate); its revisions name 2346392's 204 and 2747661's 430;
+  (d) lists exactly 168152 "Jujube, Chinese, fresh, dried" (SR Legacy, 291 and
+  no 269), 172241 "Vinegar, balsamic" (SR Legacy, no 291), 323294 (Foundation)
+  and a SYNTHESIZED Survey (FNDDS) row (2705393 "Buttermilk" less its 291: all
+  382 cached FNDDS rows hold both — the nearest real record, 50 v122 rows) —
+  never 173430 "Butter, without salt" (both); a second run merges 0, no byte
+  changed; `--dry-run` no byte changed, and the same on the seeded database
+  set to WAL with no `-wal` / `-shm` beside it (exit 0, the report equal to
+  the DELETE-mode run's; the header's WAL bytes asserted); a SYNTHESIZED
+  unreadable raw refuses
+  the whole run; a SYNTHESIZED copy of 790646 with 269.3 = 6.0 refuses ("raws
+  disagree: 790646 269.3 5.82"), and one with 291 = 2.0, a number outside
+  `--numbers`, is a repeat like any other (the owner gate: exit 0, "files
+  read: 12 detail, 3 skipped (not a detail); distinct ids 11, repeats 1",
+  "rows merged: 3" — no two raws on disk disagree on any number); two
+  SYNTHESIZED files holding `fdcId` alone
+  and `foodNutrients` alone are skipped and counted (the nearest real inputs:
+  the archives' 10 FDC search answers, holding neither key). R3 on two
+  databases computing the same recipes, one holding snapshot 33's details, one
+  the widened: every row and every totals key but sugars byte-equal (energy
+  unmoved); 100-percent-whole-wheat-pancakes|1 "2 tablespoons sugar" (746784,
+  24.805896 g) and |7 "2 large eggs" (748967, 100.00 g): sugars 29.4264 →
+  54.382685, by hand 24.805896 × 0.998 + 100 × 0.002 = +24.956285;
+  best-baked-apples|0 on 1750342 (928.72962 g) counts 269's 10.65 — 98.909705
+  g, not 98.918992 — the recipe's sugars 259.715126 on both; onions' fiber
+  1.9; A2, the nutrition GET through the route: the pancakes' per-serving
+  sugars 3.63 (54.382685 ÷ 15).
+- **MUTANTS** (29, each on a snapshot copy of its file, a literal anchor of
+  count 1, its diff saved before its result, restored by copying the snapshot
+  back + `cmp` + md5 in a `finally` and on SIGINT / TERM / HUP, the runner
+  refusing a file whose md5 is not the clean one; each KILLED BY A VALUE):
+  '269.3' dropped from `sugars`; '269.3' moved to `sugars_added`; THE ORDER
+  ['269.3', '269'] (the apples); '293' appended to `fiber`; the provider's
+  `keep` ignored; the `amount is num` test dropped (an absent amount read as 0
+  — garlic's headers); the merge overwriting an existing value and the merge
+  applying a differing one (2346392 {'204'}); a number outside `numbers`
+  merged, unmapped (790646's 293) and mapped (2747661's 430); the portions
+  dropped (`portions: const []`; the merge receives no raw portions, so
+  "portions from the raw" has no single site — 746771's pin is the property);
+  the revisions dropped, and computed over `numbers` instead of `mapped`; the
+  map check on `--numbers` removed; `fetched_at` rewritten; an INSERT for each
+  raw with no row; `--dry-run` writing (killed by the database's bytes and by
+  the WAL run's report — closer round 1, on the read-write open); the
+  read-only open put back under `--dry-run` (killed by the WAL run's exit
+  code, 255 for 0); the unreadable-raw refusal dropped; the
+  disagreeing-raws refusal dropped; the ascending `fdc_id` order replaced by
+  the file-name order (`ORDER BY CAST(fdc_id AS TEXT)`); the sweep-audit
+  comparison put back to the union (445 against 430); ONE PER WORD of the (d)
+  rule — 'Foundation', 'SR Legacy', 'Survey (FNDDS)', '269', '291' — and of
+  the raw filter — 'fdcId', 'foodNutrients' — each dropped alone; the
+  duplicate-number loop flipped to first-wins. And the four hash re-pins read
+  with `matcherVersion` 108 put back: v101's, v83's and v47's give their
+  pre-batch literals (the stamp has no map term). STATED, not a mutant: the
+  recorder's `--replace`.
+- **RULE C / COST.** No step reader, no memo and no matching path changes: the
+  cost families (test/support/cost_bounds.dart, nutrition_v26_cost_test) run
+  unchanged and green.
+- **STATED LIMITS** (each with its nearest corpus record): no Added Sugars
+  line (OQ3; `sugars_added` reads 539, which no cached record publishes);
+  fiber reads 291 ALONE (OQ1; 790646 "Onions, yellow, raw" — 258 rows —
+  publishes 293 2.71, unread; the 11 in-use records publishing 293 and no 291
+  are PB2's fill); the records read from a SEARCH HIT keep their trimmed hits
+  — the merge reaches cached details only: 43 of the 679 records on G2's rows
+  and parts have no cached detail, 41 of them on unheld rows with grams (181
+  rows; the kit's `hitread.py` on G2's database and rows; 2 Foundation, 34 SR
+  Legacy, 7 Survey (FNDDS)) — nearest, 1999633 "Spinach, mature" (Foundation,
+  hit only, no sugars number; 5 unheld rows, 2,664.85 g); the label's other
+  missing lines (saturated fat, cholesterol, …) are PB2's.
+- **DATED NOTE (2026-11-20)** on the v114 STATED paragraph's sentence ending
+  "numbers is NOT yet measured (a live look-up of the raw details)": L56 / L57
+  measured it; sugars read since v123; fiber and the fill are PB2's.
+- **DEPLOY NOTE — the procedure (written, not run; the chain's ONE deploy at
+  its very end).** No migration. (1) Stop the server. (2) `.backup` the live
+  database (a plain `cp` of a WAL database is torn). (3) The chain's own seeds
+  first (L55's details and searches). (4) `dart run
+  tool/fdc_merge_numbers.dart --db <live> --raw-dir <every archive dir, in the
+  SNAPW order> --raw-dir apps/server/test/fixtures/fdc_raw --numbers 269.3
+  --dry-run` (it runs on the stopped server's WAL file: opened read-write,
+  nothing written); read every report: files read / skipped, rows merged per
+  number,
+  `differs` (expected 0), the revisions (never applied), the rule rows with no
+  raw. (5) The rule rows with no raw are fetched by the ORCHESTRATOR — one
+  live request each, paced as L57, the raws archived under
+  .claude/diag/<date>/live<NN>_raw/ — then the dry run again until (d) is
+  empty. (6) The merge without `--dry-run`, then once more (it must merge 0).
+  (7) THEN `dart_frog build`. (8) Start. (9) The sweep — the bump to 109
+  stales every recipe, and a zero-request recompute reads the merged 269.3; a
+  merge AFTER the sweep would leave sugars unread until the next bump (design
+  §2.7).
+- **RE-PINS.** `grep -rho "RE-PIN (PB1 batch, v123)" apps/server/test | wc -l`
+  → 30, in `grep -rl` → 29 files: 26 `expect(matcherVersion, 109)` (was 108;
+  the test names that state 108 now state 109) and the four stamp literals the
+  bump moves (nutrition_seasoning_ci_test.dart, nutrition_v101_test.dart,
+  nutrition_v83_test.dart, nutrition_v47_resolver_test.dart: "matcherVersion
+  109 alone"). Nothing deleted or widened; the 19 non-energy key reads, every
+  energy pin, the cost families and fdc_request_tally_test.dart's
+  failure-class table run unchanged.
+- **GATE-P (sw5–sw13)** — each tree on its OWN replayed snapshot-33 database
+  (G0's and G3's `rp_main.db`, `.backup`), the committed sweep scripts, 12
+  shards, NoNet, calls 0 at every settle, second pass moved 0; base 05bb896 (a
+  worktree) vs the tip: sw5 33,099 / sw6 39,028 / sw7 1,950 / sw8 59,346 /
+  sw8r 5,433 / sw9 176 / sw13 294 combos, 0 divergent 0 refused both; sw10 159
+  bare and typed, 0 divergent both, sw10.tsv `cmp`-identical; sw11 41,044, 200
+  divergent (all `calls-only` by sw11_classify.py), 13,262 refused both; sw12
+  145, 54 divergent both; every line set identical base vs tip — no person
+  path moves.
+- **SUITES** (run whole after the last change to a lib or test file): server
+  +3,796 ~4 (the base's +3,776 ~4 plus the 20 tests of
+  nutrition_v123_test.dart; the base measured in a worktree +3,775 ~5 — one
+  test skips there), salt_shared +265, app +674; `dart analyze` (apps/server,
+  tool/replay included; packages/salt_shared) and `flutter analyze` clean; the
+  31 changed or new server test files load without the corpus (0 "Failed to
+  load"). Measured again at the owner gate, on the file with its four pins
+  (20 tests still): server +3,796 ~4, salt_shared +265, app +674; the analyzers
+  clean; `dart format` changes none of the 37 changed or new Dart files; the
+  31 files load without the corpus (+168 ~538, 0 "Failed to load").
+- **The owner gate (2026-11-20).** THE FOUR REPLAYS re-run on the returned tree
+  and on a worktree of the base 05bb896 (fresh copies, both orders): G0, G1, G2
+  and G3 each main == rev, rows, recs, sections, calls and notes == the v122
+  set, the buckets == the reference, calls 0 B. `panel_digest.sh --stamp same
+  G0 G1` PASS, (2) empty; `--stamp bumped G1 G2 sugars` PASS — (1) the `sugars`
+  sum alone differs, 62,009.7789 g on 1,325 ids → 115,516.4337 g on 1,329, (2)
+  948 T and 945 S lines, none of another key, (3) 0, (3b) 0 / 0, (3c) 1342 of
+  1342; `--stamp bumped G0 G3` PASS, (2) empty; and the composition the deploy
+  makes, `--stamp bumped G0 G2 sugars` (the base on snapshot 33 against the tip
+  on SNAPW): PASS, the same 948 and 945 lines. `sugar_check.py` on the gate's
+  own G1 and G2 databases exit 0: (A) 1267 equal, 0 differing; (B) 38534 pairs,
+  0 mismatches; (C) 0. `panel_dump.sh` on the gate's G2: 38,534 lines, md5
+  7a67b32f27e3a7c59f08185393bf3050 — the fixer's — written as
+  .claude/diag/2026-10-09/v123_panel.tsv beside the v123 set. SNAPW's file md5
+  and dump md5 and snapshot 33's md5 measured before the replays and again
+  after the gate's runs: unchanged. THE WIDENING REPEATED by the final tree's
+  tool on a fresh snapshot-33 copy (journal mode DELETE, the thirteen dirs in
+  the SNAPW order): "files read: 370 detail, 10 skipped (not a detail);
+  distinct ids 359, repeats 11" — five files and five repeats more than the
+  fixer's run printed, the five raws R4 then copied into test/fixtures/fdc_raw
+  — "rows merged: 75", "differs: 0", "revisions: 16 rows, 79 values", "rule
+  rows with no raw: 0"; its file md5 and dump md5 equal SNAPW's; a second run
+  merges 0, the md5 unchanged; `widen_check.py` PASS (75 / 75, problems 0). THE
+  REACH counted again by a script of the gate's own over G2's
+  `ingredient_matches` and `fdc_food_cache` (own SQL; it parses no line): 75
+  cached details hold 269.3, all Foundation, 73 with no 269; on 45 of the 73
+  sit 1,675 unheld rows and parts with grams — 8 of those rows (4,154.82 g;
+  155.62 g of sugars by their own record's 269.3) on the two records whose
+  totals read a NUTRIENT SIBLING (`nutrientSiblings`: 2727583 "Cabbage, napa,
+  leaf, destemmed, raw" → SR Legacy 169979, 7 rows; 2747675 "Watermelon,
+  seedless, flesh only, raw" → SR Legacy 167765, 1 row; each sibling holds 269,
+  so those rows' sugars do not move) — which leaves THE REACH's 1,667 rows and
+  parts, 873 recipes, 64 sections, 334,317.65 g and +52,780.81 g on 43 records;
+  the five heaviest records at THE REACH's figures; 948 ids move (884 recipes,
+  64 sections), +53,506.6549 g as the sum of the ids' deltas; the four
+  first-appearing ids, the eleven recipes THE REACH names (ten gains, the last
+  a tie) and the largest section as listed there; the 9 held rows (5 / 3 / 1).
+  THE LABEL over the 884 moving recipes: the median gain is 2.89 g of sugars a
+  serving; 317 gain more than 5 g and 117 more than 20 g. EIGHT IDS READ
+  AGAINST THEIR LINES (a second script of the gate's own: each row on a record
+  holding 269.3 and no 269, its stored grams × the record's value, summed
+  against the id's measured delta): classic-banana-bread, 0.58 → 207.75 g a
+  serving (its serving basis is 1) — "¾ cup (5¼ ounces) sugar" 148.83 g × 0.998
+  = +148.54, "3 very ripe bananas, mashed well (about 1½ cups)" 354.00 g ×
+  0.158 = +55.93, "¼ cup plain yogurt" +2.49, "2 large eggs, lightly beaten"
+  +0.20; frozen-yogurt +180.62 ("¾ cup sugar" 141.00 g, +140.72; "1 quart plain
+  whole-milk yogurt" +39.90); grill-smoked-salmon +24.76 ("2 tablespoons
+  sugar"); grilled-lamb-kebabs +8.64 (150.00 g of red onion × 0.0576);
+  crispy-slow-roasted-pork-belly +2.35 ("⅔ cup Dijon mustard" on 326698);
+  soft-cooked-eggs +0.40 ("4 large eggs"); rose-sangria's "Simple Syrup"
+  +140.72 — each sum equal to its delta at 6 dp — and
+  classic-roast-stuffed-turkey, whose own rows give +12.804 of its +59.955 (its
+  two routed lines, |7 and |10, restate two sections' totals: the batch's
+  routed check). THE INVARIANT REPORT read on the gate's databases: 6 ids on G1
+  and 11 on G2, the five new ones as traced under THE REACH. MEASURED ON THE
+  WAY, NOT THIS BATCH'S (the same on G0, G1, G2 and G3): six recipes carry a
+  NEGATIVE `carbs` total — roasted-bone-in-chicken-breasts and
+  grilled-glazed-bone-in-chicken-breasts −3.95 g, oven-roasted-chicken-thighs
+  −1.92, best-grilled-chicken-thighs −1.64,
+  grilled-spice-rubbed-chicken-drumsticks −6.79,
+  roasted-and-glazed-chicken-wings −2.69 — because seven Foundation meat
+  records publish a negative carbohydrate by difference (205: 2727569 "Chicken,
+  breast, meat and skin, raw" −0.42825 g / 100 g, 2727567 thigh −0.17255,
+  2727568 wing −0.45875, 2727566 drumstick −0.47505, 2727575 "Pork, chop,
+  center cut, raw" −0.5625, 2727576 "Pork, belly, with skin, raw" −0.705,
+  2727570 "Lamb, ground, raw" −0.2508; 31 unheld rows with grams), and the
+  stored per-serving amount is negative too (−0.99 g on the two breasts
+  recipes; the label prints Total Carbohydrate at one decimal: `_row('Total
+  Carbohydrate', _n('carbs'), bold: true, decimals: 1)`). Owed to PB2 with a
+  ruling, told to the owner. OWN MUTANTS — six, each one site but the (d) one,
+  which takes two; every diff read before its result. Against the file as the
+  batch left it four die by a value: the (d) report listing a rule row that HAS
+  a raw ("no raw 746771 Foundation Oranges, raw, navels" where the fourth line
+  belongs); `sugars` reading 269.3 alone (the word the batch's one-per-word
+  list lacked — five tests); `differs` reporting a number the row lacks; every
+  row with a raw rewritten, gained or not ("merged 2346392 " printed). TWO
+  SURVIVED: the merge appending in the REVERSE of `numbers`' order (every pin
+  merged one number), and the disagreeing-raws refusal comparing EVERY number,
+  not `--numbers` alone (no test held a repeat). Neither moves SNAPW — one
+  number; and of the archives' 11 repeats no pair disagrees on any number (a
+  script of the gate's own over the thirteen dirs). PINNED BY HAND inside two
+  existing tests (20 tests still): 2747661's row with {'430', '269.3'} gains
+  both in that order — 430 = 19.7, then 269.3 = 2.703, no revision left; and
+  beside the refusal a SYNTHESIZED copy of raw 790646 with 291 altered (1.9 →
+  2.0), a number outside `--numbers`, is a repeat like any other — exit 0,
+  "files read: 12 detail, 3 skipped (not a detail); distinct ids 11, repeats
+  1", "rows merged: 3". Both mutants run again: each killed by a value
+  (['269.3', '430'] for ['430', '269.3']; exit 65 for 0). HAND-EDIT VERIFIER
+  ROUND 1 (wf_8fe27b10-1bf: two agents on claude-opus-5-5) reproduced the gate
+  — its own G2, digest, panel dump and three widenings, the six mutants against
+  both files — and ran six neighbours of its own: `differs` computed over
+  `mapped` died by a value and FIVE SURVIVED. Two are PINNED BY HAND (20 tests
+  still): an unknown argument answered with exit 0 — a mistyped `--dryrun`
+  would have exited 0 having done nothing — is now refused in the refusals test
+  ("unknown argument: --dryrun", a non-zero exit, no byte changed); and the
+  `.json` filter dropped — the contract fixtures' README.md now sits beside the
+  test's raws, neither read nor counted. The gate ran both, and a third of its
+  own (an unknown argument ignored, the run going on): each killed by a value
+  (exit 0 where a non-zero exit is required, twice; exit 255 for 0). Three are
+  STATED, not pinned: the `--numbers` split keeping an empty entry (`--numbers
+  269.3,` is then refused as a number the map does not read: nothing written);
+  the LAST raw of a repeated id read in place of the first — the reports alone
+  can differ, the archives' repeats agree on every number and the widening
+  under it gives SNAPW's md5 (so: for an id with several raws the reports read
+  the first in dir order); and `panel_digest.sh`'s (3) without its status
+  column (no test runs the script; a status move also shows in gate.sh's recs
+  TSV). GATE-P was not re-run at the gate: the fixer and verifier round 1 each
+  ran it (every line set identical base vs tip); the lib diff, read hunk by
+  hunk, holds no engine, handler or person-path line (the detail loop moved
+  verbatim, the pure merge, one number in the map, the version); and the gate's
+  hand edits are in the test file alone. By hand: the four pins (two existing
+  tests, the refusals test and the tool group's `setUpAll`); this bullet, the
+  four PINS clauses naming them, the count of compared goldens under FIXTURES
+  (41 — the contract dir holds 41 JSON goldens and a README; the batch wrote
+  42), the last sentence of SUITES and three overlong lines of the batch's
+  split (whitespace); the Decision-log bullet of docs/IMPLEMENTATION.md and the
+  commit message. No lib and no tool file. The hand edits were verified by
+  agents before the commit.
+
 **Matcher v122 (batch M109, the tenth of the prep52 chain — two parts owed
 before the chain's single deploy, ONE block: PART S, the spelling / record
 keys; PART C, the rinsed cure and the scraped-off note; matcherVersion 107 →
@@ -8615,7 +9114,11 @@ number.)**
   188 of them (Foundation 746784 "Sugars, granulated", 525 rows, holds
   none) — and 42 more have no cached detail. The provider keeps only the
   numbers nutrients.dart maps; whether FDC publishes the rest under other
-  numbers is NOT yet measured (a live look-up of the raw details). A
+  numbers is NOT yet measured (a live look-up of the raw details).
+  [Dated note, 2026-11-20 (Matcher v123): L56 / L57 measured it — Foundation
+  publishes Total Sugars as 269.3 (75 of 209 Foundation raws); the label
+  reads sugars from it since v123; fiber (293, OQ1) and the panel fill are
+  PB2's.] A
   design pass on the label's panel follows (told to the owner). Also
   stated: a three-part line (synthesized "2 large eggs plus 2 large yolks
   plus 1 large white"; no corpus line) reads its first two parts and drops

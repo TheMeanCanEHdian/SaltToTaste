@@ -60,7 +60,10 @@ const _tacos = '0480-steak-tacos.yaml';
 const _gravlax = '1148-gravlax.yaml';
 
 void main() {
-  test('matcherVersion 108', () => expect(matcherVersion, 108));
+  test('matcherVersion 109', () {
+    // RE-PIN (PB1 batch, v123): matcherVersion 109 (was 108).
+    expect(matcherVersion, 109);
+  });
   group('v122 (M109)', skip: skipIfNoCorpus, () {
     partS();
     personPath();
