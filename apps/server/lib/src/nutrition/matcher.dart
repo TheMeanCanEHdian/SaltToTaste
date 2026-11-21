@@ -210,7 +210,10 @@ const Map<String, String> _synonyms = {
 /// v109: matcher v123 (batch PB1) — Total Sugars from Foundation records:
 /// `sugars` reads 269 then 269.3, and the cached details gain the 269.3 their
 /// raw details publish (`tool/fdc_merge_numbers.dart`); sugars alone moves.
-const int matcherVersion = 109;
+/// v110: matcher v124 (batch PB2a) — a negative published per-100 g amount
+/// adds 0 to the label's totals (`recomputeTotals` → `add`); carbs alone
+/// moves (the cached 606 / 605 merge is data, not code).
+const int matcherVersion = 110;
 
 /// [text] (lowercased) with each accented letter folded as [normalizeItem]
 /// folds it (v41: the sub-recipe resolver's titles).

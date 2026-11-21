@@ -18562,7 +18562,14 @@ bool recomputeTotals(
       for (final number in def.fdcNumbers) {
         final per100 = record.nutrientsPer100g[number];
         if (per100 != null) {
-          totals[def.key] = (totals[def.key] ?? 0) + per100 * grams / 100;
+          // v124 (batch PB2a): a NEGATIVE published amount reads as 0 — the
+          // key is still created (at 0.0 where nothing else adds), for every
+          // def. FDC publishes carbohydrate by difference (205) below zero on
+          // seven Foundation meat records (2727566 … 2727570, 2727575,
+          // 2727576); no other number on disk is negative. Not in a record
+          // wrapper: the Atwater fallback, ethanol and the braise read raw.
+          totals[def.key] =
+              (totals[def.key] ?? 0) + max(per100, 0) * grams / 100;
           break;
         }
       }

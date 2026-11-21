@@ -957,7 +957,9 @@ void main() {
         // the base 9fd3e55 with only the bump to 108 gives c3be6280).
         // RE-PIN (PB1 batch, v123): matcherVersion 109 alone (was c3be6280…;
         // the stamp has no map term: the tip with 108 put back gives c3be6280).
-        '0ed49bf7b71e3115592d668b39e7b2aa93468a70bf39c1fed182cd26be5e55aa',
+        // RE-PIN (PB2a batch, v124): matcherVersion 110 alone (was 0ed49bf7…;
+        // the stamp has no rule term: the tip with 109 put back gives 0ed49bf7).
+        '416168b66b37c3a145a79e67036feeef9c556a5ce40c533e590c54ab80f1735b',
       );
     });
   });

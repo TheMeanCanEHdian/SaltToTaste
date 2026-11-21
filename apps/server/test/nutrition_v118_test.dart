@@ -291,13 +291,14 @@ const _unmoved = [
 ];
 
 void main() {
-  test('matcherVersion 109', () {
+  test('matcherVersion 110', () {
     // RE-PIN (M106 batch, v119): matcherVersion 105 (was 104).
     // RE-PIN (M107 batch, v120): matcherVersion 106 (was 105).
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
     // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
     // RE-PIN (PB1 batch, v123): matcherVersion 109 (was 108).
-    expect(matcherVersion, 109);
+    // RE-PIN (PB2a batch, v124): matcherVersion 110 (was 109).
+    expect(matcherVersion, 110);
   });
   group(
     'v118 (M105: portion and density figures)',

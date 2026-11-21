@@ -500,7 +500,9 @@ const _kibbehHash =
     // the base 9fd3e55 with only the bump to 108 gives e2e55ccd).
     // RE-PIN (PB1 batch, v123): matcherVersion 109 alone (was e2e55ccd…;
     // the stamp has no map term: the tip with 108 put back gives e2e55ccd).
-    'd61f53903c34b4f358233c2eba75ec0225efd77c0759b805e584c653f9e4587c';
+    // RE-PIN (PB2a batch, v124): matcherVersion 110 alone (was d61f5390…;
+    // the stamp has no rule term: the tip with 109 put back gives d61f5390).
+    'c2f4593c41e7187de7f00f52a68a4b896e11ce0954969e2fc804e181300556ec';
 
 /// U7 (LOW; Sonnet S1): `defatsSentence` had no negation guard — 0492's
 /// "(do not skim the fat from the liquid)" counted as skimming, so a person

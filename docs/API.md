@@ -5391,6 +5391,357 @@ invariant the dual-fleet review found broken on a non-corpus input:
 - **F11 — the bird is the host's first turkey line WITH a printed
   weight**; a weight-less turkey line before it is passed over.
 
+**Matcher v124 (batch PB2a, prep53 — a negative published amount reads as 0;
+the cached details carry their own saturated and trans fat; the second label
+batch; matcherVersion 109 → 110. THE SPEC is the orchestrator's rulings
+.claude/diag/2026-11-20/pb2/orchestrator_rulings.md (THE SPLIT, "v124 = PB2a":
+PART N and PART M) and the census .claude/diag/2026-11-20/pb2/census/code/
+(neg.md, neg.tsv, code.md), re-based on a410832 by the PB2a brief
+(.claude/diag/2026-11-20/pb2a/brief.md, which wins where they differ; its
+changes.md §5 corrects the census's "fall-through" mutant). engine.dart (one
+statement of `recomputeTotals`'s `add`) and matcher.dart (`matcherVersion`
+alone); PART M is DATA (PB1's committed tool and recorder, unchanged); no
+migration, no tool change, no app code, no FDC request, no map change. Energy,
+every row, rec, section, note and bucket byte-identical: the whole-library
+panel gate below. This section cites symbols, grep commands and hit counts —
+never a line number.)**
+- **PART N — THE RULE.** In the label's totals, a def's first present published
+  per-100 g value that is NEGATIVE is read as 0: it is still the def's value
+  (the loop stops there; the key is created, at 0.0 where nothing else adds)
+  and it adds 0 g. ONE SITE: `recomputeTotals`'s closure `add` (`grep -n "void
+  add(FdcFood record, double grams)" apps/server/lib/src/nutrition/engine.dart`
+  → 1 hit), its one adding statement now `(totals[def.key] ?? 0) + max(per100,
+  0) * grams / 100` (`grep -c "max(per100, 0)"
+  apps/server/lib/src/nutrition/engine.dart` → 1; `dart:math`'s `max` was
+  already imported; the literal is the int the file's other clamps write, and
+  the sum is the same double), for EVERY def (uniform; no energy
+  number on disk is negative). Both callers reach it (the parts arm
+  `add(p.record!, p.part.grams)` and the one-record arm `add(record, grams)`:
+  `grep -c` → 2); routed parents inherit it through their children's stored
+  totals. NOT TOUCHED (each read again on the tree: `grep -rn "'205'" lib
+  routes tool` from apps/server → 10 hits; `grep -rn
+  "'606'\|'605'\|'saturated'\|'trans'" lib routes tool` → 14 hits, the two defs
+  and the braise share maps): the Atwater fallback (`kcalPer100g` when no
+  energy number is present, 205 read raw), the alcohol arm
+  (`ethanolKcalPer100g`), the braise / dry-heat deduction (`braisedKeptOf`; 205
+  is no kept key), `_macroComplete` (presence only), `publishesNothing`,
+  `_partialKept`, the M52 coat budget and `batterOf`, the record wrappers (the
+  two `record` resolutions with `nutrientSiblings`) and `knownFood`.
+  Per-serving amounts and `dv_percent` derive from the clamped total
+  (`_perServingOf`, no edit). RULED: not in a record wrapper — that would feed
+  the energy fallback, ethanol and the braise.
+- **THE CENSUS (PART N).** Seven Foundation records publish carbohydrate by
+  difference (205) below zero, every one read by counted rows: 2727569
+  "Chicken, breast, meat and skin, raw" −0.42825 g / 100 g (9 rows), 2727567
+  "Chicken, thigh, meat and skin, raw" −0.17255 (9), 2727568 "Chicken, wing,
+  meat and skin, raw" −0.45875 (4), 2727570 "Lamb, ground, raw" −0.2508 (4),
+  2727575 "Pork, chop, center cut, raw" −0.5625 (3), 2727566 "Chicken,
+  drumstick, meat and skin, raw" −0.47505 (1), 2727576 "Pork, belly, with skin,
+  raw" −0.705 (1): 31 counted rows in 31 recipes, 0 sections, 0 parts, 0
+  routing ids (the kit's `neg_check.py` on G1 and G2). No other number is
+  negative on any record on disk (census (a)). Two more negative records sit in
+  search hits only, on no row — 2727571 "Bison, ground, raw" and 2747656
+  "Halibut, frozen, wild caught" — the clamp reads a hit as it reads a detail.
+- **PART M — THE MERGE.** The cached details gain the 606 (saturated) and 605
+  (trans) their OWN raw details publish and they lack (the owner's Q1 of the
+  table build: the avocado's raw publishes saturated 4.15 and trans 0.01, its
+  cached row held neither — PB1's tool had REPORTED both as revisions). PB1's
+  committed tool, unchanged: `dart run tool/fdc_merge_numbers.dart --db <copy>
+  <the thirteen --raw-dir> --numbers 606,605`. THE ORDER 606,605 is RULED:
+  `mergeNumbers` appends in `numbers`' order, so the bytes depend on it
+  (`--numbers 605,606` gives another file and dump md5) and the totals do not
+  (`add` reads by key); it is the map's def order (saturated before trans). The
+  dry run on a SNAPW copy: "files read: 370 detail, 10 skipped (not a detail);
+  distinct ids 359, repeats 11"; "merged 2710824 606,605", "merged 2747667
+  606,605", "merged 2758998 606,605", "merged 2759000 606,605"; "rows merged:
+  4", "606: 4", "605: 4"; "differs: 0"; "revisions: 16 rows, 71 values" (PB1's
+  79 less the eight 606 / 605 values now merged — REPORTED, NEVER APPLIED:
+  2346392's twelve, 645 / 646 on the four, 430 on six Foundation records, the
+  spaghetti macros); "rule rows with no raw: 0"; the copy's md5 unchanged. THE
+  FOUR ROWS, read one by one (each value from the first raw of the id, all in
+  2026-11-17/live57_raw): 2710824 "Avocado, Hass, peeled, raw" (Foundation) 606
+  4.15, 605 0.01 — 14 v123 rows, 11 with grams; 2747667 "Scallops, sea, frozen,
+  wild caught" (Foundation) 0.13, 0.0 — 5 rows; 2758998 "Pasta, dry, enriched,
+  spaghetti" (Foundation) 0.489, 0.0 — 0 rows, and a `nutrientSiblings` KEY (→
+  SR Legacy 169736, which publishes 606 and 605 itself): a total never reads
+  its merged 606; 2759000 "Pasta, dry, whole grain, spaghetti " (Foundation;
+  FDC's trailing space) 0.557, 0.003 — 0 rows, `publishesNothing` still true
+  (no energy, no 203 / 204 / 205). Cost: 1.10 s real, 473,464,832 B max RSS,
+  one transaction of 4 UPDATEs.
+- **SNAPW2** = .claude/diag/2026-11-20/pb2a/snap33w2.db: SNAPW
+  (.claude/diag/2026-11-20/pb1/snap33w.db, file md5
+  617a90959e1ac695e8b8455a0a26fe14, dump md5 5960c9ea1db909516b6ea677a2c847bb,
+  unchanged before and after) copied, `PRAGMA journal_mode=DELETE`, the tool
+  once with `--numbers 606,605` and the thirteen dirs of
+  .claude/diag/2026-11-20/pb1/out/rawdirs.args (the twelve archive dirs in the
+  SNAPW order and apps/server/test/fixtures/fdc_raw) — "rows merged: 4" — then
+  once more: "rows merged: 0", md5 unchanged. FILE MD5
+  **49dfe763d284f31d964383b3b063bde8**; `sqlite3 "file:snap33w2.db?mode=ro"
+  "SELECT fdc_id, response FROM fdc_food_cache ORDER BY 1" | md5`
+  **93e1034f651704c66a1623780ad4c794**. The widening repeated on a fresh SNAPW
+  copy: the same file and dump md5, its report `cmp`-identical.
+  `widen_check_n.py --numbers 606,605` (the kit, read-only) PASS: "rows the
+  raws say to merge: 4 | rows written: 4 | user_version 22 / 22 | sqlite_master
+  rows 59 / 59 | problems: 0" (each written row = its old row plus exactly
+  [606, 605] in that order). .claude/diag/2026-11-20/live58_raw is NOT among
+  the dirs: none of its 133 ids has a cached detail row and the tool never
+  inserts, so adding it merges the same 4 (measured by the brief). RULED: FROM
+  PB2a ON SNAPW2 IS THE REPLAY BASE of every later batch; SNAPW stays
+  untouched; nothing writes SNAPW2 again (gate.sh copies it).
+- **THE REFERENCE PB2a LEAVES** (written by the owner's gate under
+  .claude/diag/2026-10-09/, from its own G2): the v124 TSV set —
+  `v124_rows.tsv`, `v124_recs.tsv`, `v124_sections.tsv`, `v124_calls.tsv`,
+  `v124_notes.tsv` and `v124_bucket.out`, the gated tip replayed on SNAPW2,
+  each file byte-identical to v123's — and `v124_panel.tsv` (the kit's
+  `panel_dump.sh <G2 rp_main.db> <out>`): 38,536 lines, md5
+  c7e8fc0c086cc231846aa575958e59cc, md5-identical to the fixer's G2 dump (two
+  `trans` keys more than v123's 38,534: pan-seared-scallops and
+  grilled-sea-scallops).
+- **THE GATE (the replay TSVs carry energy only — the panel digest and the
+  kit's two checks are the gate).** Four replays (`gate.sh`, fresh copies, main
+  and `--reverse-parents` cmp-identical, calls 0 B), each == the v123 set in
+  rows, recs, sections, calls, notes and buckets: **G0** the base a410832 on
+  SNAPW — and `panel_dump.sh` on it: 38,534 lines, md5
+  7a67b32f27e3a7c59f08185393bf3050 == v123_panel.tsv; **G1** the base on SNAPW2
+  — `panel_digest.sh --stamp same G0 G1 saturated trans` PASS: (1) `saturated`
+  70,508.5728 on 1,331 ids → 70,637.1407 on 1,331, `trans` 1,196.3371 on 1,267
+  → 1,196.6371 on 1,269, every other sum identical; (2) 31 T lines (17
+  saturated, 14 trans) and 25 S (17, 8); (3) 0; (3b) 0 / 0; (3c) 0 of 1342;
+  `merge_check.py G0 G1` exit 0: 4 records move, "(A) (id, key) pairs equal to
+  the model: 2684 | differing: 0 | routing ids: 75", "(B) per-serving pairs
+  checked on b: 38536 | mismatches: 0", "(C) rows differing between the sides:
+  0"; **G2** the tip on SNAPW2 — `--stamp bumped G1 G2 carbs` PASS: (1) `carbs`
+  290,672.3450 on 1,335 → 290,762.7377 on 1,335, every other sum identical; (2)
+  31 T and 31 S, every one `carbs`; (3) 0; (3b) 0 / 0; (3c) 1342 of 1342;
+  `neg_check.py G1 G2` exit 0: "(A) ids equal to the model: 1342 | differing:
+  0", "(B) per-serving pairs checked on the tip: 38536 | mismatches: 0", "(C)
+  rows differing between the sides: 0", "(D) negative totals values on the tip:
+  0", "(E) ids losing the carbs key: 0", the two key-only ids exactly 0.0;
+  `SELECT count(*) FROM recipe_nutrition r, json_each(r.totals) j WHERE j.value
+  < 0` → 6 on G1, 0 on G2 and G3; **G3** the tip on SNAPW — `--stamp bumped G0
+  G3 carbs` PASS with the same 31 T / 31 S lines (`diff` of the two line sets
+  empty) and sums; `neg_check.py G0 G3` exit 0 (38,534 pairs). THE COMPOSITION
+  the deploy makes, `--stamp bumped G0 G2 saturated trans carbs`: PASS, 62 T
+  (31 carbs, 17 saturated, 14 trans) and 56 S (31, 17, 8), (3) 0, (3b) 0 / 0,
+  (3c) 1342 of 1342.
+- **THE REACH.** N (G1 → G2, unrounded grams): `carbs` alone, 31 recipes,
+  +90.392712 g library-wide; every one of the 31 per-serving amounts moves; the
+  six negative totals: roasted-bone-in-chicken-breasts and
+  grilled-glazed-bone-in-chicken-breasts −3.953003 → 0.0 (−0.99 → 0.0 g a
+  serving, `dv_percent` −0.4 → 0.0), oven-roasted-chicken-thighs −1.917549 →
+  0.0 (−0.48 → 0.0), best-grilled-chicken-thighs −1.643613 → 0.0 (−0.41 → 0.0),
+  grilled-spice-rubbed-chicken-drumsticks −6.787585 → 0.0 (−1.13 → 0.0),
+  roasted-and-glazed-chicken-wings −2.690857 → +1.470850 (−0.67 → 0.37); the
+  two key-only ids (every counted row with grams that publishes 205 is the
+  negative record — grilled-glazed-bone-in-chicken-breasts,
+  grilled-spice-rubbed-chicken-drumsticks) keep `carbs` at exactly 0.0, printed
+  "0 g", never "—"; the largest per-serving move crispy-slow-roasted-pork-belly
+  9.27 → 10.47 (basis 8). M (G0 → G1): 17 ids — the 16 holding an avocado or
+  scallop row with grams and cheesy-nachos-with-guacamole-and-salsa, which
+  restates chunky-guacamole through its routed row (the routed restatement);
+  `saturated` +128.5679 g on the 17 (by hand: 150 g of avocado × 4.15 / 100 =
+  6.225, 450 g → 18.675, 680.39 g of scallops × 0.13 / 100 = 0.8845), `trans`
+  +0.3000 g on 12 and the key FIRST APPEARS (0.0) on 2 — pan-seared-scallops
+  and grilled-sea-scallops (the scallops publish 605 0.0); mono / poly unmoved
+  (the avocado's 645 / 646 are revisions, never merged). N and M touch no
+  common id.
+- **FIXTURES.** `foods.json`: the four widened ids are entries;
+  `tool/record_fdc_fixtures.dart --from-db snap33w2.db --replace food=2710824
+  food=2747667 food=2758998 food=2759000` — a JSON diff over EVERY entry: 568
+  entries, key order kept, 564 byte-equal, the four = the old entry + [('606',
+  v), ('605', v)] in that order, nothing else; each entry less its 606 / 605
+  `jsonEncode`-BYTE-EQUAL to SNAPW's row (4 of 4, a check run once on a SNAPW
+  copy). `searches.json`: unchanged by that command; then ONE answer recorded
+  for pan-seared-scallops, whose |0 line asks it (`--from-db snap33w2.db
+  'search=dry sea scallops'`, no `--replace`: 1,106 → 1,107 queries, no
+  existing query changed, 25 hits); the sweep-audit's hit-vs-detail census (565
+  / 430) unmoved. No raw fixture. Contract goldens regenerated
+  (`UPDATE_CONTRACT_GOLDENS=1`): none moves (no golden recipe holds a widened
+  or a negative record).
+- **PINS (apps/server/test/nutrition_v124_test.dart; 13 tests, both groups
+  corpus-gated, every corpus read in `setUpAll`; the records each recipe's
+  replay rows read are seeded as cached details, so every row equals G2's row —
+  position, record, grams, status — checked out of the suite on all eight
+  recipes).** PART N on the three negative records that are `foods.json`
+  entries: roasted-bone-in-chicken-breasts|0 (2727569, 923.06 g) and
+  oven-roasted-chicken-thighs|0 (2727567, 1,111.30 g): `carbs` EXACTLY 0.0 and
+  present; grilled-glazed-bone-in-chicken-breasts: the one counted row that
+  publishes 205 is |1 on 2727569 (|0's brine salt 0 g) and `carbs` is PRESENT
+  at exactly 0.0 (THE KEY STAYS); roasted-and-glazed-chicken-wings: |3 "1
+  teaspoon pepper" (170931, 2.30 g × 63.95 / 100) carries the total, 1.47085 (a
+  sign change no zero mimics); chicken-marbella|10 (2727569, 870.99 g) after
+  nine positive-carbs rows: `carbs` 82.056373 = the rule, not the running-total
+  clamp's 78.326373; AS A PROPERTY over the five: `carbs` == Σ counted rows'
+  grams × max(205, 0) / 100 (`nutrientSiblings` applied) within 1e-9 and no
+  totals value negative; A2, the nutrition GET of
+  roasted-bone-in-chicken-breasts through the route: per-serving `carbs` amount
+  0.0 and `dv_percent` 0.0.
+  THE CLAMP ENDS THE DEF, NEVER THE RECORD (the thirteenth test, pinned by hand
+  at the owner gate from two survivors): on the five, EVERY totals key but
+  `energy` == Σ counted rows' grams × the def's first present number / 100, a
+  negative read as 0, within 1e-9 (`nutrientSiblings` applied; the key sets
+  equal), and roasted-bone-in-chicken-breasts' `protein` is its meat's alone,
+  923.05972 g × 21.40625 / 100 = 197.592471.
+  PART M on two databases, one holding SNAPW's
+  details (the four entries less 606 / 605), one the widened: the four entries
+  = the unwidened + [606, 605] in that order; every row equal and every key but
+  saturated and trans equal (chunky-guacamole,
+  cheesy-nachos-with-guacamole-and-salsa, pan-seared-scallops);
+  chunky-guacamole|0 "3 medium, ripe avocados" on 2710824 (450.00 g): saturated
+  +18.675, trans +0.045 (each `closeTo(…, 1e-9)` of grams × value / 100); the
+  nachos' routed |6 restates the same deltas; pan-seared-scallops|0 on 2747667
+  (680.39 g): a `trans` key FIRST APPEARS at exactly 0.0, saturated + grams ×
+  0.13 / 100.
+- **MUTANTS** (each on a snapshot copy of engine.dart, a literal anchor of
+  count 1, its diff saved before its result, restored by copying the snapshot
+  back + `cmp` + md5 from an EXIT / INT / TERM / HUP trap, the runner refusing
+  a file whose md5 is not the clean one): MUST DIE, each KILLED BY A VALUE in
+  nutrition_v124_test.dart — the clamp dropped (0120's `carbs` −3.9530032509
+  for 0.0); a negative read as its absolute value (+3.9530032509 for 0.0); a
+  negative SKIPPED (`if (per100 < 0) break;`: 0627 has no `carbs` key); a
+  negative treated as ABSENT (`per100 != null && per100 >= 0`, falling through
+  to the def's next number — NOT equivalent, as the census said: `carbs` reads
+  ['205'] alone, so 0627 has no key); the clamp moved onto the RUNNING TOTAL
+  (chicken-marbella 78.32637277227995 for 82.05637305128234). STATED EQUIVALENT
+  ON THE DATA: (i) THE RULED SURVIVOR — the clamp placed in a record wrapper
+  (recomputeTotals's `food` closure, so it also reaches the energy fallback,
+  ethanol and the braise) with `add`'s clamp removed: the test file passes, and
+  its whole-library replay on SNAPW2 equals the v123 set and `panel_digest.sh
+  --stamp same G2 <it>` is PASS with (2) empty — every negative record
+  publishes energy, none is an alcohol or braise record; nearest record
+  2727569; no synthesized record (a negative carbohydrate with no energy is a
+  record that does not exist). (ii) THREE ARGUED EQUIVALENTS, ruled "stated,
+  not pinned", their replays not run: the clamp of the product (`max(per100 *
+  grams / 100, 0.0)` — `add` never sees grams <= 0 on the one-record arm;
+  nearest, G1's 2 zero-gram parts); the clamp on `carbs` alone or on every key
+  but energy (no other number on disk is negative; nearest, the seven
+  negative-205 records, every other number >= 0); the clamp at one caller (the
+  one-record arm only — 0 of G1's 134 parts sits on a negative record; nearest,
+  the v114 egg pairs and v41's rendered bacon parts). PART M changes no tool:
+  its mutants are PB1's (nutrition_v123_test.dart); an order flip is caught by
+  SNAPW2's md5 and `widen_check_n.py`'s key-order check.
+- **RULE C / COST.** No step reader, memo or matching path changes: the cost
+  families (test/support/cost_bounds.dart) run unchanged and green in the full
+  suite.
+- **RE-PINS.** `grep -rho "RE-PIN (PB2a batch, v124)" apps/server/test | wc -l`
+  → 30, in `grep -rl` → 29 files: 26 `expect(matcherVersion, 110)` (was 109;
+  the six test names that state 109 now state 110) and the four stamp literals
+  the bump moves (nutrition_seasoning_ci_test.dart, nutrition_v101_test.dart,
+  nutrition_v83_test.dart, nutrition_v47_resolver_test.dart: "matcherVersion
+  110 alone"; with 109 put back v101's, v83's and v47's give their pre-batch
+  literals, and the base a410832 gives seasoning_ci's). Nothing deleted or
+  widened; every energy pin, `publishesNothing(2759000)`, v41's nachos /
+  guacamole energy rows, `nutrientSiblings[2758998]` == 169736 and the
+  read-count pins run unchanged.
+- **GATE-P (sw5–sw13)** — each tree on its OWN replayed SNAPW2 database (G1's
+  and G2's `rp_main.db`, `.backup`), the committed sweep scripts, 12 shards,
+  NoNet, calls 0 at every settle, second pass moved 0; base a410832 (a
+  worktree) vs the tip: sw5 33,099 / sw6 39,028 / sw7 1,950 / sw8 59,346 / sw8r
+  5,433 / sw9 176 / sw13 294 combos, 0 divergent 0 refused both; sw10 159 bare
+  and typed, 0 divergent both, sw10.tsv `cmp`-identical; sw11 41,044, 200
+  divergent, 13,262 refused both; sw12 145, 54 divergent both; every line set
+  identical base vs tip (the sweeps print rows and energy; the clamp moves
+  neither).
+- **STATED LIMITS.** The panel FILL (missing saturated, trans, cholesterol,
+  fiber, … from a same-food record) is PB2b's, on SNAPW2; the merge's revisions
+  stay unapplied (16 rows, 71 values); fiber reads 291 alone (293 is the
+  owner's backlog); no Added Sugars; the records read from a search hit keep
+  their trimmed hits.
+- **DEPLOY NOTE — the procedure (written, not run; the chain's ONE deploy at
+  its very end).** No migration. (1) Stop the server. (2) `.backup` the live
+  database (a plain `cp` of a WAL database is torn). (3) The chain's own seeds
+  first (L55's details and searches). (4) `dart run tool/fdc_merge_numbers.dart
+  --db <live> --raw-dir <every archive dir, in the SNAPW order, then every
+  later live*_raw dir — live58_raw today: it merges nothing and refuses
+  nothing, measured by the brief> --raw-dir apps/server/test/fixtures/fdc_raw
+  --numbers 269.3,606,605 --dry-run`; read every report: files read / skipped,
+  rows merged per number (on snapshot 33: 269.3 75, 606 4, 605 4), `differs`
+  (expected 0), the revisions (never applied), the rule rows with no raw. (5)
+  The rule rows with no raw are fetched by the ORCHESTRATOR (paced as L57,
+  archived under .claude/diag/<date>/live<NN>_raw/), then the dry run again
+  until (d) is empty. (6) The merge without `--dry-run`, then once more (it
+  must merge 0); compare DUMP md5s, never file md5s (one run of `269.3,606,605`
+  from snapshot 33 gives SNAPW2's dump md5 93e1034f… and another file md5,
+  measured by the brief). (7) THEN `dart_frog build`. (8) Start. (9) The sweep
+  — the bump to 110 stales every recipe; a merge AFTER the sweep would leave
+  the merged numbers unread until the next bump.
+- **The owner gate (2026-11-21).** ONE LIB EDIT BY HAND, before the gate ran:
+  the batch's `max(per100, 0.0)` under an `// ignore: prefer_int_literals` is
+  `max(per100, 0)` — the int literal the file's other clamps write (`grep -c
+  "max(budget, 0)" apps/server/lib/src/nutrition/engine.dart` → 2), the sum the
+  same double; every figure of this bullet is measured on the edited tree, and
+  its G2 panel dump is md5-identical to the fixer's on the returned tree, so
+  the edit moves no value. THE FOUR REPLAYS re-run (G0 and G1 from a worktree
+  of a410832), each main and reverse `cmp`-identical, calls 0, == the v123 set
+  in rows, recs, sections, calls, notes and buckets; the four digests PASS with
+  the figures of THE GATE — G0 → G1 31 T (17 saturated, 14 trans) and 25 S (17,
+  8), the stamp the same; G1 → G2 and G0 → G3 31 T and 31 S, every one `carbs`,
+  the two line sets `cmp`-identical; the composition G0 → G2 62 T and 56 S; (3)
+  0 and (3b) 0 / 0 on all four; `merge_check.py` on G0 G1 and on G0 G2 and
+  `neg_check.py` on G1 G2 and on G0 G3 exit 0; negative totals values 6, 6, 0,
+  0; the panel dumps: G0 38,534 lines, md5 7a67b32f27e3a7c59f08185393bf3050 ==
+  v123_panel.tsv; G1 38,536 lines, md5 3a465c64c342761c8a725e21814f76cf; G2
+  38,536 lines, md5 c7e8fc0c086cc231846aa575958e59cc. THE WIDENING repeated by
+  the gated tree's tool on a fresh SNAPW copy: the same report lines, "rows
+  merged: 4", file md5 49dfe763d284f31d964383b3b063bde8 and dump md5
+  93e1034f651704c66a1623780ad4c794, a second run "rows merged: 0";
+  `widen_check_n.py` PASS on it and on SNAPW2; SNAPW's and SNAPW2's md5s
+  unchanged at the end, no `-wal` / `-shm` beside either. EVERY MOVED ID READ
+  AGAINST ITS LINES by a script of the gate's own that uses no kit code
+  (.claude/diag/2026-11-20/pb2a/owner/orch_check.py, on the gate's three
+  databases): the cache holds 7 negative (record, number) pairs, every one 205;
+  31 ids move G1 → G2, in `carbs` alone, each by exactly its ONE counted row on
+  a negative record — grams × |205| / 100 within 1e-9, +90.392712 g in all
+  (crispy-slow-roasted-pork-belly|0 "1 (3-pound) skin-on center-cut fresh pork
+  belly, about 1½ inches thick" 1,360.776 g × 0.705 / 100 = +9.593471); two
+  rows on a negative record sit outside the 31 and add nothing on either side
+  (best-chicken-stew|3, held `discarded_medium`;
+  braised-chicken-with-mustard-and-herbs|1, no grams: its line prints "1½–2
+  ounds", a corpus typo — the backlog's, not this batch's); 17 ids move G0 →
+  G1, in `saturated` and `trans` alone, each by its own avocado or scallop
+  row's grams × the merged value / 100 and the nachos by their routed child's
+  (+128.567913 g and +0.300000 g); 0 mismatches. NINE MUTANTS of the edited
+  statement, each diff read before its result, against
+  nutrition_v124_test.dart: the batch's five regenerated, each killed by the
+  value the MUTANTS bullet names; three own killed — the clamp only on a key's
+  FIRST add (chicken-marbella 78.32637277227995 for 82.05637305128234), a clamp
+  floor of 0.001 (roasted-bone-in-chicken-breasts' `carbs` 0.00941559700737 for
+  0.0), a negative amount ZEROING the key's running total (chicken-marbella
+  40.88445813488233) — and ONE SURVIVED the batch's twelve tests: a negative
+  amount ending the RECORD's add (`if (per100 < 0) return;` after the
+  statement, so the meat's protein, calcium, iron, potassium, magnesium and
+  phosphorus are never added — no equivalent: each of the 31 ids would lose
+  them). PINNED BY HAND on protein, and the mutant then died by a value
+  (roasted-bone-in-chicken-breasts' `protein` 0.0 for 197.59247131249998).
+  HAND-EDIT VERIFIER ROUND 1 (wf_6eede9c4-844: two agents on claude-opus-5-5;
+  359,894 tokens) compared the two forms of the statement bitwise over the
+  28,776 per-100 g values of SNAPW2 and nine edge values, at nine gram values
+  and four running totals (1,036,260 compared, 0 differing), re-ran the replay
+  and the nine mutants, and found that pin too narrow (MED): a mutant skipping
+  every later def of a negative record EXCEPT protein passed the thirteen tests
+  while moving calcium, iron, magnesium, phosphorus and potassium on the 31
+  ids. THE PIN WIDENED BY HAND to every key but `energy` (the clause in PINS);
+  the ten, re-run against the widened file, each die by a value (the second
+  survivor: roasted-bone-in-chicken-breasts' `calcium` 1.07999537688 for
+  64.75265486248). Its two LOW corrected: two products printed from 2-dp grams,
+  and fiber named among the nutrients the first survivor drops (the negative
+  records publish none). HAND-EDIT VERIFIER ROUND 2 (wf_ea1cb19f-377: two
+  agents on claude-opus-5-5; 274,480 tokens): PASS with zero findings — the ten
+  re-run, and three neighbours of its own each killed by a value in the widened
+  test (a negative record skipping its later potassium alone: 0.35999845896 for
+  3069.53356745896; adding its later calcium twice: 128.42531434808 for
+  64.75265486248; a value below 0.5 read as 0: iron 0.0 for
+  3.3002660466321005). SUITES at the gated tree, run whole after the last
+  change to a lib or test file: server +3,809 ~4 (the base's +3,796 ~4 plus the
+  13 tests of nutrition_v124_test.dart), salt_shared +265, app +674; `dart
+  analyze` (apps/server, packages/salt_shared) and `flutter analyze` clean;
+  `dart format` changes none of the 32 changed or new Dart files; the 30
+  changed or new server test files load without the corpus (+138 ~529). By
+  hand: the one lib edit and its comment; the thirteenth test, its import and
+  the test file's header line; in this block the adding statement's wording in
+  PART N, this bullet, THE REFERENCE bullet and the PINS clause; the
+  Decision-log bullet of docs/IMPLEMENTATION.md.
+
 **Matcher v123 (batch PB1, prep53 — Total Sugars from Foundation records; the
 first label batch, after the prep52 chain; matcherVersion 108 → 109. THE SPEC
 is the prep53 design .claude/diag/2026-11-17/prep53/final/design_v2.md
@@ -5522,6 +5873,9 @@ hit counts — never a line number.)**
   | md5` **5960c9ea1db909516b6ea677a2c847bb**. RULED: FROM PB1 ON SNAPW IS THE
   REPLAY BASE of every later batch; snapshot 33 stays untouched; nothing
   writes SNAPW again (gate.sh copies it).
+  DATED NOTE (2026-11-20, PB2a): from PB2a on the replay base is SNAPW2
+  (.claude/diag/2026-11-20/pb2a/snap33w2.db = SNAPW plus each cached
+  detail's own 606 / 605; "Matcher v124"); SNAPW stays untouched.
 - **THE REFERENCE PB1 LEAVES** (written by the owner's gate under
   .claude/diag/2026-10-09/): `v123_{rows,recs,sections,calls,notes}.tsv` +
   `v123_bucket.out`, the tip replayed on SNAPW — byte-identical to v122's —
@@ -5740,6 +6094,10 @@ hit counts — never a line number.)**
   live request each, paced as L57, the raws archived under
   .claude/diag/<date>/live<NN>_raw/ — then the dry run again until (d) is
   empty. (6) The merge without `--dry-run`, then once more (it must merge 0).
+  DATED NOTE (2026-11-20, PB2a): from v124 on, step (4) — the one step that
+  carries the numbers — reads `--numbers 269.3,606,605` (step (6) is the
+  same merge without `--dry-run`); compare DUMP md5s, never file md5s
+  ("Matcher v124", its DEPLOY NOTE).
   (7) THEN `dart_frog build`. (8) Start. (9) The sweep — the bump to 109
   stales every recipe, and a zero-request recompute reads the merged 269.3; a
   merge AFTER the sweep would leave sugars unread until the next bump (design

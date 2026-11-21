@@ -684,7 +684,8 @@ void keys() {
     // RE-PIN (M108 batch, v121): matcherVersion 107 (was 106).
     // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
     // RE-PIN (PB1 batch, v123): matcherVersion 109 (was 108).
-    expect(matcherVersion, 109);
+    // RE-PIN (PB2a batch, v124): matcherVersion 110 (was 109).
+    expect(matcherVersion, 110);
   });
 
   test('every new key is a rank-as item; the unprinted numbers read their '

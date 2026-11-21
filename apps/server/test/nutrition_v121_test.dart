@@ -164,10 +164,11 @@ const _arms = [
 ];
 
 void main() {
-  test('matcherVersion 109', () {
+  test('matcherVersion 110', () {
     // RE-PIN (M109 batch, v122): matcherVersion 108 (was 107).
     // RE-PIN (PB1 batch, v123): matcherVersion 109 (was 108).
-    expect(matcherVersion, 109);
+    // RE-PIN (PB2a batch, v124): matcherVersion 110 (was 109).
+    expect(matcherVersion, 110);
   });
   group('v121 (M108: measured step salt)', skip: skipIfNoCorpus, () {
     arms();
